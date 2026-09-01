@@ -31,6 +31,7 @@ import type {
 } from "./refs.ts";
 import type { UpgradePath } from "./value-sets.ts";
 
+/** The `custom_tooltip` block inside `utility_component_template`. */
 export interface UtilityComponentTemplateCustomTooltip {
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   text?: "" | LocalizationInput;
@@ -41,6 +42,7 @@ export interface UtilityComponentTemplateCustomTooltip {
   when?: Trigger<never>;
 }
 
+/** How the writer lowers each member of {@link UtilityComponentTemplateCustomTooltip} to PDXScript. */
 export const UTILITY_COMPONENT_TEMPLATE_CUSTOM_TOOLTIP_FIELDS: readonly ContentField[] = [
   {
     key: "text",
@@ -71,21 +73,25 @@ export const UTILITY_COMPONENT_TEMPLATE_CUSTOM_TOOLTIP_FIELDS: readonly ContentF
   { member: "when", shape: "inlineTrigger" },
 ];
 
+/** The `friendly_aura.stack_info` block inside `utility_component_template`. */
 export interface UtilityComponentTemplateFriendlyAuraStackInfo {
   id: string;
   priority?: number;
 }
 
+/** How the writer lowers each member of {@link UtilityComponentTemplateFriendlyAuraStackInfo} to PDXScript. */
 export const UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_STACK_INFO_FIELDS: readonly ContentField[] = [
   { key: "id", member: "id", shape: "value", form: "scalar", conversion: "identity" },
   { key: "priority", member: "priority", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `friendly_aura.graphics.area_effect` block inside `utility_component_template`. */
 export interface UtilityComponentTemplateFriendlyAuraGraphicsAreaEffect {
   entity: ModelEntityRef | string;
   dynamicScale: boolean;
 }
 
+/** How the writer lowers each member of {@link UtilityComponentTemplateFriendlyAuraGraphicsAreaEffect} to PDXScript. */
 export const UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_AREA_EFFECT_FIELDS: readonly ContentField[] =
   [
     {
@@ -105,11 +111,13 @@ export const UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_AREA_EFFECT_FIELD
     },
   ];
 
+/** The `friendly_aura.graphics.ship_effect` block inside `utility_component_template`. */
 export interface UtilityComponentTemplateFriendlyAuraGraphicsShipEffect {
   entity: ModelEntityRef | string;
   dynamicScale: boolean;
 }
 
+/** How the writer lowers each member of {@link UtilityComponentTemplateFriendlyAuraGraphicsShipEffect} to PDXScript. */
 export const UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_SHIP_EFFECT_FIELDS: readonly ContentField[] =
   [
     {
@@ -129,11 +137,13 @@ export const UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_SHIP_EFFECT_FIELD
     },
   ];
 
+/** The `friendly_aura.graphics` block inside `utility_component_template`. */
 export interface UtilityComponentTemplateFriendlyAuraGraphics {
   areaEffect?: UtilityComponentTemplateFriendlyAuraGraphicsAreaEffect[];
   shipEffect?: UtilityComponentTemplateFriendlyAuraGraphicsShipEffect[];
 }
 
+/** How the writer lowers each member of {@link UtilityComponentTemplateFriendlyAuraGraphics} to PDXScript. */
 export const UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_FIELDS: readonly ContentField[] = [
   {
     key: "area_effect",
@@ -153,6 +163,7 @@ export const UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_FIELDS: readonly 
   },
 ];
 
+/** The `friendly_aura` block inside `utility_component_template`. */
 export interface UtilityComponentTemplateFriendlyAura {
   name: string;
   limit?: Trigger<"ship">;
@@ -164,6 +175,7 @@ export interface UtilityComponentTemplateFriendlyAura {
   graphics?: UtilityComponentTemplateFriendlyAuraGraphics;
 }
 
+/** How the writer lowers each member of {@link UtilityComponentTemplateFriendlyAura} to PDXScript. */
 export const UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_FIELDS: readonly ContentField[] = [
   { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
   { key: "limit", member: "limit", shape: "trigger", form: "trigger" },
@@ -193,21 +205,25 @@ export const UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_FIELDS: readonly ContentFi
   },
 ];
 
+/** The `hostile_aura.stack_info` block inside `utility_component_template`. */
 export interface UtilityComponentTemplateHostileAuraStackInfo {
   id: string;
   priority?: number;
 }
 
+/** How the writer lowers each member of {@link UtilityComponentTemplateHostileAuraStackInfo} to PDXScript. */
 export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_STACK_INFO_FIELDS: readonly ContentField[] = [
   { key: "id", member: "id", shape: "value", form: "scalar", conversion: "identity" },
   { key: "priority", member: "priority", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `hostile_aura.graphics.area_effect` block inside `utility_component_template`. */
 export interface UtilityComponentTemplateHostileAuraGraphicsAreaEffect {
   entity: ModelEntityRef | string;
   dynamicScale: boolean;
 }
 
+/** How the writer lowers each member of {@link UtilityComponentTemplateHostileAuraGraphicsAreaEffect} to PDXScript. */
 export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_AREA_EFFECT_FIELDS: readonly ContentField[] =
   [
     {
@@ -227,11 +243,13 @@ export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_AREA_EFFECT_FIELDS
     },
   ];
 
+/** The `hostile_aura.graphics.ship_effect` block inside `utility_component_template`. */
 export interface UtilityComponentTemplateHostileAuraGraphicsShipEffect {
   entity: ModelEntityRef | string;
   dynamicScale: boolean;
 }
 
+/** How the writer lowers each member of {@link UtilityComponentTemplateHostileAuraGraphicsShipEffect} to PDXScript. */
 export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_SHIP_EFFECT_FIELDS: readonly ContentField[] =
   [
     {
@@ -251,11 +269,13 @@ export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_SHIP_EFFECT_FIELDS
     },
   ];
 
+/** The `hostile_aura.graphics` block inside `utility_component_template`. */
 export interface UtilityComponentTemplateHostileAuraGraphics {
   areaEffect?: UtilityComponentTemplateHostileAuraGraphicsAreaEffect[];
   shipEffect?: UtilityComponentTemplateHostileAuraGraphicsShipEffect[];
 }
 
+/** How the writer lowers each member of {@link UtilityComponentTemplateHostileAuraGraphics} to PDXScript. */
 export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_FIELDS: readonly ContentField[] = [
   {
     key: "area_effect",
@@ -275,17 +295,20 @@ export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_FIELDS: readonly C
   },
 ];
 
+/** The `hostile_aura.damage_per_day.damage` block inside `utility_component_template`. */
 export interface UtilityComponentTemplateHostileAuraDamagePerDayDamage {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link UtilityComponentTemplateHostileAuraDamagePerDayDamage} to PDXScript. */
 export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_DAMAGE_PER_DAY_DAMAGE_FIELDS: readonly ContentField[] =
   [
     { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
     { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
   ];
 
+/** The `hostile_aura.damage_per_day` block inside `utility_component_template`. */
 export interface UtilityComponentTemplateHostileAuraDamagePerDay {
   accuracy?: number;
   damage?: UtilityComponentTemplateHostileAuraDamagePerDayDamage;
@@ -297,6 +320,7 @@ export interface UtilityComponentTemplateHostileAuraDamagePerDay {
   sizeDamageFactor?: number;
 }
 
+/** How the writer lowers each member of {@link UtilityComponentTemplateHostileAuraDamagePerDay} to PDXScript. */
 export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_DAMAGE_PER_DAY_FIELDS: readonly ContentField[] =
   [
     { key: "accuracy", member: "accuracy", shape: "value", form: "scalar", conversion: "identity" },
@@ -351,6 +375,7 @@ export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_DAMAGE_PER_DAY_FIELDS: read
     },
   ];
 
+/** The `hostile_aura` block inside `utility_component_template`. */
 export interface UtilityComponentTemplateHostileAura {
   name: string;
   limit?: Trigger<"ship">;
@@ -363,6 +388,7 @@ export interface UtilityComponentTemplateHostileAura {
   damagePerDay?: UtilityComponentTemplateHostileAuraDamagePerDay;
 }
 
+/** How the writer lowers each member of {@link UtilityComponentTemplateHostileAura} to PDXScript. */
 export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_FIELDS: readonly ContentField[] = [
   { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
   { key: "limit", member: "limit", shape: "trigger", form: "trigger" },
@@ -455,6 +481,7 @@ export interface UtilityComponentTemplateFields {
   hostileAura?: UtilityComponentTemplateHostileAura[];
 }
 
+/** An utility_component_template with the id it is defined under. */
 export interface UtilityComponentTemplateDef<
   Id extends string = string,
 > extends UtilityComponentTemplateFields {
@@ -472,11 +499,13 @@ export type UtilityComponentTemplateLoc = {
   readonly name: LocalizationRef;
 };
 
+/** An utility_component_template registered with a mod, usable as a typed cross-reference. */
 export type DefinedUtilityComponentTemplate<Id extends string = string> = DefinedContent<
   "utility_component_template",
   UtilityComponentTemplateDef<Id>
 >;
 
+/** How the writer lowers each member of {@link UtilityComponentTemplateFields} to PDXScript. */
 export const UTILITY_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   {
     key: "icon",
@@ -720,6 +749,7 @@ export const UTILITY_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots an utility_component_template defines, with the key pattern each one mints. */
 export const UTILITY_COMPONENT_TEMPLATE_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
 ];

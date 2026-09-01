@@ -643,6 +643,7 @@ function emitScalarOrFields(
       `export type ${name}${typeParameter} = {\n${members}};\n\n` +
       docComment(docs) +
       `export function ${scalarSignature}\n` +
+      docComment(["The same rule written as a block, with its arguments named."]) +
       `export function ${argsSignature}\n` +
       `export function ${fn}${preservesEnclosingScope ? `<S extends ${scope}>` : ""}(value: ${scalarType} | ${argsType}): ${condition}<${scope}> {\n` +
       `  if (${emitter.use("isStructuredValue")}(value, ` +

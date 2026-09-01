@@ -33,6 +33,7 @@ export interface MenacePerkFields {
   onUnlock?: EffectBlock<"country", { readonly root: "country" }>;
 }
 
+/** A menace_perk with the id it is defined under. */
 export interface MenacePerkDef<Id extends string = string> extends MenacePerkFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -50,11 +51,13 @@ export type MenacePerkLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A menace_perk registered with a mod, usable as a typed cross-reference. */
 export type DefinedMenacePerk<Id extends string = string> = DefinedContent<
   "menace_perk",
   MenacePerkDef<Id>
 >;
 
+/** How the writer lowers each member of {@link MenacePerkFields} to PDXScript. */
 export const MENACE_PERK_FIELDS: readonly ContentField[] = [
   {
     key: "portrait",
@@ -74,6 +77,7 @@ export const MENACE_PERK_FIELDS: readonly ContentField[] = [
   { key: "on_unlock", member: "onUnlock", shape: "effect", form: "closure" },
 ];
 
+/** The localization slots a menace_perk defines, with the key pattern each one mints. */
 export const MENACE_PERK_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
   { member: "desc", pattern: "$_desc", required: false },

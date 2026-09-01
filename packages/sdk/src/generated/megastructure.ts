@@ -38,21 +38,25 @@ import type {
 } from "./refs.ts";
 import type { ScopeName } from "./scopes.ts";
 
+/** The `entity_offset` block inside `megastructure`. */
 export interface MegastructureEntityOffset {
   x: number;
   y: number;
 }
 
+/** How the writer lowers each member of {@link MegastructureEntityOffset} to PDXScript. */
 export const MEGASTRUCTURE_ENTITY_OFFSET_FIELDS: readonly ContentField[] = [
   { key: "x", member: "x", shape: "value", form: "scalar", conversion: "identity" },
   { key: "y", member: "y", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `placement_rules` block inside `megastructure`. */
 export interface MegastructurePlacementRules {
   planetPossible?: Trigger<"planet">;
   when?: Trigger<never>;
 }
 
+/** How the writer lowers each member of {@link MegastructurePlacementRules} to PDXScript. */
 export const MEGASTRUCTURE_PLACEMENT_RULES_FIELDS: readonly ContentField[] = [
   { key: "planet_possible", member: "planetPossible", shape: "trigger", form: "trigger" },
   { member: "when", shape: "inlineTrigger" },
@@ -251,6 +255,7 @@ export interface MegastructureFields {
   scriptedAction?: (ScriptedActionRef | string)[];
 }
 
+/** A megastructure with the id it is defined under. */
 export interface MegastructureDef<Id extends string = string> extends MegastructureFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -272,6 +277,7 @@ export type MegastructureLoc = {
   readonly delayedInfo: LocalizationRef;
 };
 
+/** A megastructure registered with a mod, usable as a typed cross-reference. */
 export type DefinedMegastructure<Id extends string = string> = DefinedContent<
   "megastructure",
   MegastructureDef<Id>
@@ -501,6 +507,7 @@ export type PatchedMegastructure = PatchedContent<ParsedMegastructure>;
 /** A patched vanilla megastructure placed into a capability feature. */
 export type MegastructurePatchItem = ContentPatchItem<ParsedMegastructure>;
 
+/** How the writer lowers each member of {@link MegastructureFields} to PDXScript. */
 export const MEGASTRUCTURE_FIELDS: readonly ContentField[] = [
   { key: "entity", member: "entity", shape: "value", form: "scalar", conversion: "ref" },
   {
@@ -920,6 +927,7 @@ export const MEGASTRUCTURE_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a megastructure defines, with the key pattern each one mints. */
 export const MEGASTRUCTURE_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
   { member: "desc", pattern: "$_DESC", required: false },

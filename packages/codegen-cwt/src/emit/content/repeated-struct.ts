@@ -9,6 +9,7 @@ import type { RuleField } from "../../cwt/model.ts";
 import type { ContentType } from "../../cwt/rules.ts";
 import {
   authoredLiterals,
+  emittedMemberType,
   memberOptional,
   mergeByName,
   metadata,
@@ -18,7 +19,7 @@ import {
 } from "../../lower/fields.ts";
 import { wildcardBlockOf } from "../../lower/rule-shapes.ts";
 import type { FieldContext } from "../../lower/scope-context.ts";
-import { camelCase, constantCase } from "../../naming.ts";
+import { camelCase, constantCase, docComment } from "../../naming.ts";
 import { CONTENT_DECLINED_FIELDS, type RepeatedStructDefinition } from "../../overlay/index.ts";
 import { Emitter } from "../../render/emitter.ts";
 import type { DocTable, FieldOmissionRow, MemberDocRow } from "../../render/field-rows.ts";
@@ -199,7 +200,7 @@ function lowerRepeatedStructMembers(
     }
     const optional = memberOptional(group, undefined);
     const docs = [...new Set([...group.flatMap((field) => field.docs), ...(lowering.docs ?? [])])];
-    members.push(renderMember({ name: member, type: lowering.memberType, optional, docs }));
+    members.push(renderMember({ name: member, type: emittedMemberType(lowering), optional, docs }));
     memberDocs[member] = {
       optional,
       docs,
@@ -242,6 +243,7 @@ function lowerRepeatedStructMembers(
 function renderRepeatedStruct(
   emitter: Emitter,
   plan: RepeatedStructPlan,
+  ownerPath: string,
   members: RepeatedStructMembers
 ): {
   readonly code: string;
@@ -271,6 +273,10 @@ function renderRepeatedStruct(
     ],
     code:
       members.extraCode.join("") +
+      docComment([
+        `One nested definition under \`${ownerPath}\`, as the game's rules describe it.`,
+        "Its record key is the definition's own logical name.",
+      ]) +
       `export interface ${plan.typeName}Fields {\n` +
       localisation.members +
       members.members.join("") +
@@ -278,8 +284,13 @@ function renderRepeatedStruct(
       constArray(
         fieldsConstant,
         emitter.use("ContentField"),
-        members.metadata.map((entry) => `  ${entry},\n`).join("")
+        members.metadata.map((entry) => `  ${entry},\n`).join(""),
+        [`How the writer lowers each member of {@link ${plan.typeName}Fields} to PDXScript.`]
       ) +
+      docComment([
+        `The localization slots one \`${ownerPath}\` entry defines, ` +
+          "with the key pattern each one mints.",
+      ]) +
       `export const ${localisationConstant}: readonly ${emitter.use("ContentLocalisation")}[] = ` +
       `${localisation.metadata};\n\n`,
   };
@@ -312,7 +323,7 @@ export function repeatedStructEmission(
       reason: `missing type[${plan.localisation.typeName}] localization`,
     });
   }
-  const rendered = renderRepeatedStruct(emitter, plan, members);
+  const rendered = renderRepeatedStruct(emitter, plan, ownerPath, members);
   const metadataValue = metadata(
     ownerField,
     ownerField.key.kind === "name" ? ownerField.key.name : "",

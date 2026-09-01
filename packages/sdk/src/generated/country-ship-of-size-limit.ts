@@ -24,6 +24,7 @@ export interface CountryShipOfSizeLimitFields {
   show: Trigger<"country">;
 }
 
+/** A country_ship_of_size_limit with the id it is defined under. */
 export interface CountryShipOfSizeLimitDef<
   Id extends string = string,
 > extends CountryShipOfSizeLimitFields {
@@ -31,11 +32,13 @@ export interface CountryShipOfSizeLimitDef<
   id: Id;
 }
 
+/** A country_ship_of_size_limit registered with a mod, usable as a typed cross-reference. */
 export type DefinedCountryShipOfSizeLimit<Id extends string = string> = DefinedContent<
   "country_ship_of_size_limit",
   CountryShipOfSizeLimitDef<Id>
 >;
 
+/** How the writer lowers each member of {@link CountryShipOfSizeLimitFields} to PDXScript. */
 export const COUNTRY_SHIP_OF_SIZE_LIMIT_FIELDS: readonly ContentField[] = [
   {
     key: "ship_types",
@@ -57,4 +60,5 @@ export const COUNTRY_SHIP_OF_SIZE_LIMIT_FIELDS: readonly ContentField[] = [
   { key: "show", member: "show", shape: "trigger", form: "trigger" },
 ];
 
+/** The localization slots a country_ship_of_size_limit defines, with the key pattern each one mints. */
 export const COUNTRY_SHIP_OF_SIZE_LIMIT_LOCALISATION: readonly ContentLocalisation[] = [];

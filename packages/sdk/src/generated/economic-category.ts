@@ -13,6 +13,7 @@ import type {
 } from "./enums.ts";
 import type { EconomicCategoryRef, ResourceRef } from "./refs.ts";
 
+/** The `triggered_cost_modifier` block inside `economic_category`. */
 export interface EconomicCategoryTriggeredCostModifier {
   key: EconomicCategoryRef | string;
   useParentIcon?: true;
@@ -20,6 +21,7 @@ export interface EconomicCategoryTriggeredCostModifier {
   trigger?: Trigger<never>;
 }
 
+/** How the writer lowers each member of {@link EconomicCategoryTriggeredCostModifier} to PDXScript. */
 export const ECONOMIC_CATEGORY_TRIGGERED_COST_MODIFIER_FIELDS: readonly ContentField[] = [
   { key: "key", member: "key", shape: "value", form: "scalar", conversion: "ref" },
   {
@@ -39,6 +41,7 @@ export const ECONOMIC_CATEGORY_TRIGGERED_COST_MODIFIER_FIELDS: readonly ContentF
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
 ];
 
+/** The `triggered_produces_modifier` block inside `economic_category`. */
 export interface EconomicCategoryTriggeredProducesModifier {
   key: EconomicCategoryRef | string;
   useParentIcon?: true;
@@ -46,6 +49,7 @@ export interface EconomicCategoryTriggeredProducesModifier {
   trigger?: Trigger<never>;
 }
 
+/** How the writer lowers each member of {@link EconomicCategoryTriggeredProducesModifier} to PDXScript. */
 export const ECONOMIC_CATEGORY_TRIGGERED_PRODUCES_MODIFIER_FIELDS: readonly ContentField[] = [
   { key: "key", member: "key", shape: "value", form: "scalar", conversion: "ref" },
   {
@@ -65,6 +69,7 @@ export const ECONOMIC_CATEGORY_TRIGGERED_PRODUCES_MODIFIER_FIELDS: readonly Cont
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
 ];
 
+/** The `triggered_upkeep_modifier` block inside `economic_category`. */
 export interface EconomicCategoryTriggeredUpkeepModifier {
   key: EconomicCategoryRef | string;
   useParentIcon?: true;
@@ -72,6 +77,7 @@ export interface EconomicCategoryTriggeredUpkeepModifier {
   trigger?: Trigger<never>;
 }
 
+/** How the writer lowers each member of {@link EconomicCategoryTriggeredUpkeepModifier} to PDXScript. */
 export const ECONOMIC_CATEGORY_TRIGGERED_UPKEEP_MODIFIER_FIELDS: readonly ContentField[] = [
   { key: "key", member: "key", shape: "value", form: "scalar", conversion: "ref" },
   {
@@ -91,6 +97,7 @@ export const ECONOMIC_CATEGORY_TRIGGERED_UPKEEP_MODIFIER_FIELDS: readonly Conten
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
 ];
 
+/** The `triggered_logistics_modifier` block inside `economic_category`. */
 export interface EconomicCategoryTriggeredLogisticsModifier {
   key: EconomicCategoryRef | string;
   useParentIcon?: true;
@@ -98,6 +105,7 @@ export interface EconomicCategoryTriggeredLogisticsModifier {
   trigger?: Trigger<never>;
 }
 
+/** How the writer lowers each member of {@link EconomicCategoryTriggeredLogisticsModifier} to PDXScript. */
 export const ECONOMIC_CATEGORY_TRIGGERED_LOGISTICS_MODIFIER_FIELDS: readonly ContentField[] = [
   { key: "key", member: "key", shape: "value", form: "scalar", conversion: "ref" },
   {
@@ -147,16 +155,19 @@ export interface EconomicCategoryFields {
   triggeredLogisticsModifier?: EconomicCategoryTriggeredLogisticsModifier[];
 }
 
+/** An economic_category with the id it is defined under. */
 export interface EconomicCategoryDef<Id extends string = string> extends EconomicCategoryFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
 
+/** An economic_category registered with a mod, usable as a typed cross-reference. */
 export type DefinedEconomicCategory<Id extends string = string> = DefinedContent<
   "economic_category",
   EconomicCategoryDef<Id>
 >;
 
+/** How the writer lowers each member of {@link EconomicCategoryFields} to PDXScript. */
 export const ECONOMIC_CATEGORY_FIELDS: readonly ContentField[] = [
   {
     key: "parent",
@@ -253,4 +264,5 @@ export const ECONOMIC_CATEGORY_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots an economic_category defines, with the key pattern each one mints. */
 export const ECONOMIC_CATEGORY_LOCALISATION: readonly ContentLocalisation[] = [];

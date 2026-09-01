@@ -8,11 +8,13 @@ import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock, WithFrom } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 
+/** The `kill_pop_amount` block inside `bombardment_stance`. */
 export interface BombardmentStanceKillPopAmount {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link BombardmentStanceKillPopAmount} to PDXScript. */
 export const BOMBARDMENT_STANCE_KILL_POP_AMOUNT_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
@@ -60,6 +62,7 @@ export interface BombardmentStanceFields {
   >;
 }
 
+/** A bombardment_stance with the id it is defined under. */
 export interface BombardmentStanceDef<Id extends string = string> extends BombardmentStanceFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -77,11 +80,13 @@ export type BombardmentStanceLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A bombardment_stance registered with a mod, usable as a typed cross-reference. */
 export type DefinedBombardmentStance<Id extends string = string> = DefinedContent<
   "bombardment_stance",
   BombardmentStanceDef<Id>
 >;
 
+/** How the writer lowers each member of {@link BombardmentStanceFields} to PDXScript. */
 export const BOMBARDMENT_STANCE_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   { key: "default", member: "default", shape: "value", form: "scalar", conversion: "identity" },
@@ -153,6 +158,7 @@ export const BOMBARDMENT_STANCE_FIELDS: readonly ContentField[] = [
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
 ];
 
+/** The localization slots a bombardment_stance defines, with the key pattern each one mints. */
 export const BOMBARDMENT_STANCE_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "bombardment_$", required: true },
   { member: "desc", pattern: "bombardment_$_desc", required: false },

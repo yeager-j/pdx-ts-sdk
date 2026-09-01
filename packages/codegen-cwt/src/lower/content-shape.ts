@@ -1,3 +1,5 @@
+import { docComment } from "../naming.ts";
+
 /**
  * Runtime content shapes shared by CWT lowering and the SDK writer.
  * The generator projects this closed vocabulary into the SDK protocol.
@@ -54,9 +56,15 @@ export type ContentConversion = (typeof CONTENT_CONVERSIONS)[number];
 /** Emits the shared content-shape and conversion protocol for the SDK package. */
 export function emitContentShapeProtocol(): string {
   return (
+    docComment(["Every shape a generated field descriptor asks the SDK writer to write."]) +
     `export const CONTENT_SHAPES = ${JSON.stringify(CONTENT_SHAPES)} as const;\n\n` +
+    docComment(["The shape one generated field descriptor asks the SDK writer to write."]) +
     "export type ContentShape = (typeof CONTENT_SHAPES)[number];\n\n" +
+    docComment(["Every scalar conversion a generated field descriptor may ask for."]) +
     `export const CONTENT_CONVERSIONS = ${JSON.stringify(CONTENT_CONVERSIONS)} as const;\n\n` +
+    docComment([
+      "The scalar conversion one generated field descriptor asks the SDK writer to apply.",
+    ]) +
     "export type ContentConversion = (typeof CONTENT_CONVERSIONS)[number];\n"
   );
 }

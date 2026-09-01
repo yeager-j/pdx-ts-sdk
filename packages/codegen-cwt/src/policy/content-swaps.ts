@@ -130,6 +130,10 @@ export function emitContentSwapProtocol(rows: readonly ContentSwapIdentity[]): s
     "  readonly path: readonly string[];\n" +
     '  readonly keying: "record-keys" | "array-names";\n' +
     "}\n\n" +
+    docComment([
+      "Every nested swap identity the SDK knows, by registry: where the swap sits",
+      "in a definition, and whether its entries are keyed by record key or by name.",
+    ]) +
     "export const SWAP_IDENTITIES = [\n" +
     rows
       .map(

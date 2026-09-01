@@ -19084,6 +19084,7 @@ export interface ScopeMap {
   war: WarScope;
 }
 
+/** The effects recordable in one named scope. */
 export type ScopeObjOf<S extends ScopeName> = ScopeMap[S];
 
 /** Scope name -> a composable effect-block path at that scope. */
@@ -19132,6 +19133,7 @@ export interface EffectPathMap<Transition extends EffectPathTransition> {
   war: WarEffectPath<Transition>;
 }
 
+/** A composable effect-block path at one named scope. */
 export type EffectPathOf<
   S extends ScopeName,
   Transition extends EffectPathTransition = "push",

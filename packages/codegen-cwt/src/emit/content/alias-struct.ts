@@ -453,8 +453,12 @@ function clauseFieldsCode(
       )
       .join("");
   return (
-    constArray(groupFieldsConstant, emitter.use("ContentField"), groupRows) +
-    constArray(clauseFieldsConstant, emitter.use("ContentField"), clauseRows)
+    constArray(groupFieldsConstant, emitter.use("ContentField"), groupRows, [
+      "How the writer lowers each member of one requirement group to PDXScript.",
+    ]) +
+    constArray(clauseFieldsConstant, emitter.use("ContentField"), clauseRows, [
+      "How the writer lowers each member of one requirement clause to PDXScript.",
+    ])
   );
 }
 
@@ -619,7 +623,9 @@ export function emitAliasStruct(
     `export interface ${typeName} {\n` +
     blockMembers.join("") +
     "}\n\n" +
-    constArray(fieldsConstant, emitter.use("ContentField"), metadata.join("")) +
+    constArray(fieldsConstant, emitter.use("ContentField"), metadata.join(""), [
+      `How the writer lowers each member of {@link ${typeName}} to PDXScript.`,
+    ]) +
     `${emitter.use("registerAliasStructFields")}(${JSON.stringify(category)}, ` +
     `${fieldsConstant});\n`;
 

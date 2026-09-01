@@ -14,6 +14,7 @@ import type { Trigger } from "../script/trigger-core.ts";
 import type { CedeClaim, PeaceOffer, WarGoalHide } from "./enums.ts";
 import type { CasusBelliRef, WarGoalRef } from "./refs.ts";
 
+/** The `forbidden_peace_offers` block inside `war_goal`. */
 export interface WarGoalForbiddenPeaceOffers {
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   demandSurrender?: LocalizationInput;
@@ -23,6 +24,7 @@ export interface WarGoalForbiddenPeaceOffers {
   surrender?: LocalizationInput;
 }
 
+/** How the writer lowers each member of {@link WarGoalForbiddenPeaceOffers} to PDXScript. */
 export const WAR_GOAL_FORBIDDEN_PEACE_OFFERS_FIELDS: readonly ContentField[] = [
   {
     key: "demand_surrender",
@@ -126,6 +128,7 @@ export interface WarGoalFields {
   shouldIgnoreFederations?: boolean;
 }
 
+/** A war_goal with the id it is defined under. */
 export interface WarGoalDef<Id extends string = string> extends WarGoalFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -143,8 +146,10 @@ export type WarGoalLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A war_goal registered with a mod, usable as a typed cross-reference. */
 export type DefinedWarGoal<Id extends string = string> = DefinedContent<"war_goal", WarGoalDef<Id>>;
 
+/** How the writer lowers each member of {@link WarGoalFields} to PDXScript. */
 export const WAR_GOAL_FIELDS: readonly ContentField[] = [
   {
     key: "casus_belli",
@@ -283,6 +288,7 @@ export const WAR_GOAL_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a war_goal defines, with the key pattern each one mints. */
 export const WAR_GOAL_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "war_goal_$", required: true },
   { member: "desc", pattern: "war_goal_$_desc", required: false },

@@ -589,8 +589,13 @@ function emitInterfaceMembers(policy: readonly EventFieldPolicyEntry[]): string 
     .join("");
 }
 
-function emitSupportLedger(name: string, policy: readonly EventFieldPolicyEntry[]): string {
+function emitSupportLedger(
+  name: string,
+  docs: readonly string[],
+  policy: readonly EventFieldPolicyEntry[]
+): string {
   return (
+    docComment(docs) +
     `export const ${name} = [\n` +
     policy
       .map(
@@ -621,8 +626,16 @@ export function emitEventFieldProtocol(policy: ReturnType<typeof createEventFiel
     "export interface GeneratedEventOptionFields<S extends ScopeName, Context extends AmbientScopeContext> {\n" +
     emitInterfaceMembers(policy.option) +
     "}\n\n" +
-    emitSupportLedger("EVENT_FIELD_SUPPORT", policy.event) +
+    emitSupportLedger(
+      "EVENT_FIELD_SUPPORT",
+      ["Every field the rules declare on an event, with the SDK's reviewed disposition."],
+      policy.event
+    ) +
     "\n" +
-    emitSupportLedger("EVENT_OPTION_FIELD_SUPPORT", policy.option)
+    emitSupportLedger(
+      "EVENT_OPTION_FIELD_SUPPORT",
+      ["Every field the rules declare on an event option, with the SDK's reviewed disposition."],
+      policy.option
+    )
   );
 }

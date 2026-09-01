@@ -183,8 +183,11 @@ function eventKindTableCode(kinds: readonly EmittedKind[]): string {
     .join("");
 
   return (
+    docComment(["One event kind the game declares, as machine-readable data."]) +
     "export interface EventKind {\n" +
+    docComment(["The PDXScript key an event of this kind is fired by."], "  ") +
     "  readonly key: string;\n" +
+    docComment(["The `type[event]` subtype the kind comes from."], "  ") +
     "  readonly subtype: string;\n" +
     "  /** The event's main scope; null for scopeless events. */\n" +
     "  readonly scope: ScopeName | null;\n" +
@@ -196,6 +199,7 @@ function eventKindTableCode(kinds: readonly EmittedKind[]): string {
     "export const EVENT_KINDS = {\n" +
     entries +
     "} as const satisfies Record<string, EventKind>;\n\n" +
+    docComment(["The PDXScript key of one event kind the game declares."]) +
     "export type EventKindKey = keyof typeof EVENT_KINDS;\n"
   );
 }
@@ -300,9 +304,18 @@ function eventDefinersCode(scoped: readonly (EmittedKind & { scope: string })[])
     scoped.map(definerBinding).join("") +
     "  };\n" +
     "}\n\n" +
+    docComment([
+      "An event namespace minted from a mod prefix and a feature name.",
+      "An empty name yields the prefix alone.",
+    ]) +
     'export type MintedNamespace<P extends string, N extends string> = N extends "" ? P : `${P}_${N}`;\n\n' +
+    docComment(["A full event id: a minted namespace and the numeric id under it."]) +
     "export type MintedEventId<P extends string, N extends string, Id extends number> =\n" +
     "  `${MintedNamespace<P, N>}.${Id}`;\n\n" +
+    docComment([
+      "A defined event whose id is fixed to the capability's own namespace.",
+      "Place it in a feature to emit it.",
+    ]) +
     "export type CapabilityEventItem<\n" +
     "  P extends string,\n" +
     "  N extends string,\n" +
@@ -311,6 +324,10 @@ function eventDefinersCode(scoped: readonly (EmittedKind & { scope: string })[])
     "  Context extends AmbientScopeContext,\n" +
     "  Kind extends string = S,\n" +
     "> = EventItem<S, Context, Kind> & { readonly id: MintedEventId<P, N, Id> };\n\n" +
+    docComment([
+      "A reserved event id, usable as a reference before the event is defined.",
+      "Call `define` to supply the body; the handle keeps the id and scopes.",
+    ]) +
     "export type CapabilityEventHandle<\n" +
     "  P extends string,\n" +
     "  N extends string,\n" +
@@ -324,8 +341,14 @@ function eventDefinersCode(scoped: readonly (EmittedKind & { scope: string })[])
     "  readonly scopes: Context;\n" +
     '  define(def: Omit<EventDef<S, Context>, "id" | "scopes">): CapabilityEventItem<P, N, Id, S, Context, Kind>;\n' +
     "};\n\n" +
+    docComment([
+      "Mints event handles inside one namespace. The capability implements it;",
+      "the generated event surface calls it.",
+    ]) +
     "export interface CapabilityEventMinter<P extends string, N extends string> {\n" +
+    docComment(["The namespace every id this minter produces sits under."], "  ") +
     "  readonly namespace: MintedNamespace<P, N>;\n" +
+    docComment(["Reserves one numeric id for an event of the named kind."], "  ") +
     "  handle<\n" +
     "    const Id extends number,\n" +
     "    S extends ScopeName,\n" +
@@ -339,10 +362,16 @@ function eventDefinersCode(scoped: readonly (EmittedKind & { scope: string })[])
     "    scopes: Context\n" +
     "  ): CapabilityEventHandle<P, N, Id, S, Context, Kind>;\n" +
     "}\n\n" +
+    docComment([
+      "One event definer and one handle reserver per event kind, bound to a",
+      "single namespace. Reached through a capability rather than constructed.",
+    ]) +
     "export interface CapabilityEvents<P extends string, N extends string> {\n" +
+    docComment(["The namespace every event defined here sits under."], "  ") +
     "  readonly namespace: MintedNamespace<P, N>;\n" +
     scoped.map(capabilitySignature).join("\n") +
     "}\n\n" +
+    docComment(["Binds the per-kind event surface to one namespace's minter."]) +
     "export function capabilityEvents<P extends string, N extends string>(\n" +
     "  minter: CapabilityEventMinter<P, N>\n" +
     "): CapabilityEvents<P, N> {\n" +

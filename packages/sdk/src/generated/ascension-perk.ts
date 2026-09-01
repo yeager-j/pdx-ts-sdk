@@ -17,6 +17,10 @@ import type {
 } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 
+/**
+ * One nested definition under `ascension_perk.tradition_swap`, as the game's rules describe it.
+ * Its record key is the definition's own logical name.
+ */
 export interface AscensionPerkSwapFields {
   /**
    * Display text emitted to localization under `<id>`.
@@ -48,6 +52,7 @@ export interface AscensionPerkSwapFields {
   trigger?: Trigger<"country">;
 }
 
+/** How the writer lowers each member of {@link AscensionPerkSwapFields} to PDXScript. */
 export const ASCENSION_PERK_SWAP_FIELDS: readonly ContentField[] = [
   {
     key: "inherit_icon",
@@ -94,6 +99,7 @@ export const ASCENSION_PERK_SWAP_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
 ];
 
+/** The localization slots one `ascension_perk.tradition_swap` entry defines, with the key pattern each one mints. */
 export const ASCENSION_PERK_SWAP_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false, requiredUnless: "inheritName" },
   { member: "flavor", pattern: "$_delayed", required: false },
@@ -126,6 +132,7 @@ export interface AscensionPerkFields {
   traditionSwap?: Readonly<Record<string, AscensionPerkSwapFields>>;
 }
 
+/** An ascension_perk with the id it is defined under. */
 export interface AscensionPerkDef<Id extends string = string> extends AscensionPerkFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -143,11 +150,13 @@ export type AscensionPerkLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** An ascension_perk registered with a mod, usable as a typed cross-reference. */
 export type DefinedAscensionPerk<Id extends string = string> = DefinedContent<
   "ascension_perk",
   AscensionPerkDef<Id>
 >;
 
+/** How the writer lowers each member of {@link AscensionPerkFields} to PDXScript. */
 export const ASCENSION_PERK_FIELDS: readonly ContentField[] = [
   { key: "potential", member: "potential", shape: "trigger", form: "trigger" },
   { key: "possible", member: "possible", shape: "trigger", form: "trigger" },
@@ -182,6 +191,7 @@ export const ASCENSION_PERK_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots an ascension_perk defines, with the key pattern each one mints. */
 export const ASCENSION_PERK_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
   { member: "desc", pattern: "$_desc", required: false },

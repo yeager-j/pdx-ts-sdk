@@ -57,6 +57,7 @@ export interface EdictFields {
   onDisabled?: EffectBlock<"country", { readonly root: "country" }>;
 }
 
+/** An edict with the id it is defined under. */
 export interface EdictDef<Id extends string = string> extends EdictFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -74,8 +75,10 @@ export type EdictLoc = {
   readonly description: LocalizationRef;
 };
 
+/** An edict registered with a mod, usable as a typed cross-reference. */
 export type DefinedEdict<Id extends string = string> = DefinedContent<"edict", EdictDef<Id>>;
 
+/** How the writer lowers each member of {@link EdictFields} to PDXScript. */
 export const EDICT_FIELDS: readonly ContentField[] = [
   { key: "length", member: "length", shape: "value", form: "scalar", conversion: "identity" },
   {
@@ -151,6 +154,7 @@ export const EDICT_FIELDS: readonly ContentField[] = [
   { key: "on_disabled", member: "onDisabled", shape: "effect", form: "closure" },
 ];
 
+/** The localization slots an edict defines, with the key pattern each one mints. */
 export const EDICT_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "edict_$", required: true },
   { member: "description", pattern: "edict_$_desc", required: false },

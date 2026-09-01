@@ -31,6 +31,7 @@ export interface AmbientObjectFields {
   tooltip?: LocalizationInput;
 }
 
+/** An ambient_object with the id it is defined under. */
 export interface AmbientObjectDef<Id extends string = string> extends AmbientObjectFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -46,11 +47,13 @@ export type AmbientObjectLoc = {
   readonly name: LocalizationRef;
 };
 
+/** An ambient_object registered with a mod, usable as a typed cross-reference. */
 export type DefinedAmbientObject<Id extends string = string> = DefinedContent<
   "ambient_object",
   AmbientObjectDef<Id>
 >;
 
+/** How the writer lowers each member of {@link AmbientObjectFields} to PDXScript. */
 export const AMBIENT_OBJECT_FIELDS: readonly ContentField[] = [
   {
     key: "entity",
@@ -86,6 +89,7 @@ export const AMBIENT_OBJECT_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots an ambient_object defines, with the key pattern each one mints. */
 export const AMBIENT_OBJECT_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
 ];

@@ -15,16 +15,19 @@ import type {
 } from "./refs.ts";
 import type { ScopeName } from "./scopes.ts";
 
+/** The `component_slot.position` block inside `section_template`. */
 export interface SectionTemplateComponentSlotPosition {
   x: number;
   y: number;
 }
 
+/** How the writer lowers each member of {@link SectionTemplateComponentSlotPosition} to PDXScript. */
 export const SECTION_TEMPLATE_COMPONENT_SLOT_POSITION_FIELDS: readonly ContentField[] = [
   { key: "x", member: "x", shape: "value", form: "scalar", conversion: "identity" },
   { key: "y", member: "y", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `component_slot` block inside `section_template`. */
 export interface SectionTemplateComponentSlot {
   name: string;
   template: ComponentSlotTemplateRef | string;
@@ -35,6 +38,7 @@ export interface SectionTemplateComponentSlot {
   sectionInstance?: number;
 }
 
+/** How the writer lowers each member of {@link SectionTemplateComponentSlot} to PDXScript. */
 export const SECTION_TEMPLATE_COMPONENT_SLOT_FIELDS: readonly ContentField[] = [
   { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
   {
@@ -107,6 +111,7 @@ export interface SectionTemplateFields {
   shipModifier?: ModifierClosure<"ship">;
 }
 
+/** A section_template with the id it is defined under. */
 export interface SectionTemplateDef<Id extends string = string> extends SectionTemplateFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -122,11 +127,13 @@ export type SectionTemplateLoc = {
   readonly name: LocalizationRef;
 };
 
+/** A section_template registered with a mod, usable as a typed cross-reference. */
 export type DefinedSectionTemplate<Id extends string = string> = DefinedContent<
   "section_template",
   SectionTemplateDef<Id>
 >;
 
+/** How the writer lowers each member of {@link SectionTemplateFields} to PDXScript. */
 export const SECTION_TEMPLATE_FIELDS: readonly ContentField[] = [
   {
     key: "ship_size",
@@ -232,6 +239,7 @@ export const SECTION_TEMPLATE_FIELDS: readonly ContentField[] = [
   { key: "ship_modifier", member: "shipModifier", shape: "modifierBlock", form: "closure" },
 ];
 
+/** The localization slots a section_template defines, with the key pattern each one mints. */
 export const SECTION_TEMPLATE_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
 ];

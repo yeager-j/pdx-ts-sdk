@@ -19,21 +19,25 @@ import type { CustomStarNames, StarFlag } from "./value-sets.ts";
 
 import "./planet-initializer.ts";
 
+/** The `asteroid_belt.radius` block inside `solar_system_initializer`. */
 export interface SolarSystemInitializerAsteroidBeltRadius {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link SolarSystemInitializerAsteroidBeltRadius} to PDXScript. */
 export const SOLAR_SYSTEM_INITIALIZER_ASTEROID_BELT_RADIUS_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `asteroid_belt` block inside `solar_system_initializer`. */
 export interface SolarSystemInitializerAsteroidBelt {
   type: AsteroidBeltTypeRef | string;
   radius: number | SolarSystemInitializerAsteroidBeltRadius;
 }
 
+/** How the writer lowers each member of {@link SolarSystemInitializerAsteroidBelt} to PDXScript. */
 export const SOLAR_SYSTEM_INITIALIZER_ASTEROID_BELT_FIELDS: readonly ContentField[] = [
   {
     key: "type",
@@ -60,20 +64,24 @@ export const SOLAR_SYSTEM_INITIALIZER_ASTEROID_BELT_FIELDS: readonly ContentFiel
   },
 ];
 
+/** The `orbit_distance` block inside `solar_system_initializer`. */
 export interface SolarSystemInitializerOrbitDistance {
   min: ScriptValue;
   max: ScriptValue;
 }
 
+/** How the writer lowers each member of {@link SolarSystemInitializerOrbitDistance} to PDXScript. */
 export const SOLAR_SYSTEM_INITIALIZER_ORBIT_DISTANCE_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `orbital_line` block inside `solar_system_initializer`. */
 export interface SolarSystemInitializerOrbitalLine {
   orbitDistanceFromParent: number;
 }
 
+/** How the writer lowers each member of {@link SolarSystemInitializerOrbitalLine} to PDXScript. */
 export const SOLAR_SYSTEM_INITIALIZER_ORBITAL_LINE_FIELDS: readonly ContentField[] = [
   {
     key: "orbit_distance_from_parent",
@@ -84,38 +92,45 @@ export const SOLAR_SYSTEM_INITIALIZER_ORBITAL_LINE_FIELDS: readonly ContentField
   },
 ];
 
+/** The `neighbor_system.distance` block inside `solar_system_initializer`. */
 export interface SolarSystemInitializerNeighborSystemDistance {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link SolarSystemInitializerNeighborSystemDistance} to PDXScript. */
 export const SOLAR_SYSTEM_INITIALIZER_NEIGHBOR_SYSTEM_DISTANCE_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `neighbor_system.hyperlane_distance` block inside `solar_system_initializer`. */
 export interface SolarSystemInitializerNeighborSystemHyperlaneDistance {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link SolarSystemInitializerNeighborSystemHyperlaneDistance} to PDXScript. */
 export const SOLAR_SYSTEM_INITIALIZER_NEIGHBOR_SYSTEM_HYPERLANE_DISTANCE_FIELDS: readonly ContentField[] =
   [
     { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
     { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
   ];
 
+/** The `neighbor_system.hyperlane_jumps` block inside `solar_system_initializer`. */
 export interface SolarSystemInitializerNeighborSystemHyperlaneJumps {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link SolarSystemInitializerNeighborSystemHyperlaneJumps} to PDXScript. */
 export const SOLAR_SYSTEM_INITIALIZER_NEIGHBOR_SYSTEM_HYPERLANE_JUMPS_FIELDS: readonly ContentField[] =
   [
     { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
     { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
   ];
 
+/** The `neighbor_system` block inside `solar_system_initializer`. */
 export interface SolarSystemInitializerNeighborSystem {
   initializer: SolarSystemInitializerRef | string;
   distance?: number | SolarSystemInitializerNeighborSystemDistance;
@@ -127,6 +142,7 @@ export interface SolarSystemInitializerNeighborSystem {
   trigger?: Trigger<never>;
 }
 
+/** How the writer lowers each member of {@link SolarSystemInitializerNeighborSystem} to PDXScript. */
 export const SOLAR_SYSTEM_INITIALIZER_NEIGHBOR_SYSTEM_FIELDS: readonly ContentField[] = [
   {
     key: "initializer",
@@ -261,6 +277,7 @@ export interface SolarSystemInitializerFields {
   neighborSystem?: SolarSystemInitializerNeighborSystem[];
 }
 
+/** A solar_system_initializer with the id it is defined under. */
 export interface SolarSystemInitializerDef<
   Id extends string = string,
 > extends SolarSystemInitializerFields {
@@ -268,11 +285,13 @@ export interface SolarSystemInitializerDef<
   id: Id;
 }
 
+/** A solar_system_initializer registered with a mod, usable as a typed cross-reference. */
 export type DefinedSolarSystemInitializer<Id extends string = string> = DefinedContent<
   "solar_system_initializer",
   SolarSystemInitializerDef<Id>
 >;
 
+/** How the writer lowers each member of {@link SolarSystemInitializerFields} to PDXScript. */
 export const SOLAR_SYSTEM_INITIALIZER_FIELDS: readonly ContentField[] = [
   {
     key: "name",
@@ -441,4 +460,5 @@ export const SOLAR_SYSTEM_INITIALIZER_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a solar_system_initializer defines, with the key pattern each one mints. */
 export const SOLAR_SYSTEM_INITIALIZER_LOCALISATION: readonly ContentLocalisation[] = [];

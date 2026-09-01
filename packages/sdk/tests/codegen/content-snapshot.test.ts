@@ -1012,7 +1012,16 @@ describe("content-type codegen", () => {
   it("lowers random_events' computed weight keys as a weighted event list", () => {
     const situation = emissions.get("situation_type");
     expect(situation?.code).toContain(
-      "randomEvents?: readonly { weight: number; event?: EventScopelessRef | string | EventSituationRef }[];"
+      "randomEvents?: readonly {\n" +
+        "/**\n" +
+        " * Relative selection weight, as a whole number. A weight becomes the arm's\n" +
+        " * key verbatim, and `random_events` keys its arms by an `int`. Duplicate\n" +
+        " * weights are preserved as separate rows, and `0` is a row the game ships itself.\n" +
+        " */\n" +
+        "weight: number;\n" +
+        "/** Event selected by this row. Omit it to emit the literal `0` no-op arm. */\n" +
+        "event?: EventScopelessRef | string | EventSituationRef;\n" +
+        "}[];"
     );
     expect(situation?.code).toContain(
       '{ key: "random_events", member: "randomEvents", shape: "weightedEvents", ' +

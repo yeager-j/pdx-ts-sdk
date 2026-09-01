@@ -68667,6 +68667,7 @@ export interface SystemModifierRecorder extends ModifierPath3455 {
   unchecked(name: string, value: number): void;
 }
 
+/** Scope name -> the modifier recorder a block at that scope receives. */
 export interface ModifierRecorderByScope {
   readonly army: ArmyModifierRecorder;
   readonly astral_rift: AstralRiftModifierRecorder;

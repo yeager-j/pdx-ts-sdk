@@ -20,19 +20,23 @@ export interface PdxparticleFields {
   scale?: number;
 }
 
+/** A pdxparticle with the id it is defined under. */
 export interface PdxparticleDef<Id extends string = string> extends PdxparticleFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
 
+/** A pdxparticle registered with a mod, usable as a typed cross-reference. */
 export type DefinedPdxparticle<Id extends string = string> = DefinedContent<
   "pdxparticle",
   PdxparticleDef<Id>
 >;
 
+/** How the writer lowers each member of {@link PdxparticleFields} to PDXScript. */
 export const PDXPARTICLE_FIELDS: readonly ContentField[] = [
   { key: "type", member: "type", shape: "value", form: "scalar", conversion: "identity" },
   { key: "scale", member: "scale", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The localization slots a pdxparticle defines, with the key pattern each one mints. */
 export const PDXPARTICLE_LOCALISATION: readonly ContentLocalisation[] = [];

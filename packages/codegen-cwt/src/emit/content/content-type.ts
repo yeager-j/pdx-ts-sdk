@@ -11,6 +11,7 @@ import type { RuleField } from "../../cwt/model.ts";
 import type { ContentBody, ContentType } from "../../cwt/rules.ts";
 import {
   authoredLiterals,
+  emittedMemberType,
   flatten,
   lowerTopLevelSplice,
   memberOptional,
@@ -615,9 +616,17 @@ function declareOrdinaryField(
       ...(lowered.docs ?? []),
     ]),
   ];
-  const memberType =
-    parameter?.selector?.member === member ? parameter.parameterName : lowered.memberType;
-  draft.members.push(renderMember({ name: member, type: memberType, optional, docs: docLines }));
+  // The selector member is the scope parameter itself rather than a lowered type.
+  const selectorType = parameter?.selector?.member === member ? parameter.parameterName : undefined;
+  const memberType = selectorType ?? lowered.memberType;
+  draft.members.push(
+    renderMember({
+      name: member,
+      type: selectorType ?? emittedMemberType(lowered),
+      optional,
+      docs: docLines,
+    })
+  );
   draft.memberDocs[member] = {
     optional,
     docs: docLines,
@@ -907,7 +916,11 @@ function scopeParameterDeclarations(
         `${parameter.scopes.map((scope) => JSON.stringify(scope)).join(" | ")};\n\n` +
         (parameter.selector === undefined
           ? ""
-          : `export type ${scopeOfName}<E extends ${parameter.parameterType}> =\n` +
+          : docComment([
+              `The scope ${indefiniteArticle(type.name)} ${type.name}'s own clauses run in, ` +
+                `selected by its \`${parameter.parameterType}\`.`,
+            ]) +
+            `export type ${scopeOfName}<E extends ${parameter.parameterType}> =\n` +
             Object.entries(parameter.selector.scopes)
               .map(
                 ([eventScope, scope]) =>
@@ -984,10 +997,15 @@ function contentTypeCode(
     "}\n\n" +
     (parameter?.selector === undefined
       ? ""
-      : `export type ${typeName}Fields<E extends ${parameter.parameterType} = ` +
+      : docComment([
+          `${capitalizedArticle(type.name)} ${type.name}, as the game's rules describe it.`,
+          `The \`${parameter.parameterType}\` argument selects the member types that scope allows.`,
+        ]) +
+        `export type ${typeName}Fields<E extends ${parameter.parameterType} = ` +
         `${parameter.parameterType}${surface.declaredFromParameter}> = ` +
         `E extends ${parameter.parameterType} ? ` +
         `${fieldsName}<E${declaredFrom === undefined ? "" : ", L"}> : never;\n\n`) +
+    docComment([`${capitalizedArticle(type.name)} ${type.name} with the id it is defined under.`]) +
     (parameter === null
       ? `export interface ${typeName}Def<Id extends string = string> extends ${typeName}Fields {\n`
       : `export interface ${typeName}Def<\n  Id extends string = string,\n` +
@@ -1004,6 +1022,10 @@ function contentTypeCode(
     // A registry with no declared slots emits no type: its items carry the
     // shared empty surface, so there is nothing per-registry to name.
     (locTypeName === null ? "" : localisationRefType(emitter, type, typeName, localisationPlan)) +
+    docComment([
+      `${capitalizedArticle(type.name)} ${type.name} registered with a mod, ` +
+        "usable as a typed cross-reference.",
+    ]) +
     `export type Defined${typeName}<Id extends string = string> = ` +
     `${emitter.use("DefinedContent")}<\n` +
     `  ${JSON.stringify(type.name)},\n` +
@@ -1013,8 +1035,13 @@ function contentTypeCode(
     constArray(
       fieldsConstant,
       emitter.use("ContentField"),
-      draft.fieldMetadata.map((entry) => `  ${entry},\n`).join("")
+      draft.fieldMetadata.map((entry) => `  ${entry},\n`).join(""),
+      [`How the writer lowers each member of {@link ${fieldsName}} to PDXScript.`]
     ) +
+    docComment([
+      `The localization slots ${indefiniteArticle(type.name)} ${type.name} defines, ` +
+        "with the key pattern each one mints.",
+    ]) +
     `export const ${localisationConstant}: readonly ${emitter.use("ContentLocalisation")}[] = ` +
     `${localisationMetadata(emitter, type, localisationPlan, draft.localisationPointers)};\n`;
   return { code, exportedNames };

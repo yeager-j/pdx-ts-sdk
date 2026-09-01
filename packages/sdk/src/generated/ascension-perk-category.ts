@@ -32,6 +32,7 @@ export interface AscensionPerkCategoryFields {
   ascensionPerks: (AscensionPerkRef | string)[];
 }
 
+/** An ascension_perk_category with the id it is defined under. */
 export interface AscensionPerkCategoryDef<
   Id extends string = string,
 > extends AscensionPerkCategoryFields {
@@ -51,6 +52,7 @@ export type AscensionPerkCategoryLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** An ascension_perk_category registered with a mod, usable as a typed cross-reference. */
 export type DefinedAscensionPerkCategory<Id extends string = string> = DefinedContent<
   "ascension_perk_category",
   AscensionPerkCategoryDef<Id>
@@ -87,6 +89,7 @@ export type PatchedAscensionPerkCategory = PatchedContent<ParsedAscensionPerkCat
 /** A patched vanilla ascension_perk_category placed into a capability feature. */
 export type AscensionPerkCategoryPatchItem = ContentPatchItem<ParsedAscensionPerkCategory>;
 
+/** How the writer lowers each member of {@link AscensionPerkCategoryFields} to PDXScript. */
 export const ASCENSION_PERK_CATEGORY_FIELDS: readonly ContentField[] = [
   {
     key: "ascension_perks",
@@ -98,6 +101,7 @@ export const ASCENSION_PERK_CATEGORY_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots an ascension_perk_category defines, with the key pattern each one mints. */
 export const ASCENSION_PERK_CATEGORY_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
   { member: "desc", pattern: "$_desc", required: false },

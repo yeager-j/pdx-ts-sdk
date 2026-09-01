@@ -31,6 +31,7 @@ import type { DescentNode } from "../../corpus/observations.ts";
 import { isOptional, type RuleField, type ScopeContext } from "../../cwt/model.ts";
 import {
   authoredLiterals,
+  emittedMemberType,
   lowerStructuralSplice,
   mergeByName,
   pickOrdinary,
@@ -224,7 +225,9 @@ function lowerNamedMembers(emitter: Emitter, context: AliasSpliceContext): Alias
     const optional = group.every((field) => isOptional(field.cardinality));
     const docs = [...new Set(group.flatMap((field) => field.docs))];
     const member = camelCase(name);
-    draft.members.push(renderMember({ name: member, type: lowering.memberType, optional, docs }));
+    draft.members.push(
+      renderMember({ name: member, type: emittedMemberType(lowering), optional, docs })
+    );
     draft.memberDocs[member] = {
       optional,
       docs,
@@ -315,7 +318,8 @@ function aliasSpliceEmission(
     constArray(
       context.fieldsConstant,
       contentField,
-      draft.fieldMetadata.map((entry) => `  ${entry},\n`).join("")
+      draft.fieldMetadata.map((entry) => `  ${entry},\n`).join(""),
+      [`How the writer lowers each member of {@link ${context.typeName}} to PDXScript.`]
     ) +
     `${registerAliasStructFields}(${JSON.stringify(context.category)}, ` +
     `${context.fieldsConstant});\n`;

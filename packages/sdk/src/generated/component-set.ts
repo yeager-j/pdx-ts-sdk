@@ -52,6 +52,7 @@ export interface ComponentSetFields {
   iconFrame?: string | number;
 }
 
+/** A component_set with the id it is defined under. */
 export interface ComponentSetDef<Id extends string = string> extends ComponentSetFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -73,11 +74,13 @@ export type ComponentSetLoc = {
   readonly stationDesc: LocalizationRef;
 };
 
+/** A component_set registered with a mod, usable as a typed cross-reference. */
 export type DefinedComponentSet<Id extends string = string> = DefinedContent<
   "component_set",
   ComponentSetDef<Id>
 >;
 
+/** How the writer lowers each member of {@link ComponentSetFields} to PDXScript. */
 export const COMPONENT_SET_FIELDS: readonly ContentField[] = [
   {
     key: "required_component_set",
@@ -131,6 +134,7 @@ export const COMPONENT_SET_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a component_set defines, with the key pattern each one mints. */
 export const COMPONENT_SET_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
   { member: "desc", pattern: "$_DESC", required: false },

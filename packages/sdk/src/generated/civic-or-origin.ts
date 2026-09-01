@@ -28,6 +28,7 @@ import type { CountryFlag } from "./value-sets.ts";
 
 import "./government-trigger.ts";
 
+/** The `swap_type` block inside `civic_or_origin`. */
 export interface CivicOrOriginSwapType {
   name?: string;
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
@@ -42,6 +43,7 @@ export interface CivicOrOriginSwapType {
   hideModifiers?: boolean;
 }
 
+/** How the writer lowers each member of {@link CivicOrOriginSwapType} to PDXScript. */
 export const CIVIC_OR_ORIGIN_SWAP_TYPE_FIELDS: readonly ContentField[] = [
   { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
   {
@@ -71,6 +73,7 @@ export const CIVIC_OR_ORIGIN_SWAP_TYPE_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `modification` block inside `civic_or_origin`. */
 export interface CivicOrOriginModification {
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   moddableConditionsCustomTooltip?: LocalizationInput;
@@ -78,6 +81,7 @@ export interface CivicOrOriginModification {
   remove?: Trigger<"country">;
 }
 
+/** How the writer lowers each member of {@link CivicOrOriginModification} to PDXScript. */
 export const CIVIC_OR_ORIGIN_MODIFICATION_FIELDS: readonly ContentField[] = [
   {
     key: "moddable_conditions_custom_tooltip",
@@ -91,10 +95,12 @@ export const CIVIC_OR_ORIGIN_MODIFICATION_FIELDS: readonly ContentField[] = [
   { key: "remove", member: "remove", shape: "trigger", form: "trigger" },
 ];
 
+/** The `traits` block inside `civic_or_origin`. */
 export interface CivicOrOriginTraits {
   trait?: (TraitSpeciesTraitRef | string)[];
 }
 
+/** How the writer lowers each member of {@link CivicOrOriginTraits} to PDXScript. */
 export const CIVIC_OR_ORIGIN_TRAITS_FIELDS: readonly ContentField[] = [
   {
     key: "trait",
@@ -107,10 +113,12 @@ export const CIVIC_OR_ORIGIN_TRAITS_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `has_secondary_species.traits` block inside `civic_or_origin`. */
 export interface CivicOrOriginHasSecondarySpeciesTraits {
   trait: (TraitSpeciesTraitRef | string)[];
 }
 
+/** How the writer lowers each member of {@link CivicOrOriginHasSecondarySpeciesTraits} to PDXScript. */
 export const CIVIC_OR_ORIGIN_HAS_SECONDARY_SPECIES_TRAITS_FIELDS: readonly ContentField[] = [
   {
     key: "trait",
@@ -123,12 +131,14 @@ export const CIVIC_OR_ORIGIN_HAS_SECONDARY_SPECIES_TRAITS_FIELDS: readonly Conte
   },
 ];
 
+/** The `has_secondary_species` block inside `civic_or_origin`. */
 export interface CivicOrOriginHasSecondarySpecies {
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   title: LocalizationInput;
   traits?: CivicOrOriginHasSecondarySpeciesTraits;
 }
 
+/** How the writer lowers each member of {@link CivicOrOriginHasSecondarySpecies} to PDXScript. */
 export const CIVIC_OR_ORIGIN_HAS_SECONDARY_SPECIES_FIELDS: readonly ContentField[] = [
   {
     key: "title",
@@ -147,10 +157,12 @@ export const CIVIC_OR_ORIGIN_HAS_SECONDARY_SPECIES_FIELDS: readonly ContentField
   },
 ];
 
+/** The `soft_traits` block inside `civic_or_origin`. */
 export interface CivicOrOriginSoftTraits {
   trait?: (TraitSpeciesTraitRef | string)[];
 }
 
+/** How the writer lowers each member of {@link CivicOrOriginSoftTraits} to PDXScript. */
 export const CIVIC_OR_ORIGIN_SOFT_TRAITS_FIELDS: readonly ContentField[] = [
   {
     key: "trait",
@@ -292,6 +304,7 @@ export interface CivicOrOriginFields {
   removedPlanetTypes?: (PlanetClassRef | string)[];
 }
 
+/** A civic_or_origin with the id it is defined under. */
 export interface CivicOrOriginDef<Id extends string = string> extends CivicOrOriginFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -309,11 +322,13 @@ export type CivicOrOriginLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A civic_or_origin registered with a mod, usable as a typed cross-reference. */
 export type DefinedCivicOrOrigin<Id extends string = string> = DefinedContent<
   "civic_or_origin",
   CivicOrOriginDef<Id>
 >;
 
+/** How the writer lowers each member of {@link CivicOrOriginFields} to PDXScript. */
 export const CIVIC_OR_ORIGIN_FIELDS: readonly ContentField[] = [
   { key: "icon", member: "icon", shape: "value", form: "scalar", conversion: "identity" },
   {
@@ -579,6 +594,7 @@ export const CIVIC_OR_ORIGIN_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a civic_or_origin defines, with the key pattern each one mints. */
 export const CIVIC_OR_ORIGIN_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
   { member: "desc", pattern: "$_desc", required: false },

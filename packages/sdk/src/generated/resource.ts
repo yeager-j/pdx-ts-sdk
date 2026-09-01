@@ -81,6 +81,7 @@ export interface ResourceFields {
   tradableInMarket?: Trigger<"country">;
 }
 
+/** A resource with the id it is defined under. */
 export interface ResourceDef<Id extends string = string> extends ResourceFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -98,11 +99,13 @@ export type ResourceLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A resource registered with a mod, usable as a typed cross-reference. */
 export type DefinedResource<Id extends string = string> = DefinedContent<
   "resource",
   ResourceDef<Id>
 >;
 
+/** How the writer lowers each member of {@link ResourceFields} to PDXScript. */
 export const RESOURCE_FIELDS: readonly ContentField[] = [
   { key: "tradable", member: "tradable", shape: "value", form: "scalar", conversion: "identity" },
   { key: "category", member: "category", shape: "value", form: "scalar", conversion: "identity" },
@@ -207,6 +210,7 @@ export const RESOURCE_FIELDS: readonly ContentField[] = [
   { key: "tradable_in_market", member: "tradableInMarket", shape: "trigger", form: "trigger" },
 ];
 
+/** The localization slots a resource defines, with the key pattern each one mints. */
 export const RESOURCE_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
   { member: "desc", pattern: "$_desc", required: false },

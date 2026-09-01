@@ -8,66 +8,79 @@ import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { AnimationMode, AnimationType, SpriteType } from "./enums.ts";
 import type { SoundEffectRef, SpriteConfigurationsRef, SpriteRef } from "./refs.ts";
 
+/** The `upper_left` block inside `spriteType`. */
 export interface SpriteTypeUpperLeft {
   x: number;
   y: number;
 }
 
+/** How the writer lowers each member of {@link SpriteTypeUpperLeft} to PDXScript. */
 export const SPRITE_TYPE_UPPER_LEFT_FIELDS: readonly ContentField[] = [
   { key: "x", member: "x", shape: "value", form: "scalar", conversion: "identity" },
   { key: "y", member: "y", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `lower_right` block inside `spriteType`. */
 export interface SpriteTypeLowerRight {
   x: number;
   y: number;
 }
 
+/** How the writer lowers each member of {@link SpriteTypeLowerRight} to PDXScript. */
 export const SPRITE_TYPE_LOWER_RIGHT_FIELDS: readonly ContentField[] = [
   { key: "x", member: "x", shape: "value", form: "scalar", conversion: "identity" },
   { key: "y", member: "y", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `borderSize` block inside `spriteType`. */
 export interface SpriteTypeBorderSize {
   x: number;
   y: number;
 }
 
+/** How the writer lowers each member of {@link SpriteTypeBorderSize} to PDXScript. */
 export const SPRITE_TYPE_BORDER_SIZE_FIELDS: readonly ContentField[] = [
   { key: "x", member: "x", shape: "value", form: "scalar", conversion: "identity" },
   { key: "y", member: "y", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `hitbox_margin` block inside `spriteType`. */
 export interface SpriteTypeHitboxMargin {
   x: number;
   y: number;
 }
 
+/** How the writer lowers each member of {@link SpriteTypeHitboxMargin} to PDXScript. */
 export const SPRITE_TYPE_HITBOX_MARGIN_FIELDS: readonly ContentField[] = [
   { key: "x", member: "x", shape: "value", form: "scalar", conversion: "identity" },
   { key: "y", member: "y", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `animation.animationrotationoffset` block inside `spriteType`. */
 export interface SpriteTypeAnimationAnimationrotationoffset {
   x: number;
   y: number;
 }
 
+/** How the writer lowers each member of {@link SpriteTypeAnimationAnimationrotationoffset} to PDXScript. */
 export const SPRITE_TYPE_ANIMATION_ANIMATIONROTATIONOFFSET_FIELDS: readonly ContentField[] = [
   { key: "x", member: "x", shape: "value", form: "scalar", conversion: "identity" },
   { key: "y", member: "y", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `animation.animationtexturescale` block inside `spriteType`. */
 export interface SpriteTypeAnimationAnimationtexturescale {
   x: number;
   y: number;
 }
 
+/** How the writer lowers each member of {@link SpriteTypeAnimationAnimationtexturescale} to PDXScript. */
 export const SPRITE_TYPE_ANIMATION_ANIMATIONTEXTURESCALE_FIELDS: readonly ContentField[] = [
   { key: "x", member: "x", shape: "value", form: "scalar", conversion: "identity" },
   { key: "y", member: "y", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `animation` block inside `spriteType`. */
 export interface SpriteTypeAnimation {
   /**
    * A path from the mod root. An Asset file placed in a Feature lowers to its declared
@@ -94,6 +107,7 @@ export interface SpriteTypeAnimation {
   animationframes?: number[];
 }
 
+/** How the writer lowers each member of {@link SpriteTypeAnimation} to PDXScript. */
 export const SPRITE_TYPE_ANIMATION_FIELDS: readonly ContentField[] = [
   {
     key: "animationmaskfile",
@@ -245,16 +259,19 @@ export interface SpriteTypeFields {
   animation?: SpriteTypeAnimation[];
 }
 
+/** A spriteType with the id it is defined under. */
 export interface SpriteTypeDef<Id extends string = string> extends SpriteTypeFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
 
+/** A spriteType registered with a mod, usable as a typed cross-reference. */
 export type DefinedSpriteType<Id extends string = string> = DefinedContent<
   "spriteType",
   SpriteTypeDef<Id>
 >;
 
+/** How the writer lowers each member of {@link SpriteTypeFields} to PDXScript. */
 export const SPRITE_TYPE_FIELDS: readonly ContentField[] = [
   {
     key: "parent",
@@ -400,4 +417,5 @@ export const SPRITE_TYPE_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a spriteType defines, with the key pattern each one mints. */
 export const SPRITE_TYPE_LOCALISATION: readonly ContentLocalisation[] = [];

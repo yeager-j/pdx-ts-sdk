@@ -80,6 +80,7 @@ export interface OpinionModifierFields {
   >;
 }
 
+/** An opinion_modifier with the id it is defined under. */
 export interface OpinionModifierDef<Id extends string = string> extends OpinionModifierFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -95,11 +96,13 @@ export type OpinionModifierLoc = {
   readonly name: LocalizationRef;
 };
 
+/** An opinion_modifier registered with a mod, usable as a typed cross-reference. */
 export type DefinedOpinionModifier<Id extends string = string> = DefinedContent<
   "opinion_modifier",
   OpinionModifierDef<Id>
 >;
 
+/** How the writer lowers each member of {@link OpinionModifierFields} to PDXScript. */
 export const OPINION_MODIFIER_FIELDS: readonly ContentField[] = [
   {
     key: "opinion",
@@ -150,6 +153,7 @@ export const OPINION_MODIFIER_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
 ];
 
+/** The localization slots an opinion_modifier defines, with the key pattern each one mints. */
 export const OPINION_MODIFIER_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
 ];

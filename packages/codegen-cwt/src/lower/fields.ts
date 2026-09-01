@@ -13,7 +13,7 @@
 
 import type { DescentNode } from "../corpus/observations.ts";
 import { isRepeated, type RuleField, type RuleType } from "../cwt/model.ts";
-import { camelCase, pascalCase } from "../naming.ts";
+import { camelCase, docComment, pascalCase } from "../naming.ts";
 import {
   type ContentFieldOverride,
   type ContentFieldShape,
@@ -118,8 +118,18 @@ export interface EmittedField {
  * one lowered CWT field. Optional code and descent data describe nested blocks.
  */
 export interface LoweredField {
-  /** The TypeScript type exposed on the generated authoring member. */
+  /**
+   * The TypeScript type exposed on the generated authoring member, as plain
+   * type text. The field-docs ledger records this spelling, so it carries no
+   * comments even when {@link LoweredField.documentedMemberType} does.
+   */
   readonly memberType: string;
+  /**
+   * The same type with JSDoc on the members of an inline object type, for the
+   * emitted interface. Only lowerings that build such a type supply it; read it
+   * through {@link emittedMemberType} rather than directly.
+   */
+  readonly documentedMemberType?: string;
   /** Renders the runtime `ContentField` descriptor for the emitted member. */
   readonly metadata: FieldMetadata;
   /**
@@ -158,6 +168,14 @@ export interface LoweredField {
    * Keep both collections paired so every described interior is measurable.
    */
   readonly descents?: readonly DescentNode[];
+}
+
+/**
+ * The type text to write into the emitted interface, which documents the
+ * members of an inline object type where the lowering described them.
+ */
+export function emittedMemberType(lowered: LoweredField): string {
+  return lowered.documentedMemberType ?? lowered.memberType;
 }
 
 /**
@@ -557,6 +575,19 @@ function lowerTriggeredModifier(
   };
 }
 
+/**
+ * The row constraints `WeightedEventRow` enforces at render time, mirrored onto
+ * the generated inline members so the type states them where an author reads it.
+ */
+const WEIGHTED_EVENT_MEMBER_DOCS = {
+  weight: [
+    "Relative selection weight, as a whole number. A weight becomes the arm's",
+    "key verbatim, and `random_events` keys its arms by an `int`. Duplicate",
+    "weights are preserved as separate rows, and `0` is a row the game ships itself.",
+  ],
+  event: ["Event selected by this row. Omit it to emit the literal `0` no-op arm."],
+} as const;
+
 function lowerWeightedEvents(
   emitter: Emitter,
   field: RuleField,
@@ -578,6 +609,14 @@ function lowerWeightedEvents(
   emitter.useValue(value);
   return {
     memberType: `readonly { weight: number; event?: ${value.type} }[]`,
+    documentedMemberType:
+      "readonly {\n" +
+      docComment(WEIGHTED_EVENT_MEMBER_DOCS.weight) +
+      "weight: number;\n" +
+      docComment(WEIGHTED_EVENT_MEMBER_DOCS.event) +
+      `event?: ${value.type};\n` +
+      "}[]",
+    docs: ["Weighted event rows. A row's weight must be a whole number."],
     metadata: metadata(field, name, "weightedEvents", scalarMetadata(value)),
     admits: admitsBlock(field, "weightedEvents"),
   };

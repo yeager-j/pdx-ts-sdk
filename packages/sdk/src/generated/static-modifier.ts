@@ -67,6 +67,7 @@ export interface StaticModifierFields<S extends StaticModifierScope = StaticModi
   hideFromCountryList?: true;
 }
 
+/** A static_modifier with the id it is defined under. */
 export interface StaticModifierDef<
   Id extends string = string,
   S extends StaticModifierScope = StaticModifierScope,
@@ -87,11 +88,13 @@ export type StaticModifierLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A static_modifier registered with a mod, usable as a typed cross-reference. */
 export type DefinedStaticModifier<Id extends string = string> = DefinedContent<
   "static_modifier",
   StaticModifierDef<Id>
 >;
 
+/** How the writer lowers each member of {@link StaticModifierFields} to PDXScript. */
 export const STATIC_MODIFIER_FIELDS: readonly ContentField[] = [
   { member: "modifiers", shape: "inlineModifiers" },
   {
@@ -135,6 +138,7 @@ export const STATIC_MODIFIER_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a static_modifier defines, with the key pattern each one mints. */
 export const STATIC_MODIFIER_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
   { member: "desc", pattern: "$_desc", required: false },

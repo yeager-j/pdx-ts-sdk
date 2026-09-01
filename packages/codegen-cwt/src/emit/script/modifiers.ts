@@ -638,6 +638,7 @@ function recorderInterfacesCode(
   }
 
   code +=
+    docComment(["Scope name -> the modifier recorder a block at that scope receives."]) +
     "export interface ModifierRecorderByScope {\n" +
     scopes.map((scope) => `  readonly ${scope}: ${pascalCase(scope)}ModifierRecorder;\n`).join("") +
     "}\n\n";

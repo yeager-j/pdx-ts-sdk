@@ -28,12 +28,14 @@ import type {
 } from "./refs.ts";
 import type { ScopeName } from "./scopes.ts";
 
+/** The `title` block inside `situation_type`. */
 export interface SituationTypeTitle {
   trigger: Trigger<"situation">;
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   text?: LocalizationInput;
 }
 
+/** How the writer lowers each member of {@link SituationTypeTitle} to PDXScript. */
 export const SITUATION_TYPE_TITLE_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   {
@@ -46,12 +48,14 @@ export const SITUATION_TYPE_TITLE_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `desc` block inside `situation_type`. */
 export interface SituationTypeDesc {
   trigger?: Trigger<"situation">;
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   text?: LocalizationInput;
 }
 
+/** How the writer lowers each member of {@link SituationTypeDesc} to PDXScript. */
 export const SITUATION_TYPE_DESC_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   {
@@ -64,12 +68,14 @@ export const SITUATION_TYPE_DESC_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `triggered_blocked_desc` block inside `situation_type`. */
 export interface SituationTypeTriggeredBlockedDesc {
   trigger?: Trigger<"situation">;
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   text?: LocalizationInput;
 }
 
+/** How the writer lowers each member of {@link SituationTypeTriggeredBlockedDesc} to PDXScript. */
 export const SITUATION_TYPE_TRIGGERED_BLOCKED_DESC_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   {
@@ -82,14 +88,23 @@ export const SITUATION_TYPE_TRIGGERED_BLOCKED_DESC_FIELDS: readonly ContentField
   },
 ];
 
+/** The `on_monthly` block inside `situation_type`. */
 export interface SituationTypeOnMonthly {
   events?: (EventScopelessRef | string | EventSituationRef)[];
+  /** Weighted event rows. A row's weight must be a whole number. */
   randomEvents?: readonly {
+    /**
+     * Relative selection weight, as a whole number. A weight becomes the arm's
+     * key verbatim, and `random_events` keys its arms by an `int`. Duplicate
+     * weights are preserved as separate rows, and `0` is a row the game ships itself.
+     */
     weight: number;
+    /** Event selected by this row. Omit it to emit the literal `0` no-op arm. */
     event?: EventScopelessRef | string | EventSituationRef;
   }[];
 }
 
+/** How the writer lowers each member of {@link SituationTypeOnMonthly} to PDXScript. */
 export const SITUATION_TYPE_ON_MONTHLY_FIELDS: readonly ContentField[] = [
   {
     key: "events",
@@ -109,6 +124,10 @@ export const SITUATION_TYPE_ON_MONTHLY_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/**
+ * One nested definition under `situation_type.approach`, as the game's rules describe it.
+ * Its record key is the definition's own logical name.
+ */
 export interface SituationApproachFields {
   /**
    * Display text emitted to localization under `<id>`.
@@ -136,6 +155,7 @@ export interface SituationApproachFields {
   aiWeight?: number | WeightBlock<"situation">;
 }
 
+/** How the writer lowers each member of {@link SituationApproachFields} to PDXScript. */
 export const SITUATION_APPROACH_FIELDS: readonly ContentField[] = [
   {
     key: "icon",
@@ -205,11 +225,16 @@ export const SITUATION_APPROACH_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots one `situation_type.approach` entry defines, with the key pattern each one mints. */
 export const SITUATION_APPROACH_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
   { member: "desc", pattern: "$_desc", required: false },
 ];
 
+/**
+ * One nested definition under `situation_type.stages`, as the game's rules describe it.
+ * Its record key is the definition's own logical name.
+ */
 export interface SituationStageFields {
   /**
    * Display text emitted to localization under `<id>`.
@@ -247,6 +272,7 @@ export interface SituationStageFields {
   triggeredTargetModifier?: TriggeredModifier<ScopeName, "situation">[];
 }
 
+/** How the writer lowers each member of {@link SituationStageFields} to PDXScript. */
 export const SITUATION_STAGE_FIELDS: readonly ContentField[] = [
   {
     key: "end",
@@ -325,6 +351,7 @@ export const SITUATION_STAGE_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots one `situation_type.stages` entry defines, with the key pattern each one mints. */
 export const SITUATION_STAGE_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
   { member: "desc", pattern: "$_desc", required: false },
@@ -415,6 +442,7 @@ export interface SituationTypeFields {
   stages?: Readonly<Record<string, SituationStageFields>>;
 }
 
+/** A situation_type with the id it is defined under. */
 export interface SituationTypeDef<Id extends string = string> extends SituationTypeFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -434,11 +462,13 @@ export type SituationTypeLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A situation_type registered with a mod, usable as a typed cross-reference. */
 export type DefinedSituationType<Id extends string = string> = DefinedContent<
   "situation_type",
   SituationTypeDef<Id>
 >;
 
+/** How the writer lowers each member of {@link SituationTypeFields} to PDXScript. */
 export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
   {
     key: "picture",
@@ -723,6 +753,7 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a situation_type defines, with the key pattern each one mints. */
 export const SITUATION_TYPE_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
   { member: "typeName", pattern: "$_type", required: false },

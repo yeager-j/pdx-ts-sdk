@@ -41,6 +41,7 @@ export interface ScriptedModifierFields {
   category: ScriptedModifierCategory;
 }
 
+/** A scripted_modifier with the id it is defined under. */
 export interface ScriptedModifierDef<Id extends string = string> extends ScriptedModifierFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -56,11 +57,13 @@ export type ScriptedModifierLoc = {
   readonly name: LocalizationRef;
 };
 
+/** A scripted_modifier registered with a mod, usable as a typed cross-reference. */
 export type DefinedScriptedModifier<Id extends string = string> = DefinedContent<
   "scripted_modifier",
   ScriptedModifierDef<Id>
 >;
 
+/** How the writer lowers each member of {@link ScriptedModifierFields} to PDXScript. */
 export const SCRIPTED_MODIFIER_FIELDS: readonly ContentField[] = [
   { key: "icon", member: "icon", shape: "value", form: "scalar", conversion: "identity" },
   {
@@ -99,6 +102,7 @@ export const SCRIPTED_MODIFIER_FIELDS: readonly ContentField[] = [
   { key: "category", member: "category", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The localization slots a scripted_modifier defines, with the key pattern each one mints. */
 export const SCRIPTED_MODIFIER_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "mod_$", required: false },
 ];

@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: codegen-cwt ContentShape protocol
 
+/** Every shape a generated field descriptor asks the SDK writer to write. */
 export const CONTENT_SHAPES = [
   "value",
   "valueList",
@@ -26,8 +27,11 @@ export const CONTENT_SHAPES = [
   "weightedEvents",
 ] as const;
 
+/** The shape one generated field descriptor asks the SDK writer to write. */
 export type ContentShape = (typeof CONTENT_SHAPES)[number];
 
+/** Every scalar conversion a generated field descriptor may ask for. */
 export const CONTENT_CONVERSIONS = ["identity", "ref", "assetPath"] as const;
 
+/** The scalar conversion one generated field descriptor asks the SDK writer to apply. */
 export type ContentConversion = (typeof CONTENT_CONVERSIONS)[number];

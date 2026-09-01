@@ -18,6 +18,7 @@ import type {
 import type { Trigger } from "../script/trigger-core.ts";
 import type { DecisionRef, SoundEffectRef, SoundRef, TechnologyRef } from "./refs.ts";
 
+/** The `custom_tooltip` block inside `decision`. */
 export interface DecisionCustomTooltip<S extends DecisionScope = "planet"> {
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   text?: "" | LocalizationInput;
@@ -28,6 +29,7 @@ export interface DecisionCustomTooltip<S extends DecisionScope = "planet"> {
   when?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>;
 }
 
+/** How the writer lowers each member of {@link DecisionCustomTooltip} to PDXScript. */
 export const DECISION_CUSTOM_TOOLTIP_FIELDS: readonly ContentField[] = [
   {
     key: "text",
@@ -105,6 +107,7 @@ export interface DecisionFields<S extends DecisionScope = "planet"> {
   prerequisites?: (TechnologyRef | string)[];
 }
 
+/** A decision with the id it is defined under. */
 export interface DecisionDef<
   Id extends string = string,
   S extends DecisionScope = "planet",
@@ -125,11 +128,13 @@ export type DecisionLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A decision registered with a mod, usable as a typed cross-reference. */
 export type DefinedDecision<Id extends string = string> = DefinedContent<
   "decision",
   DecisionDef<Id>
 >;
 
+/** How the writer lowers each member of {@link DecisionFields} to PDXScript. */
 export const DECISION_FIELDS: readonly ContentField[] = [
   {
     key: "owned_planets_only",
@@ -188,6 +193,7 @@ export const DECISION_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a decision defines, with the key pattern each one mints. */
 export const DECISION_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
   { member: "desc", pattern: "$_desc", required: false },

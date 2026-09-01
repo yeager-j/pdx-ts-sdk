@@ -18,30 +18,36 @@ import type {
 } from "./refs.ts";
 import type { PlanetFlag } from "./value-sets.ts";
 
+/** The `count` block inside `moon_initializer`. */
 export interface MoonInitializerCount {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link MoonInitializerCount} to PDXScript. */
 export const MOON_INITIALIZER_COUNT_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `orbit_distance` block inside `moon_initializer`. */
 export interface MoonInitializerOrbitDistance {
   min: ScriptValue;
   max: ScriptValue;
 }
 
+/** How the writer lowers each member of {@link MoonInitializerOrbitDistance} to PDXScript. */
 export const MOON_INITIALIZER_ORBIT_DISTANCE_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `orbital_line` block inside `moon_initializer`. */
 export interface MoonInitializerOrbitalLine {
   orbitDistanceFromParent: number;
 }
 
+/** How the writer lowers each member of {@link MoonInitializerOrbitalLine} to PDXScript. */
 export const MOON_INITIALIZER_ORBITAL_LINE_FIELDS: readonly ContentField[] = [
   {
     key: "orbit_distance_from_parent",
@@ -52,21 +58,25 @@ export const MOON_INITIALIZER_ORBITAL_LINE_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `orbit_angle` block inside `moon_initializer`. */
 export interface MoonInitializerOrbitAngle {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link MoonInitializerOrbitAngle} to PDXScript. */
 export const MOON_INITIALIZER_ORBIT_ANGLE_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `size` block inside `moon_initializer`. */
 export interface MoonInitializerSize {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link MoonInitializerSize} to PDXScript. */
 export const MOON_INITIALIZER_SIZE_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
@@ -116,6 +126,7 @@ export interface MoonInitializerFields {
   moon?: MoonInitializerFields[];
 }
 
+/** How the writer lowers each member of {@link MoonInitializerFields} to PDXScript. */
 export const MOON_INITIALIZER_FIELDS: readonly ContentField[] = [
   {
     key: "name",

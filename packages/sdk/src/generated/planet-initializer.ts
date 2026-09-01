@@ -21,30 +21,36 @@ import type { CustomPlanetNames, PlanetFlag } from "./value-sets.ts";
 
 import "./moon-initializer.ts";
 
+/** The `count` block inside `planet_initializer`. */
 export interface PlanetInitializerCount {
   min?: number;
   max?: number;
 }
 
+/** How the writer lowers each member of {@link PlanetInitializerCount} to PDXScript. */
 export const PLANET_INITIALIZER_COUNT_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `orbit_distance` block inside `planet_initializer`. */
 export interface PlanetInitializerOrbitDistance {
   min: ScriptValue;
   max: ScriptValue;
 }
 
+/** How the writer lowers each member of {@link PlanetInitializerOrbitDistance} to PDXScript. */
 export const PLANET_INITIALIZER_ORBIT_DISTANCE_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `orbital_line` block inside `planet_initializer`. */
 export interface PlanetInitializerOrbitalLine {
   orbitDistanceFromParent: number;
 }
 
+/** How the writer lowers each member of {@link PlanetInitializerOrbitalLine} to PDXScript. */
 export const PLANET_INITIALIZER_ORBITAL_LINE_FIELDS: readonly ContentField[] = [
   {
     key: "orbit_distance_from_parent",
@@ -55,21 +61,25 @@ export const PLANET_INITIALIZER_ORBITAL_LINE_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `orbit_angle` block inside `planet_initializer`. */
 export interface PlanetInitializerOrbitAngle {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link PlanetInitializerOrbitAngle} to PDXScript. */
 export const PLANET_INITIALIZER_ORBIT_ANGLE_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `size` block inside `planet_initializer`. */
 export interface PlanetInitializerSize {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link PlanetInitializerSize} to PDXScript. */
 export const PLANET_INITIALIZER_SIZE_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
@@ -121,6 +131,7 @@ export interface PlanetInitializerFields {
   moon?: MoonInitializerFields[];
 }
 
+/** How the writer lowers each member of {@link PlanetInitializerFields} to PDXScript. */
 export const PLANET_INITIALIZER_FIELDS: readonly ContentField[] = [
   {
     key: "name",

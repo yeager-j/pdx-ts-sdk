@@ -31,10 +31,12 @@ import type {
 import type { ScopeName } from "./scopes.ts";
 import type { ConstructionType } from "./value-sets.ts";
 
+/** The `section_slots` block inside `ship_size`. */
 export interface ShipSizeSectionSlots {
   locator: (ModelLocator | "$mesh_locator")[];
 }
 
+/** How the writer lowers each member of {@link ShipSizeSectionSlots} to PDXScript. */
 export const SHIP_SIZE_SECTION_SLOTS_FIELDS: readonly ContentField[] = [
   {
     key: "locator",
@@ -46,11 +48,13 @@ export const SHIP_SIZE_SECTION_SLOTS_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `triggered_ship_roles` block inside `ship_size`. */
 export interface ShipSizeTriggeredShipRoles {
   name: ComponentTag;
   trigger: Trigger<never>;
 }
 
+/** How the writer lowers each member of {@link ShipSizeTriggeredShipRoles} to PDXScript. */
 export const SHIP_SIZE_TRIGGERED_SHIP_ROLES_FIELDS: readonly ContentField[] = [
   {
     key: "name",
@@ -63,16 +67,19 @@ export const SHIP_SIZE_TRIGGERED_SHIP_ROLES_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
 ];
 
+/** The `space_fauna_values.age_threshold` block inside `ship_size`. */
 export interface ShipSizeSpaceFaunaValuesAgeThreshold {
   min?: number;
   max?: number;
 }
 
+/** How the writer lowers each member of {@link ShipSizeSpaceFaunaValuesAgeThreshold} to PDXScript. */
 export const SHIP_SIZE_SPACE_FAUNA_VALUES_AGE_THRESHOLD_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `space_fauna_values` block inside `ship_size`. */
 export interface ShipSizeSpaceFaunaValues {
   ageThreshold?: ShipSizeSpaceFaunaValuesAgeThreshold;
   cullingValue?: EconomicResourceBlock<ScopeName>[];
@@ -86,6 +93,7 @@ export interface ShipSizeSpaceFaunaValues {
   iconFrame: number;
 }
 
+/** How the writer lowers each member of {@link ShipSizeSpaceFaunaValues} to PDXScript. */
 export const SHIP_SIZE_SPACE_FAUNA_VALUES_FIELDS: readonly ContentField[] = [
   {
     key: "age_threshold",
@@ -153,6 +161,7 @@ export const SHIP_SIZE_SPACE_FAUNA_VALUES_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `ai_ship_data` block inside `ship_size`. */
 export interface ShipSizeAiShipData {
   min?: ScriptValue;
   max?: ScriptValue;
@@ -161,6 +170,7 @@ export interface ShipSizeAiShipData {
   fraction?: WeightBlock<"country"> | number;
 }
 
+/** How the writer lowers each member of {@link ShipSizeAiShipData} to PDXScript. */
 export const SHIP_SIZE_AI_SHIP_DATA_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
@@ -195,6 +205,7 @@ export const SHIP_SIZE_AI_SHIP_DATA_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `map_icon_override` block inside `ship_size`. */
 export interface ShipSizeMapIconOverride {
   normal?: SpriteRef | string;
   mixed?: SpriteRef | string;
@@ -202,6 +213,7 @@ export interface ShipSizeMapIconOverride {
   encamped?: SpriteRef | string;
 }
 
+/** How the writer lowers each member of {@link ShipSizeMapIconOverride} to PDXScript. */
 export const SHIP_SIZE_MAP_ICON_OVERRIDE_FIELDS: readonly ContentField[] = [
   {
     key: "normal",
@@ -237,6 +249,7 @@ export const SHIP_SIZE_MAP_ICON_OVERRIDE_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `hero_ship` block inside `ship_size`. */
 export interface ShipSizeHeroShip {
   heroShipFleetBackground?: SpriteRef | string;
   capabilities?: (
@@ -250,6 +263,7 @@ export interface ShipSizeHeroShip {
   customClassTextColor?: TextColorRef | string;
 }
 
+/** How the writer lowers each member of {@link ShipSizeHeroShip} to PDXScript. */
 export const SHIP_SIZE_HERO_SHIP_FIELDS: readonly ContentField[] = [
   {
     key: "hero_ship_fleet_background",
@@ -461,6 +475,7 @@ export interface ShipSizeFields {
   heroShip?: ShipSizeHeroShip;
 }
 
+/** A ship_size with the id it is defined under. */
 export interface ShipSizeDef<Id extends string = string> extends ShipSizeFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -478,11 +493,13 @@ export type ShipSizeLoc = {
   readonly plural: LocalizationRef;
 };
 
+/** A ship_size registered with a mod, usable as a typed cross-reference. */
 export type DefinedShipSize<Id extends string = string> = DefinedContent<
   "ship_size",
   ShipSizeDef<Id>
 >;
 
+/** How the writer lowers each member of {@link ShipSizeFields} to PDXScript. */
 export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
   {
     key: "graphical_culture",
@@ -1167,6 +1184,7 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a ship_size defines, with the key pattern each one mints. */
 export const SHIP_SIZE_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
   { member: "plural", pattern: "$_plural", required: false },

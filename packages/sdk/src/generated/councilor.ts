@@ -77,6 +77,7 @@ export interface CouncilorFields {
   addedPlanetTypes?: (PlanetClassRef | string)[];
 }
 
+/** A councilor with the id it is defined under. */
 export interface CouncilorDef<Id extends string = string> extends CouncilorFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -94,11 +95,13 @@ export type CouncilorLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A councilor registered with a mod, usable as a typed cross-reference. */
 export type DefinedCouncilor<Id extends string = string> = DefinedContent<
   "councilor",
   CouncilorDef<Id>
 >;
 
+/** How the writer lowers each member of {@link CouncilorFields} to PDXScript. */
 export const COUNCILOR_FIELDS: readonly ContentField[] = [
   {
     key: "leader_class",
@@ -207,6 +210,7 @@ export const COUNCILOR_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a councilor defines, with the key pattern each one mints. */
 export const COUNCILOR_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
   { member: "desc", pattern: "$_desc", required: false },

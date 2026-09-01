@@ -6,6 +6,7 @@
 
 import "./government-trigger.ts";
 
+/** How one field inside an effect block lowers to PDXScript. */
 export type EffectFieldKind =
   | "value"
   | "comparison"
@@ -53,9 +54,13 @@ export type EffectBlockMeta =
       readonly fields?: readonly EffectFieldMeta[];
     };
 
+/** How the recorder writes one named field of an effect block. */
 export interface EffectFieldMeta {
+  /** The authoring property name. */
   readonly prop: string;
+  /** The PDXScript key the property is written under. */
   readonly key: string;
+  /** How the field's value lowers. */
   readonly kind: EffectFieldKind;
   /** How a nested effect closure changes scope identity. */
   readonly transition?: "same" | "push" | "replace" | "unknown";
@@ -126,6 +131,7 @@ export type EffectBlockShapeMeta =
     }
   | { readonly kind: "alias-list"; readonly category: string };
 
+/** How the recorder writes the whole body of one effect. */
 export type EffectShapeMeta =
   | EffectScalarShapeMeta
   | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] | null }
@@ -143,8 +149,11 @@ export type EffectShapeMeta =
     }
   | { readonly kind: "scope-link"; readonly transition: "push" | "replace" | "unknown" };
 
+/** One effect the recorder can write, by PDXScript key. */
 export interface EffectMeta {
+  /** The PDXScript key the effect is written under. */
   readonly key: string;
+  /** How the recorder writes the effect's body. */
   readonly shape: EffectShapeMeta;
 }
 

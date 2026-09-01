@@ -43,6 +43,7 @@ export interface RelicFields {
   aiWeight?: WeightBlock<"country">;
 }
 
+/** A relic with the id it is defined under. */
 export interface RelicDef<Id extends string = string> extends RelicFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -60,8 +61,10 @@ export type RelicLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A relic registered with a mod, usable as a typed cross-reference. */
 export type DefinedRelic<Id extends string = string> = DefinedContent<"relic", RelicDef<Id>>;
 
+/** How the writer lowers each member of {@link RelicFields} to PDXScript. */
 export const RELIC_FIELDS: readonly ContentField[] = [
   {
     key: "activation_duration",
@@ -113,6 +116,7 @@ export const RELIC_FIELDS: readonly ContentField[] = [
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
 ];
 
+/** The localization slots a relic defines, with the key pattern each one mints. */
 export const RELIC_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
   { member: "desc", pattern: "$_desc", required: false },

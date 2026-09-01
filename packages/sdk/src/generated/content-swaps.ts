@@ -51,6 +51,10 @@ export interface SwapIdentity {
   readonly keying: "record-keys" | "array-names";
 }
 
+/**
+ * Every nested swap identity the SDK knows, by registry: where the swap sits
+ * in a definition, and whether its entries are keyed by record key or by name.
+ */
 export const SWAP_IDENTITIES = [
   { registryType: "ascension_perk", path: ["traditionSwap"], keying: "record-keys" },
   { registryType: "civic_or_origin", path: ["swapType"], keying: "array-names" },

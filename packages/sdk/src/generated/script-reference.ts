@@ -13,17 +13,27 @@
 import { STRUCTURAL_EFFECT_REFERENCES } from "../script/effects/structural-reference.ts";
 import type { ScopeName } from "./scopes.ts";
 
+/** Whether a public script member is available in every scope or only in an exact scope set. */
 export type ScriptReferenceAvailability =
   | { readonly kind: "universal" }
   | { readonly kind: "scopes"; readonly scopes: readonly ScopeName[] };
+
+/** Ownership class of a public effect-like method in the script reference. */
 export type ScriptEffectReferenceKind = "effect" | "structural" | "event-fire";
 
+/** Machine-readable reference data for one public effect-like method. */
 export interface ScriptEffectReference {
+  /** Public TypeScript method name. */
   readonly method: string;
+  /** Fixed PDXScript key, when the method always records one key. */
   readonly key?: string;
+  /** Emitter family that owns the method. */
   readonly kind: ScriptEffectReferenceKind;
+  /** Scopes on which the method is present. */
   readonly availability: ScriptReferenceAvailability;
+  /** Public call signature without its documentation comment. */
   readonly signature: string;
+  /** Documentation lines attached to the public method. */
   readonly docs: readonly string[];
 }
 
@@ -41,13 +51,19 @@ export interface ScriptTriggerReference {
   readonly docs: readonly string[];
 }
 
+/** Machine-readable reference data for one effect scope-navigation property. */
 export interface ScriptScopeLinkReference {
+  /** Public path property name. */
   readonly member: string;
+  /** Canonical scopes from which the navigation is valid. */
   readonly fromScopes: readonly ScopeName[];
+  /** Canonical scope reached by the navigation. */
   readonly toScope: ScopeName;
+  /** Documentation lines attached to the public property. */
   readonly docs: readonly string[];
 }
 
+/** Every canonical scope name the reference rows draw their availability from. */
 export const SCRIPT_REFERENCE_SCOPES = [
   "agreement",
   "alliance",
@@ -93,6 +109,10 @@ export const SCRIPT_REFERENCE_SCOPES = [
   "war",
 ] as const satisfies readonly ScopeName[];
 
+/**
+ * Effect-like methods available through the Stellaris authoring entry point:
+ * the generated builders, followed by the hand-written structural surface.
+ */
 export const SCRIPT_EFFECT_REFERENCES = [
   {
     method: "abortSituation",
@@ -31806,6 +31826,10 @@ export const SCRIPT_TRIGGER_REFERENCES = [
   },
 ] as const satisfies readonly ScriptTriggerReference[];
 
+/**
+ * Scope-navigation properties an effect path exposes, each with the scopes it
+ * navigates from and the scope it reaches.
+ */
 export const SCRIPT_SCOPE_LINK_REFERENCES = [
   {
     member: "alliance",

@@ -34,6 +34,7 @@ export const MODIFIER_OPERATIONS = [
   { member: "maxValue", scriptKey: "max" },
 ] as const;
 
+/** The authoring name of one modifier arithmetic operation. */
 export type ModifierOperationMember = (typeof MODIFIER_OPERATIONS)[number]["member"];
 
 /** Every complex_maths_enum member and the SDK's reviewed disposition. */

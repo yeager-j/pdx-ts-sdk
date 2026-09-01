@@ -19,6 +19,7 @@ import type { Trigger } from "../script/trigger-core.ts";
 import type { JobTrigger } from "./enums.ts";
 import type { BuildingRef, JobRef, PopCategoryRef, PurgeTypeRef, TraitRef } from "./refs.ts";
 
+/** The `swappable_data.default` block inside `job`. */
 export interface JobSwappableDataDefault {
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   desc?: LocalizationInput;
@@ -28,6 +29,7 @@ export interface JobSwappableDataDefault {
   conditionString?: LocalizationInput;
 }
 
+/** How the writer lowers each member of {@link JobSwappableDataDefault} to PDXScript. */
 export const JOB_SWAPPABLE_DATA_DEFAULT_FIELDS: readonly ContentField[] = [
   {
     key: "desc",
@@ -55,6 +57,7 @@ export const JOB_SWAPPABLE_DATA_DEFAULT_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `swappable_data.swap_type` block inside `job`. */
 export interface JobSwappableDataSwapType {
   trigger: Trigger<"planet">;
   name?: string | JobRef;
@@ -67,6 +70,7 @@ export interface JobSwappableDataSwapType {
   weight: number | WeightBlock<"pop_group">;
 }
 
+/** How the writer lowers each member of {@link JobSwappableDataSwapType} to PDXScript. */
 export const JOB_SWAPPABLE_DATA_SWAP_TYPE_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   { key: "name", member: "name", shape: "value", form: "scalar", conversion: "ref" },
@@ -105,11 +109,13 @@ export const JOB_SWAPPABLE_DATA_SWAP_TYPE_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `swappable_data` block inside `job`. */
 export interface JobSwappableData {
   default: JobSwappableDataDefault;
   swapType?: JobSwappableDataSwapType[];
 }
 
+/** How the writer lowers each member of {@link JobSwappableData} to PDXScript. */
 export const JOB_SWAPPABLE_DATA_FIELDS: readonly ContentField[] = [
   {
     key: "default",
@@ -128,6 +134,7 @@ export const JOB_SWAPPABLE_DATA_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `possible_pre_triggers` block inside `job`. */
 export interface JobPossiblePreTriggers {
   hasOwner?: boolean;
   isEnslaved?: boolean;
@@ -138,6 +145,7 @@ export interface JobPossiblePreTriggers {
   isRobotic?: boolean;
 }
 
+/** How the writer lowers each member of {@link JobPossiblePreTriggers} to PDXScript. */
 export const JOB_POSSIBLE_PRE_TRIGGERS_FIELDS: readonly ContentField[] = [
   { key: "has_owner", member: "hasOwner", shape: "value", form: "scalar", conversion: "identity" },
   {
@@ -184,11 +192,13 @@ export const JOB_POSSIBLE_PRE_TRIGGERS_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `triggered_tags` block inside `job`. */
 export interface JobTriggeredTags {
   trigger: Trigger<"planet">;
   tags: string[];
 }
 
+/** How the writer lowers each member of {@link JobTriggeredTags} to PDXScript. */
 export const JOB_TRIGGERED_TAGS_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   { key: "tags", member: "tags", shape: "valueList", form: "list", conversion: "identity" },
@@ -260,6 +270,7 @@ export interface JobFields {
   autoTraitPrio?: (TraitRef | string)[];
 }
 
+/** A job with the id it is defined under. */
 export interface JobDef<Id extends string = string> extends JobFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -281,8 +292,10 @@ export type JobLoc = {
   readonly effect: LocalizationRef;
 };
 
+/** A job registered with a mod, usable as a typed cross-reference. */
 export type DefinedJob<Id extends string = string> = DefinedContent<"job", JobDef<Id>>;
 
+/** How the writer lowers each member of {@link JobFields} to PDXScript. */
 export const JOB_FIELDS: readonly ContentField[] = [
   {
     key: "category",
@@ -483,6 +496,7 @@ export const JOB_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a job defines, with the key pattern each one mints. */
 export const JOB_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "job_$", required: true },
   { member: "plural", pattern: "job_$_plural", required: false },

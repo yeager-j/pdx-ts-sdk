@@ -13,6 +13,7 @@ import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 import type { EventChainRef, MissionCategoryRef, SpriteRef } from "./refs.ts";
 
+/** The `desc` block inside `mission`. */
 export interface MissionDesc {
   trigger?: WithFrom<
     Trigger<"country">,
@@ -23,6 +24,7 @@ export interface MissionDesc {
   text?: LocalizationInput[];
 }
 
+/** How the writer lowers each member of {@link MissionDesc} to PDXScript. */
 export const MISSION_DESC_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   {
@@ -36,6 +38,7 @@ export const MISSION_DESC_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `desc_operator` block inside `mission`. */
 export interface MissionDescOperator {
   trigger?: WithFrom<
     Trigger<"country">,
@@ -46,6 +49,7 @@ export interface MissionDescOperator {
   text?: LocalizationInput[];
 }
 
+/** How the writer lowers each member of {@link MissionDescOperator} to PDXScript. */
 export const MISSION_DESC_OPERATOR_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   {
@@ -59,6 +63,7 @@ export const MISSION_DESC_OPERATOR_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `desc_issuer` block inside `mission`. */
 export interface MissionDescIssuer {
   trigger?: WithFrom<
     Trigger<"country">,
@@ -69,6 +74,7 @@ export interface MissionDescIssuer {
   text?: LocalizationInput[];
 }
 
+/** How the writer lowers each member of {@link MissionDescIssuer} to PDXScript. */
 export const MISSION_DESC_ISSUER_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   {
@@ -90,6 +96,7 @@ export interface MissionCounterDefinition {
   name?: LocalizedText;
 }
 
+/** How the writer lowers each member of {@link MissionCounterDefinition} to PDXScript. */
 export const MISSION_COUNTER_DEFINITION_FIELDS: readonly ContentField[] = [
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
@@ -401,6 +408,7 @@ export interface MissionFields<
   >;
 }
 
+/** A mission with the id it is defined under. */
 export interface MissionDef<
   Id extends string = string,
   S extends MissionScope = "country",
@@ -422,8 +430,10 @@ export type MissionLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A mission registered with a mod, usable as a typed cross-reference. */
 export type DefinedMission<Id extends string = string> = DefinedContent<"mission", MissionDef<Id>>;
 
+/** How the writer lowers each member of {@link MissionFields} to PDXScript. */
 export const MISSION_FIELDS: readonly ContentField[] = [
   {
     key: "category",
@@ -601,6 +611,7 @@ export const MISSION_FIELDS: readonly ContentField[] = [
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
 ];
 
+/** The localization slots a mission defines, with the key pattern each one mints. */
 export const MISSION_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
   { member: "desc", pattern: "$_desc", required: false },

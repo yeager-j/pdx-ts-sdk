@@ -8,6 +8,7 @@ import type { WeightBlock, WithFrom } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 import type { GraphicalCultureRef, ShipCategoriesRef } from "./refs.ts";
 
+/** The `ship_lighting` block inside `graphical_culture`. */
 export interface GraphicalCultureShipLighting {
   camLight1Dir: number[];
   camLight2Dir: number[];
@@ -28,6 +29,7 @@ export interface GraphicalCultureShipLighting {
   ambientFar?: number;
 }
 
+/** How the writer lowers each member of {@link GraphicalCultureShipLighting} to PDXScript. */
 export const GRAPHICAL_CULTURE_SHIP_LIGHTING_FIELDS: readonly ContentField[] = [
   {
     key: "cam_light_1_dir",
@@ -132,16 +134,19 @@ export interface GraphicalCultureFields {
   shipSelectionWeight?: WithFrom<WeightBlock<"species">, "species", { readonly from: "country" }>;
 }
 
+/** A graphical_culture with the id it is defined under. */
 export interface GraphicalCultureDef<Id extends string = string> extends GraphicalCultureFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
 
+/** A graphical_culture registered with a mod, usable as a typed cross-reference. */
 export type DefinedGraphicalCulture<Id extends string = string> = DefinedContent<
   "graphical_culture",
   GraphicalCultureDef<Id>
 >;
 
+/** How the writer lowers each member of {@link GraphicalCultureFields} to PDXScript. */
 export const GRAPHICAL_CULTURE_FIELDS: readonly ContentField[] = [
   {
     key: "has_city_graphics",
@@ -190,4 +195,5 @@ export const GRAPHICAL_CULTURE_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a graphical_culture defines, with the key pattern each one mints. */
 export const GRAPHICAL_CULTURE_LOCALISATION: readonly ContentLocalisation[] = [];

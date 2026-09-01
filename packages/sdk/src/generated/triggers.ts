@@ -6460,6 +6460,7 @@ export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {
  * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
  */
 export function customTooltip(value: LocalizationInput): Trigger<ScopeName>;
+/** The same rule written as a block, with its arguments named. */
 export function customTooltip<S extends ScopeName = ScopeName>(
   args: CustomTooltipArgs<S>
 ): Trigger<S>;
@@ -7054,6 +7055,7 @@ export type FailTextArgs<S extends ScopeName = ScopeName> = {
  * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
  */
 export function failText(value: LocalizationInput): Trigger<ScopeName>;
+/** The same rule written as a block, with its arguments named. */
 export function failText<S extends ScopeName = ScopeName>(args: FailTextArgs<S>): Trigger<S>;
 export function failText<S extends ScopeName>(
   value: LocalizationInput | FailTextArgs<S>
@@ -10742,6 +10744,7 @@ export type HasResourceArgs = {
 export function hasResource(
   value: ResourceRef | string | boolean
 ): Trigger<"astral_rift" | "carrier" | "country" | "deposit" | "planet" | "ship">;
+/** The same rule written as a block, with its arguments named. */
 export function hasResource(
   args: HasResourceArgs
 ): Trigger<"astral_rift" | "carrier" | "country" | "deposit" | "planet" | "ship">;
@@ -11792,6 +11795,7 @@ export type IntelLevelArgs = {
  * ```
  */
 export function intelLevel(value: IntelLevel): Trigger<"country">;
+/** The same rule written as a block, with its arguments named. */
 export function intelLevel(args: IntelLevelArgs): Trigger<"country">;
 export function intelLevel(value: IntelLevel | IntelLevelArgs): Trigger<"country"> {
   if (isStructuredValue(value, [])) {
@@ -15775,6 +15779,7 @@ export function isWarParticipant(
     | "war"
   >
 ): Trigger<"country" | "war">;
+/** The same rule written as a block, with its arguments named. */
 export function isWarParticipant(args: IsWarParticipantArgs): Trigger<"country" | "war">;
 export function isWarParticipant(
   value:
@@ -18783,6 +18788,7 @@ export type SuccessTextArgs<S extends ScopeName = ScopeName> = {
  * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
  */
 export function successText(value: LocalizationInput): Trigger<ScopeName>;
+/** The same rule written as a block, with its arguments named. */
 export function successText<S extends ScopeName = ScopeName>(args: SuccessTextArgs<S>): Trigger<S>;
 export function successText<S extends ScopeName>(
   value: LocalizationInput | SuccessTextArgs<S>

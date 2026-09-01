@@ -208,6 +208,7 @@ export function effectMetaCode(
       .map((category) => `import ${JSON.stringify(aliasCategoryModule(category))};\n`)
       .join("") +
     (aliasStructCategories.length === 0 ? "" : "\n") +
+    docComment(["How one field inside an effect block lowers to PDXScript."]) +
     "export type EffectFieldKind = " +
     '"value" | "comparison" | "trigger" | "effect" | "modifiers" | "fields" | "map" | "scalar-or-block" | "value-list" | "alias-list" | "alias-struct";\n\n' +
     "/** How one scalar-valued position lowers to a PDXScript scalar. */\n" +
@@ -236,9 +237,13 @@ export function effectMetaCode(
     '  | { readonly kind: "map"; readonly map: EffectMapMeta }\n' +
     '  | { readonly kind: "value-list"; readonly scalar?: EffectScalarMeta; ' +
     "readonly fields?: readonly EffectFieldMeta[] };\n\n" +
+    docComment(["How the recorder writes one named field of an effect block."]) +
     "export interface EffectFieldMeta {\n" +
+    docComment(["The authoring property name."], "  ") +
     "  readonly prop: string;\n" +
+    docComment(["The PDXScript key the property is written under."], "  ") +
     "  readonly key: string;\n" +
+    docComment(["How the field's value lowers."], "  ") +
     "  readonly kind: EffectFieldKind;\n" +
     "  /** How a nested effect closure changes scope identity. */\n" +
     '  readonly transition?: "same" | "push" | "replace" | "unknown";\n' +
@@ -300,6 +305,7 @@ export function effectMetaCode(
     '  | { readonly kind: "map"; readonly map: EffectMapMeta }\n' +
     '  | { readonly kind: "wrapper"; readonly transition: "same" | "push" | "replace" | "unknown"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
     '  | { readonly kind: "alias-list"; readonly category: string };\n\n' +
+    docComment(["How the recorder writes the whole body of one effect."]) +
     "export type EffectShapeMeta =\n" +
     "  | EffectScalarShapeMeta\n" +
     '  | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
@@ -308,8 +314,11 @@ export function effectMetaCode(
     '  | { readonly kind: "alias-list"; readonly category: string }\n' +
     '  | { readonly kind: "scalar-or-block"; readonly scalar: EffectScalarShapeMeta; readonly block: EffectBlockShapeMeta }\n' +
     '  | { readonly kind: "scope-link"; readonly transition: "push" | "replace" | "unknown" };\n\n' +
+    docComment(["One effect the recorder can write, by PDXScript key."]) +
     "export interface EffectMeta {\n" +
+    docComment(["The PDXScript key the effect is written under."], "  ") +
     "  readonly key: string;\n" +
+    docComment(["How the recorder writes the effect's body."], "  ") +
     "  readonly shape: EffectShapeMeta;\n" +
     "}\n\n" +
     docComment([

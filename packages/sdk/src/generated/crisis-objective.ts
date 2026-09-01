@@ -31,6 +31,7 @@ export interface CrisisObjectiveFields {
   recurring?: true;
 }
 
+/** A crisis_objective with the id it is defined under. */
 export interface CrisisObjectiveDef<Id extends string = string> extends CrisisObjectiveFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -48,17 +49,20 @@ export type CrisisObjectiveLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A crisis_objective registered with a mod, usable as a typed cross-reference. */
 export type DefinedCrisisObjective<Id extends string = string> = DefinedContent<
   "crisis_objective",
   CrisisObjectiveDef<Id>
 >;
 
+/** How the writer lowers each member of {@link CrisisObjectiveFields} to PDXScript. */
 export const CRISIS_OBJECTIVE_FIELDS: readonly ContentField[] = [
   { key: "potential", member: "potential", shape: "trigger", form: "trigger" },
   { key: "reward", member: "reward", shape: "weightBlock", form: "block" },
   { key: "recurring", member: "recurring", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The localization slots a crisis_objective defines, with the key pattern each one mints. */
 export const CRISIS_OBJECTIVE_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$_name", required: false },
   { member: "desc", pattern: "$_desc", required: false },

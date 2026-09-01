@@ -23,16 +23,19 @@ export interface CrisisPathFields {
   objectives: (CrisisObjectiveRef | string)[];
 }
 
+/** A crisis_path with the id it is defined under. */
 export interface CrisisPathDef<Id extends string = string> extends CrisisPathFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
 
+/** A crisis_path registered with a mod, usable as a typed cross-reference. */
 export type DefinedCrisisPath<Id extends string = string> = DefinedContent<
   "crisis_path",
   CrisisPathDef<Id>
 >;
 
+/** How the writer lowers each member of {@link CrisisPathFields} to PDXScript. */
 export const CRISIS_PATH_FIELDS: readonly ContentField[] = [
   {
     key: "crisis_currency",
@@ -61,4 +64,5 @@ export const CRISIS_PATH_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a crisis_path defines, with the key pattern each one mints. */
 export const CRISIS_PATH_LOCALISATION: readonly ContentLocalisation[] = [];

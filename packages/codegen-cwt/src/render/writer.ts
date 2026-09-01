@@ -34,11 +34,17 @@ export function member(options: MemberOptions): string {
 }
 
 /**
- * Wraps pre-rendered rows in an exported readonly array declaration.
- * Callers retain control of each row's text and indentation.
+ * Wraps pre-rendered rows in a documented, exported readonly array declaration.
+ * Callers retain control of each row's text and indentation. The doc lines are
+ * required because every table this renders is part of the published surface.
  */
-export function constArray(name: string, elementType: string, rows: string): string {
-  return `export const ${name}: readonly ${elementType}[] = [\n${rows}];\n\n`;
+export function constArray(
+  name: string,
+  elementType: string,
+  rows: string,
+  docs: readonly string[]
+): string {
+  return docComment(docs) + `export const ${name}: readonly ${elementType}[] = [\n${rows}];\n\n`;
 }
 
 /**

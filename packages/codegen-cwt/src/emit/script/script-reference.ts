@@ -1,6 +1,6 @@
 /** Machine-readable metadata for the public script reference surface. */
 
-import { compareStrings } from "../../naming.ts";
+import { compareStrings, docComment } from "../../naming.ts";
 import type { StructuralEffectIdentity } from "../../policy/effects.ts";
 
 /**
@@ -369,46 +369,73 @@ export function emitScriptReferences(
     'import type { ScopeName } from "./scopes.ts";\n' +
     structuralImport +
     "\n" +
+    docComment([
+      "Whether a public script member is available in every scope or only in an exact scope set.",
+    ]) +
     "export type ScriptReferenceAvailability =\n" +
     '  | { readonly kind: "universal" }\n' +
-    '  | { readonly kind: "scopes"; readonly scopes: readonly ScopeName[] };\n' +
+    '  | { readonly kind: "scopes"; readonly scopes: readonly ScopeName[] };\n\n' +
+    docComment(["Ownership class of a public effect-like method in the script reference."]) +
     'export type ScriptEffectReferenceKind = "effect" | "structural" | "event-fire";\n\n' +
+    docComment(["Machine-readable reference data for one public effect-like method."]) +
     "export interface ScriptEffectReference {\n" +
+    docComment(["Public TypeScript method name."], "  ") +
     "  readonly method: string;\n" +
+    docComment(["Fixed PDXScript key, when the method always records one key."], "  ") +
     "  readonly key?: string;\n" +
+    docComment(["Emitter family that owns the method."], "  ") +
     "  readonly kind: ScriptEffectReferenceKind;\n" +
+    docComment(["Scopes on which the method is present."], "  ") +
     "  readonly availability: ScriptReferenceAvailability;\n" +
+    docComment(["Public call signature without its documentation comment."], "  ") +
     "  readonly signature: string;\n" +
+    docComment(["Documentation lines attached to the public method."], "  ") +
     "  readonly docs: readonly string[];\n" +
     "}\n\n" +
-    "/** Machine-readable reference data for one generated trigger builder. */\n" +
+    docComment(["Machine-readable reference data for one generated trigger builder."]) +
     "export interface ScriptTriggerReference {\n" +
-    "  /** Public TypeScript builder name. */\n" +
+    docComment(["Public TypeScript builder name."], "  ") +
     "  readonly method: string;\n" +
-    "  /** Fixed PDXScript key recorded by the builder. */\n" +
+    docComment(["Fixed PDXScript key recorded by the builder."], "  ") +
     "  readonly key: string;\n" +
-    "  /** Scopes where the trigger key is legal. */\n" +
+    docComment(["Scopes where the trigger key is legal."], "  ") +
     "  readonly availability: ScriptReferenceAvailability;\n" +
-    "  /** Public call signature without its documentation comment. */\n" +
+    docComment(["Public call signature without its documentation comment."], "  ") +
     "  readonly signature: string;\n" +
-    "  /** Documentation lines attached to the public builder. */\n" +
+    docComment(["Documentation lines attached to the public builder."], "  ") +
     "  readonly docs: readonly string[];\n" +
     "}\n\n" +
+    docComment(["Machine-readable reference data for one effect scope-navigation property."]) +
     "export interface ScriptScopeLinkReference {\n" +
+    docComment(["Public path property name."], "  ") +
     "  readonly member: string;\n" +
+    docComment(["Canonical scopes from which the navigation is valid."], "  ") +
     "  readonly fromScopes: readonly ScopeName[];\n" +
+    docComment(["Canonical scope reached by the navigation."], "  ") +
     "  readonly toScope: ScopeName;\n" +
+    docComment(["Documentation lines attached to the public property."], "  ") +
     "  readonly docs: readonly string[];\n" +
     "}\n\n" +
+    docComment(["Every canonical scope name the reference rows draw their availability from."]) +
     `export const SCRIPT_REFERENCE_SCOPES = ${JSON.stringify(scopes)} as const satisfies readonly ScopeName[];\n\n` +
+    docComment([
+      "Effect-like methods available through the Stellaris authoring entry point:",
+      "the generated builders, followed by the hand-written structural surface.",
+    ]) +
     "export const SCRIPT_EFFECT_REFERENCES = [\n" +
     effectRows.map(effectCode).join("") +
     "  ...STRUCTURAL_EFFECT_REFERENCES,\n" +
     "] as const as readonly ScriptEffectReference[];\n\n" +
-    "/** Generated trigger builders available through the Stellaris authoring entry point. */\n" +
+    docComment([
+      "Generated trigger builders available through the Stellaris authoring entry point.",
+    ]) +
     "export const SCRIPT_TRIGGER_REFERENCES = [\n" +
     triggerRows.map(triggerCode).join("") +
     "] as const satisfies readonly ScriptTriggerReference[];\n\n" +
+    docComment([
+      "Scope-navigation properties an effect path exposes, each with the scopes it",
+      "navigates from and the scope it reaches.",
+    ]) +
     "export const SCRIPT_SCOPE_LINK_REFERENCES = [\n" +
     linkRows.map(linkCode).join("") +
     "] as const satisfies readonly ScriptScopeLinkReference[];\n";

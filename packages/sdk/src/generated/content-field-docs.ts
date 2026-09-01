@@ -4315,7 +4315,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       },
       randomEvents: {
         optional: true,
-        docs: [],
+        docs: ["Weighted event rows. A row's weight must be a whole number."],
         memberType:
           "readonly { weight: number; event?: EventScopelessRef | string | EventSituationRef }[]",
       },
