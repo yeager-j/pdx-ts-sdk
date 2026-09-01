@@ -155,19 +155,7 @@ function assertBaselineMatches(baseline: DriftBaseline, report: DriftReport): vo
   );
 }
 
-/**
- * Loads CWT rules and documentation dumps and returns their canonical scope facts.
- *
- * Scopes come from the committed drift baseline's reviewed decision, the same
- * authority the emitters read. The baseline is reconciled against the rules and
- * dumps at these roots first, so its decisions are only applied to the sources
- * they were reviewed against. Missing or unknown scope declarations are omitted
- * instead of being narrowed by guesswork.
- *
- * @throws When the committed baseline does not match the rules and documentation
- *   at these roots. Drift is reviewed by `npm run codegen`, never here.
- */
-export function loadScopeFacts(configRoot: string, docsRoot: string): ScopeFacts {
+function readScopeFacts(configRoot: string, docsRoot: string): ScopeFacts {
   const rules = loadRules(configRoot);
   const emitter = new Emitter(rules);
   const index = scopeIndex(rules);
@@ -201,4 +189,34 @@ export function loadScopeFacts(configRoot: string, docsRoot: string): ScopeFacts
     effects: factsOf(effects),
     links,
   };
+}
+
+const factsByRoot = new Map<string, ScopeFacts>();
+
+/**
+ * Loads CWT rules and documentation dumps and returns their canonical scope facts.
+ *
+ * Scopes come from the committed drift baseline's reviewed decision, the same
+ * authority the emitters read. The baseline is reconciled against the rules and
+ * dumps at these roots first, so its decisions are only applied to the sources
+ * they were reviewed against. Missing or unknown scope declarations are omitted
+ * instead of being narrowed by guesswork.
+ *
+ * The result is read once per root pair per process and shared afterwards, so a
+ * caller that edits files under a root within one process must pass a different
+ * root to see the change.
+ *
+ * @throws When the committed baseline does not match the rules and documentation
+ *   at these roots. Drift is reviewed by `npm run codegen`, never here. A failed
+ *   check is not retained, so a later call repeats it.
+ */
+export function loadScopeFacts(configRoot: string, docsRoot: string): ScopeFacts {
+  const key = JSON.stringify([configRoot, docsRoot]);
+  const cached = factsByRoot.get(key);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const facts = readScopeFacts(configRoot, docsRoot);
+  factsByRoot.set(key, facts);
+  return facts;
 }

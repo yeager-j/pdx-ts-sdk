@@ -8,7 +8,11 @@ import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseScopeLinks } from "@pdx-ts/codegen-cwt/logs/scopes";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
-import { compareToBaseline, updatedBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
+import {
+  compareToBaseline,
+  loadBaseline,
+  updatedBaseline,
+} from "@pdx-ts/codegen-cwt/reconcile/baseline";
 import {
   reconcile,
   type DriftBaseline,
@@ -29,9 +33,9 @@ const docs = parseTriggerDocs(
 );
 const modifierDocs = parseModifierDocs(readFileSync(`${DOCS}/modifiers.log`, "utf8"));
 const dumpLinks = parseScopeLinks(readFileSync(`${DOCS}/scopes.log`, "utf8"));
-const baseline = JSON.parse(
-  readFileSync(new URL("../src/drift-baseline.json", import.meta.url), "utf8")
-) as DriftBaseline;
+// Through the loader, so a list the committed JSON omits reads as its default
+// rather than as undefined.
+const baseline = loadBaseline();
 
 describe("the two rule sources", () => {
   it("agree on all but a handful of names", () => {
@@ -422,8 +426,6 @@ describe("a scope annotation inside a rule body", () => {
     const invented = withGroupSlot("not_a_group");
 
     expect(invented.unknownScopes).toContain("scope_group[not_a_group] — synthetic-body.cwt:1");
-    expect(invented.scopeGroupAmbientSlots).toEqual(
-      reconcile(rules, docs, modifierDocs, dumpLinks).scopeGroupAmbientSlots
-    );
+    expect(invented.scopeGroupAmbientSlots).toEqual(baseline.scopeGroupAmbientSlots);
   });
 });
