@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { scopeOf, type RuleField } from "@pdx-ts/codegen-cwt/cwt/model";
@@ -304,6 +305,39 @@ describe("the reviewed mixed resolution for export_modifier_to_variable", () => 
     expect(facts.effects.get("export_modifier_to_variable")?.scopes).toEqual(
       EXPORT_MODIFIER_SCOPES
     );
+  });
+});
+
+describe("scope facts read by a generator that never runs the drift gate", () => {
+  /** The vendored config with one effect's `## scopes` changed, in a temp copy. */
+  function configWithDriftedEffect(): string {
+    const directory = mkdtempSync(path.join(tmpdir(), "pdx-scope-facts-"));
+    const config = path.join(directory, "config");
+    cpSync(CONFIG, config, { recursive: true });
+    const effects = path.join(config, "effects.cwt");
+    const source = readFileSync(effects, "utf8");
+    const annotated = "## scopes = { country }\nalias[effect:country_event] = {";
+    // A guard on the fixture: a vendor edit that moved this line would
+    // otherwise leave the test asserting against an unchanged copy.
+    expect(source).toContain(annotated);
+    writeFileSync(
+      effects,
+      source.replace(annotated, "## scopes = { planet }\nalias[effect:country_event] = {"),
+      "utf8"
+    );
+    return config;
+  }
+
+  it("refuses to apply a baseline the supplied rules no longer match", () => {
+    const config = configWithDriftedEffect();
+
+    try {
+      expect(() => loadScopeFacts(config, DOCS)).toThrowError(
+        /effect scope conflict: country_event/
+      );
+    } finally {
+      rmSync(path.dirname(config), { recursive: true, force: true });
+    }
   });
 });
 
