@@ -301,6 +301,9 @@ async function loadCodexReviewState(pullRequest) {
     githubApiPages(`${base}/issues/${pullRequest.number}/comments?per_page=100`),
     githubApiObject(`${base}/pulls/${pullRequest.number}`),
   ]);
+  if (pull.draft === true) {
+    throw new Error(`${pullRequest.label} is a draft pull request; Codex does not review drafts.`);
+  }
   const headCommit = pull.head?.sha;
   if (typeof headCommit !== "string") {
     throw new Error(`GitHub returned no head commit for ${pullRequest.label}.`);

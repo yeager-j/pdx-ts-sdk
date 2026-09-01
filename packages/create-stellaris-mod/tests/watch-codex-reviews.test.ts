@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   deriveCodexReviewState,
@@ -9,6 +9,10 @@ import {
   type GitHubComment,
   type GitHubReview,
 } from "../../../scripts/watch-codex-reviews.mjs";
+
+const { execFileMock } = vi.hoisted(() => ({ execFileMock: vi.fn() }));
+
+vi.mock("node:child_process", () => ({ execFile: execFileMock }));
 
 const pullRequest = parsePullRequestReference("yeager-j/pdx-ts-sdk#277");
 const codex = { login: "chatgpt-codex-connector[bot]" };
@@ -331,6 +335,25 @@ describe("Codex review polling", () => {
       "[yeager-j/pdx-ts-sdk#277] Codex review is running for e363bfa.",
       "[yeager-j/pdx-ts-sdk#277] Codex review completed for e363bfa with no findings.",
     ]);
+  });
+
+  it("terminates when GitHub reports a draft pull request", async () => {
+    execFileMock.mockImplementation((...args) => {
+      const commandArgs = args[1] as string[];
+      const callback = args.at(-1) as (
+        error: null,
+        result: { stdout: string; stderr: string }
+      ) => void;
+      const endpoint = commandArgs.at(-1);
+      const response = endpoint?.includes("/pulls/")
+        ? { draft: true, head: { sha: "e363bfad81490a55614e2f3966c1cbbe3e595029" } }
+        : [[]];
+      callback(null, { stdout: JSON.stringify(response), stderr: "" });
+    });
+
+    await expect(watchCodexReviews([pullRequest], { once: true })).rejects.toThrow(
+      "yeager-j/pdx-ts-sdk#277 is a draft pull request; Codex does not review drafts."
+    );
   });
 
   it("waits for every pull request when watching several at once", async () => {
