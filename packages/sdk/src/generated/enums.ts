@@ -144,7 +144,7 @@ export type EconomicModifierCategory = "cost" | "produces" | "upkeep" | "logisti
 export type EconomicModifierType = "mult" | "add";
 
 /** `enum[election_type]`. */
-export type ElectionType = "none" | "oligarchic" | "democratic";
+export type ElectionType = "democratic" | "none" | "oligarchic";
 
 /** `enum[envoy_task]`. */
 export type EnvoyTask =

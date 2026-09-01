@@ -94,8 +94,8 @@ export function loadContentTypesFrom(
   for (const relative of files) {
     const parsed = parseCwt(readFileSync(path.join(root, relative), "utf8"), relative);
     diagnostics.push(...parsed.diagnostics);
-    for (const [name, contentType] of readContentTypes(parsed.nodes)) {
-      contentTypes.set(name, contentType);
+    for (const { key, value } of readContentTypes(parsed.nodes)) {
+      contentTypes.set(key, value);
     }
   }
   return { contentTypes, diagnostics };
@@ -108,17 +108,35 @@ function parseFile(root: string, relative: string): ParsedRuleFile {
   };
 }
 
+/** The parsed CWT sources {@link buildRuleSet} reads, split by the role each plays. */
+export interface ParsedRuleSources {
+  /** The configured rule files, read for every rule table. */
+  readonly ruleFiles: readonly ParsedRuleFile[];
+  /** The remaining `.cwt` files, swept for complex enum declarations alone. */
+  readonly complexEnumFiles: readonly ParsedRuleFile[];
+}
+
+/** Finds and parses the configured CWT sources and the complex-enum sweep around them. */
+export function parseRuleSources(
+  root: string,
+  extraSourceFiles: readonly string[]
+): ParsedRuleSources {
+  const ruleFiles = [...new Set([...BASE_RULE_FILES, ...extraSourceFiles])];
+  const loaded = new Set(ruleFiles);
+  return {
+    ruleFiles: ruleFiles.map((relative) => parseFile(root, relative)),
+    complexEnumFiles: cwtFiles(root)
+      .filter((relative) => !loaded.has(relative))
+      .map((relative) => parseFile(root, relative)),
+  };
+}
+
 /** Loads the configured CWT sources and builds their complete classified rule set. */
 export function loadRules(
   root: string,
   extraSourceFiles: readonly string[],
   extraAliasCategories: readonly string[]
 ): RuleSet {
-  const ruleFiles = [...new Set([...BASE_RULE_FILES, ...extraSourceFiles])];
-  const parsedFiles = ruleFiles.map((relative) => parseFile(root, relative));
-  const loaded = new Set(ruleFiles);
-  const extraComplexEnumFiles = cwtFiles(root)
-    .filter((relative) => !loaded.has(relative))
-    .map((relative) => parseFile(root, relative));
-  return buildRuleSet(parsedFiles, extraComplexEnumFiles, extraAliasCategories);
+  const sources = parseRuleSources(root, extraSourceFiles);
+  return buildRuleSet(sources.ruleFiles, sources.complexEnumFiles, extraAliasCategories);
 }

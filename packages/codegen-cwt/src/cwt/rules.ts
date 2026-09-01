@@ -255,6 +255,25 @@ const ALIAS_KEY = /^alias\[([a-z_]+):(.+)\]$/;
 const BRACKET_KEY = /^([a-z_]+)\[(.+)\]$/;
 
 /**
+ * One declaration a file makes in a table that admits a single declaration per
+ * key.
+ *
+ * The readers return a list of these rather than a map, so a file that repeats
+ * a key inside itself still reaches the collision check in
+ * {@link mergeUniqueEntries}. A map would have collapsed the repeat to its last
+ * value first, which is the silent last-wins this table shape exists to
+ * prevent.
+ */
+interface Declaration<Value> {
+  /** The declared key. */
+  readonly key: string;
+  /** What the reader read at this declaration. */
+  readonly value: Value;
+  /** The line the declaration sits on, for the collision diagnostic. */
+  readonly line: number;
+}
+
+/**
  * `single_alias[trigger_clause] = { ... }` declarations, so that a rule written
  * `alias[trigger:any_country] = single_alias_right[trigger_clause]` can be read
  * as the block it stands for.
@@ -262,12 +281,16 @@ const BRACKET_KEY = /^([a-z_]+)\[(.+)\]$/;
 function readSingleAliases(
   nodes: readonly CwtNode[],
   file: string
-): ReadonlyMap<string, SingleAliasTarget> {
-  const aliases = new Map<string, SingleAliasTarget>();
+): readonly Declaration<SingleAliasTarget>[] {
+  const aliases: Declaration<SingleAliasTarget>[] = [];
   for (const entry of assignments(nodes)) {
     const match = BRACKET_KEY.exec(entry.key.text);
     if (match !== null && match[1] === "single_alias") {
-      aliases.set(match[2]!, { value: entry.value, sourceFile: file });
+      aliases.push({
+        key: match[2]!,
+        value: { value: entry.value, sourceFile: file },
+        line: entry.line,
+      });
     }
   }
   return aliases;
@@ -320,14 +343,14 @@ function scalarItems(block: CwtBlock): string[] {
 }
 
 interface EnumTables {
-  readonly enums: ReadonlyMap<string, readonly string[]>;
-  readonly complexEnums: ReadonlyMap<string, ComplexEnum>;
+  readonly enums: readonly Declaration<readonly string[]>[];
+  readonly complexEnums: readonly Declaration<ComplexEnum>[];
 }
 
 function readEnums(nodes: readonly CwtNode[], file: string): EnumTables {
-  const enums = new Map<string, string[]>();
-  const complexEnums = new Map<string, ComplexEnum>();
-  for (const { name: key, block } of keyedTableEntries(nodes, "enums")) {
+  const enums: Declaration<readonly string[]>[] = [];
+  const complexEnums: Declaration<ComplexEnum>[] = [];
+  for (const { name: key, block, entry } of keyedTableEntries(nodes, "enums")) {
     const match = BRACKET_KEY.exec(key);
     if (match === null) {
       continue;
@@ -335,10 +358,10 @@ function readEnums(nodes: readonly CwtNode[], file: string): EnumTables {
     if (match[1] === "complex_enum") {
       const complex = readComplexEnum(match[2]!, file, block);
       if (complex !== null) {
-        complexEnums.set(complex.name, complex);
+        complexEnums.push({ key: complex.name, value: complex, line: entry.line });
       }
     }
-    enums.set(match[2]!, scalarItems(block));
+    enums.push({ key: match[2]!, value: scalarItems(block), line: entry.line });
   }
   return { enums, complexEnums };
 }
@@ -346,16 +369,16 @@ function readEnums(nodes: readonly CwtNode[], file: string): EnumTables {
 function readComplexEnums(
   nodes: readonly CwtNode[],
   file: string
-): ReadonlyMap<string, ComplexEnum> {
-  const enums = new Map<string, ComplexEnum>();
-  for (const { name, block } of keyedTableEntries(nodes, "enums")) {
+): readonly Declaration<ComplexEnum>[] {
+  const enums: Declaration<ComplexEnum>[] = [];
+  for (const { name, block, entry } of keyedTableEntries(nodes, "enums")) {
     const match = BRACKET_KEY.exec(name);
     if (match?.[1] !== "complex_enum") {
       continue;
     }
     const complex = readComplexEnum(match[2]!, file, block);
     if (complex !== null) {
-      enums.set(complex.name, complex);
+      enums.push({ key: complex.name, value: complex, line: entry.line });
     }
   }
   return enums;
@@ -410,13 +433,13 @@ function readComplexEnum(name: string, source: string, block: CwtBlock): Complex
   };
 }
 
-function readScopes(nodes: readonly CwtNode[]): ReadonlyMap<string, readonly string[]> {
-  const scopes = new Map<string, string[]>();
-  for (const { name, block } of keyedTableEntries(nodes, "scopes")) {
+function readScopes(nodes: readonly CwtNode[]): readonly Declaration<readonly string[]>[] {
+  const scopes: Declaration<readonly string[]>[] = [];
+  for (const { name, block, entry } of keyedTableEntries(nodes, "scopes")) {
     const aliases = assignments(block.nodes).flatMap((node) =>
       node.key.text === "aliases" && node.value.kind === "block" ? scalarItems(node.value) : []
     );
-    scopes.set(name, aliases);
+    scopes.push({ key: name, value: aliases, line: entry.line });
   }
   return scopes;
 }
@@ -430,63 +453,69 @@ function readScopes(nodes: readonly CwtNode[]): ReadonlyMap<string, readonly str
  * a scope may share a name — `carrier` is both — and collapsing the two would
  * silently answer one question with the other.
  */
-function readScopeGroups(nodes: readonly CwtNode[]): ReadonlyMap<string, readonly string[]> {
-  const groups = new Map<string, string[]>();
-  for (const { name, block } of keyedTableEntries(nodes, "scope_groups")) {
-    groups.set(name, [...new Set(scalarItems(block))]);
+function readScopeGroups(nodes: readonly CwtNode[]): readonly Declaration<readonly string[]>[] {
+  const groups: Declaration<readonly string[]>[] = [];
+  for (const { name, block, entry } of keyedTableEntries(nodes, "scope_groups")) {
+    groups.push({ key: name, value: [...new Set(scalarItems(block))], line: entry.line });
   }
   return groups;
 }
 
-function readLinks(nodes: readonly CwtNode[], file: string): ReadonlyMap<string, LinkDecl> {
-  const links = new Map<string, LinkDecl>();
+function readLinks(nodes: readonly CwtNode[], file: string): readonly Declaration<LinkDecl>[] {
+  const links: Declaration<LinkDecl>[] = [];
   for (const { name, block, entry } of keyedTableEntries(nodes, "links")) {
     const inputScopes = assignments(block.nodes).flatMap((node) =>
       node.key.text === "input_scopes" && node.value.kind === "block" ? scalarItems(node.value) : []
     );
-    links.set(name, {
-      name,
-      docs: entry.docs,
-      inputScopes,
-      outputScope: scalar(block, "output_scope"),
-      type: scalar(block, "type") === "value" ? "value" : "scope",
-      fromData: scalar(block, "from_data") === "yes",
-      prefix: scalar(block, "prefix"),
-      file,
+    links.push({
+      key: name,
+      value: {
+        name,
+        docs: entry.docs,
+        inputScopes,
+        outputScope: scalar(block, "output_scope"),
+        type: scalar(block, "type") === "value" ? "value" : "scope",
+        fromData: scalar(block, "from_data") === "yes",
+        prefix: scalar(block, "prefix"),
+        file,
+        line: entry.line,
+      },
       line: entry.line,
     });
   }
   return links;
 }
 
-function readModifierCategories(nodes: readonly CwtNode[]): ReadonlyMap<string, readonly string[]> {
-  const categories = new Map<string, string[]>();
-  for (const { name, block } of keyedTableEntries(nodes, "modifier_categories")) {
+function readModifierCategories(
+  nodes: readonly CwtNode[]
+): readonly Declaration<readonly string[]>[] {
+  const categories: Declaration<readonly string[]>[] = [];
+  for (const { name, block, entry } of keyedTableEntries(nodes, "modifier_categories")) {
     const scopes = assignments(block.nodes).flatMap((node) =>
       node.key.text === "supported_scopes" && node.value.kind === "block"
         ? scalarItems(node.value)
         : []
     );
-    categories.set(name, scopes);
+    categories.push({ key: name, value: scopes, line: entry.line });
   }
   return categories;
 }
 
 interface ModifierTables {
-  readonly declarations: ReadonlyMap<string, readonly string[]>;
+  readonly declarations: readonly Declaration<readonly string[]>[];
   readonly templates: readonly ModifierTemplate[];
 }
 
 function readModifierDecls(nodes: readonly CwtNode[]): ModifierTables {
-  const declarations = new Map<string, string[]>();
+  const declarations: Declaration<readonly string[]>[] = [];
   const templates: ModifierTemplate[] = [];
-  for (const { name, block } of keyedTableEntries(nodes, "modifiers")) {
+  for (const { name, block, entry } of keyedTableEntries(nodes, "modifiers")) {
     const categories = scalarItems(block);
     if (name.includes("<") || name.includes("[")) {
       templates.push({ name, categories });
       continue;
     }
-    declarations.set(name, categories);
+    declarations.push({ key: name, value: categories, line: entry.line });
   }
   return { declarations, templates };
 }
@@ -710,21 +739,25 @@ function readContentType(
   };
 }
 
-/** Reads every `type[...]` declaration in the supplied CWT nodes. */
-export function readContentTypes(nodes: readonly CwtNode[]): ReadonlyMap<string, ContentType> {
-  const contentTypes = new Map<string, ContentType>();
+/** Reads every `type[...]` declaration in the supplied CWT nodes, in file order. */
+export function readContentTypes(nodes: readonly CwtNode[]): readonly Declaration<ContentType>[] {
+  const contentTypes: Declaration<ContentType>[] = [];
   for (const { name: key, block, entry } of keyedTableEntries(nodes, "types")) {
     const match = BRACKET_KEY.exec(key);
     if (match === null || match[1] !== "type") {
       continue;
     }
-    contentTypes.set(match[2]!, readContentType(match[2]!, block, entry.options));
+    contentTypes.push({
+      key: match[2]!,
+      value: readContentType(match[2]!, block, entry.options),
+      line: entry.line,
+    });
   }
   return contentTypes;
 }
 
 interface BodyReadResult {
-  readonly bodies: ReadonlyMap<string, ContentBody>;
+  readonly bodies: readonly Declaration<ContentBody>[];
   readonly diagnostics: readonly CwtDiagnostic[];
 }
 
@@ -734,16 +767,17 @@ function readBodies(
   known: ReadonlyMap<string, ContentType>,
   singleAliases: ReadonlyMap<string, SingleAliasTarget>
 ): BodyReadResult {
-  const bodies = new Map<string, ContentBody>();
+  const bodies: Declaration<ContentBody>[] = [];
   const collector = createClassificationCollector(file);
   for (const entry of assignments(nodes)) {
     if (!known.has(entry.key.text) || entry.value.kind !== "block") {
       continue;
     }
     const block = classifyBlock(entry.value, resolverFor(singleAliases), collector.report);
-    bodies.set(entry.key.text, {
-      fields: block.fields,
-      scope: scopeOf(entry.options, collector.report),
+    bodies.push({
+      key: entry.key.text,
+      value: { fields: block.fields, scope: scopeOf(entry.options, collector.report) },
+      line: entry.line,
     });
   }
   return { bodies, diagnostics: collector.diagnostics };
@@ -790,6 +824,22 @@ export interface ParsedRuleFile {
   readonly parsed: CwtParseResult;
 }
 
+/** Where one declaration was read, as the collision diagnostic spells it. */
+interface DeclarationSite {
+  /** The file that declared the key. */
+  readonly file: string;
+  /** The line the declaration sits on. */
+  readonly line: number;
+}
+
+/**
+ * Table name -> declared key -> where it was first declared.
+ *
+ * Keyed by table rather than globally: `carrier` is both a scope and a scope
+ * group, and the two tables answer different questions.
+ */
+type DeclarationOwners = Map<string, Map<string, DeclarationSite>>;
+
 interface RuleSetAccumulator extends RuleSet {
   readonly enums: Map<string, readonly string[]>;
   readonly complexEnums: Map<string, ComplexEnum>;
@@ -808,6 +858,7 @@ interface RuleSetAccumulator extends RuleSet {
   readonly singleAliases: Map<string, SingleAliasTarget>;
   readonly diagnostics: CwtDiagnostic[];
   readonly classificationDiagnosticKeys: Set<string>;
+  readonly declarationOwners: DeclarationOwners;
 }
 
 function createRuleSetAccumulator(extraAliasCategories: readonly string[]): RuleSetAccumulator {
@@ -829,15 +880,151 @@ function createRuleSetAccumulator(extraAliasCategories: readonly string[]): Rule
     singleAliases: new Map(),
     diagnostics: [],
     classificationDiagnosticKeys: new Set(),
+    declarationOwners: new Map(),
   };
 }
 
-function mergeLatestEntries<Key, Value>(
-  target: Map<Key, Value>,
-  source: ReadonlyMap<Key, Value>
+/**
+ * Records `site` as the declaring site of `key` in `table`, and returns the
+ * site that declared it first when one already had.
+ */
+function claimDeclaration(
+  owners: DeclarationOwners,
+  table: string,
+  key: string,
+  site: DeclarationSite
+): DeclarationSite | undefined {
+  let declared = owners.get(table);
+  if (declared === undefined) {
+    declared = new Map();
+    owners.set(table, declared);
+  }
+  const owner = declared.get(key);
+  if (owner === undefined) {
+    declared.set(key, site);
+  }
+  return owner;
+}
+
+function declarationConflict(
+  table: string,
+  key: string,
+  owner: DeclarationSite,
+  site: DeclarationSite
+): Error {
+  const where = (at: DeclarationSite): string => `${at.file}:${at.line}`;
+  return new Error(
+    `${table} key "${key}" is declared by ${where(owner)} and declared again by ${where(site)}; ` +
+      "rule set assembly accepts one declaration per key"
+  );
+}
+
+/**
+ * Whether a plain value, array or object tree holds the same content as
+ * another.
+ *
+ * Anything else — a `Map`, a `Set`, a class instance — compares by identity, so
+ * an unfamiliar shape reads as a disagreement and is reported rather than
+ * quietly accepted. The comparison only ever decides whether a repeat is
+ * allowed through, so erring towards "different" errs towards the diagnostic.
+ */
+function sameDeclaration(left: unknown, right: unknown): boolean {
+  if (Object.is(left, right)) {
+    return true;
+  }
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return (
+      Array.isArray(left) &&
+      Array.isArray(right) &&
+      left.length === right.length &&
+      left.every((item, index) => sameDeclaration(item, right[index]))
+    );
+  }
+  if (!isPlainObject(left) || !isPlainObject(right)) {
+    return false;
+  }
+  const keys = Object.keys(left);
+  return (
+    keys.length === Object.keys(right).length &&
+    keys.every((key) => key in right && sameDeclaration(left[key], right[key]))
+  );
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const prototype: unknown = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+/**
+ * Merges one file's declarations into a table that admits one per key.
+ *
+ * Every declaration the reader read arrives here, including a key a single file
+ * declared twice, so one place decides what a repeat means. A repeat is
+ * accepted only when it says the same thing, which cannot make file order
+ * matter: whichever declaration is kept, the table is the same. The vendored
+ * rules need it once — `scopes.cwt` declares `Design` at lines 60 and 102, both
+ * times as `aliases = { design }`.
+ *
+ * @throws Error when a repeated declaration says something different.
+ */
+function mergeUniqueEntries<Value>(
+  target: Map<string, Value>,
+  declarations: readonly Declaration<Value>[],
+  table: string,
+  file: string,
+  owners: DeclarationOwners
 ): void {
-  for (const [key, value] of source) {
-    target.set(key, value);
+  for (const { key, value, line } of declarations) {
+    const site: DeclarationSite = { file, line };
+    const owner = claimDeclaration(owners, table, key, site);
+    if (owner === undefined) {
+      target.set(key, value);
+      continue;
+    }
+    if (!sameDeclaration(target.get(key), value)) {
+      throw declarationConflict(table, key, owner, site);
+    }
+  }
+}
+
+function sameMembers(left: readonly string[], right: readonly string[]): boolean {
+  const members = new Set(left);
+  return members.size === new Set(right).size && right.every((member) => members.has(member));
+}
+
+/**
+ * Merges one file's enum declarations, accepting a repeated declaration whose
+ * members are the same set and storing those members sorted.
+ *
+ * Enums say the same thing more loosely than the other tables do: an enum's
+ * members are a set, so a second declaration listing them in another order
+ * still says the same thing. The vendored rules do exactly that: `enums.cwt:49`
+ * and `common/governments.cwt:662` both declare `election_type` as none,
+ * democratic and oligarchic, in different orders. Sorting keeps the merged
+ * members the same whichever file is read first.
+ *
+ * @throws Error when the same enum is declared again with different members.
+ */
+function mergeEnumEntries(
+  target: Map<string, readonly string[]>,
+  declarations: readonly Declaration<readonly string[]>[],
+  file: string,
+  owners: DeclarationOwners
+): void {
+  for (const { key, value: members, line } of declarations) {
+    const site: DeclarationSite = { file, line };
+    const owner = claimDeclaration(owners, "enums", key, site);
+    if (owner === undefined) {
+      target.set(key, members);
+      continue;
+    }
+    if (!sameMembers(target.get(key) ?? [], members)) {
+      throw declarationConflict("enums", key, owner, site);
+    }
+    target.set(key, [...new Set(members)].sort());
   }
 }
 
@@ -876,20 +1063,40 @@ function mergeReferencedDeclarations(
   files: readonly ParsedRuleFile[],
   state: RuleSetAccumulator
 ): void {
+  const owners = state.declarationOwners;
   for (const { file, parsed } of files) {
-    mergeLatestEntries(state.singleAliases, readSingleAliases(parsed.nodes, file));
-    mergeLatestEntries(state.contentTypes, readContentTypes(parsed.nodes));
+    mergeUniqueEntries(
+      state.singleAliases,
+      readSingleAliases(parsed.nodes, file),
+      "singleAliases",
+      file,
+      owners
+    );
+    mergeUniqueEntries(
+      state.contentTypes,
+      readContentTypes(parsed.nodes),
+      "contentTypes",
+      file,
+      owners
+    );
   }
 }
 
 function mergeResolvedRules(files: readonly ParsedRuleFile[], state: RuleSetAccumulator): void {
+  const owners = state.declarationOwners;
   for (const { file, parsed } of files) {
     const enums = readEnums(parsed.nodes, file);
-    mergeLatestEntries(state.enums, enums.enums);
-    mergeLatestEntries(state.complexEnums, enums.complexEnums);
-    mergeLatestEntries(state.scopes, readScopes(parsed.nodes));
-    mergeLatestEntries(state.scopeGroups, readScopeGroups(parsed.nodes));
-    mergeLatestEntries(state.links, readLinks(parsed.nodes, file));
+    mergeEnumEntries(state.enums, enums.enums, file, owners);
+    mergeUniqueEntries(state.complexEnums, enums.complexEnums, "complexEnums", file, owners);
+    mergeUniqueEntries(state.scopes, readScopes(parsed.nodes), "scopes", file, owners);
+    mergeUniqueEntries(
+      state.scopeGroups,
+      readScopeGroups(parsed.nodes),
+      "scopeGroups",
+      file,
+      owners
+    );
+    mergeUniqueEntries(state.links, readLinks(parsed.nodes, file), "links", file, owners);
 
     const triggers = readAliases(parsed.nodes, file, "trigger", state.singleAliases);
     appendEntries(state.triggers, triggers.aliases);
@@ -906,24 +1113,56 @@ function mergeResolvedRules(files: readonly ParsedRuleFile[], state: RuleSetAccu
     }
 
     const bodies = readBodies(parsed.nodes, file, state.contentTypes, state.singleAliases);
-    mergeLatestEntries(state.bodies, bodies.bodies);
+    mergeUniqueEntries(state.bodies, bodies.bodies, "bodies", file, owners);
     mergeClassificationDiagnostics(state, bodies.diagnostics);
 
     state.onActions.push(...readOnActions(parsed.nodes, file));
-    mergeLatestEntries(state.modifierCategories, readModifierCategories(parsed.nodes));
+    mergeUniqueEntries(
+      state.modifierCategories,
+      readModifierCategories(parsed.nodes),
+      "modifierCategories",
+      file,
+      owners
+    );
     const modifiers = readModifierDecls(parsed.nodes);
-    mergeLatestEntries(state.modifierDecls, modifiers.declarations);
+    mergeUniqueEntries(state.modifierDecls, modifiers.declarations, "modifierDecls", file, owners);
     state.modifierTemplates.push(...modifiers.templates);
   }
 }
 
 function mergeExtraComplexEnums(files: readonly ParsedRuleFile[], state: RuleSetAccumulator): void {
+  const owners = state.declarationOwners;
   for (const { file, parsed } of files) {
-    mergeLatestEntries(state.complexEnums, readComplexEnums(parsed.nodes, file));
+    mergeUniqueEntries(
+      state.complexEnums,
+      readComplexEnums(parsed.nodes, file),
+      "complexEnums",
+      file,
+      owners
+    );
   }
 }
 
-/** Builds an order-independent rule set from already-parsed CWT files. */
+/**
+ * Builds a rule set from already-parsed CWT files, independent of the order the
+ * files are supplied in.
+ *
+ * Order independence is enforced rather than assumed: a second declaration of
+ * an enum, scope, scope group, link, content type, body, modifier category,
+ * modifier declaration or single alias throws. The check does not care whether
+ * the two declarations came from two files or from one file twice, because the
+ * readers hand over every declaration they read rather than a map that would
+ * have collapsed the repeat first.
+ *
+ * A repeat that says the same thing is accepted, since no reading of it can
+ * depend on file order: for a scope or any other table the two declarations
+ * must be equal, and for an enum they must have the same members, which merge
+ * to those members sorted. Trigger, effect and alias-category declarations
+ * accumulate per name instead, so several files may declare one name.
+ *
+ * @throws Error when a key in a single-declaration table is declared twice
+ * with different content.
+ */
 export function buildRuleSet(
   parsedFiles: readonly ParsedRuleFile[],
   extraComplexEnumFiles: readonly ParsedRuleFile[] = [],
