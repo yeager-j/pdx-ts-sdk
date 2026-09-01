@@ -98,6 +98,52 @@ describe("content closure resolution", () => {
 
     expect(resolved.customTooltip.when).toBe(trigger);
   });
+
+  it("resolves closures through wrapped structs, alias structs, and struct maps", () => {
+    const nested: readonly ContentField[] = [{ member: "when", shape: "inlineTrigger" }];
+    registerAliasStructFields("test_closure_descent", nested);
+    const fields: readonly ContentField[] = [
+      {
+        key: "wrapped",
+        member: "wrapped",
+        shape: "struct",
+        form: "list",
+        wrapped: true,
+        fields: nested,
+      },
+      {
+        key: "aliased",
+        member: "aliased",
+        shape: "aliasStruct",
+        form: "block",
+        category: "test_closure_descent",
+      },
+      {
+        key: "mapped",
+        member: "mapped",
+        shape: "structMap",
+        form: "block",
+        fields: nested,
+      },
+    ];
+    const trigger = always();
+    const resolved = resolveFromClosures(
+      {
+        wrapped: [{ when: () => trigger }],
+        aliased: { when: () => trigger },
+        mapped: { first: { when: () => trigger } },
+      },
+      fields
+    ) as {
+      readonly wrapped: readonly [{ readonly when: unknown }];
+      readonly aliased: { readonly when: unknown };
+      readonly mapped: { readonly first: { readonly when: unknown } };
+    };
+
+    expect(resolved.wrapped[0].when).toBe(trigger);
+    expect(resolved.aliased.when).toBe(trigger);
+    expect(resolved.mapped.first.when).toBe(trigger);
+  });
 });
 
 function localizationMap(mod: PureMod, language = "english"): ReadonlyMap<string, string> {

@@ -26,11 +26,15 @@ import {
 } from "../script/effects/modifiers.ts";
 import type { TypedRef } from "../script/scalar.ts";
 import { isComplexTriggerModifier, TRIGGERED_MODIFIER_TEXT_MEMBERS } from "./blocks.ts";
+import {
+  contentFieldDescent,
+  contentFieldRecordPath,
+  mapContentFieldRecords,
+} from "./field-descent.ts";
 import { resolveLocalizationRole, type LocalizationRoleUse } from "./localization-families.ts";
-import { dualArm, fieldEntries, isPassthrough, resolveFromClosures } from "./lower.ts";
+import { fieldEntries, isPassthrough, resolveFromClosures } from "./lower.ts";
 import type { ShapeMint } from "./mint-provenance.ts";
 import {
-  aliasStructFieldsOf,
   carriesPrefixSegment,
   type ContentField,
   type ContentLocalisation,
@@ -62,14 +66,6 @@ export interface DefinedContent<
 
 type ContentDef = { readonly id: string };
 type RegisterLoc = (entries: readonly KeyedLocalization[]) => void;
-
-/** What the definition walk carries unchanged into a block field's interior. */
-interface StructWalkContext {
-  readonly ownerId: string;
-  readonly ownerType: string;
-  readonly pendingIds: Map<string, Set<string>>;
-  readonly mint: LocalizationMint;
-}
 
 /**
  * Accumulates the reference sink, the dotted path to the current level (for
@@ -676,81 +672,79 @@ export class ContentAuthoring {
         );
         continue;
       }
-      if (field.shape === "dual") {
+      const descent = contentFieldDescent(field, raw);
+      if (descent.kind === "field") {
         // Same trick the writer uses: resolve the arm and walk it as the
         // ordinary field it is. `path`, not `fieldPath` — the arm carries the
         // same key, so the recursion rebuilds the identical path.
-        const arm = dualArm(field, raw);
         const armDef = this.resolveFieldTree(
           ownerId,
           path,
-          { [arm.member]: raw },
-          [arm],
+          { [descent.field.member]: raw },
+          [descent.field],
           ownerType,
           pendingIds,
           mint
         );
-        if (armDef[arm.member] !== raw) {
-          rewrite(field.member, armDef[arm.member]);
+        if (armDef[descent.field.member] !== raw) {
+          rewrite(field.member, armDef[descent.field.member]);
         }
         continue;
       }
-      if (field.shape === "struct" || field.shape === "triggerStruct") {
-        // A wrapped struct is an array whatever `repeated` says — the schema's
-        // own rule — and each element needs its own path segment either way.
-        const asList = field.repeated === true || (field.shape === "struct" && field.wrapped);
-        this.rewriteStructItems(
-          raw,
-          asList === true,
-          fieldPath,
-          field.fields,
-          { ownerId, ownerType, pendingIds, mint },
-          (value) => rewrite(field.member, value)
-        );
+      if (descent.kind !== "records") {
         continue;
       }
-      if (field.shape === "aliasStruct") {
-        this.rewriteStructItems(
-          raw,
-          field.repeated === true,
-          fieldPath,
-          aliasStructFieldsOf(field.category),
-          { ownerId, ownerType, pendingIds, mint },
-          (value) => rewrite(field.member, value)
+      if (
+        descent.field.shape === "struct" ||
+        descent.field.shape === "triggerStruct" ||
+        descent.field.shape === "aliasStruct"
+      ) {
+        const walked = mapContentFieldRecords(descent, (occurrence) =>
+          this.resolveFieldTree(
+            ownerId,
+            contentFieldRecordPath(path, descent.field.key, occurrence),
+            occurrence.value as Readonly<Record<string, unknown>>,
+            descent.fields,
+            ownerType,
+            pendingIds,
+            mint
+          )
         );
+        if (walked !== raw) {
+          rewrite(field.member, walked);
+        }
         continue;
       }
-      if (field.shape === "structMap") {
-        const record = raw as Readonly<Record<string, Readonly<Record<string, unknown>>>>;
-        const entries = Object.entries(record).map(([name, item]) => {
+      if (descent.field.shape === "structMap") {
+        const structMapField = descent.field;
+        const walked = mapContentFieldRecords(descent, (occurrence) => {
+          const name = occurrence.key!;
+          const item = occurrence.value as Readonly<Record<string, unknown>>;
           // The map key is the localisation key: an event-chain counter shows
           // under its own name, with no pattern around it.
-          this.collectLocalisation(name, item, field.localisation ?? [], mint.into);
-          const nested = this.resolveFieldTree(
+          this.collectLocalisation(name, item, structMapField.localisation ?? [], mint.into);
+          return this.resolveFieldTree(
             ownerId,
-            `${fieldPath}_${name}`,
+            contentFieldRecordPath(path, structMapField.key, occurrence),
             item,
-            field.fields,
+            descent.fields,
             ownerType,
             pendingIds,
             mint
           );
-          return [name, nested] as const;
         });
-        if (entries.some(([name, nested]) => nested !== record[name])) {
-          rewrite(field.member, Object.fromEntries(entries));
+        if (walked !== raw) {
+          rewrite(field.member, walked);
         }
         continue;
       }
-      if (field.shape !== "repeatedStruct") {
-        continue;
-      }
-      const record = raw as Readonly<Record<string, Readonly<Record<string, unknown>>>>;
-      const identity = `${ownerType}.${field.key}`;
+      const repeatedStructField = descent.field;
+      const identity = `${ownerType}.${repeatedStructField.key}`;
       const existingIds = this.nestedIds.get(identity);
       const pending = pendingIds.get(identity) ?? new Set<string>();
-      const entries: (readonly [string, Readonly<Record<string, unknown>>])[] = [];
-      for (const [id, nested] of Object.entries(record)) {
+      const walked = mapContentFieldRecords(descent, (occurrence) => {
+        const id = occurrence.key!;
+        const nested = occurrence.value as Readonly<Record<string, unknown>>;
         // Nested definition ids are never minted with a head and carry no
         // exact-name allowance: no descriptor, so the plain measure applies.
         this.assertPrefixed(identity, id);
@@ -758,50 +752,15 @@ export class ContentAuthoring {
           throw new Error(`Duplicate ${identity} id "${id}"`);
         }
         pending.add(id);
-        this.collectLocalisation(id, nested, field.localisation, mint.into);
-        entries.push([
-          id,
-          this.resolveFieldTree(id, "", nested, field.fields, identity, pendingIds, mint),
-        ]);
-      }
+        this.collectLocalisation(id, nested, repeatedStructField.localisation, mint.into);
+        return this.resolveFieldTree(id, "", nested, descent.fields, identity, pendingIds, mint);
+      });
       pendingIds.set(identity, pending);
-      if (entries.some(([id, nested]) => nested !== record[id])) {
-        rewrite(field.member, Object.fromEntries(entries));
+      if (walked !== raw) {
+        rewrite(field.member, walked);
       }
     }
     return rewritten ?? def;
-  }
-
-  /**
-   * Walks a block-valued field's interior — one block, or an array of them —
-   * and reports a rewritten value only when the walk actually changed one.
-   */
-  private rewriteStructItems(
-    raw: unknown,
-    asList: boolean,
-    fieldPath: string,
-    fields: readonly ContentField[],
-    ctx: StructWalkContext,
-    rewrite: (value: unknown) => void
-  ): void {
-    const items = asList
-      ? (raw as readonly Readonly<Record<string, unknown>>[])
-      : [raw as Readonly<Record<string, unknown>>];
-    const walked = items.map((item, index) =>
-      this.resolveFieldTree(
-        ctx.ownerId,
-        asList ? `${fieldPath}_${index}` : fieldPath,
-        item,
-        fields,
-        ctx.ownerType,
-        ctx.pendingIds,
-        ctx.mint
-      )
-    );
-    if (walked.every((item, index) => item === items[index])) {
-      return;
-    }
-    rewrite(asList ? walked : walked[0]);
   }
 
   /**

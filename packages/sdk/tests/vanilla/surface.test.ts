@@ -9,7 +9,8 @@ import { parse, serialize, withoutLines } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 import { external } from "../../src/authoring/external.ts";
-import type { ContentField } from "../../src/content/schema.ts";
+import { ContentAuthoring } from "../../src/content/authoring.ts";
+import type { ContentField, ContentRegistryDescriptor } from "../../src/content/schema.ts";
 import { SwapPatchError } from "../../src/errors.ts";
 import type { AscensionPerkCategoryPatch } from "../../src/generated/ascension-perk-category.ts";
 import type { BuildingPatch } from "../../src/generated/building.ts";
@@ -1155,6 +1156,64 @@ describe("what a patch may and may not carry", () => {
     );
     expect(emitted).toContain(
       "\t\t\tdesc = pp_tech_gene_forging_technology_swap_1_weight_lavish\n"
+    );
+  });
+
+  it("indexes wrapped structs the same for definitions and patches", () => {
+    const wrapped: ContentField = {
+      key: "terms",
+      member: "terms",
+      shape: "struct",
+      form: "list",
+      wrapped: true,
+      fields: [
+        {
+          key: "text",
+          member: "text",
+          shape: "value",
+          form: "scalar",
+          conversion: "identity",
+          locKey: true,
+        },
+      ],
+    };
+    const descriptor: ContentRegistryDescriptor = {
+      type: "wrapped_test",
+      referenceName: "wrapped_test",
+      outputDir: "common/wrapped_test",
+      fileStem: "wrapped_test",
+      fileExtension: ".txt",
+      fields: [wrapped],
+      localisation: [],
+    };
+    const definedLoc: { readonly key: string }[] = [];
+    const authoring = new ContentAuthoring(PREFIX, [descriptor], (entries) =>
+      definedLoc.push(...entries)
+    );
+    const defined = authoring.define("wrapped_test", {
+      id: "pp_defined",
+      terms: [{ text: "First" }, { text: "Second" }],
+    });
+    const patched = patchContent(
+      refinery,
+      () => ({ terms: [{ text: "First" }, { text: "Second" }] }),
+      "building",
+      [wrapped],
+      [],
+      PREFIX
+    );
+
+    expect(definedLoc.map((entry) => entry.key)).toEqual([
+      "pp_defined_terms_0_text",
+      "pp_defined_terms_1_text",
+    ]);
+    expect(patched.loc.map((entry) => entry.key)).toEqual([
+      "pp_building_pp_refinery_terms_0_text",
+      "pp_building_pp_refinery_terms_1_text",
+    ]);
+    expect(serialize([defined.toEntries()])).toContain("text = pp_defined_terms_1_text");
+    expect(serialize([patched.toEntries()])).toContain(
+      "text = pp_building_pp_refinery_terms_1_text"
     );
   });
 

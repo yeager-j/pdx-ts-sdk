@@ -55,7 +55,12 @@ import {
   resolveTriggeredModifierText,
 } from "../../content/authoring.ts";
 import { isComplexTriggerModifier } from "../../content/blocks.ts";
-import { dualArm, fieldEntries } from "../../content/lower.ts";
+import {
+  contentFieldDescent,
+  contentFieldRecordPath,
+  mapContentFieldRecords,
+} from "../../content/field-descent.ts";
+import { fieldEntries } from "../../content/lower.ts";
 import type { LoweringContext } from "../../content/lowering-context.ts";
 import type { ContentField, ContentLocalisation } from "../../content/schema.ts";
 import type { TriggeredModifier } from "../../content/types.ts";
@@ -395,6 +400,50 @@ function mintLocalisation(
   path: string,
   ctx: MintContext
 ): unknown {
+  const descent = contentFieldDescent(field, value);
+  if (descent.kind === "field") {
+    // The resolved arm, not every arm: the walk now rewrites the member, so it
+    // has to agree with the one arm `fieldEntries` will lower.
+    return mintLocalisation(value, descent.field, member, path, ctx);
+  }
+  if (descent.kind === "records") {
+    if (descent.field.shape === "repeatedStruct") {
+      if (descent.field.localisation.length > 0) {
+        throw new Error(
+          `The patched "${member}" is a nested definition whose ids carry localisation, and a ` +
+            "patch has no rule for minting an id of its own inside a definition it does not " +
+            "own. Patched localization covers renames (the registry's own name/desc members) " +
+            "and desc'd modifier rows in weight blocks; define your own content for the rest."
+        );
+      }
+      return value;
+    }
+    if (descent.field.shape === "structMap") {
+      throw new Error(
+        `The patched "${member}" is a structMap field, and the patch path has no rule ` +
+          "for the localisation one can nest. Extend `mintLocalisation` before adding a patch " +
+          "registry that has one."
+      );
+    }
+    return mapContentFieldRecords(descent, (occurrence) => {
+      if (!isAuthoredRecord(occurrence.value)) {
+        return occurrence.value;
+      }
+      const itemPath = contentFieldRecordPath(path, descent.field.key, occurrence);
+      let resolved = occurrence.value;
+      for (const nested of descent.fields) {
+        const inner = occurrence.value[nested.member];
+        if (inner === undefined) {
+          continue;
+        }
+        const next = mintLocalisation(inner, nested, `${member}.${nested.member}`, itemPath, ctx);
+        if (next !== inner) {
+          resolved = { ...resolved, [nested.member]: next };
+        }
+      }
+      return resolved;
+    });
+  }
   switch (field.shape) {
     case "value": {
       if (field.locKey !== true) {
@@ -451,63 +500,6 @@ function mintLocalisation(
     case "weightBlockWithLoc":
       mintModifierDescs(value, field.key, joinFieldPath(path, field.key), ctx);
       return value;
-    case "repeatedStruct":
-      if (field.localisation.length > 0) {
-        throw new Error(
-          `The patched "${member}" is a nested definition whose ids carry localisation, and a ` +
-            "patch has no rule for minting an id of its own inside a definition it does not " +
-            "own. Patched localization covers renames (the registry's own name/desc members) " +
-            "and desc'd modifier rows in weight blocks; define your own content for the rest."
-        );
-      }
-      return value;
-    case "dual":
-      // The resolved arm, not every arm: the walk now rewrites the member, so
-      // it has to agree with the one arm `fieldEntries` will lower. `dualArm`
-      // is that decision, and its refusal of a form no arm takes is the same
-      // refusal the lowering would raise a moment later.
-      return mintLocalisation(value, dualArm(field, value), member, path, ctx);
-    case "struct":
-    case "triggerStruct": {
-      // A struct carries no localisation of its own, but the fields inside it
-      // are ordinary fields — `technology_swap`'s `weight` is a dual whose
-      // block arm is a `WeightBlock`, and a desc'd row there mints the same
-      // key one at the top level does. Passthrough elements keep their index,
-      // so an authored sibling's path does not move when one is added.
-      const items = Array.isArray(value) ? (value as readonly unknown[]) : [value];
-      const fieldPath = joinFieldPath(path, field.key);
-      const walked = items.map((item, index) => {
-        if (!isAuthoredRecord(item)) {
-          return item;
-        }
-        const itemPath = field.repeated ? `${fieldPath}_${index}` : fieldPath;
-        let resolved = item;
-        for (const nested of field.fields) {
-          const inner = item[nested.member];
-          if (inner === undefined) {
-            continue;
-          }
-          const next = mintLocalisation(inner, nested, `${member}.${nested.member}`, itemPath, ctx);
-          if (next !== inner) {
-            resolved = { ...resolved, [nested.member]: next };
-          }
-        }
-        return resolved;
-      });
-      return Array.isArray(value) ? walked : walked[0];
-    }
-    case "aliasStruct":
-    case "structMap":
-      // Reachable only from a patch registry whose fields hold one of these,
-      // which none does. Both can nest a `locKey` value, and a `structMap` can
-      // key localisation by a map key this mod does not own, so neither has a
-      // patch rule yet — and a silent pass-through would ship the author's
-      // prose as a key.
-      throw new Error(
-        `The patched "${member}" is a ${field.shape} field, and the patch path has no rule ` +
-          "for the localisation one can nest. Extend `mintLocalisation` before adding a patch " +
-          "registry that has one."
-      );
     default:
       return value;
   }
