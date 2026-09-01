@@ -15,16 +15,13 @@ import { PUBLIC_NESTED_TYPES } from "../../policy/public-surface.ts";
 export interface PublicBarrelModule {
   /** Generated module file name, e.g. `technology.ts`. */
   readonly file: string;
-  /** Complete generated module text, which every published name is checked against. */
-  readonly code: string;
+  /**
+   * Every name the module's emission declared as an export, recorded where it
+   * was rendered. Every published name is checked against these.
+   */
+  readonly exportedNames: readonly string[];
   /** Type names the module's own emission declares public. */
   readonly publicTypes: readonly string[];
-}
-
-/** Every name the generated module text declares as an export. */
-function exportedNames(code: string): Set<string> {
-  const declarations = code.matchAll(/^export (?:type|interface|const|function|class) (\w+)/gm);
-  return new Set([...declarations].map((declaration) => declaration[1]!));
 }
 
 /** The emission-derived and curated names each module publishes, keyed by file. */
@@ -54,7 +51,7 @@ function exportStatement(module: PublicBarrelModule, names: ReadonlySet<string>)
   if (names.size === 0) {
     return "";
   }
-  const exported = exportedNames(module.code);
+  const exported = new Set(module.exportedNames);
   const missing = [...names].filter((name) => !exported.has(name)).sort(compareStrings);
   if (missing.length > 0) {
     throw new Error(

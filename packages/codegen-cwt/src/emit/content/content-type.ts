@@ -77,6 +77,11 @@ const PARSED_CONTENT_MODULE = "../installation/vanilla/parsed-definitions.ts";
 export interface ContentEmission {
   /** Complete generated module text for the registry. */
   readonly code: string;
+  /**
+   * Every name {@link ContentEmission.code} declares as an export, which the
+   * public barrel checks the names it publishes against.
+   */
+  readonly exportedNames: readonly string[];
   /** Pascal-cased base name shared by the registry's generated declarations. */
   readonly typeName: string;
   /**
@@ -200,7 +205,7 @@ function patchTypes(
   localisationPlan: LocalisationPlan,
   patchWidenings: string[],
   patchLocMembers: string[]
-): string {
+): { readonly code: string; readonly exportedNames: readonly string[] } {
   const parsed = emitter.useFrom(PARSED_CONTENT_MODULE, `Parsed${typeName}`, "type");
   const locMembers = localisationPlan.entries.map((entry) => {
     const member = camelCase(entry.key);
@@ -249,23 +254,25 @@ function patchTypes(
         `${widening.reason}`
     );
   }
-  return (
-    docComment([
-      `What a patch of a vanilla ${type.name} may change.`,
-      "",
-      "Closed, so a typo is a compile error, and `id`-less: a patched definition",
-      "keeps vanilla's identity, because the override has to target the vanilla",
-      "key to win.",
-    ]) +
-    `export interface ${typeName}Patch${generic} {\n` +
-    locMembers.join("") +
-    members.join("") +
-    "}\n\n" +
-    docComment([`A patched vanilla ${type.name}, ready for the win engine.`]) +
-    `export type Patched${typeName} = ${emitter.use("PatchedContent")}<${parsed}>;\n\n` +
-    docComment([`A patched vanilla ${type.name} placed into a capability feature.`]) +
-    `export type ${typeName}PatchItem = ${emitter.use("ContentPatchItem")}<${parsed}>;\n\n`
-  );
+  return {
+    exportedNames: [`${typeName}Patch`, `Patched${typeName}`, `${typeName}PatchItem`],
+    code:
+      docComment([
+        `What a patch of a vanilla ${type.name} may change.`,
+        "",
+        "Closed, so a typo is a compile error, and `id`-less: a patched definition",
+        "keeps vanilla's identity, because the override has to target the vanilla",
+        "key to win.",
+      ]) +
+      `export interface ${typeName}Patch${generic} {\n` +
+      locMembers.join("") +
+      members.join("") +
+      "}\n\n" +
+      docComment([`A patched vanilla ${type.name}, ready for the win engine.`]) +
+      `export type Patched${typeName} = ${emitter.use("PatchedContent")}<${parsed}>;\n\n` +
+      docComment([`A patched vanilla ${type.name} placed into a capability feature.`]) +
+      `export type ${typeName}PatchItem = ${emitter.use("ContentPatchItem")}<${parsed}>;\n\n`,
+  };
 }
 
 /**
@@ -308,6 +315,8 @@ interface ContentTypeDraft {
   readonly memberDocs: Record<string, MemberDocRow>;
   readonly docTables: DocTable[];
   readonly extraCode: string[];
+  /** Every name {@link ContentTypeDraft.extraCode} exports. */
+  readonly exportedNames: string[];
   readonly emittedFields: EmittedField[];
   readonly nestedEmittedFields: EmittedField[];
   readonly corpusDescents: DescentNode[];
@@ -331,6 +340,7 @@ function contentTypeDraft(): ContentTypeDraft {
     memberDocs: {},
     docTables: [],
     extraCode: [],
+    exportedNames: [],
     emittedFields: [],
     nestedEmittedFields: [],
     corpusDescents: [],
@@ -509,8 +519,9 @@ function declareRepeatedStruct(
   draft.docTables.push(...nested.docTables);
   draft.patchMembers.push({ member, docs: docLines, memberType: nested.memberType });
   draft.extraCode.push(nested.code);
+  draft.exportedNames.push(...nested.exportedNames);
   draft.repeatedStructTypes.push(`${config.typeName}Fields`);
-  draft.fieldMetadata.push(nested.metadata);
+  draft.fieldMetadata.push(nested.metadata(member));
   draft.declinedFields.push(...nested.declinedFields);
   draft.unsupported.push(...nested.unsupported);
   draft.nestedEmittedFields.push(
@@ -615,18 +626,10 @@ function declareOrdinaryField(
   };
   draft.docTables.push(...(lowered.docTables ?? []));
   draft.patchMembers.push({ member, docs: docLines, memberType });
-  draft.fieldMetadata.push(
-    member === camelCase(name)
-      ? lowered.metadata
-      : // replaceAll, not replace: a dual repeats the member on each arm, and
-        // the writer resolves an arm by its own member name.
-        lowered.metadata.replaceAll(
-          `member: ${JSON.stringify(camelCase(name))}`,
-          `member: ${JSON.stringify(member)}`
-        )
-  );
+  draft.fieldMetadata.push(lowered.metadata(member));
   if (lowered.code !== undefined) {
     draft.extraCode.push(lowered.code);
+    draft.exportedNames.push(...(lowered.exportedNames ?? []));
   }
   if (lowered.unsupported !== undefined) {
     draft.unsupported.push(...lowered.unsupported);
@@ -826,6 +829,8 @@ interface ScopeParameterSurface {
   readonly declaredFromMember: string;
   /** The exported scope union types the parameters name. */
   readonly scopeTypes: string;
+  /** Every name {@link ScopeParameterSurface.scopeTypes} exports. */
+  readonly scopeTypeNames: readonly string[];
 }
 
 function scopeParameterDeclarations(
@@ -885,6 +890,15 @@ function scopeParameterDeclarations(
           ],
           "  "
         ) + `  ${declaredFrom.member}?: L;\n`;
+  const scopeOfName = `${pascalCase(type.name)}ScopeOf`;
+  const scopeTypeNames =
+    parameter === null
+      ? []
+      : [
+          parameter.typeName,
+          ...(parameter.selector === undefined ? [] : [scopeOfName]),
+          ...(declaredFrom === undefined ? [] : [declaredFrom.typeName]),
+        ];
   const scopeTypes =
     parameter === null
       ? ""
@@ -893,7 +907,7 @@ function scopeParameterDeclarations(
         `${parameter.scopes.map((scope) => JSON.stringify(scope)).join(" | ")};\n\n` +
         (parameter.selector === undefined
           ? ""
-          : `export type ${pascalCase(type.name)}ScopeOf<E extends ${parameter.parameterType}> =\n` +
+          : `export type ${scopeOfName}<E extends ${parameter.parameterType}> =\n` +
             Object.entries(parameter.selector.scopes)
               .map(
                 ([eventScope, scope]) =>
@@ -910,10 +924,24 @@ function scopeParameterDeclarations(
             ]) +
             `export type ${declaredFrom.typeName} = ` +
             `${declaredFrom.scopes.map((scope) => JSON.stringify(scope)).join(" | ")};\n\n`);
-  return { generic, declaredFromParameter, scopeMember, declaredFromMember, scopeTypes };
+  return {
+    generic,
+    declaredFromParameter,
+    scopeMember,
+    declaredFromMember,
+    scopeTypes,
+    scopeTypeNames,
+  };
 }
 
-/** Assembles the registry's generated module text from the lowered pieces. */
+/**
+ * Assembles the registry's generated module text from the lowered pieces, and
+ * the names it exports.
+ *
+ * The two are returned together because the public barrel checks every name it
+ * publishes against them: a declaration this stops emitting takes its name out
+ * of the list with it.
+ */
 function contentTypeCode(
   emitter: Emitter,
   type: ContentType,
@@ -922,12 +950,25 @@ function contentTypeCode(
   parameter: ScopeParameter | null,
   surface: ScopeParameterSurface,
   localisationPlan: LocalisationPlan,
+  locTypeName: string | null,
   draft: ContentTypeDraft,
-  patchCode: string
-): string {
+  patch: { readonly code: string; readonly exportedNames: readonly string[] }
+): { readonly code: string; readonly exportedNames: readonly string[] } {
   const { typeName, fieldsName, fieldsConstant, localisationConstant } = names;
   const declaredFrom = parameter?.declaredFrom;
-  return (
+  const exportedNames = [
+    ...draft.exportedNames,
+    ...surface.scopeTypeNames,
+    fieldsName,
+    ...(parameter?.selector === undefined ? [] : [`${typeName}Fields`]),
+    `${typeName}Def`,
+    ...(locTypeName === null ? [] : [locTypeName]),
+    `Defined${typeName}`,
+    ...patch.exportedNames,
+    fieldsConstant,
+    localisationConstant,
+  ];
+  const code =
     draft.extraCode.join("") +
     surface.scopeTypes +
     docComment([
@@ -962,23 +1003,21 @@ function contentTypeCode(
     "}\n\n" +
     // A registry with no declared slots emits no type: its items carry the
     // shared empty surface, so there is nothing per-registry to name.
-    (localisationPlan.entries.length === 0
-      ? ""
-      : localisationRefType(emitter, type, typeName, localisationPlan)) +
+    (locTypeName === null ? "" : localisationRefType(emitter, type, typeName, localisationPlan)) +
     `export type Defined${typeName}<Id extends string = string> = ` +
     `${emitter.use("DefinedContent")}<\n` +
     `  ${JSON.stringify(type.name)},\n` +
     `  ${typeName}Def<Id>\n` +
     ">;\n\n" +
-    patchCode +
+    patch.code +
     constArray(
       fieldsConstant,
       emitter.use("ContentField"),
       draft.fieldMetadata.map((entry) => `  ${entry},\n`).join("")
     ) +
     `export const ${localisationConstant}: readonly ${emitter.use("ContentLocalisation")}[] = ` +
-    `${localisationMetadata(emitter, type, localisationPlan, draft.localisationPointers)};\n`
-  );
+    `${localisationMetadata(emitter, type, localisationPlan, draft.localisationPointers)};\n`;
+  return { code, exportedNames };
 }
 
 /**
@@ -1038,7 +1077,7 @@ export function emitContentType(
   const patchWidenings: string[] = [];
   const patchLocMembers: string[] = [];
   const patchable = CONTENT_PATCH_REGISTRIES.has(type.name);
-  const patchCode = patchable
+  const patch = patchable
     ? patchTypes(
         emitter,
         type,
@@ -1049,8 +1088,9 @@ export function emitContentType(
         patchWidenings,
         patchLocMembers
       )
-    : "";
-  const code = contentTypeCode(
+    : { code: "", exportedNames: [] };
+  const locTypeName = localisationPlan.entries.length === 0 ? null : `${names.typeName}Loc`;
+  const module = contentTypeCode(
     emitter,
     type,
     cwtType,
@@ -1058,8 +1098,9 @@ export function emitContentType(
     parameter,
     surface,
     localisationPlan,
+    locTypeName,
     draft,
-    patchCode
+    patch
   );
 
   // The prose lists are projections of the same rows the ledger carries, so
@@ -1071,9 +1112,9 @@ export function emitContentType(
     return lineA < lineB ? -1 : lineA > lineB ? 1 : 0;
   });
   const collapsedRows = [...localisationPlan.aliases, ...draft.localisationAliases];
-  const locTypeName = localisationPlan.entries.length === 0 ? null : `${names.typeName}Loc`;
   return {
-    code,
+    code: module.code,
+    exportedNames: module.exportedNames,
     typeName: names.typeName,
     publicTypes: contentPublicTypes(
       names.typeName,

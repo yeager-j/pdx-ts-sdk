@@ -11,11 +11,35 @@ import { CONTENT_SUBTYPE_REFERENCE_REFINEMENTS } from "../../overlay/index.ts";
 import { importList } from "../../render/symbols.ts";
 import type { RegistryDefinerPlan } from "./definer-plan.ts";
 
-/** The complete `content-capability.ts` text: imports, then the surface. */
-export function contentCapabilityModule(plans: readonly RegistryDefinerPlan[]): string {
+/**
+ * The complete `content-capability.ts` module: imports, then the surface, and
+ * the names it exports for the public barrel's check.
+ */
+export function contentCapabilityModule(plans: readonly RegistryDefinerPlan[]): {
+  readonly code: string;
+  readonly exportedNames: readonly string[];
+} {
   assertCapabilityMethodsCollisionFree(plans);
   const facts = contentCapabilityFacts(plans);
-  return contentCapabilityImports(plans, facts) + "\n" + contentCapabilityDeclarations(facts);
+  return {
+    code: contentCapabilityImports(plans, facts) + "\n" + contentCapabilityDeclarations(facts),
+    exportedNames: [
+      "IdProfile",
+      "DEFAULT_ID_PROFILE",
+      "MINT_SHAPES",
+      "MintShapedRegistry",
+      "EXACT_NAME_MINTS",
+      "ExactNameRegistry",
+      "ExactMintName",
+      "MintNameOptions",
+      "MintedContentId",
+      "MintedIdOf",
+      "ContentIdMinter",
+      ...facts.shapeMintTypeNames,
+      "ContentCapabilityMethods",
+      "contentCapabilityMethods",
+    ],
+  };
 }
 
 /**
@@ -28,16 +52,11 @@ export function contentCapabilityModule(plans: readonly RegistryDefinerPlan[]): 
  */
 function assertCapabilityMethodsCollisionFree(plans: readonly RegistryDefinerPlan[]): void {
   const names = new Set<string>();
-  for (const member of plans.flatMap((plan) => plan.capabilityMembers)) {
-    const declared = /^ {2}(?:readonly )?(\w+)[<(:]/m.exec(member);
-    if (declared === null) {
-      throw new Error(`content capability member declares no method name:\n${member}`);
+  for (const { method } of plans.flatMap((plan) => plan.capabilityMembers)) {
+    if (names.has(method)) {
+      throw new Error(`content capability method collision at ${method}`);
     }
-    const name = declared[1]!;
-    if (names.has(name)) {
-      throw new Error(`content capability method collision at ${name}`);
-    }
-    names.add(name);
+    names.add(method);
   }
 }
 
@@ -50,6 +69,7 @@ function contentCapabilityFacts(plans: readonly RegistryDefinerPlan[]) {
   const mintShapeRows = plans.flatMap((plan) => plan.mintShapeRow ?? []);
   const exactNameRows = plans.flatMap((plan) => plan.exactNameRow ?? []);
   const shapeMintTypes = plans.flatMap((plan) => plan.shapeMintTypes);
+  const shapeMintTypeNames = plans.flatMap((plan) => plan.shapeMintTypeNames);
   const shapeMintRefTypes = plans.flatMap((plan) => plan.shapeMintRefTypes);
   const capabilityMembers = plans.flatMap((plan) => plan.capabilityMembers);
   const capabilityBindings = plans.flatMap((plan) => plan.capabilityBindings);
@@ -64,6 +84,7 @@ function contentCapabilityFacts(plans: readonly RegistryDefinerPlan[]) {
     mintShapeRows,
     exactNameRows,
     shapeMintTypes,
+    shapeMintTypeNames,
     shapeMintRefTypes,
     capabilityMembers,
     capabilityBindings,
@@ -332,7 +353,7 @@ function contentCapabilityDeclarations(facts: ContentCapabilityFacts): string {
     (shapeMintTypes.length === 0 ? "" : "\n") +
     docComment(["Content authoring methods bound to one mod capability's prefix and id profile."]) +
     "export interface ContentCapabilityMethods<P extends string, I extends IdProfile> {\n" +
-    capabilityMembers.join("\n") +
+    capabilityMembers.map((member) => member.declaration).join("\n") +
     "\n}\n\n" +
     docComment(["Builds the internal content-method table for a mod capability."]) +
     "export function contentCapabilityMethods<P extends string, I extends IdProfile>(\n" +

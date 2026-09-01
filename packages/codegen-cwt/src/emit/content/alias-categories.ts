@@ -24,6 +24,8 @@ import { emitAliasStruct } from "./alias-struct.ts";
 export interface AliasCategoryEmission {
   /** Complete generated module text for the category. */
   readonly code: string;
+  /** Every name {@link AliasCategoryEmission.code} declares as an export. */
+  readonly exportedNames: readonly string[];
   /** Name of the generated authoring interface. */
   readonly typeName: string;
   /** Imports and referenced symbols collected while generating the module. */
@@ -84,6 +86,7 @@ function emitAliasCategory(
   state.aliasSplices.set(category, emission);
   state.aliasCategories.set(category, {
     code: emission.code,
+    exportedNames: emission.exportedNames,
     typeName: emission.typeName,
     usage,
     emittedMembers: emission.emittedFields.map((field) => field.field),

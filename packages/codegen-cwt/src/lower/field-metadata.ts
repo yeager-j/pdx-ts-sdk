@@ -7,7 +7,6 @@
  */
 
 import { isOptional, isRepeated, type RuleField } from "../cwt/model.ts";
-import { camelCase } from "../naming.ts";
 import type { ContentFieldOverride } from "../overlay/index.ts";
 import { contentConversionOf, type TsValue } from "../render/emitter.ts";
 import { refTypesEntries } from "../render/writer.ts";
@@ -65,6 +64,17 @@ export function memberOptional(
 }
 
 /**
+ * Renders one field's runtime descriptor under the authoring member it is
+ * finally emitted as.
+ *
+ * The member is an argument rather than part of the rendered text because a
+ * body field colliding with a localization slot authors under a renamed member
+ * (`conditionalDesc`), which the emitter only decides once the slots are known.
+ * A dual repeats the member on each arm, so every arm receives the same one.
+ */
+export type FieldMetadata = (member: string) => string;
+
+/**
  * Renders the runtime descriptor for one generated content field.
  * Shape-specific entries can be appended through `extras`.
  */
@@ -73,31 +83,36 @@ export function metadata(
   name: string,
   shape: string,
   extras: readonly string[] = []
-): string {
+): FieldMetadata {
   const repeated = repeatsSiblings(field, shape);
-  const members = [
-    `key: ${JSON.stringify(name)}`,
-    `member: ${JSON.stringify(camelCase(name))}`,
-    `shape: ${JSON.stringify(shape)}`,
-    `form: ${JSON.stringify(formOfShape({ shape: contentShape(shape), repeated }))}`,
-    ...extras,
-  ];
-  if (repeated) {
-    members.push("repeated: true");
-  }
-  return `{ ${members.join(", ")} }`;
+  return (member) => {
+    const members = [
+      `key: ${JSON.stringify(name)}`,
+      `member: ${JSON.stringify(member)}`,
+      `shape: ${JSON.stringify(shape)}`,
+      `form: ${JSON.stringify(formOfShape({ shape: contentShape(shape), repeated }))}`,
+      ...extras,
+    ];
+    if (repeated) {
+      members.push("repeated: true");
+    }
+    return `{ ${members.join(", ")} }`;
+  };
 }
 
 /**
- * Appends one entry to an already-rendered field descriptor.
+ * Appends one entry to a field descriptor.
  *
  * Overlay corrections applied after a shape has been chosen (`pickOrdinary`)
- * have no other way in: the descriptor is text by then, and threading every
- * overlay property through each {@link metadata} call site would make every
- * lowering carry properties only one of them can use.
+ * have no other way in: threading every overlay property through each
+ * {@link metadata} call site would make every lowering carry properties only
+ * one of them can use.
  */
-export function withMetadataEntry(descriptor: string, entry: string): string {
-  return `${descriptor.slice(0, descriptor.lastIndexOf("}")).trimEnd()}, ${entry} }`;
+export function withMetadataEntry(descriptor: FieldMetadata, entry: string): FieldMetadata {
+  return (member) => {
+    const rendered = descriptor(member);
+    return `${rendered.slice(0, rendered.lastIndexOf("}")).trimEnd()}, ${entry} }`;
+  };
 }
 
 /** The descriptor for a shape whose whole value is one scalar the rules type. */

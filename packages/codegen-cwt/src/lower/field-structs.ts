@@ -61,6 +61,8 @@ interface StructShape {
   readonly fieldsConstant: string;
   /** The interface and field-table declarations, for the caller to prepend. */
   readonly code: string;
+  /** Every name {@link StructShape.code} exports, for the public barrel's check. */
+  readonly exportedNames: readonly string[];
   readonly unsupported: readonly FieldOmissionRow[];
   /** Doc rows for the struct's own table and every table nested inside it. */
   readonly docTables: readonly DocTable[];
@@ -85,7 +87,7 @@ function rerootFields(
 /** The generated members and evidence for one enum-keyed block declaration. */
 interface EnumKeyedMembers extends Pick<
   StructShape,
-  "code" | "unsupported" | "nested" | "children" | "docTables"
+  "code" | "exportedNames" | "unsupported" | "nested" | "children" | "docTables"
 > {
   /** One interface member per enum value, already indented and documented. */
   readonly members: readonly string[];
@@ -136,7 +138,9 @@ function enumKeyedMembers(
       })
     );
     memberDocs[member] = { optional: true, docs: keyed.declaration.docs, memberType };
-    fieldMetadata.push(metadata(field, value, "struct", [`fields: ${entry.fieldsConstant}`]));
+    fieldMetadata.push(
+      metadata(field, value, "struct", [`fields: ${entry.fieldsConstant}`])(member)
+    );
     nested.push(
       { field: memberPath, shape: "struct", repeated },
       ...rerootFields(entry.nested, entryPath, memberPath)
@@ -148,6 +152,7 @@ function enumKeyedMembers(
     fieldMetadata,
     memberDocs,
     code: entry.code,
+    exportedNames: entry.exportedNames,
     unsupported: entry.unsupported,
     nested,
     children,
@@ -160,6 +165,8 @@ interface StructDraft {
   readonly members: string[];
   readonly fieldMetadata: string[];
   readonly extraCode: string[];
+  /** Every name {@link StructDraft.extraCode} exports. */
+  readonly exportedNames: string[];
   readonly unsupported: FieldOmissionRow[];
   readonly nested: EmittedField[];
   readonly children: DescentNode[];
@@ -176,6 +183,7 @@ function lowerNamedStructMembers(
   const members: string[] = [];
   const fieldMetadata: string[] = [];
   const extraCode: string[] = [];
+  const exportedNames: string[] = [];
   const unsupported: FieldOmissionRow[] = [];
   const nested: EmittedField[] = [];
   const children: DescentNode[] = [];
@@ -231,9 +239,10 @@ function lowerNamedStructMembers(
       ...authoredLiterals(lowered.admits.literals),
     };
     docTables.push(...(lowered.docTables ?? []));
-    fieldMetadata.push(lowered.metadata);
+    fieldMetadata.push(lowered.metadata(member));
     if (lowered.code !== undefined) {
       extraCode.push(lowered.code);
+      exportedNames.push(...(lowered.exportedNames ?? []));
     }
     if (lowered.unsupported !== undefined) {
       unsupported.push(...lowered.unsupported);
@@ -252,6 +261,7 @@ function lowerNamedStructMembers(
     members,
     fieldMetadata,
     extraCode,
+    exportedNames,
     unsupported,
     nested,
     children,
@@ -340,6 +350,7 @@ function structShape(
     draft.fieldMetadata.push(...expanded.fieldMetadata);
     Object.assign(draft.memberDocs, expanded.memberDocs);
     draft.extraCode.push(expanded.code);
+    draft.exportedNames.push(...expanded.exportedNames);
     draft.unsupported.push(...expanded.unsupported);
     draft.nested.push(...expanded.nested);
     draft.children.push(...expanded.children);
@@ -371,6 +382,7 @@ function structShape(
     typeName,
     memberType: generic === undefined ? typeName : `${typeName}<${generic.argument}>`,
     fieldsConstant,
+    exportedNames: [...draft.exportedNames, typeName, fieldsConstant],
     nested: draft.nested,
     children: draft.children,
     docTables: [{ constant: fieldsConstant, members: draft.memberDocs }, ...draft.docTables],
@@ -432,6 +444,7 @@ export function lowerStructMap(
     ]),
     admits: { shape: "structMap", repeated: repeatsSiblings(field, "structMap") },
     code: shape.code,
+    exportedNames: shape.exportedNames,
     unsupported: shape.unsupported,
     docTables: shape.docTables,
     nested: shape.nested,
@@ -494,9 +507,9 @@ export function lowerStruct(
   // below, which the form calculation must agree with.
   const structRepeated = isRepeated(field.cardinality);
   const repeated = wrapped || structRepeated;
-  const metadataMembers = [
+  const metadataMembers = (member: string): string[] => [
     `key: ${JSON.stringify(name)}`,
-    `member: ${JSON.stringify(camelCase(name))}`,
+    `member: ${JSON.stringify(member)}`,
     `shape: "struct"`,
     `form: ${JSON.stringify(formOfShape({ shape: "struct", repeated: structRepeated, wrapped }))}`,
     `fields: ${fieldsConstant}`,
@@ -505,10 +518,11 @@ export function lowerStruct(
   ];
   return {
     memberType: repeated ? arrayType(typeName) : typeName,
-    metadata: `{ ${metadataMembers.join(", ")} }`,
+    metadata: (member) => `{ ${metadataMembers(member).join(", ")} }`,
     admits: { shape: "struct", repeated: structRepeated, ...(wrapped ? { wrapped } : {}) },
     wrapped,
     code,
+    exportedNames: shape.exportedNames,
     unsupported,
     docTables: shape.docTables,
     nested: shape.nested,
@@ -544,12 +558,13 @@ export function lowerTriggerStruct(
   const repeated = isRepeated(field.cardinality);
   return {
     memberType: repeated ? arrayType(shape.memberType) : shape.memberType,
-    metadata:
-      `{ key: ${JSON.stringify(name)}, member: ${JSON.stringify(camelCase(name))}, ` +
+    metadata: (member) =>
+      `{ key: ${JSON.stringify(name)}, member: ${JSON.stringify(member)}, ` +
       `shape: "triggerStruct", form: ${JSON.stringify(formOfShape({ shape: "triggerStruct", repeated }))}, ` +
       `fields: ${shape.fieldsConstant}${repeated ? ", repeated: true" : ""} }`,
     admits: { shape: "triggerStruct", repeated },
     code: shape.code,
+    exportedNames: shape.exportedNames,
     unsupported: shape.unsupported,
     docTables: shape.docTables,
     nested: shape.nested,
