@@ -56,6 +56,7 @@ import {
   type ContentManifestEntry,
 } from "@pdx-ts/codegen-cwt/policy/manifest";
 import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
+import { SPECIAL_SCOPE_PATHS } from "@pdx-ts/codegen-cwt/special-scope-paths";
 import { parse, scalarText, type PdxValue } from "@pdx-ts/pdxscript";
 
 import { InstallNotFoundError } from "../../src/errors.ts";
@@ -152,6 +153,39 @@ const RULE_SCOPES = (() => {
 /** The `scopesOf` resolver `shapeConformance` takes, over {@link RULE_SCOPES}. */
 export function ruleScopesOf(clause: "trigger" | "effect", key: string): RuleScopes | null {
   return RULE_SCOPES[clause].get(key.toLowerCase()) ?? null;
+}
+
+/**
+ * Every key a trigger clause admits by name, lowercased: the rules' trigger
+ * declarations, their scope links, the ambient scope paths, and the structural
+ * combinators cwtools implements in its own machinery instead of declaring.
+ */
+const RULE_TRIGGER_KEYS = new Set([
+  ...[...rules.triggers.keys()].map((key) => key.toLowerCase()),
+  ...[...rules.links.values()]
+    .filter((link) => link.type === "scope")
+    .map((link) => link.name.toLowerCase()),
+  ...SPECIAL_SCOPE_PATHS,
+  "not",
+  "and",
+  "or",
+  "nor",
+  "nand",
+  "hidden_trigger",
+]);
+
+/**
+ * Whether the vendored rules make `key` one a trigger clause admits.
+ *
+ * Half of the `isTriggerKey` the corpus reader takes: the other half is
+ * vanilla's scripted triggers, which cwtools resolves from the game files
+ * rather than declaring, so {@link extractCorpus} adds them from the install.
+ */
+export function isRuleTriggerKey(key: string): boolean {
+  // A data-driven scope path — `event_target:x`, `value:y`, `parameter:z` — is
+  // navigation whatever follows its prefix, the reading codegen-vanilla's
+  // `infer-scopes.ts` already gives a scope path's first segment.
+  return key.includes(":") || RULE_TRIGGER_KEYS.has(key.toLowerCase());
 }
 
 /**
@@ -440,6 +474,24 @@ function globalVariables(installPath: string): ReadonlyMap<string, PdxValue> {
   return variables;
 }
 
+/**
+ * The install's own scripted trigger names, lowercased. cwtools resolves these
+ * from the game files rather than declaring them, so the install is their only
+ * authority — the reason {@link globalVariables} reads the install too.
+ */
+function scriptedTriggerNames(installPath: string): ReadonlySet<string> {
+  const names = new Set<string>();
+  const dir = path.join(installPath, "common/scripted_triggers");
+  for (const file of readdirSync(dir).filter((name) => name.endsWith(".txt"))) {
+    for (const item of parse(readFileSync(path.join(dir, file), "utf8")).items) {
+      if (item.kind === "entry") {
+        names.add(item.key.toLowerCase());
+      }
+    }
+  }
+  return names;
+}
+
 function resolvedScalar(
   value: PdxValue,
   variables: ReadonlyMap<string, PdxValue>,
@@ -572,6 +624,9 @@ export function extractCorpus(installPath: string): ExtractedCorpus {
     );
   }
   const variables = globalVariables(installPath);
+  const scriptedTriggers = scriptedTriggerNames(installPath);
+  const isTriggerKey = (key: string): boolean =>
+    isRuleTriggerKey(key) || scriptedTriggers.has(key.toLowerCase());
   const registries = MEASUREMENTS.map((measurement) =>
     serializeCorpus(
       measurement.registry,
@@ -580,6 +635,7 @@ export function extractCorpus(installPath: string): ExtractedCorpus {
         registryPath: measurement.registryPath,
         keyword: measurement.keyword,
         nameField: measurement.nameField,
+        isTriggerKey,
         descents: measurement.descents,
         spliceMembers: measurement.spliceMembers,
         excludedKey: measurement.excludedKey,
