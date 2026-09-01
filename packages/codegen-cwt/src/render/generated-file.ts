@@ -1,12 +1,14 @@
 /** Formats complete generated SDK modules and swaps them into their output directory as one tree. */
 
 import {
+  chmodSync,
   copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   renameSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
@@ -196,31 +198,26 @@ export class GeneratedOutput {
 
   /**
    * Publishes the session: preserved files are carried into the staging tree,
-   * then that tree replaces the output directory. A failure to swap restores
-   * the previous directory before it rethrows.
+   * then that tree replaces the output directory. A failure restores the
+   * previous output and removes the staging tree before it rethrows, so a
+   * retry starts from a clean staging root. The session closes either way.
    */
   commit(): void {
     this.assertOpen();
-    this.stagePreservedFiles();
+    this.closed = true;
 
     const previousDirectory = `${this.stagingDirectory}.previous`;
-    const hadOutputDirectory = existsSync(this.outputDirectory);
-
-    mkdirSync(path.dirname(this.outputDirectory), { recursive: true });
-    if (hadOutputDirectory) {
-      renameSync(this.outputDirectory, previousDirectory);
-    }
     try {
-      renameSync(this.stagingDirectory, this.outputDirectory);
+      this.swapStagedTreeIn(previousDirectory);
     } catch (error) {
-      if (hadOutputDirectory) {
-        renameSync(previousDirectory, this.outputDirectory);
-      }
+      // The swap already put the output back, so dropping the staging tree
+      // here is what keeps a retry from inheriting it. A previous directory
+      // that outlived a failed restore is left alone: it is then the only copy
+      // of the output that remains.
+      rmSync(this.stagingDirectory, { recursive: true, force: true });
       throw error;
     }
-
     rmSync(previousDirectory, { recursive: true, force: true });
-    this.closed = true;
   }
 
   /** Removes the staging tree and closes the session, leaving the output directory as it was. */
@@ -228,6 +225,37 @@ export class GeneratedOutput {
     this.assertOpen();
     rmSync(this.stagingDirectory, { recursive: true, force: true });
     this.closed = true;
+  }
+
+  private swapStagedTreeIn(previousDirectory: string): void {
+    this.stagePreservedFiles();
+    mkdirSync(path.dirname(this.outputDirectory), { recursive: true });
+    this.adoptOutputDirectoryMode();
+
+    if (existsSync(this.outputDirectory)) {
+      renameSync(this.outputDirectory, previousDirectory);
+    }
+    try {
+      renameSync(this.stagingDirectory, this.outputDirectory);
+    } catch (error) {
+      if (existsSync(previousDirectory)) {
+        renameSync(previousDirectory, this.outputDirectory);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * `mkdtempSync` creates the staging directory owner-only, and the swap
+   * renames that directory into place, so it has to take on the mode of the
+   * directory it replaces rather than impose `0700` on the committed tree.
+   * A first generation has nothing to replace and follows its parent instead.
+   */
+  private adoptOutputDirectoryMode(): void {
+    const modelDirectory = existsSync(this.outputDirectory)
+      ? this.outputDirectory
+      : path.dirname(this.outputDirectory);
+    chmodSync(this.stagingDirectory, statSync(modelDirectory).mode & 0o777);
   }
 
   private stagePreservedFiles(): void {

@@ -8,12 +8,14 @@
  */
 
 import {
+  chmodSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -140,6 +142,46 @@ describe("GeneratedOutput", () => {
       /plain file name/
     );
   });
+
+  // Directory permission bits do not carry the same meaning on Windows, where
+  // `chmodSync` on a directory is close to a no-op.
+  it.skipIf(process.platform === "win32")(
+    "commits a directory readable by everyone the old one was",
+    async () => {
+      seedOutputDirectory({ "keep.ts": "export const keep = 1;\n" });
+      chmodSync(outputDirectory, 0o755);
+
+      const output = openSession();
+      await output.write("keep.ts", "export const keep = 2;\n");
+      output.commit();
+
+      expect(statSync(outputDirectory).mode & 0o777).toBe(0o755);
+    }
+  );
+
+  // A read-only parent stops the output directory from being renamed aside,
+  // which is the swap's first move. Windows does not enforce that bit.
+  it.skipIf(process.platform === "win32")(
+    "cleans up the staging tree when the swap fails",
+    async () => {
+      const outputParent = path.join(root, "locked");
+      outputDirectory = path.join(outputParent, "generated");
+      seedOutputDirectory({ "keep.ts": "export const keep = 1;\n" });
+      chmodSync(outputParent, 0o555);
+
+      const output = openSession();
+      await output.write("keep.ts", "export const keep = 2;\n");
+      try {
+        expect(() => output.commit()).toThrow();
+
+        expect(outputFiles()).toEqual(["keep.ts"]);
+        expect(readOutput("keep.ts")).toBe("export const keep = 1;\n");
+        expect(stagedSessions()).toEqual([]);
+      } finally {
+        chmodSync(outputParent, 0o755);
+      }
+    }
+  );
 
   it("refuses to reuse a session after it closes", async () => {
     const output = openSession();
