@@ -125,6 +125,8 @@ export interface ContentBody {
   readonly fields: readonly RuleField[];
   /** Scope inherited by fields without their own replace/push annotation. */
   readonly scope: ScopeContext | null;
+  /** The source file containing the body. */
+  readonly file: string;
 }
 
 /**
@@ -776,7 +778,7 @@ function readBodies(
     const block = classifyBlock(entry.value, resolverFor(singleAliases), collector.report);
     bodies.push({
       key: entry.key.text,
-      value: { fields: block.fields, scope: scopeOf(entry.options, collector.report) },
+      value: { fields: block.fields, scope: scopeOf(entry.options, collector.report), file },
       line: entry.line,
     });
   }
@@ -1175,6 +1177,14 @@ export function buildRuleSet(
   mergeResolvedRules(parsedFiles, state);
   mergeExtraComplexEnums(extraComplexEnumFiles, state);
   return state;
+}
+
+/**
+ * Maps every `scope_groups` name, lowercased, onto the scopes that group admits,
+ * so a group reference resolves however the annotation spells it.
+ */
+export function scopeGroupIndex(rules: RuleSet): Map<string, readonly string[]> {
+  return new Map([...rules.scopeGroups].map(([name, members]) => [name.toLowerCase(), members]));
 }
 
 /**

@@ -1,11 +1,18 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { scopeOf, type RuleField, type ScopeContext } from "@pdx-ts/codegen-cwt/cwt/model";
+import { parseCwt } from "@pdx-ts/codegen-cwt/cwt/parser";
+import { readAliases, type AliasDecl } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseScopeLinks } from "@pdx-ts/codegen-cwt/logs/scopes";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
-import { compareToBaseline, updatedBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
+import {
+  compareToBaseline,
+  loadBaseline,
+  updatedBaseline,
+} from "@pdx-ts/codegen-cwt/reconcile/baseline";
 import {
   reconcile,
   type DriftBaseline,
@@ -26,9 +33,9 @@ const docs = parseTriggerDocs(
 );
 const modifierDocs = parseModifierDocs(readFileSync(`${DOCS}/modifiers.log`, "utf8"));
 const dumpLinks = parseScopeLinks(readFileSync(`${DOCS}/scopes.log`, "utf8"));
-const baseline = JSON.parse(
-  readFileSync(new URL("../src/drift-baseline.json", import.meta.url), "utf8")
-) as DriftBaseline;
+// Through the loader, so a list the committed JSON omits reads as its default
+// rather than as undefined.
+const baseline = loadBaseline();
 
 describe("the two rule sources", () => {
   it("agree on all but a handful of names", () => {
@@ -290,5 +297,135 @@ describe("where the fork and the game's dump disagree", () => {
     expect(count("pop", "docsAdd")).toBe(117);
     const explained = parsed.filter((entry) => entry.explained);
     expect(explained.length / parsed.length).toBeGreaterThan(0.95);
+  });
+});
+
+describe("a scope annotation inside a rule body", () => {
+  /** The classified `## push_scope` / `## replace_scopes` one option line declares. */
+  function annotation(option: string): ScopeContext {
+    const node = parseCwt(`${option}\nfield = scalar`, "annotation.cwt").nodes[0];
+    if (node?.kind !== "assignment") {
+      throw new Error("synthetic scope must be attached to an assignment");
+    }
+    const scope = scopeOf(node.options);
+    if (scope === null) {
+      throw new Error("synthetic annotation must classify");
+    }
+    return scope;
+  }
+
+  function field(name: string, scope: ScopeContext): RuleField {
+    return {
+      key: { kind: "name", name },
+      type: { kind: "bool" },
+      cardinality: { min: 1, max: 1 },
+      docs: [],
+      scope,
+      line: 1,
+      comparison: false,
+    };
+  }
+
+  /** One effect whose nested `limit` clause replaces ROOT with a misspelling. */
+  function misspelledClauseEffect(): ReadonlyMap<string, readonly AliasDecl[]> {
+    const source = [
+      "## scopes = { country }",
+      "alias[effect:synthetic_clause_effect] = {",
+      "\t## replace_scopes = { this = country root = countr }",
+      "\tlimit = bool",
+      "}",
+    ].join("\n");
+    const { aliases } = readAliases(
+      parseCwt(source, "synthetic-effect.cwt").nodes,
+      "synthetic-effect.cwt",
+      "effect",
+      new Map()
+    );
+    return new Map([...rules.effects, ...aliases]);
+  }
+
+  const injected = reconcile(
+    {
+      ...rules,
+      bodies: new Map([
+        ...rules.bodies,
+        [
+          "synthetic_type",
+          {
+            fields: [field("potential", annotation("## push_scope = contry"))],
+            scope: null,
+            file: "synthetic-body.cwt",
+          },
+        ],
+      ]),
+      effects: misspelledClauseEffect(),
+    },
+    docs,
+    modifierDocs,
+    dumpLinks
+  );
+
+  it("reaches the drift report from a content body's own field", () => {
+    expect(injected.unknownScopes).toContain("contry — synthetic-body.cwt:1");
+  });
+
+  it("reaches it from a nested clause of an alias declaration", () => {
+    expect(injected.unknownScopes).toContain("countr — synthetic-effect.cwt:1");
+  });
+
+  it("fails the gate rather than silently widening the field", () => {
+    const differences = compareToBaseline(injected, baseline);
+
+    expect(differences).toContain("  + unknown scope: contry — synthetic-body.cwt:1");
+    expect(differences).toContain("  + unknown scope: countr — synthetic-effect.cwt:1");
+  });
+
+  /** One body whose `from` slot holds a scope group rather than one scope. */
+  const withGroupSlot = (group: string) =>
+    reconcile(
+      {
+        ...rules,
+        bodies: new Map([
+          ...rules.bodies,
+          [
+            "synthetic_type",
+            {
+              fields: [
+                field(
+                  "on_start",
+                  annotation(`## replace_scopes = { this = country from = scope_group[${group}] }`)
+                ),
+              ],
+              scope: null,
+              file: "synthetic-body.cwt",
+            },
+          ],
+        ]),
+      },
+      docs,
+      modifierDocs,
+      dumpLinks
+    );
+
+  it("separates a declared scope group from a scope scopes.cwt does not define", () => {
+    const declared = withGroupSlot("spatial_object");
+    // The vendored rules already fill ambient slots with this group, so the
+    // synthetic reference joins that entry rather than adding its own.
+    const entry = declared.scopeGroupAmbientSlots.find((slot) =>
+      slot.startsWith("scope_group[spatial_object] — ")
+    );
+
+    expect(entry).toContain("synthetic-body.cwt:1");
+    expect(declared.unknownScopes.some((scope) => scope.startsWith("scope_group["))).toBe(false);
+    expect(compareToBaseline(declared, baseline)).toContain(
+      `  + scope group in ambient slot: ${entry}`
+    );
+  });
+
+  it("still reports a group name scopes.cwt never declared as an unknown scope", () => {
+    const invented = withGroupSlot("not_a_group");
+
+    expect(invented.unknownScopes).toContain("scope_group[not_a_group] — synthetic-body.cwt:1");
+    expect(invented.scopeGroupAmbientSlots).toEqual(baseline.scopeGroupAmbientSlots);
   });
 });

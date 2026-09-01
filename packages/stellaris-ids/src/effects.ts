@@ -7779,6 +7779,7 @@ export const setAssimilationCounterVariable = /*#__PURE__*/ scriptedEffect(
   [
     "army",
     "carrier",
+    "colony",
     "country",
     "fleet",
     "leader",

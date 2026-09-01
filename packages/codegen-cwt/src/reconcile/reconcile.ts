@@ -1,14 +1,21 @@
 /** Reconciles CWT rules with independent game documentation into a deterministic drift report. */
 
+import { scopeGroupName, type RuleType, type ScopeContext } from "../cwt/model.ts";
 import type { CwtDiagnostic } from "../cwt/parser.ts";
-import { scopeIndex, type AliasDecl, type LinkDecl, type RuleSet } from "../cwt/rules.ts";
+import {
+  scopeGroupIndex,
+  scopeIndex,
+  type AliasDecl,
+  type LinkDecl,
+  type RuleSet,
+} from "../cwt/rules.ts";
 import { joinModifierScopes } from "../emit/script/modifiers.ts";
 import type { ModifierDocs } from "../logs/modifier-docs.ts";
 import type { ScopeLinks } from "../logs/scopes.ts";
 import type { DocDump } from "../logs/trigger-docs.ts";
 import { compareStrings } from "../naming.ts";
 import { UNIVERSAL_SCOPES } from "../overlay/index.ts";
-import { SPECIAL_SCOPE_PATHS } from "../special-scope-paths.ts";
+import { AMBIENT_SCOPE_KEYS, SPECIAL_SCOPE_PATHS } from "../special-scope-paths.ts";
 
 /** Names present in only one side of a rules-and-documentation comparison. */
 export interface NameDrift {
@@ -57,6 +64,16 @@ export interface ScopeResolution {
     /** Accepted effect rules without scope annotations. */
     readonly effects: readonly string[];
   };
+  /**
+   * For a `mixed` authority only: the reviewed scope set per rule name, since
+   * neither source states it. Required for every rule the resolution decides.
+   */
+  readonly resolvedScopes?: {
+    /** Reviewed scope sets for trigger rules. */
+    readonly triggers?: Readonly<Record<string, readonly string[]>>;
+    /** Reviewed scope sets for effect rules. */
+    readonly effects?: Readonly<Record<string, readonly string[]>>;
+  };
 }
 
 /** All deterministic differences between the CWT rules and game documentation. */
@@ -101,11 +118,22 @@ export interface DriftReport {
   /** Duplicate scope-link documentation names, identified by later location. */
   readonly duplicateScopeLinkEntries: readonly string[];
   /**
-   * Undefined scope names and stable summaries of their references. File-backed references use
-   * `<file>:<count>` tokens; modifier categories use `modifier_categories.cwt category:<name>`.
+   * Undefined scope names and stable summaries of their references. Scopes named by rule
+   * annotations, body fields, alias declarations, links, and the documentation dumps use
+   * `<file>:<count>` tokens; modifier categories use `modifier_categories.cwt category:<name>`;
+   * a content subtype's `push_scope` uses `<typeName> subtype:<subtypeName>`, because the
+   * parsed type declaration retains no source file.
    * Replacing one reference with another in the same file can leave its count unchanged.
    */
   readonly unknownScopes: readonly string[];
+  /**
+   * Scope annotations that place a scope group in a scope slot (`from = scope_group[x]`).
+   * The generator cannot narrow one slot to several scopes, so it leaves an ambient slot
+   * inaccessible; a group in the `this` slot is listed here too but fails lowering, since
+   * leaving it unpinned would widen the block instead. Each entry is the group and its
+   * `<file>:<count>` references.
+   */
+  readonly scopeGroupAmbientSlots: readonly string[];
   /** Rules whose `## scopes` disagree with the game's own dump. */
   readonly scopeConflicts: {
     /** Trigger rules whose normalized scope sets disagree. */
@@ -211,36 +239,129 @@ function compareScopes(
   };
 }
 
-function describeUnknownScopeReferences(
+/** A CWT field or bare value: the two nested nodes that carry a scope annotation. */
+interface ScopedMember {
+  /** The node's own `push_scope` or `replace_scopes` annotation, when present. */
+  readonly scope: ScopeContext | null;
+  /** The node's accepted value type, which may nest further members. */
+  readonly type: RuleType;
+}
+
+/**
+ * The fields and bare values nested directly inside one rule type.
+ *
+ * The switch is exhaustive so a future nesting `RuleType` variant fails to
+ * compile here rather than silently hiding the scopes below it.
+ */
+function nestedMembers(type: RuleType): readonly ScopedMember[] {
+  switch (type.kind) {
+    case "block":
+      return [...type.fields, ...type.bare];
+    case "bool":
+    case "int":
+    case "float":
+    case "scalar":
+    case "localisation":
+    case "valueField":
+    case "enum":
+    case "typeRef":
+    case "valueSet":
+    case "scope":
+    case "scopeGroup":
+    case "filepath":
+    case "icon":
+    case "colour":
+    case "aliasMatchLeft":
+    case "singleAliasRight":
+    case "unknownKeyword":
+    case "literal":
+      return [];
+  }
+}
+
+/** Every scope one annotation names, across `this` and the ambient slots. */
+function annotatedScopes(scope: ScopeContext | null): readonly string[] {
+  if (scope === null) {
+    return [];
+  }
+  return [scope.this, ...AMBIENT_SCOPE_KEYS.map((key) => scope[key])]
+    .filter((name) => name !== null)
+    .map((name) => name.toLowerCase());
+}
+
+/** Where one class of scope name was referenced, kept as stable identities. */
+interface ScopeReferences {
+  /** Reference counts per source file. */
+  readonly fileCounts: Map<string, Map<string, number>>;
+  /** Named references for sources that retain no file location. */
+  readonly namedTokens: Map<string, Set<string>>;
+}
+
+function emptyScopeReferences(): ScopeReferences {
+  return { fileCounts: new Map(), namedTokens: new Map() };
+}
+
+function describeScopeReferences(references: ScopeReferences): string[] {
+  const names = new Set([...references.fileCounts.keys(), ...references.namedTokens.keys()]);
+  return [...names].sort().map((scope) => {
+    const fileTokens = [...(references.fileCounts.get(scope) ?? [])].map(
+      ([file, count]) => `${file}:${count}`
+    );
+    const tokens = [...fileTokens, ...(references.namedTokens.get(scope) ?? [])].sort();
+    return `${scope} — ${tokens.join(", ")}`;
+  });
+}
+
+/** The scope references the drift report keeps, split by why each one is notable. */
+interface ScopeReferenceReport {
+  /** Undefined scope names and stable summaries of their references. */
+  readonly unknownScopes: readonly string[];
+  /** Declared scope groups placed in an ambient slot, and their references. */
+  readonly scopeGroupAmbientSlots: readonly string[];
+}
+
+function collectScopeReferences(
   rules: RuleSet,
   docs: DocDump,
   staticLinks: readonly LinkDecl[],
   canonicalScopes: ReadonlyMap<string, string>
-): string[] {
-  const fileCounts = new Map<string, Map<string, number>>();
-  const categoryTokens = new Map<string, Set<string>>();
-  const isUnknownScope = (scope: string): boolean =>
-    !canonicalScopes.has(scope) && !UNIVERSAL_SCOPES.has(scope);
+): ScopeReferenceReport {
+  const unknown = emptyScopeReferences();
+  const groupSlots = emptyScopeReferences();
+  // Matched the way `Emitter.scopeGroup` matches, so the report and lowering
+  // never disagree about whether a group reference resolves.
+  const scopeGroups = scopeGroupIndex(rules);
+
+  /** Which list a referenced scope belongs in, or `null` when it is ordinary. */
+  const listFor = (scope: string): ScopeReferences | null => {
+    const group = scopeGroupName(scope);
+    if (group !== null) {
+      return scopeGroups.has(group.toLowerCase()) ? groupSlots : unknown;
+    }
+    return canonicalScopes.has(scope) || UNIVERSAL_SCOPES.has(scope) ? null : unknown;
+  };
 
   const recordFileReferences = (scopes: readonly string[], file: string): void => {
     for (const scope of scopes) {
-      if (!isUnknownScope(scope)) {
+      const list = listFor(scope);
+      if (list === null) {
         continue;
       }
-      const countsForScope = fileCounts.get(scope) ?? new Map<string, number>();
+      const countsForScope = list.fileCounts.get(scope) ?? new Map<string, number>();
       countsForScope.set(file, (countsForScope.get(file) ?? 0) + 1);
-      fileCounts.set(scope, countsForScope);
+      list.fileCounts.set(scope, countsForScope);
     }
   };
 
   const recordCategoryReference = (scopes: readonly string[], token: string): void => {
     for (const scope of scopes) {
-      if (!isUnknownScope(scope)) {
+      const list = listFor(scope);
+      if (list === null) {
         continue;
       }
-      const tokensForScope = categoryTokens.get(scope) ?? new Set<string>();
+      const tokensForScope = list.namedTokens.get(scope) ?? new Set<string>();
       tokensForScope.add(token);
-      categoryTokens.set(scope, tokensForScope);
+      list.namedTokens.set(scope, tokensForScope);
     }
   };
 
@@ -256,6 +377,43 @@ function describeUnknownScopeReferences(
         if (declaration.supportedScopes !== null) {
           recordFileReferences(declaration.supportedScopes, declaration.file);
         }
+      }
+    }
+  }
+
+  const recordNestedScopes = (type: RuleType, file: string): void => {
+    for (const member of nestedMembers(type)) {
+      recordFileReferences(annotatedScopes(member.scope), file);
+      recordNestedScopes(member.type, file);
+    }
+  };
+
+  for (const body of rules.bodies.values()) {
+    recordFileReferences(annotatedScopes(body.scope), body.file);
+    for (const field of body.fields) {
+      recordFileReferences(annotatedScopes(field.scope), body.file);
+      recordNestedScopes(field.type, body.file);
+    }
+  }
+
+  for (const aliasTable of [rules.triggers, rules.effects, ...rules.aliasCategories.values()]) {
+    for (const declarations of aliasTable.values()) {
+      for (const declaration of declarations) {
+        recordFileReferences(annotatedScopes(declaration.scope), declaration.file);
+        recordNestedScopes(declaration.type, declaration.file);
+      }
+    }
+  }
+
+  // Parsed type declarations do not retain source locations, so the type and
+  // subtype names provide stable identities.
+  for (const contentType of rules.contentTypes.values()) {
+    for (const subtype of contentType.subtypes) {
+      if (subtype.pushScope !== null) {
+        recordCategoryReference(
+          [subtype.pushScope.toLowerCase()],
+          `${contentType.name} subtype:${subtype.name}`
+        );
       }
     }
   }
@@ -278,14 +436,10 @@ function describeUnknownScopeReferences(
     }
   }
 
-  const unknownScopeNames = new Set([...fileCounts.keys(), ...categoryTokens.keys()]);
-  return [...unknownScopeNames].sort().map((scope) => {
-    const fileTokens = [...(fileCounts.get(scope) ?? new Map<string, number>())].map(
-      ([file, count]) => `${file}:${count}`
-    );
-    const tokens = [...fileTokens, ...(categoryTokens.get(scope) ?? [])].sort();
-    return `${scope} — ${tokens.join(", ")}`;
-  });
+  return {
+    unknownScopes: describeScopeReferences(unknown),
+    scopeGroupAmbientSlots: describeScopeReferences(groupSlots),
+  };
 }
 
 /**
@@ -332,7 +486,7 @@ export function reconcile(
     duplicateDocEntries: [...docs.duplicates].sort(),
     duplicateModifierEntries: [...modifierDocs.duplicates].sort(),
     duplicateScopeLinkEntries: [...dumpLinks.duplicates].sort(),
-    unknownScopes: describeUnknownScopeReferences(rules, docs, staticLinks, canonicalScopes),
+    ...collectScopeReferences(rules, docs, staticLinks, canonicalScopes),
     scopeConflicts: {
       triggers: triggerScopes.conflicts,
       effects: effectScopes.conflicts,

@@ -48,13 +48,19 @@ import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import type { EmittedField } from "@pdx-ts/codegen-cwt/lower/fields";
-import { canonicalScopeSet, declaredScopes } from "@pdx-ts/codegen-cwt/lower/script-shape";
+import { canonicalScopeSet } from "@pdx-ts/codegen-cwt/lower/script-shape";
 import { CONTENT_DECLINED_FIELDS } from "@pdx-ts/codegen-cwt/overlay";
 import {
   CONTENT_MANIFEST,
   registryNameOf,
   type ContentManifestEntry,
 } from "@pdx-ts/codegen-cwt/policy/manifest";
+import { loadBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
+import {
+  resolveRuleScopes,
+  scopeAuthorityOf,
+  type RuleScopeDecision,
+} from "@pdx-ts/codegen-cwt/reconcile/scope-authority";
 import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { SPECIAL_SCOPE_PATHS } from "@pdx-ts/codegen-cwt/special-scope-paths";
 import { parse, scalarText, type PdxValue } from "@pdx-ts/pdxscript";
@@ -119,24 +125,27 @@ const MODIFIER_NAMES = (() => {
 
 /**
  * Which scopes each trigger and effect is legal in, resolved exactly the way
- * the trigger and effect emitters resolve it — the rules' own `## scopes`, with
- * the game's dump as fallback. A key neither source knows resolves to `null`,
- * which the shape gate skips: vanilla's ~1449 scripted triggers and every scope
- * link land there, and they are the vanilla-surface backlog rather than
- * evidence about the field holding them.
+ * the trigger and effect emitters resolve it — the committed drift baseline's
+ * reviewed decision over the rules' own `## scopes` and the game's dump. A key
+ * no decision covers and no rule annotates resolves to `null`, which the shape
+ * gate skips: vanilla's ~1449 scripted triggers and every scope link land there,
+ * and they are the vanilla-surface backlog rather than evidence about the field
+ * holding them.
  */
 const RULE_SCOPES = (() => {
   const dump = parseTriggerDocs(
     readFileSync(path.join(SCRIPT_DOCS, "triggers.log"), "utf8"),
     readFileSync(path.join(SCRIPT_DOCS, "effects.log"), "utf8")
   );
+  const authority = scopeAuthorityOf(loadBaseline(), scopes);
   const resolve = (
     table: typeof rules.triggers,
-    docs: typeof dump.triggers
+    docs: typeof dump.triggers,
+    decisions: ReadonlyMap<string, RuleScopeDecision>
   ): Map<string, RuleScopes> => {
     const out = new Map<string, RuleScopes>();
     for (const [key, declarations] of table) {
-      const supported = declaredScopes(declarations, docs.get(key));
+      const supported = resolveRuleScopes(declarations, docs.get(key), decisions.get(key));
       const set = supported.length === 0 ? null : canonicalScopeSet(supported, scopes);
       if (set !== null) {
         out.set(key.toLowerCase(), set);
@@ -145,8 +154,8 @@ const RULE_SCOPES = (() => {
     return out;
   };
   return {
-    trigger: resolve(rules.triggers, dump.triggers),
-    effect: resolve(rules.effects, dump.effects),
+    trigger: resolve(rules.triggers, dump.triggers, authority.triggers),
+    effect: resolve(rules.effects, dump.effects, authority.effects),
   };
 })();
 

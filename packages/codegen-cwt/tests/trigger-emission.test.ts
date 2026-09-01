@@ -9,6 +9,8 @@ import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
 import type { ArgField } from "@pdx-ts/codegen-cwt/lower/script-shape";
+import { loadBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
+import { scopeAuthorityOf } from "@pdx-ts/codegen-cwt/reconcile/scope-authority";
 import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
@@ -21,10 +23,12 @@ const docs = parseTriggerDocs(
   readFileSync(`${DOCS}/effects.log`, "utf8")
 );
 const emitter = new Emitter(rules);
+const scopes = scopeIndex(rules);
+const authority = scopeAuthorityOf(loadBaseline(), scopes);
 const emission = emitTriggers(
   emitter,
   docs.triggers,
-  lowerRuleTable(rules.triggers, docs.triggers, emitter, scopeIndex(rules))
+  lowerRuleTable(rules.triggers, docs.triggers, emitter, scopes, authority.triggers)
 );
 
 /**
@@ -54,7 +58,7 @@ function emitInlineTriggers(source: string): TriggerEmission {
   return emitTriggers(
     inlineEmitter,
     docs.triggers,
-    lowerRuleTable(aliases, docs.triggers, inlineEmitter, scopeIndex(rules))
+    lowerRuleTable(aliases, docs.triggers, inlineEmitter, scopes, new Map())
   );
 }
 

@@ -92,8 +92,9 @@ import {
 import { formatScriptGapReport, reconcileScriptGaps } from "./policy/script-gaps.ts";
 import { HAND_WRITTEN_TRIGGER_EXPORTS, RESERVED_TRIGGER_EXPORT_NAMES } from "./policy/triggers.ts";
 import { parseUpstreamCommit } from "./provenance.ts";
-import { checkDrift } from "./reconcile/baseline.ts";
+import { checkDrift, loadBaseline } from "./reconcile/baseline.ts";
 import { reconcile } from "./reconcile/reconcile.ts";
+import { scopeAuthorityOf, type ScopeAuthority } from "./reconcile/scope-authority.ts";
 import { Emitter, type Usage } from "./render/emitter.ts";
 import { GeneratedOutput, header } from "./render/generated-file.ts";
 import { importList } from "./render/symbols.ts";
@@ -299,12 +300,19 @@ function emitScriptRules(
   docs: ReturnType<typeof parseTriggerDocs>,
   links: ReturnType<typeof parseScopeLinks>,
   emitter: Emitter,
-  effectPolicy: ReturnType<typeof createEffectPolicy>
+  effectPolicy: ReturnType<typeof createEffectPolicy>,
+  authority: ScopeAuthority
 ): ScriptRuleEmission {
   const index = scopeIndex(rules);
 
   emitter.beginFile();
-  const loweredTriggers = lowerRuleTable(rules.triggers, docs.triggers, emitter, index);
+  const loweredTriggers = lowerRuleTable(
+    rules.triggers,
+    docs.triggers,
+    emitter,
+    index,
+    authority.triggers
+  );
   const triggers = emitTriggers(emitter, docs.triggers, loweredTriggers);
   const triggerUsage = emitter.endFile();
 
@@ -314,7 +322,13 @@ function emitScriptRules(
   const scopeLinks = emitScopeLinks(classifiedLinks, index, reservedScopeLinkNames);
 
   emitter.beginFile();
-  const loweredEffects = lowerRuleTable(rules.effects, docs.effects, emitter, index);
+  const loweredEffects = lowerRuleTable(
+    rules.effects,
+    docs.effects,
+    emitter,
+    index,
+    authority.effects
+  );
   const effects = emitEffects(
     emitter,
     docs.effects,
@@ -876,13 +890,15 @@ async function main(): Promise<void> {
     SCRIPT_DOCS_DIRECTORY
   );
 
-  checkDrift(reconcile(rules, docs, modifierDocs, links), rebaseline);
+  const baseline = loadBaseline();
+  checkDrift(reconcile(rules, docs, modifierDocs, links), baseline, rebaseline);
+  const authority = scopeAuthorityOf(baseline, scopeIndex(rules));
 
   const emitter = new Emitter(rules);
   const effectPolicy = createEffectPolicy(rules);
   const modifierOperationPolicy = createModifierOperationPolicy(rules);
   const eventFieldPolicy = createEventFieldPolicy(rules);
-  const scriptRules = emitScriptRules(rules, docs, links, emitter, effectPolicy);
+  const scriptRules = emitScriptRules(rules, docs, links, emitter, effectPolicy, authority);
 
   const output = GeneratedOutput.open();
   let report: string[];

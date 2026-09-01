@@ -619,8 +619,8 @@ export interface EffectsIn11Scopes5713 {
   createArchaeologicalSite(value: ArchaeologicalSiteTypeRef | string | "random"): void;
 }
 
-/** Effects valid in: army, carrier, country, fleet, leader, megastructure, planet, pop_faction, pop_group, ship, species, system. */
-export interface EffectsIn12Scopes3d16 {
+/** Effects valid in: army, carrier, colony, country, fleet, leader, megastructure, planet, pop_faction, pop_group, ship, species, system. */
+export interface EffectsIn13Scopesf001 {
   /**
    * Exports the value of a specified modifier in the current scope to a specified variable.
    * ```
@@ -17744,7 +17744,7 @@ export interface ArchaeologicalSiteScope
 export interface ArmyScope
   extends
     StructuralEffects<"army">,
-    EffectsIn12Scopes3d16,
+    EffectsIn13Scopesf001,
     EffectsIn15Scopesee16,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes4fbd,
@@ -17817,7 +17817,7 @@ export interface CarrierScope
   extends
     StructuralEffects<"carrier">,
     EffectsIn11Scopes5713,
-    EffectsIn12Scopes3d16,
+    EffectsIn13Scopesf001,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a<"carrier">,
     EffectsIn29Scopes878c,
@@ -17864,6 +17864,7 @@ export interface ColonyScope
   extends
     StructuralEffects<"colony">,
     EffectsIn11Scopes5713,
+    EffectsIn13Scopesf001,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a<"colony">,
     EffectsIn29Scopes878c,
@@ -17916,7 +17917,7 @@ export interface CosmicStormInfluenceFieldScope
 export interface CountryScope
   extends
     StructuralEffects<"country">,
-    EffectsIn12Scopes3d16,
+    EffectsIn13Scopesf001,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a<"country">,
     EffectsIn29Scopes878c,
@@ -18079,7 +18080,7 @@ export interface FleetScope
   extends
     StructuralEffects<"fleet">,
     EffectsIn11Scopes5713,
-    EffectsIn12Scopes3d16,
+    EffectsIn13Scopesf001,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a<"fleet">,
     EffectsIn29Scopes878c,
@@ -18128,7 +18129,7 @@ export interface GalacticCommunityScope
 export interface LeaderScope
   extends
     StructuralEffects<"leader">,
-    EffectsIn12Scopes3d16,
+    EffectsIn13Scopesf001,
     EffectsIn15Scopesee16,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes4fbd,
@@ -18161,7 +18162,7 @@ export interface MegastructureScope
   extends
     StructuralEffects<"megastructure">,
     EffectsIn11Scopes5713,
-    EffectsIn12Scopes3d16,
+    EffectsIn13Scopesf001,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a<"megastructure">,
     EffectsIn29Scopes878c,
@@ -18213,7 +18214,7 @@ export interface PlanetScope
   extends
     StructuralEffects<"planet">,
     EffectsIn11Scopes5713,
-    EffectsIn12Scopes3d16,
+    EffectsIn13Scopesf001,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a<"planet">,
     EffectsIn29Scopes878c,
@@ -18266,7 +18267,7 @@ export interface PlanetScope
 export interface PopFactionScope
   extends
     StructuralEffects<"pop_faction">,
-    EffectsIn12Scopes3d16,
+    EffectsIn13Scopesf001,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a<"pop_faction">,
     EffectsIn29Scopes878c,
@@ -18285,7 +18286,7 @@ export interface PopFactionScope
 export interface PopGroupScope
   extends
     StructuralEffects<"pop_group">,
-    EffectsIn12Scopes3d16,
+    EffectsIn13Scopesf001,
     EffectsIn16Scopes674a<"pop_group">,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes023a<"pop_group">,
@@ -18341,7 +18342,7 @@ export interface ShipScope
   extends
     StructuralEffects<"ship">,
     EffectsIn11Scopes5713,
-    EffectsIn12Scopes3d16,
+    EffectsIn13Scopesf001,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a<"ship">,
     EffectsIn29Scopes878c,
@@ -18417,7 +18418,7 @@ export interface SituationScope
 export interface SpeciesScope
   extends
     StructuralEffects<"species">,
-    EffectsIn12Scopes3d16,
+    EffectsIn13Scopesf001,
     EffectsIn29Scopes878c,
     EffectsIn8Scopes39a9<"species">,
     EffectsInLeaderPopGroupSpecies,
@@ -18506,7 +18507,7 @@ export interface SystemScope
   extends
     StructuralEffects<"system">,
     EffectsIn11Scopes5713,
-    EffectsIn12Scopes3d16,
+    EffectsIn13Scopesf001,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a<"system">,
     EffectsIn29Scopes878c,

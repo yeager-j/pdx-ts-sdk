@@ -36,6 +36,7 @@
   "duplicateModifierEntries": [],
   "duplicateScopeLinkEntries": [],
   "unknownScopes": ["pop — effects.log:52, triggers.log:73"],
+  "scopeGroupAmbientSlots": ["scope_group[spatial_object] — common/missions.cwt:11"],
   "scopeResolutions": [
     {
       "id": "stale-v4-scope-names",
@@ -526,6 +527,25 @@
       "unscopedRules": {
         "triggers": [],
         "effects": []
+      },
+      "resolvedScopes": {
+        "effects": {
+          "export_modifier_to_variable": [
+            "army",
+            "carrier",
+            "colony",
+            "country",
+            "fleet",
+            "leader",
+            "megastructure",
+            "planet",
+            "pop_faction",
+            "pop_group",
+            "ship",
+            "species",
+            "system"
+          ]
+        }
       }
     },
     {

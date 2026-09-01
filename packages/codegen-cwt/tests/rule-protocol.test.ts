@@ -35,6 +35,8 @@ import { createEffectPolicy } from "@pdx-ts/codegen-cwt/policy/effects";
 import { createEventFieldPolicy } from "@pdx-ts/codegen-cwt/policy/event-fields";
 import { createModifierOperationPolicy } from "@pdx-ts/codegen-cwt/policy/modifiers";
 import { RESERVED_TRIGGER_EXPORT_NAMES } from "@pdx-ts/codegen-cwt/policy/triggers";
+import { loadBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
+import { scopeAuthorityOf } from "@pdx-ts/codegen-cwt/reconcile/scope-authority";
 import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
@@ -48,6 +50,7 @@ const docs = parseTriggerDocs(
 );
 const emitter = new Emitter(rules);
 const scopes = scopeIndex(rules);
+const authority = scopeAuthorityOf(loadBaseline(), scopes);
 
 function bareValue(overrides: Partial<RuleBareValue> = {}): RuleBareValue {
   return {
@@ -166,7 +169,7 @@ function syntheticEffectInput(source: string, emitter: Emitter) {
   const effects = new Map([...rules.effects, ...aliases]);
   return {
     policy: createEffectPolicy({ ...rules, effects }),
-    rules: lowerRuleTable(effects, docs.effects, emitter, scopes),
+    rules: lowerRuleTable(effects, docs.effects, emitter, scopes, authority.effects),
   };
 }
 
@@ -312,8 +315,14 @@ describe("LoweredRule", () => {
     ).toMatchObject({ this: "fleet", fromfromfromfrom: "war", prevprev: "country" });
   });
 
-  const triggers = lowerRuleTable(rules.triggers, docs.triggers, emitter, scopes);
-  const effects = lowerRuleTable(rules.effects, docs.effects, emitter, scopes);
+  const triggers = lowerRuleTable(
+    rules.triggers,
+    docs.triggers,
+    emitter,
+    scopes,
+    authority.triggers
+  );
+  const effects = lowerRuleTable(rules.effects, docs.effects, emitter, scopes, authority.effects);
 
   it("carries legal scopes and nested-clause facts through one model", () => {
     const rule = triggers.get("count_owned_planet")!;
@@ -347,7 +356,9 @@ describe("LoweredRule", () => {
     ).aliases.get("mixed_status")!;
 
     expect(declarations).toHaveLength(2);
-    expect(() => lowerRule("mixed_status", declarations, undefined, emitter, scopes)).toThrow(
+    expect(() =>
+      lowerRule("mixed_status", declarations, undefined, emitter, scopes, undefined)
+    ).toThrow(
       'mixed_status: some declarations are marked "## api_status = removed" and some are not'
     );
   });
@@ -961,7 +972,7 @@ describe("LoweredRule", () => {
 });
 
 describe("a spliced alias category with a script authoring surface", () => {
-  const effects = lowerRuleTable(rules.effects, docs.effects, emitter, scopes);
+  const effects = lowerRuleTable(rules.effects, docs.effects, emitter, scopes, authority.effects);
   const emitted = emitEffects(
     new Emitter(rules),
     docs.effects,
@@ -1114,7 +1125,7 @@ describe("a repeated argument's declared bound", () => {
       new Emitter(rules),
       docs.effects,
       scopes,
-      lowerRuleTable(rules.effects, docs.effects, emitter, scopes),
+      lowerRuleTable(rules.effects, docs.effects, emitter, scopes, authority.effects),
       createEffectPolicy(rules),
       []
     );
@@ -1205,7 +1216,7 @@ describe("the effect ownership policy", () => {
   });
 
   it("reserves the effect-path terminal against generated scope links", () => {
-    const lowered = lowerRuleTable(rules.effects, docs.effects, emitter, scopes);
+    const lowered = lowerRuleTable(rules.effects, docs.effects, emitter, scopes, authority.effects);
     expect(() =>
       emitEffects(emitter, docs.effects, scopes, lowered, policy, [
         {

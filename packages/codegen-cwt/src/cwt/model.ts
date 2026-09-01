@@ -394,6 +394,18 @@ export function cardinalityOf(
 }
 
 /**
+ * The group a `scope_group[spatial_object]` scope annotation names, or `null`
+ * when the value is an ordinary scope name.
+ *
+ * A slot filled this way holds one of the group's scopes at runtime rather than
+ * a single known scope. The caller decides whether the named group exists.
+ */
+export function scopeGroupName(declared: string): string | null {
+  const match = BRACKETED.exec(declared.trim());
+  return match?.[1] === "scope_group" ? match[2]! : null;
+}
+
+/**
  * `replace_scope` swaps the whole scope context, `push_scope` only pushes
  * `this`. Either tells us which scope the block below runs in.
  */

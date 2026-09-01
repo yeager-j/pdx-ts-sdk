@@ -17,6 +17,8 @@ import {
   type ScriptGenerationGap,
   type ScriptRuleKind,
 } from "@pdx-ts/codegen-cwt/policy/script-gaps";
+import { loadBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
+import { scopeAuthorityOf } from "@pdx-ts/codegen-cwt/reconcile/scope-authority";
 import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
@@ -29,18 +31,19 @@ const docs = parseTriggerDocs(
   readFileSync(`${DOCS}/effects.log`, "utf8")
 );
 const scopes = scopeIndex(rules);
+const authority = scopeAuthorityOf(loadBaseline(), scopes);
 const triggerEmitter = new Emitter(rules);
 const effectEmitter = new Emitter(rules);
 const triggers = emitTriggers(
   triggerEmitter,
   docs.triggers,
-  lowerRuleTable(rules.triggers, docs.triggers, triggerEmitter, scopes)
+  lowerRuleTable(rules.triggers, docs.triggers, triggerEmitter, scopes, authority.triggers)
 );
 const effects = emitEffects(
   effectEmitter,
   docs.effects,
   scopes,
-  lowerRuleTable(rules.effects, docs.effects, effectEmitter, scopes),
+  lowerRuleTable(rules.effects, docs.effects, effectEmitter, scopes, authority.effects),
   createEffectPolicy(rules),
   []
 );
@@ -60,7 +63,7 @@ function removedRuleTable(
 ): ReadonlyMap<string, LoweredRule> {
   const declarations = new Map([[key, removedDeclarations(category, key)]]);
   const ruleDocs = category === "trigger" ? docs.triggers : docs.effects;
-  return lowerRuleTable(declarations, ruleDocs, emitter, scopes);
+  return lowerRuleTable(declarations, ruleDocs, emitter, scopes, new Map());
 }
 
 function row(overrides: Partial<ScriptGenerationGap> = {}): ScriptGenerationGap {
