@@ -95,7 +95,7 @@ import { parseUpstreamCommit } from "./provenance.ts";
 import { checkDrift } from "./reconcile/baseline.ts";
 import { reconcile } from "./reconcile/reconcile.ts";
 import { Emitter, type Usage } from "./render/emitter.ts";
-import { header, write, writeModule } from "./render/generated-file.ts";
+import { GeneratedOutput, header } from "./render/generated-file.ts";
 import { importList } from "./render/symbols.ts";
 import { eventFieldSupportLossLines, printReport, reportSection } from "./report.ts";
 
@@ -143,6 +143,8 @@ interface EventModuleEmission {
 }
 
 interface SharedRuleModuleInput {
+  /** The open session these modules are staged into. */
+  readonly output: GeneratedOutput;
   readonly commit: string;
   readonly rules: RuleSet;
   readonly emitter: Emitter;
@@ -151,6 +153,8 @@ interface SharedRuleModuleInput {
 }
 
 interface ContentModuleInput {
+  /** The open session these modules are staged into. */
+  readonly output: GeneratedOutput;
   readonly commit: string;
   readonly rules: RuleSet;
   readonly emitter: Emitter;
@@ -160,6 +164,8 @@ interface ContentModuleInput {
 }
 
 interface ScriptModuleInput {
+  /** The open session these modules are staged into. */
+  readonly output: GeneratedOutput;
   readonly commit: string;
   readonly emitter: Emitter;
   readonly triggers: ReturnType<typeof emitTriggers>;
@@ -172,6 +178,8 @@ interface ScriptModuleInput {
 }
 
 interface EventModuleInput {
+  /** The open session these modules are staged into. */
+  readonly output: GeneratedOutput;
   readonly commit: string;
   readonly rules: RuleSet;
   readonly emitter: Emitter;
@@ -584,23 +592,23 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
 async function writeSharedRuleModules(
   input: SharedRuleModuleInput
 ): Promise<ReturnType<typeof emitModifiers>> {
-  const { commit, emitter, modifierDocs, modifierOperationPolicy, rules } = input;
+  const { commit, emitter, modifierDocs, modifierOperationPolicy, output, rules } = input;
 
-  await write(
+  await output.write(
     "scopes.ts",
     header(commit, ["scopes.cwt"]) + emitScopes(canonicalScopes(rules.scopes))
   );
-  await write(
+  await output.write(
     "refs.ts",
     header(commit, ["type references across the rule files"]) + emitRefs(emitter)
   );
-  await write(
+  await output.write(
     "enums.ts",
     header(commit, ["enums.cwt"]) +
       'import type { VanillaEnumMember } from "../identifiers/contracts.ts";\n\n' +
       emitEnums(emitter)
   );
-  await write(
+  await output.write(
     "value-sets.ts",
     header(commit, ["value sets referenced across the rule files"]) + emitValueSets(emitter)
   );
@@ -608,7 +616,7 @@ async function writeSharedRuleModules(
   const modifiers = emitModifiers(
     joinModifierScopes(rules, modifierDocs, (token) => emitter.canonicalScope(token))
   );
-  await write(
+  await output.write(
     "modifiers.ts",
     header(commit, [
       "script-docs/v4.4.1/modifiers.log",
@@ -619,7 +627,7 @@ async function writeSharedRuleModules(
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       modifiers.code
   );
-  await write(
+  await output.write(
     "modifier-policy.ts",
     header(commit, ["modifier_rule.cwt"]) + emitModifierOperationProtocol(modifierOperationPolicy)
   );
@@ -630,10 +638,10 @@ async function writeSharedRuleModules(
 async function writeContentModules(
   input: ContentModuleInput
 ): Promise<ReturnType<typeof contentDefiners>> {
-  const { aliasCategories, commit, contents, emitter, rules, vanillaRefs } = input;
+  const { aliasCategories, commit, contents, emitter, output, rules, vanillaRefs } = input;
 
   for (const [category, emission] of aliasCategories) {
-    await writeModule(
+    await output.writeModule(
       `${category.replaceAll("_", "-")}.ts`,
       commit,
       [`alias[${category}:...] across the rule files`],
@@ -643,7 +651,7 @@ async function writeContentModules(
     );
   }
   for (const content of contents) {
-    await writeModule(
+    await output.writeModule(
       `${kebabCase(content.registry)}.ts`,
       commit,
       [content.manifest.source],
@@ -654,8 +662,11 @@ async function writeContentModules(
   }
 
   const contentSources = [...new Set(CONTENT_MANIFEST.map((entry) => entry.source))];
-  await write("content-registry.ts", header(commit, contentSources) + contentRegistry(contents));
-  await write("content-loc.ts", header(commit, contentSources) + contentLocLookup(contents));
+  await output.write(
+    "content-registry.ts",
+    header(commit, contentSources) + contentRegistry(contents)
+  );
+  await output.write("content-loc.ts", header(commit, contentSources) + contentLocLookup(contents));
 
   const fieldDocsModules: FieldDocsModule[] = [
     ...contents.map((content) => ({
@@ -667,7 +678,7 @@ async function writeContentModules(
       docTables: emission.docTables,
     })),
   ];
-  await write(
+  await output.write(
     "content-field-docs.ts",
     header(commit, [...contentSources, "codegen-cwt field-docs ledger"]) +
       emitContentFieldDocs(
@@ -678,15 +689,15 @@ async function writeContentModules(
   );
 
   const contentSwaps = deriveContentSwapIdentities(rules, contents);
-  await write(
+  await output.write(
     "content-swaps.ts",
     header(commit, [...contentSources, "CWT base_type declarations"]) +
       emitContentSwapProtocol(contentSwaps)
   );
 
   const definers = contentDefiners(contents);
-  await write("content-definers.ts", header(commit, contentSources) + definers.code);
-  await write(
+  await output.write("content-definers.ts", header(commit, contentSources) + definers.code);
+  await output.write(
     "content-capability.ts",
     header(commit, [...contentSources, "content-manifest.ts"]) + definers.capabilityCode
   );
@@ -709,12 +720,12 @@ async function writeContentModules(
       publicTypes: definers.capabilityPublicTypes,
     },
   ];
-  await write(
+  await output.write(
     "content-public.ts",
     header(commit, [...contentSources, "codegen-cwt public-surface policy"]) +
       contentPublicBarrel(publicModules)
   );
-  await write(
+  await output.write(
     "vanilla-refs.ts",
     header(commit, [...contentSources, "content-manifest.ts (VANILLA_REF_EXTRAS)"]) +
       'import type { CheckedVanillaId, VanillaId, VanillaTrie } from "../identifiers/contracts.ts";\n' +
@@ -738,12 +749,13 @@ async function writeScriptModules(input: ScriptModuleInput): Promise<void> {
     effectUsage,
     effects,
     emitter,
+    output,
     scopeLinks,
     triggers,
     triggerUsage,
   } = input;
 
-  await writeModule(
+  await output.writeModule(
     "triggers.ts",
     commit,
     ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"],
@@ -751,7 +763,7 @@ async function writeScriptModules(input: ScriptModuleInput): Promise<void> {
     triggerUsage,
     triggers.code
   );
-  await write(
+  await output.write(
     "links.ts",
     header(commit, ["links.cwt", "script-docs/v4.4.1/scopes.log"]) +
       'import { block } from "@pdx-ts/pdxscript";\n' +
@@ -761,13 +773,13 @@ async function writeScriptModules(input: ScriptModuleInput): Promise<void> {
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       scopeLinks.code
   );
-  await write(
+  await output.write(
     "link-meta.ts",
     header(commit, ["links.cwt"]) +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       emitScopeLinkNavigation(classifiedLinks.navigation)
   );
-  await writeModule(
+  await output.writeModule(
     "effects.ts",
     commit,
     [
@@ -781,27 +793,28 @@ async function writeScriptModules(input: ScriptModuleInput): Promise<void> {
     effectUsage,
     effects.interfaces
   );
-  await write(
+  await output.write(
     "effect-meta.ts",
     header(commit, ["effects.cwt", "aliases.cwt", "links.cwt"]) + effects.meta
   );
-  await write(
+  await output.write(
     "effect-policy.ts",
     header(commit, ["effects.cwt", "events/events.cwt"]) + emitEffectPolicyProtocol(effectPolicy)
   );
 }
 
 async function writeEventModules(input: EventModuleInput): Promise<EventModuleEmission> {
-  const { commit, effectPolicy, effects, emitter, eventFieldPolicy, rules, triggers } = input;
+  const { commit, effectPolicy, effects, emitter, eventFieldPolicy, output, rules, triggers } =
+    input;
 
   const events = emitEvents(emitter, effectPolicy, effects.universalParameters);
-  await write(
+  await output.write(
     "events.ts",
     header(commit, ["events/events.cwt"]) +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       events.code
   );
-  await write(
+  await output.write(
     "event-definers.ts",
     header(commit, ["events/events.cwt"]) +
       'import { assertEventNumber, buildEvent } from "../events/lower.ts";\n' +
@@ -813,7 +826,7 @@ async function writeEventModules(input: EventModuleInput): Promise<EventModuleEm
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       events.definerCode
   );
-  await write(
+  await output.write(
     "event-fires.ts",
     header(commit, ["events/events.cwt", "effects.cwt"]) +
       'import type { FireEventArgs, WitnessedFireEventArgs } from "../events/types.ts";\n' +
@@ -829,7 +842,7 @@ async function writeEventModules(input: EventModuleInput): Promise<EventModuleEm
     triggers.references,
     effects.scopeLinkReferences
   );
-  await write(
+  await output.write(
     "script-reference.ts",
     header(commit, [
       "scopes.cwt",
@@ -843,14 +856,14 @@ async function writeEventModules(input: EventModuleInput): Promise<EventModuleEm
       "script-docs/v4.4.1/scopes.log",
     ]) + scriptReferences.code
   );
-  await write(
+  await output.write(
     "event-fields.ts",
     header(commit, ["events/events.cwt", "codegen-cwt event field support policy"]) +
       emitEventFieldProtocol(eventFieldPolicy)
   );
 
   const onActions = emitOnActions(rules);
-  await write("on-actions.ts", header(commit, ["on_actions.cwt"]) + onActions.code);
+  await output.write("on-actions.ts", header(commit, ["on_actions.cwt"]) + onActions.code);
 
   return { events, scriptReferences, onActions };
 }
@@ -871,63 +884,69 @@ async function main(): Promise<void> {
   const eventFieldPolicy = createEventFieldPolicy(rules);
   const scriptRules = emitScriptRules(rules, docs, links, emitter, effectPolicy);
 
-  await write(
-    "content-shape.ts",
-    header(commit, ["codegen-cwt ContentShape protocol"]) + emitContentShapeProtocol()
-  );
+  const output = GeneratedOutput.open();
+  let report: string[];
+  try {
+    await output.write(
+      "content-shape.ts",
+      header(commit, ["codegen-cwt ContentShape protocol"]) + emitContentShapeProtocol()
+    );
 
-  const { contents, registryNames } = emitManifestContents(rules, emitter);
+    const { contents, registryNames } = emitManifestContents(rules, emitter);
 
-  const { aliasCategories, aliasSplices } = emitAliasCategories(
-    emitter,
-    rules,
-    contents.flatMap((content) => content.emission.inlineSplices)
-  );
-  assertGenerationPolicies(rules, emitter, registryNames);
+    const { aliasCategories, aliasSplices } = emitAliasCategories(
+      emitter,
+      rules,
+      contents.flatMap((content) => content.emission.inlineSplices)
+    );
+    assertGenerationPolicies(rules, emitter, registryNames);
 
-  const vanillaRefs = emitVanillaRefs(
-    emitter,
-    CONTENT_MANIFEST,
-    VANILLA_REF_EXTRAS,
-    new Map(contents.map((content) => [content.registry, content.referenceName]))
-  );
-  for (const refinement of CONTENT_SUBTYPE_REFERENCE_REFINEMENTS.values()) {
-    emitter.usedRefs.add(refinement.reference);
-  }
+    const vanillaRefs = emitVanillaRefs(
+      emitter,
+      CONTENT_MANIFEST,
+      VANILLA_REF_EXTRAS,
+      new Map(contents.map((content) => [content.registry, content.referenceName]))
+    );
+    for (const refinement of CONTENT_SUBTYPE_REFERENCE_REFINEMENTS.values()) {
+      emitter.usedRefs.add(refinement.reference);
+    }
 
-  const modifiers = await writeSharedRuleModules({
-    commit,
-    rules,
-    emitter,
-    modifierDocs,
-    modifierOperationPolicy,
-  });
-  const definers = await writeContentModules({
-    commit,
-    rules,
-    emitter,
-    contents,
-    aliasCategories,
-    vanillaRefs,
-  });
-  await writeScriptModules({
-    commit,
-    emitter,
-    ...scriptRules,
-    effectPolicy,
-  });
-  const { events, scriptReferences, onActions } = await writeEventModules({
-    commit,
-    rules,
-    emitter,
-    effects: scriptRules.effects,
-    triggers: scriptRules.triggers,
-    effectPolicy,
-    eventFieldPolicy,
-  });
+    const modifiers = await writeSharedRuleModules({
+      output,
+      commit,
+      rules,
+      emitter,
+      modifierDocs,
+      modifierOperationPolicy,
+    });
+    const definers = await writeContentModules({
+      output,
+      commit,
+      rules,
+      emitter,
+      contents,
+      aliasCategories,
+      vanillaRefs,
+    });
+    await writeScriptModules({
+      output,
+      commit,
+      emitter,
+      ...scriptRules,
+      effectPolicy,
+    });
+    const { events, scriptReferences, onActions } = await writeEventModules({
+      output,
+      commit,
+      rules,
+      emitter,
+      effects: scriptRules.effects,
+      triggers: scriptRules.triggers,
+      effectPolicy,
+      eventFieldPolicy,
+    });
 
-  printReport(
-    buildCodegenReport({
+    report = buildCodegenReport({
       commit,
       rules,
       emitter,
@@ -947,8 +966,15 @@ async function main(): Promise<void> {
       scriptGapLines: scriptRules.scriptGapLines,
       classifiedLinks: scriptRules.classifiedLinks,
       eventFieldPolicy,
-    })
-  );
+    });
+  } catch (error) {
+    output.discard();
+    throw error;
+  }
+
+  // The report describes output that landed, so it prints only after the swap.
+  output.commit();
+  printReport(report);
 }
 
 await main();
