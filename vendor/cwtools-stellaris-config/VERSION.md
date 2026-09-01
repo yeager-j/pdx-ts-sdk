@@ -4,9 +4,9 @@ Upstream: https://github.com/yeager-j/cwtools-stellaris-config
 
 | | |
 | --- | --- |
-| Commit | `97ff2fcd60980f32ec040b5dbecdbe5955a7ce6e` |
-| Committed | 2026-08-22 |
-| Fetched | 2026-08-22 |
+| Commit | `c8ec14e71e721ea74f4895416f7b82e8a6aed478` |
+| Committed | 2026-09-01 |
+| Fetched | 2026-09-01 |
 
 Licensed under the upstream MIT license, reproduced in `LICENSE`.
 
@@ -42,7 +42,7 @@ this snapshot can carry a fix before upstream merges it.
 
 ### Fixes this snapshot carries ahead of upstream
 
-Thirteen commits carried on our fork ahead of DragonKnightOfBreeze's `master`.
+Fourteen commits carried on our fork ahead of DragonKnightOfBreeze's `master`.
 The earlier rule corrections each delete a row from
 `packages/codegen-cwt/src/overlay.ts` or a special case in the loader rather
 than adding one; the GFX corrections supply the upstream-true rules needed by
@@ -105,6 +105,10 @@ the GFX codegen work:
   `mesage_variable_type`, at its declaration and its one reference. The name is
   projected into the SDK's public surface, so the typo shipped as the exported
   type `MesageVariableType`; it is now `MessageVariableType`.
+- `c8ec14e` `scopes.cwt` declared `Design` twice, at lines 60 and 102, both
+  `aliases = { design }`. The second block is deleted. Rule-set assembly already
+  tolerated the identical repeat (`mergeUniqueEntries`, SDK-357), so nothing
+  generated changes beyond the source-commit header line.
 
 `country_ship_of_size_limit.show` deliberately stays an overlay row rather
 than becoming a sixth annotation: its scope is inferred from the corpus

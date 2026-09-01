@@ -99,9 +99,6 @@ scopes = {
 	Debris = {
 		aliases = { debris }
 	}
-    Design = {
-        aliases = { design }
-    }
 	"Astral Rift" = {
 		aliases = { astral_rift }
 	}
