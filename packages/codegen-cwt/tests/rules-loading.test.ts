@@ -11,8 +11,12 @@
  *
  * SDK-357: the same claim also needs the tables holding one declaration per
  * key. They used to let the last file read win, so a colliding declaration
- * silently made file order load-bearing again. They now throw, with one
- * documented exception for an enum redeclared with the same member set.
+ * silently made file order load-bearing again. They now throw. A repeat inside
+ * a single file is caught the same way, since the readers hand over every
+ * declaration they read rather than a map that would have collapsed it first.
+ * Two repeats are accepted, both because they say the same thing: an enum
+ * redeclared with the same member set, and any other declaration repeated with
+ * equal content.
  */
 
 import path from "node:path";
@@ -230,47 +234,105 @@ const CONFLICTS: readonly ConflictCase[] = [
   },
 ];
 
+/** The message `build` threw, for assertions that read it rather than match it. */
+function messageFrom(build: () => unknown): string {
+  try {
+    build();
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+  throw new Error("expected the rule set assembly to throw");
+}
+
+/** The conflict message, with each site's line left open. */
+function conflictPattern(table: string, key: string, owner: string, other: string): RegExp {
+  const at = (file: string): string => `${file.replaceAll(".", "\\.")}:(\\d+)`;
+  return new RegExp(
+    `${table} key "${key}" is declared by ${at(owner)} and declared again by ${at(other)};`
+  );
+}
+
 describe("colliding declarations", () => {
   it.each(CONFLICTS)("reject a second $table declaration of $key", (conflict) => {
     const first = file("first.cwt", conflict.first);
     const second = file("second.cwt", conflict.second);
-    const message = (owner: string, other: string): string =>
-      `${conflict.table} key "${conflict.key}" is declared by ${owner} and declared again by ${other}`;
+    const { table, key } = conflict;
 
-    expect(() => buildRuleSet([first, second])).toThrow(message("first.cwt", "second.cwt"));
-    expect(() => buildRuleSet([second, first])).toThrow(message("second.cwt", "first.cwt"));
+    expect(() => buildRuleSet([first, second])).toThrow(
+      conflictPattern(table, key, "first.cwt", "second.cwt")
+    );
+    expect(() => buildRuleSet([second, first])).toThrow(
+      conflictPattern(table, key, "second.cwt", "first.cwt")
+    );
+  });
+
+  it.each(CONFLICTS)("reject a repeated $table declaration of $key inside one file", (conflict) => {
+    // The readers used to return one map per file, so a file declaring a key
+    // twice collapsed it to the last declaration before the collision check saw
+    // either — the same silent last-wins, one level down. Concatenating the two
+    // sources of the case above puts both declarations in a single file.
+    const both = file("only.cwt", `${conflict.first}\n${conflict.second}`);
+    const message = messageFrom(() => buildRuleSet([both]));
+    const sites = conflictPattern(conflict.table, conflict.key, "only.cwt", "only.cwt").exec(
+      message
+    );
+
+    expect(sites, message).not.toBeNull();
+    // Both declarations are named, rather than the first one named twice.
+    expect(sites![1]).not.toBe(sites![2]);
   });
 
   it("accept an enum redeclared with the same members in another order", () => {
     // What `enums.cwt` and `common/governments.cwt` do to `election_type`.
-    const listed = file(
-      "listed.cwt",
-      [
-        "enums = {",
-        "\tenum[election_type] = {",
-        "\t\tnone",
-        "\t\tdemocratic",
-        "\t\toligarchic",
-        "\t}",
-        "}",
-      ].join("\n")
-    );
-    const reordered = file(
-      "reordered.cwt",
-      [
-        "enums = {",
-        "\tenum[election_type] = {",
-        "\t\tnone",
-        "\t\toligarchic",
-        "\t\tdemocratic",
-        "\t}",
-        "}",
-      ].join("\n")
-    );
+    const listedSource = [
+      "enums = {",
+      "\tenum[election_type] = {",
+      "\t\tnone",
+      "\t\tdemocratic",
+      "\t\toligarchic",
+      "\t}",
+      "}",
+    ].join("\n");
+    const reorderedSource = [
+      "enums = {",
+      "\tenum[election_type] = {",
+      "\t\tnone",
+      "\t\toligarchic",
+      "\t\tdemocratic",
+      "\t}",
+      "}",
+    ].join("\n");
+    const listed = file("listed.cwt", listedSource);
+    const reordered = file("reordered.cwt", reorderedSource);
     const sorted = ["democratic", "none", "oligarchic"];
 
     expect(buildRuleSet([listed, reordered]).enums.get("election_type")).toEqual(sorted);
     expect(buildRuleSet([reordered, listed]).enums.get("election_type")).toEqual(sorted);
+
+    // The same enum, listed both ways inside one file.
+    const inOneFile = file("both.cwt", `${listedSource}\n${reorderedSource}`);
+    expect(buildRuleSet([inOneFile]).enums.get("election_type")).toEqual(sorted);
+  });
+
+  it("accept a declaration repeated with equal content", () => {
+    // What `scopes.cwt` does to `Design`, declaring it identically at lines 60
+    // and 102. Nothing about the result can depend on which declaration is
+    // kept, so the repeat is accepted rather than reported.
+    const twice = file(
+      "scopes.cwt",
+      [
+        "scopes = {",
+        "\tDesign = {",
+        "\t\taliases = { design }",
+        "\t}",
+        "\tDesign = {",
+        "\t\taliases = { design }",
+        "\t}",
+        "}",
+      ].join("\n")
+    );
+
+    expect(buildRuleSet([twice]).scopes.get("Design")).toEqual(["design"]);
   });
 });
 

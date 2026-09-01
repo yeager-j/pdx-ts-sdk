@@ -94,8 +94,8 @@ export function loadContentTypesFrom(
   for (const relative of files) {
     const parsed = parseCwt(readFileSync(path.join(root, relative), "utf8"), relative);
     diagnostics.push(...parsed.diagnostics);
-    for (const [name, contentType] of readContentTypes(parsed.nodes)) {
-      contentTypes.set(name, contentType);
+    for (const { key, value } of readContentTypes(parsed.nodes)) {
+      contentTypes.set(key, value);
     }
   }
   return { contentTypes, diagnostics };
