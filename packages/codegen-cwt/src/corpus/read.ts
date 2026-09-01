@@ -5,6 +5,7 @@ import {
   parse,
   scalarText as renderScalarText,
   type PdxContainer,
+  type PdxEntry,
   type PdxItem,
   type PdxValue,
 } from "@pdx-ts/pdxscript";
@@ -19,14 +20,26 @@ import {
 } from "./observations.ts";
 import { relativeRegistryPath, walkRegistryFiles } from "./registry-files.ts";
 
+/**
+ * The values and arity one definition's descents collect, with the rule a mixed
+ * trigger struct needs to tell its own members from the trigger keys it splices.
+ */
+interface DescentContext {
+  /** Collected values by dotted field path. */
+  readonly valuesByField: Map<string, PdxValue[]>;
+  /** Whether a path was written more than once inside one block. */
+  readonly blockArity: Map<string, boolean>;
+  /** {@link RegistryRead.isTriggerKey}. */
+  readonly isTriggerKey: (key: string) => boolean;
+}
+
 /** Records a block's entries and their nested descendant fields. */
 function recordBlock(
   block: PdxContainer,
   path: string,
   children: ReadonlyMap<string, DescentNode>,
   skip: string | undefined,
-  seen: Map<string, PdxValue[]>,
-  blockArity: Map<string, boolean>
+  context: DescentContext
 ): void {
   const withinThisBlock = new Set<string>();
   for (const leaf of block.items) {
@@ -34,12 +47,18 @@ function recordBlock(
       continue;
     }
     const leafPath = `${path}.${leaf.key}`;
-    blockArity.set(leafPath, (blockArity.get(leafPath) ?? false) || withinThisBlock.has(leafPath));
+    context.blockArity.set(
+      leafPath,
+      (context.blockArity.get(leafPath) ?? false) || withinThisBlock.has(leafPath)
+    );
     withinThisBlock.add(leafPath);
-    seen.set(leafPath, [...(seen.get(leafPath) ?? []), leaf.value]);
+    context.valuesByField.set(leafPath, [
+      ...(context.valuesByField.get(leafPath) ?? []),
+      leaf.value,
+    ]);
     const child = children.get(leaf.key);
     if (child !== undefined && leaf.value.kind === "container") {
-      descend(leaf.value, child, path, seen, blockArity);
+      descend(leaf.value, child, path, context);
     }
   }
 }
@@ -49,26 +68,25 @@ function descend(
   value: PdxContainer,
   node: DescentNode,
   prefix: string,
-  seen: Map<string, PdxValue[]>,
-  blockArity: Map<string, boolean>
+  context: DescentContext
 ): void {
   const path = prefix === "" ? node.field : `${prefix}.${node.field}`;
   const children = new Map(node.children.map((child) => [child.field, child]));
   switch (node.mode) {
     case "struct":
-      recordBlock(value, path, children, undefined, seen, blockArity);
+      recordBlock(value, path, children, undefined, context);
       return;
     case "wrappedStruct":
       for (const item of value.items) {
         if (item.kind === "container") {
-          recordBlock(item, path, children, undefined, seen, blockArity);
+          recordBlock(item, path, children, undefined, context);
         }
       }
       return;
     case "structMap":
       for (const item of value.items) {
         if (item.kind === "entry" && item.value.kind === "container") {
-          recordBlock(item.value, path, children, undefined, seen, blockArity);
+          recordBlock(item.value, path, children, undefined, context);
         }
       }
       return;
@@ -76,24 +94,24 @@ function descend(
       if (node.keying === "container") {
         for (const sub of value.items) {
           if (sub.kind === "entry" && sub.value.kind === "container") {
-            recordBlock(sub.value, path, children, undefined, seen, blockArity);
+            recordBlock(sub.value, path, children, undefined, context);
           }
         }
         return;
       }
-      recordBlock(value, path, children, node.identityKey, seen, blockArity);
+      recordBlock(value, path, children, node.identityKey, context);
       return;
     case "weightModifiers":
-      recordWeightModifiers(value, path, node.strippedKeys, seen, blockArity);
+      recordWeightModifiers(value, path, node.strippedKeys, context);
       return;
     case "triggeredModifierPotential":
-      recordTriggeredModifierPotential(value, path, seen, blockArity);
+      recordTriggeredModifierPotential(value, path, context);
       return;
     case "economicResourceOperationTrigger":
-      recordEconomicResourceOperationTrigger(value, path, seen, blockArity);
+      recordEconomicResourceOperationTrigger(value, path, context);
       return;
     case "triggerStruct":
-      recordTriggerStruct(value, path, node, children, seen, blockArity);
+      recordTriggerStruct(value, path, node, children, context);
       return;
     default: {
       const unreachable: never = node;
@@ -102,36 +120,45 @@ function descend(
   }
 }
 
+/**
+ * Records a mixed trigger struct: its members at their own paths, and the
+ * trigger keys it splices folded into one synthetic `when` container.
+ *
+ * A direct key that is neither declared ordinary nor a trigger key counts as a
+ * member. It is a field the game writes and the rules have yet to declare, and
+ * folding it into `when` would present it as a condition an author already has
+ * a way to write.
+ */
 function recordTriggerStruct(
   value: PdxContainer,
   path: string,
   node: Extract<DescentNode, { mode: "triggerStruct" }>,
   children: ReadonlyMap<string, DescentNode>,
-  seen: Map<string, PdxValue[]>,
-  blockArity: Map<string, boolean>
+  context: DescentContext
 ): void {
   const ordinaryKeys = new Set(node.ordinaryKeys);
-  const ordinaryEntries = value.items.filter(
-    (item): item is Extract<(typeof value.items)[number], { kind: "entry" }> =>
-      item.kind === "entry" && ordinaryKeys.has(item.key)
-  );
-  recordBlock(
-    { kind: "container", items: ordinaryEntries },
-    path,
-    children,
-    undefined,
-    seen,
-    blockArity
-  );
-  const triggerEntries = value.items.filter(
-    (item): item is Extract<(typeof value.items)[number], { kind: "entry" }> =>
-      item.kind === "entry" && !ordinaryKeys.has(item.key)
-  );
-  if (triggerEntries.length > 0) {
-    const when = `${path}.when`;
-    blockArity.set(when, false);
-    seen.set(when, [...(seen.get(when) ?? []), { kind: "container", items: triggerEntries }]);
+  const memberEntries: PdxEntry[] = [];
+  const triggerEntries: PdxEntry[] = [];
+  for (const item of value.items) {
+    if (item.kind !== "entry") {
+      continue;
+    }
+    if (!ordinaryKeys.has(item.key) && context.isTriggerKey(item.key)) {
+      triggerEntries.push(item);
+      continue;
+    }
+    memberEntries.push(item);
   }
+  recordBlock({ kind: "container", items: memberEntries }, path, children, undefined, context);
+  if (triggerEntries.length === 0) {
+    return;
+  }
+  const when = `${path}.when`;
+  context.blockArity.set(when, false);
+  context.valuesByField.set(when, [
+    ...(context.valuesByField.get(when) ?? []),
+    { kind: "container", items: triggerEntries },
+  ]);
 }
 
 /** Records the trigger keys from `modifier` rows in a weight block. */
@@ -139,8 +166,7 @@ function recordWeightModifiers(
   weights: PdxContainer,
   path: string,
   strippedKeys: ReadonlySet<string>,
-  seen: Map<string, PdxValue[]>,
-  blockArity: Map<string, boolean>
+  context: DescentContext
 ): void {
   const rowPath = `${path}.modifier`;
   let hasEarlierRow = false;
@@ -148,10 +174,10 @@ function recordWeightModifiers(
     if (item.kind !== "entry" || item.key !== "modifier" || item.value.kind !== "container") {
       continue;
     }
-    blockArity.set(rowPath, (blockArity.get(rowPath) ?? false) || hasEarlierRow);
+    context.blockArity.set(rowPath, (context.blockArity.get(rowPath) ?? false) || hasEarlierRow);
     hasEarlierRow = true;
-    seen.set(rowPath, [
-      ...(seen.get(rowPath) ?? []),
+    context.valuesByField.set(rowPath, [
+      ...(context.valuesByField.get(rowPath) ?? []),
       {
         kind: "container",
         items: item.value.items.filter(
@@ -166,8 +192,7 @@ function recordWeightModifiers(
 function recordTriggeredModifierPotential(
   modifier: PdxContainer,
   path: string,
-  seen: Map<string, PdxValue[]>,
-  blockArity: Map<string, boolean>
+  context: DescentContext
 ): void {
   const potentialPath = `${path}.potential`;
   let hasEarlierPotential = false;
@@ -175,9 +200,15 @@ function recordTriggeredModifierPotential(
     if (item.kind !== "entry" || item.key !== "potential") {
       continue;
     }
-    blockArity.set(potentialPath, (blockArity.get(potentialPath) ?? false) || hasEarlierPotential);
+    context.blockArity.set(
+      potentialPath,
+      (context.blockArity.get(potentialPath) ?? false) || hasEarlierPotential
+    );
     hasEarlierPotential = true;
-    seen.set(potentialPath, [...(seen.get(potentialPath) ?? []), item.value]);
+    context.valuesByField.set(potentialPath, [
+      ...(context.valuesByField.get(potentialPath) ?? []),
+      item.value,
+    ]);
   }
 }
 
@@ -185,8 +216,7 @@ function recordTriggeredModifierPotential(
 function recordEconomicResourceOperationTrigger(
   operation: PdxContainer,
   path: string,
-  seen: Map<string, PdxValue[]>,
-  blockArity: Map<string, boolean>
+  context: DescentContext
 ): void {
   const triggerPath = `${path}.trigger`;
   let hasEarlierTrigger = false;
@@ -194,19 +224,20 @@ function recordEconomicResourceOperationTrigger(
     if (item.kind !== "entry" || item.key !== "trigger") {
       continue;
     }
-    blockArity.set(triggerPath, (blockArity.get(triggerPath) ?? false) || hasEarlierTrigger);
+    context.blockArity.set(
+      triggerPath,
+      (context.blockArity.get(triggerPath) ?? false) || hasEarlierTrigger
+    );
     hasEarlierTrigger = true;
-    seen.set(triggerPath, [...(seen.get(triggerPath) ?? []), item.value]);
+    context.valuesByField.set(triggerPath, [
+      ...(context.valuesByField.get(triggerPath) ?? []),
+      item.value,
+    ]);
   }
 }
 
 /** Records a spliced member and its recursively nested members. */
-function descendSplice(
-  value: PdxContainer,
-  member: SpliceMember,
-  seen: Map<string, PdxValue[]>,
-  blockArity: Map<string, boolean>
-): void {
+function descendSplice(value: PdxContainer, member: SpliceMember, context: DescentContext): void {
   const nested = new Map(member.members().map((inner) => [inner.key, inner]));
   const children = new Map(member.descents.map((child) => [child.field, child]));
   const withinThisBlock = new Set<string>();
@@ -215,20 +246,23 @@ function descendSplice(
       continue;
     }
     const path = `${member.key}.${leaf.key}`;
-    blockArity.set(path, (blockArity.get(path) ?? false) || withinThisBlock.has(path));
+    context.blockArity.set(
+      path,
+      (context.blockArity.get(path) ?? false) || withinThisBlock.has(path)
+    );
     withinThisBlock.add(path);
-    seen.set(path, [...(seen.get(path) ?? []), leaf.value]);
+    context.valuesByField.set(path, [...(context.valuesByField.get(path) ?? []), leaf.value]);
     if (leaf.value.kind !== "container") {
       continue;
     }
     const inner = nested.get(leaf.key);
     if (inner !== undefined) {
-      descendSplice(leaf.value, inner, seen, blockArity);
+      descendSplice(leaf.value, inner, context);
       continue;
     }
     const child = children.get(leaf.key);
     if (child !== undefined) {
-      descend(leaf.value, child, member.key, seen, blockArity);
+      descend(leaf.value, child, member.key, context);
     }
   }
 }
@@ -464,6 +498,16 @@ export interface RegistryRead {
   readonly keyword: string | null;
   /** Field carrying a definition's name, excluded from observations. */
   readonly nameField: string | null;
+  /**
+   * Whether a key is one a trigger clause admits: a trigger rule, a scope link, a structural
+   * combinator, or a scripted trigger. Implement it case-insensitively; the reader passes the key
+   * as the game writes it.
+   *
+   * In a mixed trigger struct, a key that is neither ordinary nor a trigger key is recorded at its
+   * own path so conformance reports it as unauthorable instead of hiding it inside the synthetic
+   * `when` block.
+   */
+  readonly isTriggerKey: (key: string) => boolean;
   /** Block-valued fields whose contents are observed. Supply the emitter-derived descent nodes. */
   readonly descents?: readonly DescentNode[];
   /** Structural alias splices whose contents are observed. Create the members with {@link spliceMembersOf}. */
@@ -496,35 +540,37 @@ function definitionBodies(
   });
 }
 
-type DefinitionObservations = {
-  readonly valuesByField: Map<string, PdxValue[]>;
-  readonly blockArity: Map<string, boolean>;
-};
-
 /** Collects one canonical definition's top-level and descended field values. */
 function collectDefinitionObservations(
   definition: PdxContainer,
   nameField: string | null,
   descentsByField: ReadonlyMap<string, DescentNode>,
-  splicesByKey: ReadonlyMap<string, SpliceMember>
-): DefinitionObservations {
-  const valuesByField = new Map<string, PdxValue[]>();
-  const blockArity = new Map<string, boolean>();
+  splicesByKey: ReadonlyMap<string, SpliceMember>,
+  isTriggerKey: (key: string) => boolean
+): DescentContext {
+  const context: DescentContext = {
+    valuesByField: new Map<string, PdxValue[]>(),
+    blockArity: new Map<string, boolean>(),
+    isTriggerKey,
+  };
   for (const field of definition.items) {
     if (field.kind !== "entry" || field.key === nameField) {
       continue;
     }
-    valuesByField.set(field.key, [...(valuesByField.get(field.key) ?? []), field.value]);
+    context.valuesByField.set(field.key, [
+      ...(context.valuesByField.get(field.key) ?? []),
+      field.value,
+    ]);
     const descent = descentsByField.get(field.key);
     if (descent !== undefined && field.value.kind === "container") {
-      descend(field.value, descent, "", valuesByField, blockArity);
+      descend(field.value, descent, "", context);
     }
     const splice = splicesByKey.get(field.key);
     if (splice !== undefined && field.value.kind === "container") {
-      descendSplice(field.value, splice, valuesByField, blockArity);
+      descendSplice(field.value, splice, context);
     }
   }
-  return { valuesByField, blockArity };
+  return context;
 }
 
 /**
@@ -532,6 +578,9 @@ function collectDefinitionObservations(
  *
  * Pass the install root and CWT-derived {@link RegistryRead} configuration. The result is suitable
  * for {@link conformance} and `shapeConformance`; absent registry directories return an empty corpus.
+ *
+ * The reader carries no rules of its own, so {@link RegistryRead.isTriggerKey} is what decides
+ * whether a mixed trigger struct's direct key is a condition or a member of the struct.
  */
 export function readRegistryCorpus(root: string, registryRead: RegistryRead): RegistryCorpus {
   const layout = registryRead.layout ?? {};
@@ -569,17 +618,14 @@ export function readRegistryCorpus(root: string, registryRead: RegistryRead): Re
     )) {
       definitions += 1;
       const definition = folder === null ? body : foldKeys(body, foldKey);
-      const definitionObservations = collectDefinitionObservations(
+      const observed = collectDefinitionObservations(
         definition,
         registryRead.nameField,
         descentsByField,
-        splicesByKey
+        splicesByKey,
+        registryRead.isTriggerKey
       );
-      addDefinitionObservations(
-        occurrences,
-        definitionObservations.valuesByField,
-        definitionObservations.blockArity
-      );
+      addDefinitionObservations(occurrences, observed.valuesByField, observed.blockArity);
     }
   }
   return { definitions, files: files.length, occurrences };

@@ -33,17 +33,22 @@ import { describe, expect, it } from "vitest";
 const MOON: SpliceMember = { key: "moon", members: () => [MOON], descents: [] };
 const PLANET: SpliceMember = { key: "planet", members: () => [PLANET, MOON], descents: [] };
 
+/** No key is a trigger key unless a case says which ones are. */
+const NO_TRIGGER_KEYS = () => false;
+
 function corpusOf(
   contents: string,
   descents: readonly DescentNode[] = [],
   excludedKey: string | null = null,
   spliceMembers: readonly SpliceMember[] = [PLANET],
-  layout: RegistryLayout = {}
+  layout: RegistryLayout = {},
+  isTriggerKey: (key: string) => boolean = NO_TRIGGER_KEYS
 ) {
   return corpusOfFiles({ [`test${layout.extension ?? ".txt"}`]: contents }, layout, {
     descents,
     excludedKey,
     spliceMembers,
+    isTriggerKey,
   });
 }
 
@@ -61,6 +66,7 @@ function corpusOfFiles(
     descents?: readonly DescentNode[];
     excludedKey?: string | null;
     spliceMembers?: readonly SpliceMember[];
+    isTriggerKey?: (key: string) => boolean;
   } = {}
 ) {
   const root = mkdtempSync(path.join(tmpdir(), "pdx-corpus-"));
@@ -74,6 +80,7 @@ function corpusOfFiles(
     registryPath: "common/systems",
     keyword: options.keyword ?? null,
     nameField: options.nameField ?? null,
+    isTriggerKey: options.isTriggerKey ?? NO_TRIGGER_KEYS,
     descents: options.descents ?? [],
     spliceMembers: options.spliceMembers ?? [PLANET],
     excludedKey: options.excludedKey ?? null,
@@ -209,6 +216,7 @@ describe("file layout", () => {
         registryPath: "not-a-directory",
         keyword: null,
         nameField: null,
+        isTriggerKey: NO_TRIGGER_KEYS,
       });
 
     // The contract is that a fault is not an absent registry, so the code is
@@ -232,6 +240,7 @@ describe("file layout", () => {
       registryPath: "missing/registry",
       keyword: null,
       nameField: null,
+      isTriggerKey: NO_TRIGGER_KEYS,
     });
 
     expect(corpus).toEqual({ definitions: 0, files: 0, occurrences: new Map() });
@@ -894,6 +903,89 @@ describe("triggered-modifier potential descent", () => {
     const potential = corpus.occurrences.get("triggered_modifier.potential");
     expect(potential?.definitions).toBe(2);
     expect(potential?.repeated).toBe(1);
+  });
+});
+
+describe("mixed trigger-struct descent", () => {
+  // `decision.custom_tooltip`: `success_text` is the rule's own member, and
+  // everything else in the block is the trigger clause it splices.
+  const CUSTOM_TOOLTIP: DescentNode = {
+    field: "custom_tooltip",
+    mode: "triggerStruct",
+    ordinaryKeys: ["success_text"],
+    children: [],
+  };
+  const TRIGGER_KEYS = new Set(["owner", "not", "has_technology", "is_ai"]);
+  const readTriggerStruct = (contents: string, descent: DescentNode = CUSTOM_TOOLTIP) =>
+    corpusOf(contents, [descent], null, [], {}, (key) => TRIGGER_KEYS.has(key.toLowerCase()));
+
+  it("records a key that is neither ordinary nor a trigger key at its own path", () => {
+    // The escape this closes: a field the game writes and the rules have yet to
+    // declare read as one more condition inside `when`, where the presence
+    // floor never sees it and the scope check skips it as unresolvable.
+    const corpus = readTriggerStruct(`
+      one = {
+        custom_tooltip = {
+          success_text = "x"
+          owner = { is_ai = no }
+          NOT = { has_technology = t }
+          brand_new_field = yes
+        }
+      }
+    `);
+    expect(corpus.occurrences.get("custom_tooltip.success_text")?.scalars).toBe(1);
+    expect(corpus.occurrences.get("custom_tooltip.brand_new_field")).toMatchObject({
+      definitions: 1,
+      scalars: 1,
+    });
+    expect([...(corpus.occurrences.get("custom_tooltip.when")?.keys ?? [])].sort()).toEqual([
+      "NOT",
+      "owner",
+    ]);
+    expect(corpus.occurrences.get("custom_tooltip.when")?.keys.has("brand_new_field")).toBe(false);
+  });
+
+  it("records nothing beyond the members and the clause when every key is known", () => {
+    const corpus = readTriggerStruct(`
+      one = {
+        custom_tooltip = {
+          success_text = "x"
+          owner = { is_ai = no }
+          NOT = { has_technology = t }
+        }
+      }
+    `);
+    expect(
+      [...corpus.occurrences.keys()].filter((path) => path.startsWith("custom_tooltip.")).sort()
+    ).toEqual(["custom_tooltip.success_text", "custom_tooltip.when"]);
+    expect([...(corpus.occurrences.get("custom_tooltip.when")?.keys ?? [])].sort()).toEqual([
+      "NOT",
+      "owner",
+    ]);
+  });
+
+  it("descends into an unknown key the way it descends into an ordinary one", () => {
+    // Written rather than observed: no emitter hands the reader a child for a
+    // key its rule does not declare. The point is that when one arrives, the
+    // unknown key gets the whole ordinary treatment and not half of it.
+    const corpus = readTriggerStruct(
+      `
+      one = { custom_tooltip = { success_text = "x" new_block = { inner = 3 } } }
+    `,
+      { ...CUSTOM_TOOLTIP, children: [{ field: "new_block", mode: "struct", children: [] }] }
+    );
+    expect(corpus.occurrences.get("custom_tooltip.new_block")?.definitions).toBe(1);
+    expect([...(corpus.occurrences.get("custom_tooltip.new_block.inner")?.values ?? [])]).toEqual([
+      "3",
+    ]);
+  });
+
+  it("records no clause at all when the block holds no trigger key", () => {
+    const corpus = readTriggerStruct(`
+      one = { custom_tooltip = { brand_new_field = yes } }
+    `);
+    expect(corpus.occurrences.has("custom_tooltip.when")).toBe(false);
+    expect(corpus.occurrences.get("custom_tooltip.brand_new_field")?.definitions).toBe(1);
   });
 });
 
