@@ -142,25 +142,6 @@ export function canonicalScopeSet(
   return [...new Set(canonical as string[])].sort();
 }
 
-/**
- * The scopes one rule declares, from the rules' own `## scopes` with the game's
- * dump as fallback. Empty when neither source names any — the caller reports
- * that rather than guessing, since a scope invented here would be a lie about
- * where the rule is legal.
- */
-export function declaredScopes(
-  declarations: readonly { readonly supportedScopes: readonly string[] | null }[],
-  doc:
-    | {
-        /** Scope names reported by the Stellaris script documentation dump. */
-        readonly scopes: readonly string[];
-      }
-    | undefined
-): readonly string[] {
-  const declared = declarations.flatMap((declaration) => declaration.supportedScopes ?? []);
-  return declared.length > 0 ? declared : (doc?.scopes ?? []);
-}
-
 /** A nested script clause category supported by the shared block model. */
 export type ClauseCategory = "trigger" | "effect" | "modifier_rule";
 

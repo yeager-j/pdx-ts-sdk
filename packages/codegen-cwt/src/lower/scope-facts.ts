@@ -8,6 +8,11 @@
  * three readers and keeps the lists, so a consumer that needs to *reason* about
  * scope rather than print it has somewhere to read from.
  *
+ * Which of the two disagreeing sources a rule's scopes come from is not decided
+ * here. The reviewed drift baseline decides it once, and both this module and
+ * the emitters read that decision, so the facts and the generated types can
+ * never describe a rule differently.
+ *
  * The one consumer today is `@pdx-ts/codegen-vanilla`, which intersects these
  * facts over vanilla's scripted trigger and effect bodies to infer each
  * definition's scope (SDK-13); `packages/codegen-vanilla/tests/callsites.test.ts`
@@ -30,6 +35,8 @@ import { classifyLinks } from "../emit/script/links.ts";
 import { loadRules } from "../load-rules.ts";
 import { parseScopeLinks } from "../logs/scopes.ts";
 import { parseTriggerDocs } from "../logs/trigger-docs.ts";
+import { loadBaseline } from "../reconcile/baseline.ts";
+import { scopeAuthorityOf } from "../reconcile/scope-authority.ts";
 import { Emitter } from "../render/emitter.ts";
 import { lowerRuleTable, type LoweredRule } from "./lowered-rule.ts";
 import { canonicalScopeSet } from "./script-shape.ts";
@@ -124,18 +131,28 @@ function linkFactsOf(
 
 /**
  * Loads CWT rules and documentation dumps and returns their canonical scope facts.
- * Missing or unknown scope declarations are omitted instead of being narrowed by guesswork.
+ *
+ * Scopes come from the committed drift baseline's reviewed decision, the same
+ * authority the emitters read. Missing or unknown scope declarations are omitted
+ * instead of being narrowed by guesswork.
  */
 export function loadScopeFacts(configRoot: string, docsRoot: string): ScopeFacts {
   const rules = loadRules(configRoot);
   const emitter = new Emitter(rules);
   const index = scopeIndex(rules);
+  const authority = scopeAuthorityOf(loadBaseline(), index);
   const docs = parseTriggerDocs(
     readFileSync(path.join(docsRoot, "triggers.log"), "utf8"),
     readFileSync(path.join(docsRoot, "effects.log"), "utf8")
   );
-  const triggers = lowerRuleTable(rules.triggers, docs.triggers, emitter, index);
-  const effects = lowerRuleTable(rules.effects, docs.effects, emitter, index);
+  const triggers = lowerRuleTable(
+    rules.triggers,
+    docs.triggers,
+    emitter,
+    index,
+    authority.triggers
+  );
+  const effects = lowerRuleTable(rules.effects, docs.effects, emitter, index, authority.effects);
   const dumpLinks = new Map(
     parseScopeLinks(readFileSync(path.join(docsRoot, "scopes.log"), "utf8")).links.map((link) => [
       link.name,

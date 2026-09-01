@@ -85,7 +85,11 @@ describe("buildRuleSet order independence", () => {
     // same way — the assertion above alone would also pass if neither order
     // resolved anything.
     expect(forward.triggers.get("my_trigger")?.[0]?.type.kind).toBe("block");
-    expect(forward.bodies.get("my_type")).toEqual({ fields: expect.any(Array), scope: null });
+    expect(forward.bodies.get("my_type")).toEqual({
+      fields: expect.any(Array),
+      scope: null,
+      file: "consumes.cwt",
+    });
   });
 
   it("would have failed under the old single pass: readAliases cannot resolve a single_alias it has not read yet", () => {

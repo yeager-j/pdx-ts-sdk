@@ -1,12 +1,13 @@
 import type { RuleField, RuleType } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
+import { resolveRuleScopes, type RuleScopeDecision } from "../reconcile/scope-authority.ts";
 import type { Emitter } from "../render/emitter.ts";
+import { canonicalThisScope } from "./scope-context.ts";
 import {
   canonicalScopeSet,
   clauseOf,
   clauseScopeContext,
   clauseScopesAgree,
-  declaredScopes,
   skippedRule,
   type ClauseScope,
   type SkippedRule,
@@ -120,6 +121,9 @@ function renderedScopeType(scopes: LoweredRuleScopes | null): string | null {
 /**
  * Normalizes all declarations of one trigger or effect rule for emitters and
  * scope-fact consumers. It preserves declaration and field order.
+ *
+ * @param decision The reviewed drift baseline's scope decision for this rule,
+ *   or `undefined` when no resolution decides it and its `## scopes` stand alone.
  */
 export function lowerRule(
   key: string,
@@ -131,9 +135,10 @@ export function lowerRule(
       }
     | undefined,
   emitter: Emitter,
-  scopeIndex: ReadonlyMap<string, string>
+  scopeIndex: ReadonlyMap<string, string>,
+  decision: RuleScopeDecision | undefined
 ): LoweredRule {
-  const supportedScopes = declaredScopes(declarations, doc);
+  const supportedScopes = resolveRuleScopes(declarations, doc, decision);
   const scopes =
     supportedScopes.length === 0 ? null : canonicalScopeSet(supportedScopes, scopeIndex);
   const scalars: AliasDecl[] = [];
@@ -193,7 +198,14 @@ export function lowerRule(
       continue;
     }
     const candidate = candidates[0]!;
-    clauses.set(name, candidate.scope === null ? null : emitter.canonicalScope(candidate.scope));
+    // A universal push scope canonicalizes to null, the same value an absent
+    // one takes: both leave the clause unnarrowed, which is what they mean.
+    clauses.set(
+      name,
+      candidate.scope === null
+        ? null
+        : canonicalThisScope(emitter, candidate.scope, `${key}: clause field "${name}"`)
+    );
   }
 
   let splice: { scope: string | null } | null = null;
@@ -201,7 +213,10 @@ export function lowerRule(
     const candidate = spliceCandidates[0];
     if (candidate !== undefined) {
       splice = {
-        scope: candidate.scope === null ? null : emitter.canonicalScope(candidate.scope),
+        scope:
+          candidate.scope === null
+            ? null
+            : canonicalThisScope(emitter, candidate.scope, `${key}: unkeyed clause splice`),
       };
     }
   } else {
@@ -228,7 +243,12 @@ export function lowerRule(
   };
 }
 
-/** Lowers every entry in a trigger or effect rule table without changing key order. */
+/**
+ * Lowers every entry in a trigger or effect rule table without changing key order.
+ *
+ * @param authority The reviewed drift baseline's scope decisions for this clause
+ *   kind. Pass an empty map for synthetic rules no resolution covers.
+ */
 export function lowerRuleTable(
   table: ReadonlyMap<string, readonly AliasDecl[]>,
   docs: ReadonlyMap<
@@ -239,12 +259,13 @@ export function lowerRuleTable(
     }
   >,
   emitter: Emitter,
-  scopeIndex: ReadonlyMap<string, string>
+  scopeIndex: ReadonlyMap<string, string>,
+  authority: ReadonlyMap<string, RuleScopeDecision>
 ): ReadonlyMap<string, LoweredRule> {
   return new Map(
     [...table].map(([key, declarations]) => [
       key,
-      lowerRule(key, declarations, docs.get(key), emitter, scopeIndex),
+      lowerRule(key, declarations, docs.get(key), emitter, scopeIndex, authority.get(key)),
     ])
   );
 }

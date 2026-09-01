@@ -4,7 +4,7 @@
  */
 
 import type { RuleType } from "../cwt/model.ts";
-import { scopeIndex, type RuleSet } from "../cwt/rules.ts";
+import { scopeGroupIndex, scopeIndex, type RuleSet } from "../cwt/rules.ts";
 import type { ContentConversion } from "../lower/content-shape.ts";
 import { pascalCase } from "../naming.ts";
 import { OverlayAudit } from "../overlay/audit.ts";
@@ -256,11 +256,13 @@ export class Emitter {
   private scopedImports = new ImportRecorder();
   private selfAliasCategory: string | undefined;
   private readonly scopes: ReadonlyMap<string, string>;
+  private readonly scopeGroups: ReadonlyMap<string, readonly string[]>;
 
   /** Creates a run-scoped emitter over one parsed CWT rule set. */
   constructor(rules: RuleSet) {
     this.rules = rules;
     this.scopes = scopeIndex(rules);
+    this.scopeGroups = scopeGroupIndex(rules);
   }
 
   /**
@@ -269,6 +271,15 @@ export class Emitter {
    */
   canonicalScope(name: string): string | null {
     return this.scopes.get(name.toLowerCase()) ?? null;
+  }
+
+  /**
+   * The scopes one `scope_groups` entry admits, matched case-insensitively, or
+   * `null` when no group has that name. Members are as `scopes.cwt` spells
+   * them, not canonicalized.
+   */
+  scopeGroup(name: string): readonly string[] | null {
+    return this.scopeGroups.get(name.toLowerCase()) ?? null;
   }
 
   /**

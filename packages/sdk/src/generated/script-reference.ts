@@ -5654,6 +5654,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       scopes: [
         "army",
         "carrier",
+        "colony",
         "country",
         "fleet",
         "leader",

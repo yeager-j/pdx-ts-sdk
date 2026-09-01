@@ -8,8 +8,14 @@ import {
   type DriftBaseline,
   type DriftReport,
   type ScopeConflict,
+  type ScopeResolution,
   type ScopeSet,
 } from "./reconcile.ts";
+import {
+  resolutionRuleNames,
+  SCOPE_CLAUSE_KINDS,
+  SCOPE_CONFLICT_NAME_SUFFIX,
+} from "./scope-authority.ts";
 
 const BASELINE_PATH = fileURLToPath(new URL("../drift-baseline.json", import.meta.url));
 const VALID_SCOPE_AUTHORITIES = new Set(["rules", "docs", "mixed", "none"]);
@@ -45,8 +51,32 @@ function describeScopeSet(scopes: ScopeSet): string {
 
 function describeScopeConflict(conflict: ScopeConflict): string {
   return (
-    `${conflict.name}: rules say [${describeScopeSet(conflict.rules)}], ` +
+    `${conflict.name}${SCOPE_CONFLICT_NAME_SUFFIX}[${describeScopeSet(conflict.rules)}], ` +
     `docs say [${describeScopeSet(conflict.docs)}]`
+  );
+}
+
+/**
+ * A `mixed` resolution states the reviewed scope set neither source carries, so
+ * it must name one for every rule it decides. Any other authority reads a whole
+ * source and must not carry a set that nothing consumes.
+ */
+function describeResolvedScopeErrors(
+  resolution: ScopeResolution,
+  resolutionId: string
+): readonly string[] {
+  if (resolution.selectedAuthority !== "mixed") {
+    return resolution.resolvedScopes === undefined
+      ? []
+      : [`  ! scope resolution ${resolutionId} has resolvedScopes but is not mixed`];
+  }
+  return SCOPE_CLAUSE_KINDS.flatMap((kind) =>
+    resolutionRuleNames(resolution, kind)
+      .filter((name) => (resolution.resolvedScopes?.[kind]?.[name] ?? []).length === 0)
+      .map(
+        (name) =>
+          `  ! scope resolution ${resolutionId} has no resolvedScopes.${kind} entry for ${name}`
+      )
   );
 }
 
@@ -75,6 +105,7 @@ function analyzeScopeBaseline(baseline: DriftBaseline): ScopeBaselineAnalysis {
         errors.push(`  ! scope resolution ${resolutionId} has no ${field}`);
       }
     }
+    errors.push(...describeResolvedScopeErrors(resolution, resolutionId));
     conflicts.triggers.push(...resolution.conflicts.triggers);
     conflicts.effects.push(...resolution.conflicts.effects);
     unscopedRules.triggers.push(...resolution.unscopedRules.triggers);
@@ -228,6 +259,11 @@ export function compareToBaseline(report: DriftReport, baseline: DriftBaseline):
       baseline.duplicateScopeLinkEntries
     ),
     ...describeListDifferences("unknown scope", report.unknownScopes, baseline.unknownScopes),
+    ...describeListDifferences(
+      "scope group in ambient slot",
+      report.scopeGroupAmbientSlots,
+      baseline.scopeGroupAmbientSlots
+    ),
     ...compareScopeEvidence(report, baseline),
   ];
 }
@@ -249,7 +285,12 @@ export function updatedBaseline(report: DriftReport, baseline: DriftBaseline): D
   return { ...rest, scopeResolutions: baseline.scopeResolutions };
 }
 
-function readBaseline(): DriftBaseline {
+/**
+ * Reads the committed drift baseline.
+ * It is the reviewed authority for scope decisions as well as the drift gate's
+ * comparison target, so pass the same loaded value to both consumers.
+ */
+export function loadBaseline(): DriftBaseline {
   // Missing join fields represent empty evidence so a newly added join surfaces all current drift.
   return {
     links: { rulesOnly: [], docsOnly: [] },
@@ -260,6 +301,7 @@ function readBaseline(): DriftBaseline {
     duplicateDocEntries: [],
     duplicateModifierEntries: [],
     duplicateScopeLinkEntries: [],
+    scopeGroupAmbientSlots: [],
     ...(JSON.parse(readFileSync(BASELINE_PATH, "utf8")) as Partial<DriftBaseline>),
   } as DriftBaseline;
 }
@@ -268,8 +310,11 @@ function readBaseline(): DriftBaseline {
  * Enforces the committed drift baseline for code generation.
  * Rebaseline mode writes accepted non-scope drift; check mode exits the process on differences.
  */
-export function checkDrift(report: DriftReport, rebaseline: boolean): void {
-  const baseline = readBaseline();
+export function checkDrift(
+  report: DriftReport,
+  baseline: DriftBaseline,
+  rebaseline: boolean
+): void {
   if (rebaseline) {
     writeFileSync(
       BASELINE_PATH,

@@ -11,9 +11,95 @@
  * its children.
  */
 
-import type { RuleField, ScopeContext } from "../cwt/model.ts";
+import { scopeGroupName, type FieldKey, type RuleField, type ScopeContext } from "../cwt/model.ts";
+import { UNIVERSAL_SCOPES } from "../overlay/index.ts";
 import type { Emitter } from "../render/emitter.ts";
 import { AMBIENT_SCOPE_KEYS, type AmbientScopeKey } from "../special-scope-paths.ts";
+
+/** The declared scope group one annotation names, or `null` for anything else. */
+function declaredScopeGroup(emitter: Emitter, declared: string): string | null {
+  const group = scopeGroupName(declared);
+  return group !== null && emitter.scopeGroup(group) !== null ? group : null;
+}
+
+function knownScope(emitter: Emitter, declared: string, source: string): string {
+  const canonical = emitter.canonicalScope(declared);
+  if (canonical === null) {
+    throw new Error(
+      `${source} names unknown scope "${declared}". ` +
+        "The drift gate reports such names under unknownScopes."
+    );
+  }
+  return canonical;
+}
+
+/**
+ * Canonicalizes the scope an ambient slot names — `from`, `root`, `prev`, and
+ * their repeats. A universal scope and a declared scope group both resolve to
+ * `null`, which keeps the slot inaccessible to authors.
+ *
+ * @param source Where the annotation was read, named in the failure message.
+ * @throws When the name is neither of those and not a known scope. The drift
+ *   gate reports such names under `unknownScopes`.
+ */
+export function canonicalAmbientScope(
+  emitter: Emitter,
+  declared: string,
+  source: string
+): string | null {
+  if (UNIVERSAL_SCOPES.has(declared.toLowerCase())) {
+    return null;
+  }
+  if (declaredScopeGroup(emitter, declared) !== null) {
+    // A slot holding one of several scopes has no single type, and a union FROM
+    // is not modeled yet (SDK-402). `null` leaves the slot inaccessible, which
+    // narrows rather than widens; the drift report lists these under
+    // `scopeGroupAmbientSlots`.
+    return null;
+  }
+  return knownScope(emitter, declared, source);
+}
+
+/**
+ * Canonicalizes the scope a THIS position names — a `push_scope`, the `this` of
+ * a `replace_scopes`, or a nested clause's pushed scope. A universal scope
+ * resolves to `null`, leaving the block unpinned.
+ *
+ * @param source Where the annotation was read, named in the failure message.
+ * @throws When the name is a declared scope group, which has no single type to
+ *   pin here, or is not a known scope. Either would silently widen the block to
+ *   every scope; the drift gate reports both under its scope lists.
+ */
+export function canonicalThisScope(
+  emitter: Emitter,
+  declared: string,
+  source: string
+): string | null {
+  if (UNIVERSAL_SCOPES.has(declared.toLowerCase())) {
+    return null;
+  }
+  const group = declaredScopeGroup(emitter, declared);
+  if (group !== null) {
+    throw new Error(
+      `${source} names scope group "${group}". A scope group in the THIS position is not ` +
+        "modeled: resolving it would widen the block to every scope in the group."
+    );
+  }
+  return knownScope(emitter, declared, source);
+}
+
+function fieldLabel(key: FieldKey): string {
+  switch (key.kind) {
+    case "name":
+      return key.name;
+    case "computed":
+      return `computed key (${key.type.kind})`;
+    case "aliasName":
+      return `alias_name[${key.category}]`;
+    case "subtype":
+      return `subtype[${key.negated ? "!" : ""}${key.name}]`;
+  }
+}
 
 /**
  * Carries the ambient scope and fallback TypeScript types used while lowering a field.
@@ -105,13 +191,16 @@ function ambientType(
   if (declared === undefined || declared === null) {
     return null;
   }
-  const canonical = emitter.canonicalScope(declared);
+  const source = `Scope annotation "${ambient}" on field "${fieldLabel(field.key)}"`;
+  const canonical = canonicalAmbientScope(emitter, declared, source);
   return canonical === null ? null : JSON.stringify(canonical);
 }
 
 /**
  * Resolves the scope a field's closures run in, including FROM and ROOT.
- * An asserted scope overrides THIS and throws when the overlay names an unknown scope.
+ * An asserted scope overrides THIS.
+ *
+ * @throws When the overlay or the rules name a scope the emitter cannot resolve.
  */
 export function scopeType(
   emitter: Emitter,
@@ -146,7 +235,8 @@ export function scopeType(
   if (declared === undefined || declared === null) {
     return unpinned;
   }
-  const canonical = emitter.canonicalScope(declared);
+  const source = `Scope annotation "this" on field "${fieldLabel(field.key)}"`;
+  const canonical = canonicalThisScope(emitter, declared, source);
   return canonical === null
     ? unpinned
     : { type: JSON.stringify(canonical), scopes: [canonical], from, root, context };
