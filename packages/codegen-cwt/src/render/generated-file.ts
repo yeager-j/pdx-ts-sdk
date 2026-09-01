@@ -1,6 +1,16 @@
-/** Formats complete generated SDK modules and writes them to their fixed output directory. */
+/** Formats complete generated SDK modules and swaps them into their output directory as one tree. */
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { format, resolveConfig } from "prettier";
@@ -14,6 +24,21 @@ const REPOSITORY_ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
 const GENERATED_OUTPUT_DIRECTORY = path.join(REPOSITORY_ROOT, "packages/sdk/src/generated");
 
 /**
+ * Staging sits outside `packages/sdk/src` so that no program ever compiles a
+ * half-written tree: the SDK build tsconfig includes only `src`, the root
+ * tsconfig's wildcard include skips dot-prefixed directories, and the vitest
+ * include glob collects each package's `tests` directory only.
+ */
+const STAGING_ROOT = path.join(REPOSITORY_ROOT, "packages/sdk/.codegen-staging");
+
+/**
+ * `verified-build.ts` is written by `@pdx-ts/codegen-vanilla`
+ * (`packages/codegen-vanilla/src/verified-build-projection.ts`), not by this
+ * generator, so the swap carries it across unchanged.
+ */
+const PRESERVED_FILES = ["verified-build.ts"];
+
+/**
  * Builds the provenance banner for a generated SDK module.
  * The banner identifies the generator, source revision, and contributing source files.
  */
@@ -24,18 +49,6 @@ export function header(commit: string, sources: readonly string[]): string {
     sources.map((source) => `// From: ${source}\n`).join("") +
     "\n"
   );
-}
-
-/**
- * Formats and writes one file under the generated SDK output directory.
- * Use this for complete module text whose imports are already assembled.
- */
-export async function write(outputFile: string, contents: string): Promise<void> {
-  const outputPath = path.join(GENERATED_OUTPUT_DIRECTORY, outputFile);
-  const options = await resolveConfig(outputPath);
-  mkdirSync(GENERATED_OUTPUT_DIRECTORY, { recursive: true });
-  const formattedContents = await format(contents, { ...options, filepath: outputPath });
-  writeFileSync(outputPath, formattedContents, "utf8");
 }
 
 function renderGeneratedModule(
@@ -65,19 +78,199 @@ function renderGeneratedModule(
   );
 }
 
+function isPlainFileName(outputFile: string): boolean {
+  if (outputFile === "" || outputFile === "." || outputFile === "..") {
+    return false;
+  }
+  return path.basename(outputFile) === outputFile;
+}
+
+/** Directories and file names one {@link GeneratedOutput} session works with. */
+export interface GeneratedOutputOptions {
+  /** Directory the committed tree replaces. Defaults to `packages/sdk/src/generated`. */
+  readonly outputDirectory?: string;
+  /** Directory the session's staging tree is created under. Defaults to `packages/sdk/.codegen-staging`. */
+  readonly stagingRoot?: string;
+  /**
+   * File names carried across the swap when the session does not write them.
+   * Defaults to the files another generator owns.
+   */
+  readonly preserved?: readonly string[];
+}
+
 /**
- * Validates recorded imports, assembles them with the module body, and writes the generated file.
- * Use this with the {@link Usage} captured while emitting the body.
+ * One generation session. Modules are formatted into a temporary tree, and that
+ * whole tree replaces the output directory only after every write succeeded, so
+ * a failure part-way through leaves the previous output untouched rather than
+ * mixing old and new files.
+ *
+ * The committed directory is an exact projection of the session: a file that
+ * was in the output directory but was neither written nor preserved does not
+ * survive the swap, so a renamed or retired module cannot linger.
+ *
+ * Call {@link commit} or {@link discard} exactly once. Both close the session,
+ * and every later call throws.
+ *
+ * @example
+ * const output = GeneratedOutput.open();
+ * try {
+ *   await output.write("scopes.ts", contents);
+ * } catch (error) {
+ *   output.discard();
+ *   throw error;
+ * }
+ * output.commit();
  */
-export async function writeModule(
-  outputFile: string,
-  commit: string,
-  sources: readonly string[],
-  emitter: Emitter,
-  usage: Usage,
-  body: string
-): Promise<void> {
-  assertRecordedImportsAreUsed(outputFile, body, usage.imports, referencesIdentifier);
-  const contents = renderGeneratedModule(commit, sources, emitter, usage, body);
-  await write(outputFile, contents);
+export class GeneratedOutput {
+  private readonly outputDirectory: string;
+  private readonly stagingDirectory: string;
+  private readonly preserved: readonly string[];
+  private readonly writtenFiles = new Set<string>();
+  private closed = false;
+
+  private constructor(
+    outputDirectory: string,
+    stagingDirectory: string,
+    preserved: readonly string[]
+  ) {
+    this.outputDirectory = outputDirectory;
+    this.stagingDirectory = stagingDirectory;
+    this.preserved = preserved;
+  }
+
+  /** Creates the staging tree for one generation session. */
+  static open(options: GeneratedOutputOptions = {}): GeneratedOutput {
+    const stagingRoot = options.stagingRoot ?? STAGING_ROOT;
+    mkdirSync(stagingRoot, { recursive: true });
+    return new GeneratedOutput(
+      options.outputDirectory ?? GENERATED_OUTPUT_DIRECTORY,
+      mkdtempSync(path.join(stagingRoot, "session-")),
+      options.preserved ?? PRESERVED_FILES
+    );
+  }
+
+  /** The file names written so far, which is what {@link commit} publishes. */
+  get written(): ReadonlySet<string> {
+    return this.writtenFiles;
+  }
+
+  /**
+   * Formats one complete module and stages it under the given file name.
+   * Prettier resolves its configuration from the file's final destination, so
+   * the staged text is exactly what {@link commit} publishes.
+   *
+   * Throws when the session is closed, when the name is anything but a plain
+   * file name, or when the name was already written: two emitters claiming one
+   * file is a defect, not a last-writer-wins merge.
+   */
+  async write(outputFile: string, contents: string): Promise<void> {
+    this.assertOpen();
+    if (!isPlainFileName(outputFile)) {
+      throw new Error(`Generated output requires a plain file name, received "${outputFile}".`);
+    }
+    if (this.writtenFiles.has(outputFile)) {
+      throw new Error(`Generated output file "${outputFile}" was written twice in one session.`);
+    }
+
+    const destinationPath = path.join(this.outputDirectory, outputFile);
+    const options = await resolveConfig(destinationPath);
+    const formattedContents = await format(contents, { ...options, filepath: destinationPath });
+
+    writeFileSync(path.join(this.stagingDirectory, outputFile), formattedContents, "utf8");
+    this.writtenFiles.add(outputFile);
+  }
+
+  /**
+   * Validates recorded imports, assembles them with the module body, and stages the generated file.
+   * Use this with the {@link Usage} captured while emitting the body.
+   */
+  async writeModule(
+    outputFile: string,
+    commit: string,
+    sources: readonly string[],
+    emitter: Emitter,
+    usage: Usage,
+    body: string
+  ): Promise<void> {
+    assertRecordedImportsAreUsed(outputFile, body, usage.imports, referencesIdentifier);
+    await this.write(outputFile, renderGeneratedModule(commit, sources, emitter, usage, body));
+  }
+
+  /**
+   * Publishes the session: preserved files are carried into the staging tree,
+   * then that tree replaces the output directory. A failure restores the
+   * previous output and removes the staging tree before it rethrows, so a
+   * retry starts from a clean staging root. The session closes either way.
+   */
+  commit(): void {
+    this.assertOpen();
+    this.closed = true;
+
+    const previousDirectory = `${this.stagingDirectory}.previous`;
+    try {
+      this.swapStagedTreeIn(previousDirectory);
+    } catch (error) {
+      // The swap already put the output back, so dropping the staging tree
+      // here is what keeps a retry from inheriting it. A previous directory
+      // that outlived a failed restore is left alone: it is then the only copy
+      // of the output that remains.
+      rmSync(this.stagingDirectory, { recursive: true, force: true });
+      throw error;
+    }
+    rmSync(previousDirectory, { recursive: true, force: true });
+  }
+
+  /** Removes the staging tree and closes the session, leaving the output directory as it was. */
+  discard(): void {
+    this.assertOpen();
+    rmSync(this.stagingDirectory, { recursive: true, force: true });
+    this.closed = true;
+  }
+
+  private swapStagedTreeIn(previousDirectory: string): void {
+    this.stagePreservedFiles();
+    mkdirSync(path.dirname(this.outputDirectory), { recursive: true });
+    this.adoptOutputDirectoryMode();
+
+    if (existsSync(this.outputDirectory)) {
+      renameSync(this.outputDirectory, previousDirectory);
+    }
+    try {
+      renameSync(this.stagingDirectory, this.outputDirectory);
+    } catch (error) {
+      if (existsSync(previousDirectory)) {
+        renameSync(previousDirectory, this.outputDirectory);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * `mkdtempSync` creates the staging directory owner-only, and the swap
+   * renames that directory into place, so it has to take on the mode of the
+   * directory it replaces rather than impose `0700` on the committed tree.
+   * A first generation has nothing to replace and follows its parent instead.
+   */
+  private adoptOutputDirectoryMode(): void {
+    const modelDirectory = existsSync(this.outputDirectory)
+      ? this.outputDirectory
+      : path.dirname(this.outputDirectory);
+    chmodSync(this.stagingDirectory, statSync(modelDirectory).mode & 0o777);
+  }
+
+  private stagePreservedFiles(): void {
+    for (const outputFile of this.preserved) {
+      const preservedPath = path.join(this.outputDirectory, outputFile);
+      if (this.writtenFiles.has(outputFile) || !existsSync(preservedPath)) {
+        continue;
+      }
+      copyFileSync(preservedPath, path.join(this.stagingDirectory, outputFile));
+    }
+  }
+
+  private assertOpen(): void {
+    if (this.closed) {
+      throw new Error("This generated output session is already committed or discarded.");
+    }
+  }
 }

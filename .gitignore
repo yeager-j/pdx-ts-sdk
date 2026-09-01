@@ -16,6 +16,9 @@ next-env.d.ts
 packages/create-stellaris-mod/src/generated/package-version.ts
 packages/docs-site/lib/generated/sdk-docs-revision.ts
 
+# Where codegen-cwt stages a generation before swapping it into src/generated.
+packages/sdk/.codegen-staging/
+
 # Unanchored: a workspace member whose dependency cannot hoist (a second major
 # of something the root already has) gets its own nested node_modules.
 node_modules/
