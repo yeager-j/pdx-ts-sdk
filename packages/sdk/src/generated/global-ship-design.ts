@@ -16,11 +16,13 @@ import type {
   ShipSizeRef,
 } from "./refs.ts";
 
+/** The `growth_stages.section.component` block inside `global_ship_design`. */
 export interface GlobalShipDesignGrowthStagesSectionComponent {
   slot?: ComponentSlot | UtilityComponentSlot;
   template?: ComponentTemplateRef | string;
 }
 
+/** How the writer lowers each member of {@link GlobalShipDesignGrowthStagesSectionComponent} to PDXScript. */
 export const GLOBAL_SHIP_DESIGN_GROWTH_STAGES_SECTION_COMPONENT_FIELDS: readonly ContentField[] = [
   { key: "slot", member: "slot", shape: "value", form: "scalar", conversion: "identity" },
   {
@@ -33,12 +35,14 @@ export const GLOBAL_SHIP_DESIGN_GROWTH_STAGES_SECTION_COMPONENT_FIELDS: readonly
   },
 ];
 
+/** The `growth_stages.section` block inside `global_ship_design`. */
 export interface GlobalShipDesignGrowthStagesSection {
   template?: SectionTemplateRef | string;
   slot?: SectionSlot;
   component?: GlobalShipDesignGrowthStagesSectionComponent[];
 }
 
+/** How the writer lowers each member of {@link GlobalShipDesignGrowthStagesSection} to PDXScript. */
 export const GLOBAL_SHIP_DESIGN_GROWTH_STAGES_SECTION_FIELDS: readonly ContentField[] = [
   {
     key: "template",
@@ -59,12 +63,14 @@ export const GLOBAL_SHIP_DESIGN_GROWTH_STAGES_SECTION_FIELDS: readonly ContentFi
   },
 ];
 
+/** The `growth_stages` block inside `global_ship_design`. */
 export interface GlobalShipDesignGrowthStages {
   shipSize: ShipSizeRef | string;
   section?: GlobalShipDesignGrowthStagesSection[];
   requiredComponent?: (ComponentTemplateUtilityComponentTemplateRef | string)[];
 }
 
+/** How the writer lowers each member of {@link GlobalShipDesignGrowthStages} to PDXScript. */
 export const GLOBAL_SHIP_DESIGN_GROWTH_STAGES_FIELDS: readonly ContentField[] = [
   {
     key: "ship_size",
@@ -93,11 +99,13 @@ export const GLOBAL_SHIP_DESIGN_GROWTH_STAGES_FIELDS: readonly ContentField[] = 
   },
 ];
 
+/** The `section.component` block inside `global_ship_design`. */
 export interface GlobalShipDesignSectionComponent {
   slot?: ComponentSlot | UtilityComponentSlot;
   template?: ComponentTemplateRef | string;
 }
 
+/** How the writer lowers each member of {@link GlobalShipDesignSectionComponent} to PDXScript. */
 export const GLOBAL_SHIP_DESIGN_SECTION_COMPONENT_FIELDS: readonly ContentField[] = [
   { key: "slot", member: "slot", shape: "value", form: "scalar", conversion: "identity" },
   {
@@ -110,12 +118,14 @@ export const GLOBAL_SHIP_DESIGN_SECTION_COMPONENT_FIELDS: readonly ContentField[
   },
 ];
 
+/** The `section` block inside `global_ship_design`. */
 export interface GlobalShipDesignSection {
   template?: SectionTemplateRef | string;
   slot?: SectionSlot;
   component?: GlobalShipDesignSectionComponent[];
 }
 
+/** How the writer lowers each member of {@link GlobalShipDesignSection} to PDXScript. */
 export const GLOBAL_SHIP_DESIGN_SECTION_FIELDS: readonly ContentField[] = [
   {
     key: "template",
@@ -167,6 +177,7 @@ export interface GlobalShipDesignFields {
   requiredComponent?: (ComponentTemplateUtilityComponentTemplateRef | string)[];
 }
 
+/** A global_ship_design with the id it is defined under. */
 export interface GlobalShipDesignDef<Id extends string = string> extends GlobalShipDesignFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -182,11 +193,13 @@ export type GlobalShipDesignLoc = {
   readonly name: LocalizationRef;
 };
 
+/** A global_ship_design registered with a mod, usable as a typed cross-reference. */
 export type DefinedGlobalShipDesign<Id extends string = string> = DefinedContent<
   "global_ship_design",
   GlobalShipDesignDef<Id>
 >;
 
+/** How the writer lowers each member of {@link GlobalShipDesignFields} to PDXScript. */
 export const GLOBAL_SHIP_DESIGN_FIELDS: readonly ContentField[] = [
   {
     key: "ship_size",
@@ -313,6 +326,7 @@ export const GLOBAL_SHIP_DESIGN_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a global_ship_design defines, with the key pattern each one mints. */
 export const GLOBAL_SHIP_DESIGN_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
 ];

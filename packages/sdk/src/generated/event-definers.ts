@@ -247,14 +247,23 @@ export function namespace(ns: string): EventNamespace {
   };
 }
 
+/**
+ * An event namespace minted from a mod prefix and a feature name.
+ * An empty name yields the prefix alone.
+ */
 export type MintedNamespace<P extends string, N extends string> = N extends "" ? P : `${P}_${N}`;
 
+/** A full event id: a minted namespace and the numeric id under it. */
 export type MintedEventId<
   P extends string,
   N extends string,
   Id extends number,
 > = `${MintedNamespace<P, N>}.${Id}`;
 
+/**
+ * A defined event whose id is fixed to the capability's own namespace.
+ * Place it in a feature to emit it.
+ */
 export type CapabilityEventItem<
   P extends string,
   N extends string,
@@ -264,6 +273,10 @@ export type CapabilityEventItem<
   Kind extends string = S,
 > = EventItem<S, Context, Kind> & { readonly id: MintedEventId<P, N, Id> };
 
+/**
+ * A reserved event id, usable as a reference before the event is defined.
+ * Call `define` to supply the body; the handle keeps the id and scopes.
+ */
 export type CapabilityEventHandle<
   P extends string,
   N extends string,
@@ -280,8 +293,14 @@ export type CapabilityEventHandle<
   ): CapabilityEventItem<P, N, Id, S, Context, Kind>;
 };
 
+/**
+ * Mints event handles inside one namespace. The capability implements it;
+ * the generated event surface calls it.
+ */
 export interface CapabilityEventMinter<P extends string, N extends string> {
+  /** The namespace every id this minter produces sits under. */
   readonly namespace: MintedNamespace<P, N>;
+  /** Reserves one numeric id for an event of the named kind. */
   handle<
     const Id extends number,
     S extends ScopeName,
@@ -296,7 +315,12 @@ export interface CapabilityEventMinter<P extends string, N extends string> {
   ): CapabilityEventHandle<P, N, Id, S, Context, Kind>;
 }
 
+/**
+ * One event definer and one handle reserver per event kind, bound to a
+ * single namespace. Reached through a capability rather than constructed.
+ */
 export interface CapabilityEvents<P extends string, N extends string> {
+  /** The namespace every event defined here sits under. */
   readonly namespace: MintedNamespace<P, N>;
   /**
    * Defines an agreement event with an id in this capability namespace.
@@ -676,6 +700,7 @@ export interface CapabilityEvents<P extends string, N extends string> {
   ): CapabilityEventHandle<P, N, Id, "system", Context, "system">;
 }
 
+/** Binds the per-kind event surface to one namespace's minter. */
 export function capabilityEvents<P extends string, N extends string>(
   minter: CapabilityEventMinter<P, N>
 ): CapabilityEvents<P, N> {

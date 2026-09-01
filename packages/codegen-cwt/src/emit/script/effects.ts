@@ -1462,6 +1462,7 @@ function scopeMapCode(emitter: Emitter, allScopes: readonly string[]): string {
     `export interface ScopeMap {\n` +
     allScopes.map((scope) => `  ${JSON.stringify(scope)}: ${pascalCase(scope)}Scope;\n`).join("") +
     `}\n\n` +
+    docComment(["The effects recordable in one named scope."]) +
     `export type ScopeObjOf<S extends ${emitter.use("ScopeName")}> = ScopeMap[S];\n\n` +
     docComment(["Scope name -> a composable effect-block path at that scope."]) +
     `export interface EffectPathMap<Transition extends ${emitter.use("EffectPathTransition")}> {\n` +
@@ -1469,6 +1470,7 @@ function scopeMapCode(emitter: Emitter, allScopes: readonly string[]): string {
       .map((scope) => `  ${JSON.stringify(scope)}: ${pascalCase(scope)}EffectPath<Transition>;\n`)
       .join("") +
     `}\n\n` +
+    docComment(["A composable effect-block path at one named scope."]) +
     `export type EffectPathOf<S extends ${emitter.use("ScopeName")}, Transition extends ${emitter.use("EffectPathTransition")} = "push"> = EffectPathMap<Transition>[S];\n`
   );
 }

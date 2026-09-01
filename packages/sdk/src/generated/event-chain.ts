@@ -8,12 +8,14 @@ import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 import type { SituationLogCategoryRef, SpriteRef } from "./refs.ts";
 
+/** The `counter` block inside `event_chain`. */
 export interface EventChainCounterDefinition {
   max?: number;
   /** Display text emitted to localization under this entry's own key. */
   name?: LocalizedText;
 }
 
+/** How the writer lowers each member of {@link EventChainCounterDefinition} to PDXScript. */
 export const EVENT_CHAIN_COUNTER_DEFINITION_FIELDS: readonly ContentField[] = [
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
@@ -40,6 +42,7 @@ export interface EventChainFields {
   abortTrigger?: Trigger<"country">;
 }
 
+/** An event_chain with the id it is defined under. */
 export interface EventChainDef<Id extends string = string> extends EventChainFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -57,11 +60,13 @@ export type EventChainLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** An event_chain registered with a mod, usable as a typed cross-reference. */
 export type DefinedEventChain<Id extends string = string> = DefinedContent<
   "event_chain",
   EventChainDef<Id>
 >;
 
+/** How the writer lowers each member of {@link EventChainFields} to PDXScript. */
 export const EVENT_CHAIN_FIELDS: readonly ContentField[] = [
   { key: "icon", member: "icon", shape: "value", form: "scalar", conversion: "identity" },
   {
@@ -92,6 +97,7 @@ export const EVENT_CHAIN_FIELDS: readonly ContentField[] = [
   { key: "abort_trigger", member: "abortTrigger", shape: "trigger", form: "trigger" },
 ];
 
+/** The localization slots an event_chain defines, with the key pattern each one mints. */
 export const EVENT_CHAIN_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "title", pattern: "$_title", required: false },
   { member: "desc", pattern: "$_desc", required: false },

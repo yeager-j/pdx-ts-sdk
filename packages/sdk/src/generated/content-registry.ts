@@ -122,6 +122,11 @@ import {
   WEAPON_COMPONENT_TEMPLATE_LOCALISATION,
 } from "./weapon-component-template.ts";
 
+/**
+ * Every content registry the SDK exposes: its name, the CWT reference its
+ * definitions satisfy, the game folder it writes to, and its field and
+ * localization tables.
+ */
 export const CONTENT_REGISTRIES = [
   {
     type: "technology",
@@ -593,6 +598,7 @@ export const CONTENT_REGISTRIES = [
   },
 ] as const satisfies readonly ContentRegistryDescriptor[];
 
+/** The name of one content registry the SDK exposes. */
 export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];
 
 /**

@@ -70,6 +70,7 @@ export interface CasusBelliFields {
   aggregatedMessageKey?: LocalizationInput;
 }
 
+/** A casus_belli with the id it is defined under. */
 export interface CasusBelliDef<Id extends string = string> extends CasusBelliFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -87,11 +88,13 @@ export type CasusBelliLoc = {
   readonly hint: LocalizationRef;
 };
 
+/** A casus_belli registered with a mod, usable as a typed cross-reference. */
 export type DefinedCasusBelli<Id extends string = string> = DefinedContent<
   "casus_belli",
   CasusBelliDef<Id>
 >;
 
+/** How the writer lowers each member of {@link CasusBelliFields} to PDXScript. */
 export const CASUS_BELLI_FIELDS: readonly ContentField[] = [
   { key: "potential", member: "potential", shape: "trigger", form: "trigger" },
   { key: "is_valid", member: "isValid", shape: "trigger", form: "trigger" },
@@ -128,6 +131,7 @@ export const CASUS_BELLI_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a casus_belli defines, with the key pattern each one mints. */
 export const CASUS_BELLI_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "casus_belli_$", required: true },
   { member: "hint", pattern: "casus_belli_$_acquire_hint", required: false },

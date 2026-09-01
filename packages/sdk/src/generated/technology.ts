@@ -21,6 +21,7 @@ import type { PrereqForCategory, ResearchArea, TechAiType } from "./enums.ts";
 import type { TechnologyCategoryRef, TechnologyRef, TechnologyTierRef } from "./refs.ts";
 import type { FeatureFlag, TechWeightGroup } from "./value-sets.ts";
 
+/** The `technology_swap.prereqfor_desc.entry` block inside `technology`. */
 export interface TechnologyTechnologySwapPrereqforDescEntry {
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   title: LocalizationInput;
@@ -28,6 +29,7 @@ export interface TechnologyTechnologySwapPrereqforDescEntry {
   desc?: LocalizationInput;
 }
 
+/** How the writer lowers each member of {@link TechnologyTechnologySwapPrereqforDescEntry} to PDXScript. */
 export const TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_ENTRY_FIELDS: readonly ContentField[] = [
   {
     key: "title",
@@ -47,6 +49,7 @@ export const TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_ENTRY_FIELDS: readonly Co
   },
 ];
 
+/** The `technology_swap.prereqfor_desc` block inside `technology`. */
 export interface TechnologyTechnologySwapPrereqforDesc {
   hidePrereqForDesc?: PrereqForCategory[];
   ship?: TechnologyTechnologySwapPrereqforDescEntry[];
@@ -57,6 +60,7 @@ export interface TechnologyTechnologySwapPrereqforDesc {
   resource?: TechnologyTechnologySwapPrereqforDescEntry[];
 }
 
+/** How the writer lowers each member of {@link TechnologyTechnologySwapPrereqforDesc} to PDXScript. */
 export const TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_FIELDS: readonly ContentField[] = [
   {
     key: "hide_prereq_for_desc",
@@ -116,6 +120,7 @@ export const TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_FIELDS: readonly ContentF
   },
 ];
 
+/** The `technology_swap` block inside `technology`. */
 export interface TechnologyTechnologySwap {
   name?: string;
   inheritIcon?: boolean;
@@ -129,6 +134,7 @@ export interface TechnologyTechnologySwap {
   weight?: number | WeightBlock<never>;
 }
 
+/** How the writer lowers each member of {@link TechnologyTechnologySwap} to PDXScript. */
 export const TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS: readonly ContentField[] = [
   { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
   {
@@ -182,6 +188,7 @@ export const TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `prereqfor_desc.entry` block inside `technology`. */
 export interface TechnologyPrereqforDescEntry {
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   title: LocalizationInput;
@@ -189,6 +196,7 @@ export interface TechnologyPrereqforDescEntry {
   desc?: LocalizationInput;
 }
 
+/** How the writer lowers each member of {@link TechnologyPrereqforDescEntry} to PDXScript. */
 export const TECHNOLOGY_PREREQFOR_DESC_ENTRY_FIELDS: readonly ContentField[] = [
   {
     key: "title",
@@ -208,6 +216,7 @@ export const TECHNOLOGY_PREREQFOR_DESC_ENTRY_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `prereqfor_desc` block inside `technology`. */
 export interface TechnologyPrereqforDesc {
   hidePrereqForDesc?: PrereqForCategory[];
   ship?: TechnologyPrereqforDescEntry[];
@@ -218,6 +227,7 @@ export interface TechnologyPrereqforDesc {
   resource?: TechnologyPrereqforDescEntry[];
 }
 
+/** How the writer lowers each member of {@link TechnologyPrereqforDesc} to PDXScript. */
 export const TECHNOLOGY_PREREQFOR_DESC_FIELDS: readonly ContentField[] = [
   {
     key: "hide_prereq_for_desc",
@@ -347,6 +357,7 @@ export interface TechnologyFields {
   startingPotential?: Trigger<"country">;
 }
 
+/** A technology with the id it is defined under. */
 export interface TechnologyDef<Id extends string = string> extends TechnologyFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -364,6 +375,7 @@ export type TechnologyLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A technology registered with a mod, usable as a typed cross-reference. */
 export type DefinedTechnology<Id extends string = string> = DefinedContent<
   "technology",
   TechnologyDef<Id>
@@ -453,6 +465,7 @@ export type PatchedTechnology = PatchedContent<ParsedTechnology>;
 /** A patched vanilla technology placed into a capability feature. */
 export type TechnologyPatchItem = ContentPatchItem<ParsedTechnology>;
 
+/** How the writer lowers each member of {@link TechnologyFields} to PDXScript. */
 export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
   { key: "area", member: "area", shape: "value", form: "scalar", conversion: "identity" },
   {
@@ -600,6 +613,7 @@ export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
   { key: "starting_potential", member: "startingPotential", shape: "trigger", form: "trigger" },
 ];
 
+/** The localization slots a technology defines, with the key pattern each one mints. */
 export const TECHNOLOGY_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
   { member: "desc", pattern: "$_desc", required: false },

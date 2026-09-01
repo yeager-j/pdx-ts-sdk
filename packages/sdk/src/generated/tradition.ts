@@ -18,6 +18,10 @@ import type {
 import type { Trigger } from "../script/trigger-core.ts";
 import type { AgendaRef } from "./refs.ts";
 
+/**
+ * One nested definition under `tradition.tradition_swap`, as the game's rules describe it.
+ * Its record key is the definition's own logical name.
+ */
 export interface TraditionSwapFields {
   /**
    * Display text emitted to localization under `<id>`.
@@ -51,6 +55,7 @@ export interface TraditionSwapFields {
   triggeredModifier?: TriggeredModifier<"country">[];
 }
 
+/** How the writer lowers each member of {@link TraditionSwapFields} to PDXScript. */
 export const TRADITION_SWAP_FIELDS: readonly ContentField[] = [
   {
     key: "inherit_icon",
@@ -112,6 +117,7 @@ export const TRADITION_SWAP_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots one `tradition.tradition_swap` entry defines, with the key pattern each one mints. */
 export const TRADITION_SWAP_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false, requiredUnless: "inheritName" },
   { member: "flavor", pattern: "$_delayed", required: false },
@@ -152,6 +158,7 @@ export interface TraditionFields {
   aiWeight?: WeightBlock<"country">;
 }
 
+/** A tradition with the id it is defined under. */
 export interface TraditionDef<Id extends string = string> extends TraditionFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -171,11 +178,13 @@ export type TraditionLoc = {
   readonly effects: LocalizationRef;
 };
 
+/** A tradition registered with a mod, usable as a typed cross-reference. */
 export type DefinedTradition<Id extends string = string> = DefinedContent<
   "tradition",
   TraditionDef<Id>
 >;
 
+/** How the writer lowers each member of {@link TraditionFields} to PDXScript. */
 export const TRADITION_FIELDS: readonly ContentField[] = [
   {
     key: "unlocks_agenda",
@@ -227,6 +236,7 @@ export const TRADITION_FIELDS: readonly ContentField[] = [
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
 ];
 
+/** The localization slots a tradition defines, with the key pattern each one mints. */
 export const TRADITION_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
   { member: "flavor", pattern: "$_delayed", required: false },

@@ -7,6 +7,7 @@ import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ModelAnimation } from "./enums.ts";
 
+/** The `meshsettings` block inside `pdxmesh`. */
 export interface PdxmeshMeshsettings {
   name?: string;
   index?: number;
@@ -17,6 +18,7 @@ export interface PdxmeshMeshsettings {
   textureWpo?: string;
 }
 
+/** How the writer lowers each member of {@link PdxmeshMeshsettings} to PDXScript. */
 export const PDXMESH_MESHSETTINGS_FIELDS: readonly ContentField[] = [
   { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
   { key: "index", member: "index", shape: "value", form: "scalar", conversion: "identity" },
@@ -51,6 +53,7 @@ export const PDXMESH_MESHSETTINGS_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `animation` block inside `pdxmesh`. */
 export interface PdxmeshAnimation {
   id: ModelAnimation | string;
   /**
@@ -62,6 +65,7 @@ export interface PdxmeshAnimation {
   type: string;
 }
 
+/** How the writer lowers each member of {@link PdxmeshAnimation} to PDXScript. */
 export const PDXMESH_ANIMATION_FIELDS: readonly ContentField[] = [
   { key: "id", member: "id", shape: "value", form: "scalar", conversion: "identity" },
   { key: "type", member: "type", shape: "value", form: "scalar", conversion: "identity" },
@@ -85,13 +89,16 @@ export interface PdxmeshFields {
   cullDistance?: string;
 }
 
+/** A pdxmesh with the id it is defined under. */
 export interface PdxmeshDef<Id extends string = string> extends PdxmeshFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
 
+/** A pdxmesh registered with a mod, usable as a typed cross-reference. */
 export type DefinedPdxmesh<Id extends string = string> = DefinedContent<"pdxmesh", PdxmeshDef<Id>>;
 
+/** How the writer lowers each member of {@link PdxmeshFields} to PDXScript. */
 export const PDXMESH_FIELDS: readonly ContentField[] = [
   { key: "file", member: "file", shape: "value", form: "scalar", conversion: "assetPath" },
   { key: "scale", member: "scale", shape: "value", form: "scalar", conversion: "identity" },
@@ -120,4 +127,5 @@ export const PDXMESH_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a pdxmesh defines, with the key pattern each one mints. */
 export const PDXMESH_LOCALISATION: readonly ContentLocalisation[] = [];

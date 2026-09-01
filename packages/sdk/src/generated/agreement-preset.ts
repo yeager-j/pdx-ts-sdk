@@ -19,6 +19,7 @@ import type {
   SpriteRef,
 } from "./refs.ts";
 
+/** The `term_data.discrete_terms` block inside `agreement_preset`. */
 export interface AgreementPresetTermDataDiscreteTerms {
   /** The term name, as defined in agreement_terms */
   key:
@@ -34,6 +35,7 @@ export interface AgreementPresetTermDataDiscreteTerms {
     | AgreementTermValueSpecialistTypeRef;
 }
 
+/** How the writer lowers each member of {@link AgreementPresetTermDataDiscreteTerms} to PDXScript. */
 export const AGREEMENT_PRESET_TERM_DATA_DISCRETE_TERMS_FIELDS: readonly ContentField[] = [
   {
     key: "key",
@@ -61,6 +63,7 @@ export const AGREEMENT_PRESET_TERM_DATA_DISCRETE_TERMS_FIELDS: readonly ContentF
   },
 ];
 
+/** The `term_data.resource_terms` block inside `agreement_preset`. */
 export interface AgreementPresetTermDataResourceTerms {
   /** The resource term value to use, as defined in agreement_term_values */
   key: AgreementTermValueResourceRef | string;
@@ -68,6 +71,7 @@ export interface AgreementPresetTermDataResourceTerms {
   value: number;
 }
 
+/** How the writer lowers each member of {@link AgreementPresetTermDataResourceTerms} to PDXScript. */
 export const AGREEMENT_PRESET_TERM_DATA_RESOURCE_TERMS_FIELDS: readonly ContentField[] = [
   {
     key: "key",
@@ -80,6 +84,7 @@ export const AGREEMENT_PRESET_TERM_DATA_RESOURCE_TERMS_FIELDS: readonly ContentF
   { key: "value", member: "value", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `term_data` block inside `agreement_preset`. */
 export interface AgreementPresetTermData {
   /** default: yes */
   hasCooldownOnFirstRenegotiation?: boolean;
@@ -89,6 +94,7 @@ export interface AgreementPresetTermData {
   resourceTerms?: AgreementPresetTermDataResourceTerms[];
 }
 
+/** How the writer lowers each member of {@link AgreementPresetTermData} to PDXScript. */
 export const AGREEMENT_PRESET_TERM_DATA_FIELDS: readonly ContentField[] = [
   {
     key: "has_cooldown_on_first_renegotiation",
@@ -172,6 +178,7 @@ export interface AgreementPresetFields {
   canPresetBeChanged?: boolean;
 }
 
+/** An agreement_preset with the id it is defined under. */
 export interface AgreementPresetDef<Id extends string = string> extends AgreementPresetFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -191,11 +198,13 @@ export type AgreementPresetLoc = {
   readonly flavor: LocalizationRef;
 };
 
+/** An agreement_preset registered with a mod, usable as a typed cross-reference. */
 export type DefinedAgreementPreset<Id extends string = string> = DefinedContent<
   "agreement_preset",
   AgreementPresetDef<Id>
 >;
 
+/** How the writer lowers each member of {@link AgreementPresetFields} to PDXScript. */
 export const AGREEMENT_PRESET_FIELDS: readonly ContentField[] = [
   {
     key: "parent",
@@ -248,6 +257,7 @@ export const AGREEMENT_PRESET_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots an agreement_preset defines, with the key pattern each one mints. */
 export const AGREEMENT_PRESET_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
   { member: "desc", pattern: "$_desc", required: false },

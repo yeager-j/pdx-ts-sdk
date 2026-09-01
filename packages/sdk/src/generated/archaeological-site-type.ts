@@ -13,12 +13,14 @@ import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 import type { EventFleetRef, SituationLogCategoryRef, SpriteRef } from "./refs.ts";
 
+/** The `desc` block inside `archaeological_site_type`. */
 export interface ArchaeologicalSiteTypeDesc {
   trigger?: Trigger<"archaeological_site">;
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   text?: LocalizationInput;
 }
 
+/** How the writer lowers each member of {@link ArchaeologicalSiteTypeDesc} to PDXScript. */
 export const ARCHAEOLOGICAL_SITE_TYPE_DESC_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   {
@@ -31,16 +33,19 @@ export const ARCHAEOLOGICAL_SITE_TYPE_DESC_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `stage.difficulty` block inside `archaeological_site_type`. */
 export interface ArchaeologicalSiteTypeStageDifficulty {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link ArchaeologicalSiteTypeStageDifficulty} to PDXScript. */
 export const ARCHAEOLOGICAL_SITE_TYPE_STAGE_DIFFICULTY_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `stage` block inside `archaeological_site_type`. */
 export interface ArchaeologicalSiteTypeStage {
   /** min max interval type. interval is defined either by '<int>' or '{ min = <int> max = <int> }' where the later will randomize a value between min and max. */
   difficulty: number | ArchaeologicalSiteTypeStageDifficulty;
@@ -50,6 +55,7 @@ export interface ArchaeologicalSiteTypeStage {
   event: EventFleetRef | string;
 }
 
+/** How the writer lowers each member of {@link ArchaeologicalSiteTypeStage} to PDXScript. */
 export const ARCHAEOLOGICAL_SITE_TYPE_STAGE_FIELDS: readonly ContentField[] = [
   {
     key: "difficulty",
@@ -151,6 +157,7 @@ export interface ArchaeologicalSiteTypeFields {
   >;
 }
 
+/** An archaeological_site_type with the id it is defined under. */
 export interface ArchaeologicalSiteTypeDef<
   Id extends string = string,
 > extends ArchaeologicalSiteTypeFields {
@@ -170,11 +177,13 @@ export type ArchaeologicalSiteTypeLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** An archaeological_site_type registered with a mod, usable as a typed cross-reference. */
 export type DefinedArchaeologicalSiteType<Id extends string = string> = DefinedContent<
   "archaeological_site_type",
   ArchaeologicalSiteTypeDef<Id>
 >;
 
+/** How the writer lowers each member of {@link ArchaeologicalSiteTypeFields} to PDXScript. */
 export const ARCHAEOLOGICAL_SITE_TYPE_FIELDS: readonly ContentField[] = [
   {
     key: "picture",
@@ -255,6 +264,7 @@ export const ARCHAEOLOGICAL_SITE_TYPE_FIELDS: readonly ContentField[] = [
   { key: "on_visible", member: "onVisible", shape: "effect", form: "closure" },
 ];
 
+/** The localization slots an archaeological_site_type defines, with the key pattern each one mints. */
 export const ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
   { member: "desc", pattern: "$_desc", required: false, pointerMember: "conditionalDesc" },

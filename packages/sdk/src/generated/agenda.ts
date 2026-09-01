@@ -45,6 +45,7 @@ export interface AgendaFields {
   aiWeight?: WeightBlock<"country">;
 }
 
+/** An agenda with the id it is defined under. */
 export interface AgendaDef<Id extends string = string> extends AgendaFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -62,8 +63,10 @@ export type AgendaLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** An agenda registered with a mod, usable as a typed cross-reference. */
 export type DefinedAgenda<Id extends string = string> = DefinedContent<"agenda", AgendaDef<Id>>;
 
+/** How the writer lowers each member of {@link AgendaFields} to PDXScript. */
 export const AGENDA_FIELDS: readonly ContentField[] = [
   {
     key: "agenda_cost",
@@ -103,6 +106,7 @@ export const AGENDA_FIELDS: readonly ContentField[] = [
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
 ];
 
+/** The localization slots an agenda defines, with the key pattern each one mints. */
 export const AGENDA_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "council_agenda_$_name", required: true },
   { member: "desc", pattern: "council_agenda_$_desc", required: false },

@@ -128,6 +128,7 @@ export function emitModifierOperationProtocol(
       )
       .join("") +
     "] as const;\n\n" +
+    docComment(["The authoring name of one modifier arithmetic operation."]) +
     'export type ModifierOperationMember = (typeof MODIFIER_OPERATIONS)[number]["member"];\n\n' +
     docComment(["Every complex_maths_enum member and the SDK's reviewed disposition."]) +
     "export const MODIFIER_OPERATION_POLICY = [\n" +

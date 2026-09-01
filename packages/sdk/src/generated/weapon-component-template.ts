@@ -41,6 +41,7 @@ import type {
 } from "./refs.ts";
 import type { UpgradePath } from "./value-sets.ts";
 
+/** The `custom_tooltip` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateCustomTooltip {
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   text?: "" | LocalizationInput;
@@ -51,6 +52,7 @@ export interface WeaponComponentTemplateCustomTooltip {
   when?: Trigger<never>;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateCustomTooltip} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_CUSTOM_TOOLTIP_FIELDS: readonly ContentField[] = [
   {
     key: "text",
@@ -81,11 +83,13 @@ export const WEAPON_COMPONENT_TEMPLATE_CUSTOM_TOOLTIP_FIELDS: readonly ContentFi
   { member: "when", shape: "inlineTrigger" },
 ];
 
+/** The `injected_modifier.modifier` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateInjectedModifierModifier {
   modifier: ModifierRef | string | StaticModifierRef;
   days?: number;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateInjectedModifierModifier} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_INJECTED_MODIFIER_MODIFIER_FIELDS: readonly ContentField[] =
   [
     {
@@ -99,22 +103,26 @@ export const WEAPON_COMPONENT_TEMPLATE_INJECTED_MODIFIER_MODIFIER_FIELDS: readon
     { key: "days", member: "days", shape: "value", form: "scalar", conversion: "identity" },
   ];
 
+/** The `injected_modifier.stack_info` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateInjectedModifierStackInfo {
   id: string;
   priority: number;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateInjectedModifierStackInfo} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_INJECTED_MODIFIER_STACK_INFO_FIELDS: readonly ContentField[] =
   [
     { key: "id", member: "id", shape: "value", form: "scalar", conversion: "identity" },
     { key: "priority", member: "priority", shape: "value", form: "scalar", conversion: "identity" },
   ];
 
+/** The `injected_modifier` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateInjectedModifier {
   modifier: WeaponComponentTemplateInjectedModifierModifier;
   stackInfo?: WeaponComponentTemplateInjectedModifierStackInfo;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateInjectedModifier} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_INJECTED_MODIFIER_FIELDS: readonly ContentField[] = [
   {
     key: "modifier",
@@ -132,41 +140,49 @@ export const WEAPON_COMPONENT_TEMPLATE_INJECTED_MODIFIER_FIELDS: readonly Conten
   },
 ];
 
+/** The `damage` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateDamage {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateDamage} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_DAMAGE_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `windup` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateWindup {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateWindup} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_WINDUP_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `friendly_aura.stack_info` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateFriendlyAuraStackInfo {
   id: string;
   priority?: number;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateFriendlyAuraStackInfo} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_FRIENDLY_AURA_STACK_INFO_FIELDS: readonly ContentField[] = [
   { key: "id", member: "id", shape: "value", form: "scalar", conversion: "identity" },
   { key: "priority", member: "priority", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `friendly_aura.graphics.area_effect` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateFriendlyAuraGraphicsAreaEffect {
   entity: ModelEntityRef | string;
   dynamicScale: boolean;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateFriendlyAuraGraphicsAreaEffect} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_AREA_EFFECT_FIELDS: readonly ContentField[] =
   [
     {
@@ -186,11 +202,13 @@ export const WEAPON_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_AREA_EFFECT_FIELDS
     },
   ];
 
+/** The `friendly_aura.graphics.ship_effect` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateFriendlyAuraGraphicsShipEffect {
   entity: ModelEntityRef | string;
   dynamicScale: boolean;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateFriendlyAuraGraphicsShipEffect} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_SHIP_EFFECT_FIELDS: readonly ContentField[] =
   [
     {
@@ -210,11 +228,13 @@ export const WEAPON_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_SHIP_EFFECT_FIELDS
     },
   ];
 
+/** The `friendly_aura.graphics` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateFriendlyAuraGraphics {
   areaEffect?: WeaponComponentTemplateFriendlyAuraGraphicsAreaEffect[];
   shipEffect?: WeaponComponentTemplateFriendlyAuraGraphicsShipEffect[];
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateFriendlyAuraGraphics} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_FIELDS: readonly ContentField[] = [
   {
     key: "area_effect",
@@ -234,6 +254,7 @@ export const WEAPON_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_FIELDS: readonly C
   },
 ];
 
+/** The `friendly_aura` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateFriendlyAura {
   name: string;
   limit?: Trigger<"ship">;
@@ -245,6 +266,7 @@ export interface WeaponComponentTemplateFriendlyAura {
   graphics?: WeaponComponentTemplateFriendlyAuraGraphics;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateFriendlyAura} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_FRIENDLY_AURA_FIELDS: readonly ContentField[] = [
   { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
   { key: "limit", member: "limit", shape: "trigger", form: "trigger" },
@@ -274,21 +296,25 @@ export const WEAPON_COMPONENT_TEMPLATE_FRIENDLY_AURA_FIELDS: readonly ContentFie
   },
 ];
 
+/** The `hostile_aura.stack_info` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateHostileAuraStackInfo {
   id: string;
   priority?: number;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateHostileAuraStackInfo} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_STACK_INFO_FIELDS: readonly ContentField[] = [
   { key: "id", member: "id", shape: "value", form: "scalar", conversion: "identity" },
   { key: "priority", member: "priority", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `hostile_aura.graphics.area_effect` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateHostileAuraGraphicsAreaEffect {
   entity: ModelEntityRef | string;
   dynamicScale: boolean;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateHostileAuraGraphicsAreaEffect} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_AREA_EFFECT_FIELDS: readonly ContentField[] =
   [
     {
@@ -308,11 +334,13 @@ export const WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_AREA_EFFECT_FIELDS:
     },
   ];
 
+/** The `hostile_aura.graphics.ship_effect` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateHostileAuraGraphicsShipEffect {
   entity: ModelEntityRef | string;
   dynamicScale: boolean;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateHostileAuraGraphicsShipEffect} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_SHIP_EFFECT_FIELDS: readonly ContentField[] =
   [
     {
@@ -332,11 +360,13 @@ export const WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_SHIP_EFFECT_FIELDS:
     },
   ];
 
+/** The `hostile_aura.graphics` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateHostileAuraGraphics {
   areaEffect?: WeaponComponentTemplateHostileAuraGraphicsAreaEffect[];
   shipEffect?: WeaponComponentTemplateHostileAuraGraphicsShipEffect[];
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateHostileAuraGraphics} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_FIELDS: readonly ContentField[] = [
   {
     key: "area_effect",
@@ -356,17 +386,20 @@ export const WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_FIELDS: readonly Co
   },
 ];
 
+/** The `hostile_aura.damage_per_day.damage` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateHostileAuraDamagePerDayDamage {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateHostileAuraDamagePerDayDamage} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_DAMAGE_PER_DAY_DAMAGE_FIELDS: readonly ContentField[] =
   [
     { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
     { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
   ];
 
+/** The `hostile_aura.damage_per_day` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateHostileAuraDamagePerDay {
   accuracy?: number;
   damage?: WeaponComponentTemplateHostileAuraDamagePerDayDamage;
@@ -378,6 +411,7 @@ export interface WeaponComponentTemplateHostileAuraDamagePerDay {
   sizeDamageFactor?: number;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateHostileAuraDamagePerDay} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_DAMAGE_PER_DAY_FIELDS: readonly ContentField[] =
   [
     { key: "accuracy", member: "accuracy", shape: "value", form: "scalar", conversion: "identity" },
@@ -432,6 +466,7 @@ export const WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_DAMAGE_PER_DAY_FIELDS: reado
     },
   ];
 
+/** The `hostile_aura` block inside `weapon_component_template`. */
 export interface WeaponComponentTemplateHostileAura {
   name: string;
   limit?: Trigger<"ship">;
@@ -444,6 +479,7 @@ export interface WeaponComponentTemplateHostileAura {
   damagePerDay?: WeaponComponentTemplateHostileAuraDamagePerDay;
 }
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateHostileAura} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_FIELDS: readonly ContentField[] = [
   { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
   { key: "limit", member: "limit", shape: "trigger", form: "trigger" },
@@ -565,6 +601,7 @@ export interface WeaponComponentTemplateFields {
   hostileAura?: WeaponComponentTemplateHostileAura[];
 }
 
+/** A weapon_component_template with the id it is defined under. */
 export interface WeaponComponentTemplateDef<
   Id extends string = string,
 > extends WeaponComponentTemplateFields {
@@ -582,11 +619,13 @@ export type WeaponComponentTemplateLoc = {
   readonly name: LocalizationRef;
 };
 
+/** A weapon_component_template registered with a mod, usable as a typed cross-reference. */
 export type DefinedWeaponComponentTemplate<Id extends string = string> = DefinedContent<
   "weapon_component_template",
   WeaponComponentTemplateDef<Id>
 >;
 
+/** How the writer lowers each member of {@link WeaponComponentTemplateFields} to PDXScript. */
 export const WEAPON_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   {
     key: "icon",
@@ -991,6 +1030,7 @@ export const WEAPON_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a weapon_component_template defines, with the key pattern each one mints. */
 export const WEAPON_COMPONENT_TEMPLATE_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
 ];

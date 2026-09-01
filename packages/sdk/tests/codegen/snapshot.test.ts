@@ -228,6 +228,7 @@ describe("emitted trigger signatures", () => {
     `);
     expect(declaration("customTooltip")).toMatchInlineSnapshot(`
       "export function customTooltip(value: LocalizationInput): Trigger<ScopeName>;
+      /** The same rule written as a block, with its arguments named. */
       export function customTooltip<S extends ScopeName = ScopeName>(
         args: CustomTooltipArgs<S>
       ): Trigger<S>;
@@ -276,6 +277,7 @@ describe("emitted trigger signatures", () => {
       "export function hasResource(
         value: ResourceRef | string | boolean
       ): Trigger<"astral_rift" | "carrier" | "country" | "deposit" | "planet" | "ship">;
+      /** The same rule written as a block, with its arguments named. */
       export function hasResource(
         args: HasResourceArgs
       ): Trigger<"astral_rift" | "carrier" | "country" | "deposit" | "planet" | "ship">;

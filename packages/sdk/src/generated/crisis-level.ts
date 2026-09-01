@@ -34,6 +34,7 @@ export interface CrisisLevelFields {
   onUnlock: EffectBlock<"country", { readonly root: "country" }>;
 }
 
+/** A crisis_level with the id it is defined under. */
 export interface CrisisLevelDef<Id extends string = string> extends CrisisLevelFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -51,11 +52,13 @@ export type CrisisLevelLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A crisis_level registered with a mod, usable as a typed cross-reference. */
 export type DefinedCrisisLevel<Id extends string = string> = DefinedContent<
   "crisis_level",
   CrisisLevelDef<Id>
 >;
 
+/** How the writer lowers each member of {@link CrisisLevelFields} to PDXScript. */
 export const CRISIS_LEVEL_FIELDS: readonly ContentField[] = [
   { key: "allow", member: "allow", shape: "trigger", form: "trigger" },
   {
@@ -76,6 +79,7 @@ export const CRISIS_LEVEL_FIELDS: readonly ContentField[] = [
   { key: "on_unlock", member: "onUnlock", shape: "effect", form: "closure" },
 ];
 
+/** The localization slots a crisis_level defines, with the key pattern each one mints. */
 export const CRISIS_LEVEL_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
   { member: "desc", pattern: "$_desc", required: false },

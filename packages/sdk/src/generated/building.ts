@@ -28,12 +28,14 @@ import type { BuildingCategory } from "./enums.ts";
 import type { BuildingRef, SpriteRef, TechnologyRef } from "./refs.ts";
 import type { BuildingSet } from "./value-sets.ts";
 
+/** The `desc` block inside `building`. */
 export interface BuildingDesc {
   trigger?: Trigger<"colony">;
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   text?: LocalizationInput;
 }
 
+/** How the writer lowers each member of {@link BuildingDesc} to PDXScript. */
 export const BUILDING_DESC_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   {
@@ -46,12 +48,14 @@ export const BUILDING_DESC_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `triggered_desc` block inside `building`. */
 export interface BuildingTriggeredDesc {
   trigger?: Trigger<"colony">;
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   text?: LocalizationInput;
 }
 
+/** How the writer lowers each member of {@link BuildingTriggeredDesc} to PDXScript. */
 export const BUILDING_TRIGGERED_DESC_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   {
@@ -166,6 +170,7 @@ export interface BuildingFields {
   customTooltip?: LocalizationInput;
 }
 
+/** A building with the id it is defined under. */
 export interface BuildingDef<Id extends string = string> extends BuildingFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -183,6 +188,7 @@ export type BuildingLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A building registered with a mod, usable as a typed cross-reference. */
 export type DefinedBuilding<Id extends string = string> = DefinedContent<
   "building",
   BuildingDef<Id>
@@ -304,6 +310,7 @@ export type PatchedBuilding = PatchedContent<ParsedBuilding>;
 /** A patched vanilla building placed into a capability feature. */
 export type BuildingPatchItem = ContentPatchItem<ParsedBuilding>;
 
+/** How the writer lowers each member of {@link BuildingFields} to PDXScript. */
 export const BUILDING_FIELDS: readonly ContentField[] = [
   {
     key: "desc",
@@ -625,6 +632,7 @@ export const BUILDING_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a building defines, with the key pattern each one mints. */
 export const BUILDING_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
   { member: "desc", pattern: "$_desc", required: false },

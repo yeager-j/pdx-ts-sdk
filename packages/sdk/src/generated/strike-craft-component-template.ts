@@ -36,6 +36,7 @@ import type {
 } from "./refs.ts";
 import type { UpgradePath } from "./value-sets.ts";
 
+/** The `custom_tooltip` block inside `strike_craft_component_template`. */
 export interface StrikeCraftComponentTemplateCustomTooltip {
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   text?: "" | LocalizationInput;
@@ -46,6 +47,7 @@ export interface StrikeCraftComponentTemplateCustomTooltip {
   when?: Trigger<never>;
 }
 
+/** How the writer lowers each member of {@link StrikeCraftComponentTemplateCustomTooltip} to PDXScript. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_CUSTOM_TOOLTIP_FIELDS: readonly ContentField[] = [
   {
     key: "text",
@@ -76,32 +78,38 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_CUSTOM_TOOLTIP_FIELDS: readonly Con
   { member: "when", shape: "inlineTrigger" },
 ];
 
+/** The `damage` block inside `strike_craft_component_template`. */
 export interface StrikeCraftComponentTemplateDamage {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link StrikeCraftComponentTemplateDamage} to PDXScript. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_DAMAGE_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `friendly_aura.stack_info` block inside `strike_craft_component_template`. */
 export interface StrikeCraftComponentTemplateFriendlyAuraStackInfo {
   id: string;
   priority?: number;
 }
 
+/** How the writer lowers each member of {@link StrikeCraftComponentTemplateFriendlyAuraStackInfo} to PDXScript. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FRIENDLY_AURA_STACK_INFO_FIELDS: readonly ContentField[] =
   [
     { key: "id", member: "id", shape: "value", form: "scalar", conversion: "identity" },
     { key: "priority", member: "priority", shape: "value", form: "scalar", conversion: "identity" },
   ];
 
+/** The `friendly_aura.graphics.area_effect` block inside `strike_craft_component_template`. */
 export interface StrikeCraftComponentTemplateFriendlyAuraGraphicsAreaEffect {
   entity: ModelEntityRef | string;
   dynamicScale: boolean;
 }
 
+/** How the writer lowers each member of {@link StrikeCraftComponentTemplateFriendlyAuraGraphicsAreaEffect} to PDXScript. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_AREA_EFFECT_FIELDS: readonly ContentField[] =
   [
     {
@@ -121,11 +129,13 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_AREA_EFFECT_
     },
   ];
 
+/** The `friendly_aura.graphics.ship_effect` block inside `strike_craft_component_template`. */
 export interface StrikeCraftComponentTemplateFriendlyAuraGraphicsShipEffect {
   entity: ModelEntityRef | string;
   dynamicScale: boolean;
 }
 
+/** How the writer lowers each member of {@link StrikeCraftComponentTemplateFriendlyAuraGraphicsShipEffect} to PDXScript. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_SHIP_EFFECT_FIELDS: readonly ContentField[] =
   [
     {
@@ -145,11 +155,13 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_SHIP_EFFECT_
     },
   ];
 
+/** The `friendly_aura.graphics` block inside `strike_craft_component_template`. */
 export interface StrikeCraftComponentTemplateFriendlyAuraGraphics {
   areaEffect?: StrikeCraftComponentTemplateFriendlyAuraGraphicsAreaEffect[];
   shipEffect?: StrikeCraftComponentTemplateFriendlyAuraGraphicsShipEffect[];
 }
 
+/** How the writer lowers each member of {@link StrikeCraftComponentTemplateFriendlyAuraGraphics} to PDXScript. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_FIELDS: readonly ContentField[] =
   [
     {
@@ -170,6 +182,7 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_FIELDS: read
     },
   ];
 
+/** The `friendly_aura` block inside `strike_craft_component_template`. */
 export interface StrikeCraftComponentTemplateFriendlyAura {
   name: string;
   limit?: Trigger<"ship">;
@@ -181,6 +194,7 @@ export interface StrikeCraftComponentTemplateFriendlyAura {
   graphics?: StrikeCraftComponentTemplateFriendlyAuraGraphics;
 }
 
+/** How the writer lowers each member of {@link StrikeCraftComponentTemplateFriendlyAura} to PDXScript. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FRIENDLY_AURA_FIELDS: readonly ContentField[] = [
   { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
   { key: "limit", member: "limit", shape: "trigger", form: "trigger" },
@@ -210,22 +224,26 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FRIENDLY_AURA_FIELDS: readonly Cont
   },
 ];
 
+/** The `hostile_aura.stack_info` block inside `strike_craft_component_template`. */
 export interface StrikeCraftComponentTemplateHostileAuraStackInfo {
   id: string;
   priority?: number;
 }
 
+/** How the writer lowers each member of {@link StrikeCraftComponentTemplateHostileAuraStackInfo} to PDXScript. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_HOSTILE_AURA_STACK_INFO_FIELDS: readonly ContentField[] =
   [
     { key: "id", member: "id", shape: "value", form: "scalar", conversion: "identity" },
     { key: "priority", member: "priority", shape: "value", form: "scalar", conversion: "identity" },
   ];
 
+/** The `hostile_aura.graphics.area_effect` block inside `strike_craft_component_template`. */
 export interface StrikeCraftComponentTemplateHostileAuraGraphicsAreaEffect {
   entity: ModelEntityRef | string;
   dynamicScale: boolean;
 }
 
+/** How the writer lowers each member of {@link StrikeCraftComponentTemplateHostileAuraGraphicsAreaEffect} to PDXScript. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_AREA_EFFECT_FIELDS: readonly ContentField[] =
   [
     {
@@ -245,11 +263,13 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_AREA_EFFECT_F
     },
   ];
 
+/** The `hostile_aura.graphics.ship_effect` block inside `strike_craft_component_template`. */
 export interface StrikeCraftComponentTemplateHostileAuraGraphicsShipEffect {
   entity: ModelEntityRef | string;
   dynamicScale: boolean;
 }
 
+/** How the writer lowers each member of {@link StrikeCraftComponentTemplateHostileAuraGraphicsShipEffect} to PDXScript. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_SHIP_EFFECT_FIELDS: readonly ContentField[] =
   [
     {
@@ -269,11 +289,13 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_SHIP_EFFECT_F
     },
   ];
 
+/** The `hostile_aura.graphics` block inside `strike_craft_component_template`. */
 export interface StrikeCraftComponentTemplateHostileAuraGraphics {
   areaEffect?: StrikeCraftComponentTemplateHostileAuraGraphicsAreaEffect[];
   shipEffect?: StrikeCraftComponentTemplateHostileAuraGraphicsShipEffect[];
 }
 
+/** How the writer lowers each member of {@link StrikeCraftComponentTemplateHostileAuraGraphics} to PDXScript. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_FIELDS: readonly ContentField[] =
   [
     {
@@ -294,17 +316,20 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_FIELDS: reado
     },
   ];
 
+/** The `hostile_aura.damage_per_day.damage` block inside `strike_craft_component_template`. */
 export interface StrikeCraftComponentTemplateHostileAuraDamagePerDayDamage {
   min: number;
   max: number;
 }
 
+/** How the writer lowers each member of {@link StrikeCraftComponentTemplateHostileAuraDamagePerDayDamage} to PDXScript. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_HOSTILE_AURA_DAMAGE_PER_DAY_DAMAGE_FIELDS: readonly ContentField[] =
   [
     { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
     { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
   ];
 
+/** The `hostile_aura.damage_per_day` block inside `strike_craft_component_template`. */
 export interface StrikeCraftComponentTemplateHostileAuraDamagePerDay {
   accuracy?: number;
   damage?: StrikeCraftComponentTemplateHostileAuraDamagePerDayDamage;
@@ -316,6 +341,7 @@ export interface StrikeCraftComponentTemplateHostileAuraDamagePerDay {
   sizeDamageFactor?: number;
 }
 
+/** How the writer lowers each member of {@link StrikeCraftComponentTemplateHostileAuraDamagePerDay} to PDXScript. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_HOSTILE_AURA_DAMAGE_PER_DAY_FIELDS: readonly ContentField[] =
   [
     { key: "accuracy", member: "accuracy", shape: "value", form: "scalar", conversion: "identity" },
@@ -370,6 +396,7 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_HOSTILE_AURA_DAMAGE_PER_DAY_FIELDS:
     },
   ];
 
+/** The `hostile_aura` block inside `strike_craft_component_template`. */
 export interface StrikeCraftComponentTemplateHostileAura {
   name: string;
   limit?: Trigger<"ship">;
@@ -382,6 +409,7 @@ export interface StrikeCraftComponentTemplateHostileAura {
   damagePerDay?: StrikeCraftComponentTemplateHostileAuraDamagePerDay;
 }
 
+/** How the writer lowers each member of {@link StrikeCraftComponentTemplateHostileAura} to PDXScript. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_HOSTILE_AURA_FIELDS: readonly ContentField[] = [
   { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
   { key: "limit", member: "limit", shape: "trigger", form: "trigger" },
@@ -486,6 +514,7 @@ export interface StrikeCraftComponentTemplateFields {
   hostileAura?: StrikeCraftComponentTemplateHostileAura[];
 }
 
+/** A strike_craft_component_template with the id it is defined under. */
 export interface StrikeCraftComponentTemplateDef<
   Id extends string = string,
 > extends StrikeCraftComponentTemplateFields {
@@ -503,11 +532,13 @@ export type StrikeCraftComponentTemplateLoc = {
   readonly name: LocalizationRef;
 };
 
+/** A strike_craft_component_template registered with a mod, usable as a typed cross-reference. */
 export type DefinedStrikeCraftComponentTemplate<Id extends string = string> = DefinedContent<
   "strike_craft_component_template",
   StrikeCraftComponentTemplateDef<Id>
 >;
 
+/** How the writer lowers each member of {@link StrikeCraftComponentTemplateFields} to PDXScript. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   {
     key: "icon",
@@ -801,6 +832,7 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a strike_craft_component_template defines, with the key pattern each one mints. */
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
 ];

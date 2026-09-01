@@ -9,6 +9,7 @@ import type { WeightBlock } from "../content/types.ts";
 import type { ScriptValue, Trigger } from "../script/trigger-core.ts";
 import type { SpriteRef } from "./refs.ts";
 
+/** The `text` block inside `scripted_loc`. */
 export interface ScriptedLocText {
   weight?: WeightBlock<never> | number;
   trigger?: Trigger<never>;
@@ -16,6 +17,7 @@ export interface ScriptedLocText {
   localizationKey: LocalizationInput | SpriteRef | LiteralText;
 }
 
+/** How the writer lowers each member of {@link ScriptedLocText} to PDXScript. */
 export const SCRIPTED_LOC_TEXT_FIELDS: readonly ContentField[] = [
   {
     key: "weight",
@@ -49,16 +51,19 @@ export interface ScriptedLocFields {
   default?: LocalizationInput | SpriteRef | LiteralText;
 }
 
+/** A scripted_loc with the id it is defined under. */
 export interface ScriptedLocDef<Id extends string = string> extends ScriptedLocFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
 
+/** A scripted_loc registered with a mod, usable as a typed cross-reference. */
 export type DefinedScriptedLoc<Id extends string = string> = DefinedContent<
   "scripted_loc",
   ScriptedLocDef<Id>
 >;
 
+/** How the writer lowers each member of {@link ScriptedLocFields} to PDXScript. */
 export const SCRIPTED_LOC_FIELDS: readonly ContentField[] = [
   { key: "random", member: "random", shape: "value", form: "scalar", conversion: "identity" },
   {
@@ -80,4 +85,5 @@ export const SCRIPTED_LOC_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a scripted_loc defines, with the key pattern each one mints. */
 export const SCRIPTED_LOC_LOCALISATION: readonly ContentLocalisation[] = [];

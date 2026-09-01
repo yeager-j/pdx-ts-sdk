@@ -1,6 +1,6 @@
 import type { RuleSet } from "../cwt/rules.ts";
 import { eventKinds } from "../lower/event-kinds.ts";
-import { camelCase, compareStrings } from "../naming.ts";
+import { camelCase, compareStrings, docComment } from "../naming.ts";
 
 /** The implementation surface that owns an effect key and its public method. */
 export type EffectOwner = "generated" | "structural" | "fire";
@@ -163,21 +163,35 @@ export function emitEffectPolicyProtocol(policy: EffectPolicy): string {
     .filter((entry) => entry.owner !== "generated")
     .sort((left, right) => compareStrings(left.key, right.key));
   return (
+    docComment([
+      "Every CWT effect key a hand-written surface owns instead of a generated builder,",
+      "with the public method that records it. `owner` names the surface: `structural`",
+      "for control flow and contracts, `fire` for the event-firing effects. A `null`",
+      "method has no public builder of its own.",
+    ]) +
     `export const EFFECT_OWNERSHIP = ${JSON.stringify(nonGeneratedEntries)} as const;\n\n` +
+    docComment(["Every public method the hand-written structural effect surface provides."]) +
     `export const STRUCTURAL_EFFECT_METHODS = ${JSON.stringify(structural)} as const;\n\n` +
-    "/**\n" +
-    " * The fixed PDXScript key each public structural method records, or `null` when\n" +
-    " * the method records no fixed key. The sole authority for structural\n" +
-    " * method-to-key identity; the hand-written reference ledger reads its keys from here.\n" +
-    " *\n" +
-    " * A row carrying `sharesKeyWithGenerated` records a key that a generated effect\n" +
-    " * method also records, deliberately: both methods write the same block, so the\n" +
-    " * key identifies the block rather than the method that produced it.\n" +
-    " */\n" +
+    docComment([
+      "The fixed PDXScript key each public structural method records, or `null` when",
+      "the method records no fixed key. The sole authority for structural",
+      "method-to-key identity; the hand-written reference ledger reads its keys from here.",
+      "",
+      "A row carrying `sharesKeyWithGenerated` records a key that a generated effect",
+      "method also records, deliberately: both methods write the same block, so the",
+      "key identifies the block rather than the method that produced it.",
+    ]) +
     `export const STRUCTURAL_EFFECT_IDENTITY = ${JSON.stringify(policy.structuralIdentity)} as const;\n\n` +
+    docComment([
+      "Every CWT effect key the structural surface owns, including the keys it records",
+      "without a public method of their own.",
+    ]) +
     `export const STRUCTURAL_EFFECT_KEYS = ${JSON.stringify(structuralKeys)} as const;\n\n` +
+    docComment(["Every CWT effect key that fires an event."]) +
     `export const FIRE_EFFECT_KEYS = ${JSON.stringify(fireKeys)} as const;\n\n` +
+    docComment(["One public structural effect method name."]) +
     "export type StructuralEffectMethod = (typeof STRUCTURAL_EFFECT_METHODS)[number];\n" +
+    docComment(["One CWT effect key the structural surface owns."]) +
     "export type StructuralEffectKey = (typeof STRUCTURAL_EFFECT_KEYS)[number];\n"
   );
 }

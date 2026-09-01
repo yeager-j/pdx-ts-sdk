@@ -154,6 +154,7 @@ export interface GeneratedEventOptionFields<
   readonly effects?: EventEffect<S, Context>;
 }
 
+/** Every field the rules declare on an event, with the SDK's reviewed disposition. */
 export const EVENT_FIELD_SUPPORT = [
   {
     scriptKey: "id",
@@ -528,6 +529,7 @@ export const EVENT_FIELD_SUPPORT = [
   },
 ] as const;
 
+/** Every field the rules declare on an event option, with the SDK's reviewed disposition. */
 export const EVENT_OPTION_FIELD_SUPPORT = [
   {
     scriptKey: "name",

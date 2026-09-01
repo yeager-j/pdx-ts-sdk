@@ -21,6 +21,7 @@ import {
   repeatsSiblings,
 } from "./field-metadata.ts";
 import {
+  emittedMemberType,
   mergeByName,
   pickOrdinary,
   useWideningSymbols,
@@ -231,7 +232,7 @@ function lowerNamedStructMembers(
         ...(lowered.docs ?? []),
       ]),
     ];
-    members.push(renderMember({ name: member, type: lowered.memberType, optional, docs }));
+    members.push(renderMember({ name: member, type: emittedMemberType(lowered), optional, docs }));
     memberDocs[member] = {
       optional,
       docs,
@@ -268,6 +269,18 @@ function lowerNamedStructMembers(
     memberDocs,
     docTables,
   };
+}
+
+/**
+ * Describes one nested block for its generated interface's JSDoc, from the
+ * dotted field path: the block's own trail, and the registry or alias category
+ * whose declaration it sits inside.
+ */
+function blockDocs(path: string): readonly string[] {
+  const [owner = path, ...trail] = path.split(".");
+  return trail.length === 0
+    ? [`The \`${owner}\` block, as the game's rules describe it.`]
+    : [`The \`${trail.join(".")}\` block inside \`${owner}\`.`];
 }
 
 /** Rejects enum-keyed declarations that would collide with an ordinary member or nested type. */
@@ -388,14 +401,15 @@ function structShape(
     docTables: [{ constant: fieldsConstant, members: draft.memberDocs }, ...draft.docTables],
     code:
       draft.extraCode.join("") +
-      docComment(options.typeDocs ?? []) +
+      docComment(options.typeDocs ?? blockDocs(path)) +
       `export interface ${typeName}${generic?.declaration ?? ""} {\n` +
       draft.members.join("") +
       "}\n\n" +
       constArray(
         fieldsConstant,
         emitter.use("ContentField"),
-        draft.fieldMetadata.map((entry) => `  ${entry},\n`).join("")
+        draft.fieldMetadata.map((entry) => `  ${entry},\n`).join(""),
+        [`How the writer lowers each member of {@link ${typeName}} to PDXScript.`]
       ),
     unsupported: draft.unsupported,
   };

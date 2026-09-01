@@ -4,8 +4,11 @@
 
 import type { ScopeName } from "./scopes.ts";
 
+/** One event kind the game declares, as machine-readable data. */
 export interface EventKind {
+  /** The PDXScript key an event of this kind is fired by. */
   readonly key: string;
+  /** The `type[event]` subtype the kind comes from. */
   readonly subtype: string;
   /** The event's main scope; null for scopeless events. */
   readonly scope: ScopeName | null;
@@ -51,4 +54,5 @@ export const EVENT_KINDS = {
   system_event: { key: "system_event", subtype: "system", scope: "system" },
 } as const satisfies Record<string, EventKind>;
 
+/** The PDXScript key of one event kind the game declares. */
 export type EventKindKey = keyof typeof EVENT_KINDS;

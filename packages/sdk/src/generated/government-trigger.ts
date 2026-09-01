@@ -46,6 +46,7 @@ export interface GovernmentTriggerClause<R> {
   nor?: readonly GovernmentTriggerClauseGroup<R>[];
 }
 
+/** How the writer lowers each member of one requirement group to PDXScript. */
 export const GOVERNMENT_TRIGGER_AUTHORITY_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
   {
     key: "text",
@@ -66,6 +67,7 @@ export const GOVERNMENT_TRIGGER_AUTHORITY_CLAUSE_GROUP_FIELDS: readonly ContentF
   },
 ];
 
+/** How the writer lowers each member of one requirement clause to PDXScript. */
 export const GOVERNMENT_TRIGGER_AUTHORITY_CLAUSE_FIELDS: readonly ContentField[] = [
   {
     key: "value",
@@ -101,6 +103,7 @@ export const GOVERNMENT_TRIGGER_AUTHORITY_CLAUSE_FIELDS: readonly ContentField[]
   },
 ];
 
+/** How the writer lowers each member of one requirement group to PDXScript. */
 export const GOVERNMENT_TRIGGER_COUNTRY_TYPE_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
   {
     key: "text",
@@ -121,6 +124,7 @@ export const GOVERNMENT_TRIGGER_COUNTRY_TYPE_CLAUSE_GROUP_FIELDS: readonly Conte
   },
 ];
 
+/** How the writer lowers each member of one requirement clause to PDXScript. */
 export const GOVERNMENT_TRIGGER_COUNTRY_TYPE_CLAUSE_FIELDS: readonly ContentField[] = [
   {
     key: "value",
@@ -156,6 +160,7 @@ export const GOVERNMENT_TRIGGER_COUNTRY_TYPE_CLAUSE_FIELDS: readonly ContentFiel
   },
 ];
 
+/** How the writer lowers each member of one requirement group to PDXScript. */
 export const GOVERNMENT_TRIGGER_ETHICS_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
   {
     key: "text",
@@ -176,6 +181,7 @@ export const GOVERNMENT_TRIGGER_ETHICS_CLAUSE_GROUP_FIELDS: readonly ContentFiel
   },
 ];
 
+/** How the writer lowers each member of one requirement clause to PDXScript. */
 export const GOVERNMENT_TRIGGER_ETHICS_CLAUSE_FIELDS: readonly ContentField[] = [
   {
     key: "value",
@@ -211,6 +217,7 @@ export const GOVERNMENT_TRIGGER_ETHICS_CLAUSE_FIELDS: readonly ContentField[] = 
   },
 ];
 
+/** How the writer lowers each member of one requirement group to PDXScript. */
 export const GOVERNMENT_TRIGGER_CIVICS_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
   {
     key: "text",
@@ -231,6 +238,7 @@ export const GOVERNMENT_TRIGGER_CIVICS_CLAUSE_GROUP_FIELDS: readonly ContentFiel
   },
 ];
 
+/** How the writer lowers each member of one requirement clause to PDXScript. */
 export const GOVERNMENT_TRIGGER_CIVICS_CLAUSE_FIELDS: readonly ContentField[] = [
   {
     key: "value",
@@ -266,6 +274,7 @@ export const GOVERNMENT_TRIGGER_CIVICS_CLAUSE_FIELDS: readonly ContentField[] = 
   },
 ];
 
+/** How the writer lowers each member of one requirement group to PDXScript. */
 export const GOVERNMENT_TRIGGER_ORIGIN_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
   {
     key: "text",
@@ -286,6 +295,7 @@ export const GOVERNMENT_TRIGGER_ORIGIN_CLAUSE_GROUP_FIELDS: readonly ContentFiel
   },
 ];
 
+/** How the writer lowers each member of one requirement clause to PDXScript. */
 export const GOVERNMENT_TRIGGER_ORIGIN_CLAUSE_FIELDS: readonly ContentField[] = [
   {
     key: "value",
@@ -321,6 +331,7 @@ export const GOVERNMENT_TRIGGER_ORIGIN_CLAUSE_FIELDS: readonly ContentField[] = 
   },
 ];
 
+/** How the writer lowers each member of one requirement group to PDXScript. */
 export const GOVERNMENT_TRIGGER_TRAITS_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
   {
     key: "text",
@@ -341,6 +352,7 @@ export const GOVERNMENT_TRIGGER_TRAITS_CLAUSE_GROUP_FIELDS: readonly ContentFiel
   },
 ];
 
+/** How the writer lowers each member of one requirement clause to PDXScript. */
 export const GOVERNMENT_TRIGGER_TRAITS_CLAUSE_FIELDS: readonly ContentField[] = [
   {
     key: "value",
@@ -376,6 +388,7 @@ export const GOVERNMENT_TRIGGER_TRAITS_CLAUSE_FIELDS: readonly ContentField[] = 
   },
 ];
 
+/** How the writer lowers each member of one requirement group to PDXScript. */
 export const GOVERNMENT_TRIGGER_SPECIES_CLASS_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
   {
     key: "text",
@@ -396,6 +409,7 @@ export const GOVERNMENT_TRIGGER_SPECIES_CLASS_CLAUSE_GROUP_FIELDS: readonly Cont
   },
 ];
 
+/** How the writer lowers each member of one requirement clause to PDXScript. */
 export const GOVERNMENT_TRIGGER_SPECIES_CLASS_CLAUSE_FIELDS: readonly ContentField[] = [
   {
     key: "value",
@@ -431,6 +445,7 @@ export const GOVERNMENT_TRIGGER_SPECIES_CLASS_CLAUSE_FIELDS: readonly ContentFie
   },
 ];
 
+/** How the writer lowers each member of one requirement group to PDXScript. */
 export const GOVERNMENT_TRIGGER_SPECIES_ARCHETYPE_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
   {
     key: "text",
@@ -451,6 +466,7 @@ export const GOVERNMENT_TRIGGER_SPECIES_ARCHETYPE_CLAUSE_GROUP_FIELDS: readonly 
   },
 ];
 
+/** How the writer lowers each member of one requirement clause to PDXScript. */
 export const GOVERNMENT_TRIGGER_SPECIES_ARCHETYPE_CLAUSE_FIELDS: readonly ContentField[] = [
   {
     key: "value",
@@ -486,6 +502,7 @@ export const GOVERNMENT_TRIGGER_SPECIES_ARCHETYPE_CLAUSE_FIELDS: readonly Conten
   },
 ];
 
+/** How the writer lowers each member of one requirement group to PDXScript. */
 export const GOVERNMENT_TRIGGER_PREFERRED_PLANET_CLASS_CLAUSE_GROUP_FIELDS: readonly ContentField[] =
   [
     {
@@ -507,6 +524,7 @@ export const GOVERNMENT_TRIGGER_PREFERRED_PLANET_CLASS_CLAUSE_GROUP_FIELDS: read
     },
   ];
 
+/** How the writer lowers each member of one requirement clause to PDXScript. */
 export const GOVERNMENT_TRIGGER_PREFERRED_PLANET_CLASS_CLAUSE_FIELDS: readonly ContentField[] = [
   {
     key: "value",
@@ -542,6 +560,7 @@ export const GOVERNMENT_TRIGGER_PREFERRED_PLANET_CLASS_CLAUSE_FIELDS: readonly C
   },
 ];
 
+/** How the writer lowers each member of one requirement group to PDXScript. */
 export const GOVERNMENT_TRIGGER_GRAPHICAL_CULTURE_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
   {
     key: "text",
@@ -562,6 +581,7 @@ export const GOVERNMENT_TRIGGER_GRAPHICAL_CULTURE_CLAUSE_GROUP_FIELDS: readonly 
   },
 ];
 
+/** How the writer lowers each member of one requirement clause to PDXScript. */
 export const GOVERNMENT_TRIGGER_GRAPHICAL_CULTURE_CLAUSE_FIELDS: readonly ContentField[] = [
   {
     key: "value",
@@ -622,6 +642,7 @@ export interface GovernmentTriggerBlock {
   isNomadic?: boolean;
 }
 
+/** How the writer lowers each member of {@link GovernmentTriggerBlock} to PDXScript. */
 export const GOVERNMENT_TRIGGER_FIELDS: readonly ContentField[] = [
   { key: "text", member: "text", shape: "value", form: "scalar", conversion: "ref" },
   { key: "always", member: "always", shape: "value", form: "scalar", conversion: "identity" },

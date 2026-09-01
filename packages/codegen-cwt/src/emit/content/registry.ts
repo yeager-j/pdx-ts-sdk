@@ -71,9 +71,15 @@ export function contentRegistry(
     'import type { ContentRegistryDescriptor } from "../content/schema.ts";\n' +
     imports +
     "\n" +
+    docComment([
+      "Every content registry the SDK exposes: its name, the CWT reference its",
+      "definitions satisfy, the game folder it writes to, and its field and",
+      "localization tables.",
+    ]) +
     "export const CONTENT_REGISTRIES = [\n" +
     descriptors +
     "] as const satisfies readonly ContentRegistryDescriptor[];\n\n" +
+    docComment(["The name of one content registry the SDK exposes."]) +
     'export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];\n\n' +
     docComment([
       "The CWT reference a registry's definitions satisfy, as a type.",

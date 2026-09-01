@@ -13,12 +13,14 @@ import type { WeightBlock } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 import type { TraditionRef } from "./refs.ts";
 
+/** The `desc` block inside `tradition_category`. */
 export interface TraditionCategoryDesc {
   trigger?: Trigger<"country">;
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   text?: LocalizationInput;
 }
 
+/** How the writer lowers each member of {@link TraditionCategoryDesc} to PDXScript. */
 export const TRADITION_CATEGORY_DESC_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   {
@@ -55,6 +57,7 @@ export interface TraditionCategoryFields {
   aiWeight?: WeightBlock<"country">;
 }
 
+/** A tradition_category with the id it is defined under. */
 export interface TraditionCategoryDef<Id extends string = string> extends TraditionCategoryFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -72,11 +75,13 @@ export type TraditionCategoryLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A tradition_category registered with a mod, usable as a typed cross-reference. */
 export type DefinedTraditionCategory<Id extends string = string> = DefinedContent<
   "tradition_category",
   TraditionCategoryDef<Id>
 >;
 
+/** How the writer lowers each member of {@link TraditionCategoryFields} to PDXScript. */
 export const TRADITION_CATEGORY_FIELDS: readonly ContentField[] = [
   {
     key: "desc",
@@ -121,6 +126,7 @@ export const TRADITION_CATEGORY_FIELDS: readonly ContentField[] = [
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
 ];
 
+/** The localization slots a tradition_category defines, with the key pattern each one mints. */
 export const TRADITION_CATEGORY_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
   { member: "desc", pattern: "$_desc", required: false },

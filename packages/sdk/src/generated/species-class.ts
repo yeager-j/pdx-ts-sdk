@@ -24,12 +24,14 @@ import type { ScopeName } from "./scopes.ts";
 
 import "./government-trigger.ts";
 
+/** The `custom_portraits` block inside `species_class`. */
 export interface SpeciesClassCustomPortraits {
   randomized?: Trigger<"no_scope">;
   playable?: Trigger<"no_scope">;
   portraits: (PortraitRef | string | PortraitGroupRef)[];
 }
 
+/** How the writer lowers each member of {@link SpeciesClassCustomPortraits} to PDXScript. */
 export const SPECIES_CLASS_CUSTOM_PORTRAITS_FIELDS: readonly ContentField[] = [
   { key: "randomized", member: "randomized", shape: "trigger", form: "trigger" },
   { key: "playable", member: "playable", shape: "trigger", form: "trigger" },
@@ -214,6 +216,7 @@ export interface SpeciesClassFields {
   removedPlanetTypes?: (PlanetClassRef | string)[];
 }
 
+/** A species_class with the id it is defined under. */
 export interface SpeciesClassDef<Id extends string = string> extends SpeciesClassFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -281,11 +284,13 @@ export type SpeciesClassLoc = {
   readonly remnantPlural: LocalizationRef;
 };
 
+/** A species_class registered with a mod, usable as a typed cross-reference. */
 export type DefinedSpeciesClass<Id extends string = string> = DefinedContent<
   "species_class",
   SpeciesClassDef<Id>
 >;
 
+/** How the writer lowers each member of {@link SpeciesClassFields} to PDXScript. */
 export const SPECIES_CLASS_FIELDS: readonly ContentField[] = [
   {
     key: "archetype",
@@ -488,6 +493,7 @@ export const SPECIES_CLASS_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a species_class defines, with the key pattern each one mints. */
 export const SPECIES_CLASS_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
   { member: "desc", pattern: "$_desc", required: false },

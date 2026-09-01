@@ -76,16 +76,17 @@ describe("member", () => {
 });
 
 describe("constArray", () => {
-  it("wraps pre-rendered rows in an exported readonly array declaration", () => {
+  it("documents the exported readonly array wrapping its pre-rendered rows", () => {
     const rows = '  { key: "a" },\n  { key: "b" },\n';
-    expect(constArray("THINGS", "ContentField", rows)).toBe(
-      'export const THINGS: readonly ContentField[] = [\n  { key: "a" },\n  { key: "b" },\n];\n\n'
+    expect(constArray("THINGS", "ContentField", rows, ["Every thing."])).toBe(
+      "/** Every thing. */\n" +
+        'export const THINGS: readonly ContentField[] = [\n  { key: "a" },\n  { key: "b" },\n];\n\n'
     );
   });
 
   it("still emits a valid empty array for no rows", () => {
-    expect(constArray("THINGS", "ContentField", "")).toBe(
-      "export const THINGS: readonly ContentField[] = [\n];\n\n"
+    expect(constArray("THINGS", "ContentField", "", ["Every thing."])).toBe(
+      "/** Every thing. */\nexport const THINGS: readonly ContentField[] = [\n];\n\n"
     );
   });
 });

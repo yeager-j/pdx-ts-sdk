@@ -9,6 +9,7 @@ import type { WeightBlock, WithFrom } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 import type { ShipSizeRef, SpriteRef, StarbaseLevelRef } from "./refs.ts";
 
+/** The `picture` block inside `starbase_level`. */
 export interface StarbaseLevelPicture {
   trigger: WithFrom<
     Trigger<"starbase">,
@@ -18,6 +19,7 @@ export interface StarbaseLevelPicture {
   picture: SpriteRef | string;
 }
 
+/** How the writer lowers each member of {@link StarbaseLevelPicture} to PDXScript. */
 export const STARBASE_LEVEL_PICTURE_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   {
@@ -71,16 +73,19 @@ export interface StarbaseLevelFields {
   buildingSlots?: (number | "lower_1" | "lower_2" | "lower_3" | "lower_4")[];
 }
 
+/** A starbase_level with the id it is defined under. */
 export interface StarbaseLevelDef<Id extends string = string> extends StarbaseLevelFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
 
+/** A starbase_level registered with a mod, usable as a typed cross-reference. */
 export type DefinedStarbaseLevel<Id extends string = string> = DefinedContent<
   "starbase_level",
   StarbaseLevelDef<Id>
 >;
 
+/** How the writer lowers each member of {@link StarbaseLevelFields} to PDXScript. */
 export const STARBASE_LEVEL_FIELDS: readonly ContentField[] = [
   {
     key: "ship_size",
@@ -225,4 +230,5 @@ export const STARBASE_LEVEL_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a starbase_level defines, with the key pattern each one mints. */
 export const STARBASE_LEVEL_LOCALISATION: readonly ContentLocalisation[] = [];

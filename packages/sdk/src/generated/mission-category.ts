@@ -29,6 +29,7 @@ export interface MissionCategoryFields {
   showInIssueList?: boolean;
 }
 
+/** A mission_category with the id it is defined under. */
 export interface MissionCategoryDef<Id extends string = string> extends MissionCategoryFields {
   /** Full content id, including the mod prefix. */
   id: Id;
@@ -46,11 +47,13 @@ export type MissionCategoryLoc = {
   readonly short: LocalizationRef;
 };
 
+/** A mission_category registered with a mod, usable as a typed cross-reference. */
 export type DefinedMissionCategory<Id extends string = string> = DefinedContent<
   "mission_category",
   MissionCategoryDef<Id>
 >;
 
+/** How the writer lowers each member of {@link MissionCategoryFields} to PDXScript. */
 export const MISSION_CATEGORY_FIELDS: readonly ContentField[] = [
   {
     key: "is_contract",
@@ -77,6 +80,7 @@ export const MISSION_CATEGORY_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The localization slots a mission_category defines, with the key pattern each one mints. */
 export const MISSION_CATEGORY_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
   { member: "short", pattern: "$_short", required: false },

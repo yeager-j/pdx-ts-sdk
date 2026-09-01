@@ -23,12 +23,14 @@ import type {
   TraitLeaderTraitRef,
 } from "./refs.ts";
 
+/** The `desc` block inside `special_project`. */
 export interface SpecialProjectDesc {
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   text: LocalizationInput;
   trigger: Trigger<"country">;
 }
 
+/** How the writer lowers each member of {@link SpecialProjectDesc} to PDXScript. */
 export const SPECIAL_PROJECT_DESC_FIELDS: readonly ContentField[] = [
   {
     key: "text",
@@ -41,11 +43,13 @@ export const SPECIAL_PROJECT_DESC_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
 ];
 
+/** The `requirements.size_requirement` block inside `special_project`. */
 export interface SpecialProjectRequirementsSizeRequirement {
   shipSize: ShipSizeRef | string;
   count: number;
 }
 
+/** How the writer lowers each member of {@link SpecialProjectRequirementsSizeRequirement} to PDXScript. */
 export const SPECIAL_PROJECT_REQUIREMENTS_SIZE_REQUIREMENT_FIELDS: readonly ContentField[] = [
   {
     key: "ship_size",
@@ -58,6 +62,7 @@ export const SPECIAL_PROJECT_REQUIREMENTS_SIZE_REQUIREMENT_FIELDS: readonly Cont
   { key: "count", member: "count", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The `requirements` block inside `special_project`. */
 export interface SpecialProjectRequirements {
   shipclassMilitary?: number;
   shipclassConstructor?: number;
@@ -81,6 +86,7 @@ export interface SpecialProjectRequirements {
   carriesColony?: number;
 }
 
+/** How the writer lowers each member of {@link SpecialProjectRequirements} to PDXScript. */
 export const SPECIAL_PROJECT_REQUIREMENTS_FIELDS: readonly ContentField[] = [
   {
     key: "shipclass_military",
@@ -215,6 +221,7 @@ export const SPECIAL_PROJECT_REQUIREMENTS_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** The `triggered_requirement` block inside `special_project`. */
 export interface SpecialProjectTriggeredRequirement {
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
   text: LocalizationInput;
@@ -222,6 +229,7 @@ export interface SpecialProjectTriggeredRequirement {
   trigger: Trigger<"fleet">;
 }
 
+/** How the writer lowers each member of {@link SpecialProjectTriggeredRequirement} to PDXScript. */
 export const SPECIAL_PROJECT_TRIGGERED_REQUIREMENT_FIELDS: readonly ContentField[] = [
   {
     key: "text",
@@ -238,6 +246,7 @@ export const SPECIAL_PROJECT_TRIGGERED_REQUIREMENT_FIELDS: readonly ContentField
 /** The scopes a special_project may declare. */
 export type SpecialProjectScope = "country" | "planet" | "ship" | "carrier";
 
+/** The scope a special_project's own clauses run in, selected by its `SpEventScope`. */
 export type SpecialProjectScopeOf<E extends SpEventScope> = E extends "country_event"
   ? "country"
   : E extends "planet_event"
@@ -347,11 +356,16 @@ export interface SpecialProjectFieldsBase<
   onCancel?: EffectBlock<"country", { readonly from: NoInfer<SpecialProjectScopeOf<E>> }>;
 }
 
+/**
+ * A special_project, as the game's rules describe it.
+ * The `SpEventScope` argument selects the member types that scope allows.
+ */
 export type SpecialProjectFields<
   E extends SpEventScope = SpEventScope,
   L extends SpecialProjectLocationScope | undefined = undefined,
 > = E extends SpEventScope ? SpecialProjectFieldsBase<E, L> : never;
 
+/** A special_project with the id it is defined under. */
 export interface SpecialProjectDef<
   Id extends string = string,
   E extends SpEventScope = "country_event",
@@ -373,11 +387,13 @@ export type SpecialProjectLoc = {
   readonly desc: LocalizationRef;
 };
 
+/** A special_project registered with a mod, usable as a typed cross-reference. */
 export type DefinedSpecialProject<Id extends string = string> = DefinedContent<
   "special_project",
   SpecialProjectDef<Id>
 >;
 
+/** How the writer lowers each member of {@link SpecialProjectFieldsBase} to PDXScript. */
 export const SPECIAL_PROJECT_FIELDS: readonly ContentField[] = [
   {
     key: "event_chain",
@@ -495,6 +511,7 @@ export const SPECIAL_PROJECT_FIELDS: readonly ContentField[] = [
   { key: "on_cancel", member: "onCancel", shape: "effect", form: "closure" },
 ];
 
+/** The localization slots a special_project defines, with the key pattern each one mints. */
 export const SPECIAL_PROJECT_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: false },
   { member: "desc", pattern: "$_DESC", required: false },

@@ -3,6 +3,12 @@
 // From: effects.cwt
 // From: events/events.cwt
 
+/**
+ * Every CWT effect key a hand-written surface owns instead of a generated builder,
+ * with the public method that records it. `owner` names the surface: `structural`
+ * for control flow and contracts, `fire` for the event-firing effects. A `null`
+ * method has no public builder of its own.
+ */
 export const EFFECT_OWNERSHIP = [
   {
     key: "add_event_chain_counter",
@@ -100,6 +106,7 @@ export const EFFECT_OWNERSHIP = [
   { key: "while", method: "whileLoop", owner: "structural", reason: "control flow" },
 ] as const;
 
+/** Every public method the hand-written structural effect surface provides. */
 export const STRUCTURAL_EFFECT_METHODS = [
   "addEventChainCounter",
   "addResource",
@@ -121,7 +128,6 @@ export const STRUCTURAL_EFFECT_METHODS = [
  * The fixed PDXScript key each public structural method records, or `null` when
  * the method records no fixed key. The sole authority for structural
  * method-to-key identity; the hand-written reference ledger reads its keys from here.
- *
  * A row carrying `sharesKeyWithGenerated` records a key that a generated effect
  * method also records, deliberately: both methods write the same block, so the
  * key identifies the block rather than the method that produced it.
@@ -150,6 +156,10 @@ export const STRUCTURAL_EFFECT_IDENTITY = [
   { method: "whileLoop", key: "while" },
 ] as const;
 
+/**
+ * Every CWT effect key the structural surface owns, including the keys it records
+ * without a public method of their own.
+ */
 export const STRUCTURAL_EFFECT_KEYS = [
   "add_event_chain_counter",
   "add_resource",
@@ -168,6 +178,7 @@ export const STRUCTURAL_EFFECT_KEYS = [
   "while",
 ] as const;
 
+/** Every CWT effect key that fires an event. */
 export const FIRE_EFFECT_KEYS = [
   "agreement_event",
   "astral_rift_event",
@@ -191,5 +202,7 @@ export const FIRE_EFFECT_KEYS = [
   "system_event",
 ] as const;
 
+/** One public structural effect method name. */
 export type StructuralEffectMethod = (typeof STRUCTURAL_EFFECT_METHODS)[number];
+/** One CWT effect key the structural surface owns. */
 export type StructuralEffectKey = (typeof STRUCTURAL_EFFECT_KEYS)[number];
