@@ -57,6 +57,7 @@ import {
   corpusOfFixture,
   FIXTURE_PATH,
   fixtureStems,
+  isRuleTriggerKey,
   loadMeta,
   loadRegistryFixture,
   MEASUREMENTS,
@@ -643,6 +644,40 @@ describe("corpus conformance", () => {
     const withInline = shapes.filter((keys) => keys.has("inline_script"));
     expect([shapes.length, withInline.length]).toEqual([14, 7]);
     expect(withInline.filter((keys) => keys.size === 2)).toHaveLength(1);
+  });
+});
+
+describe("the trigger-key predicate the extractor reads a mixed trigger struct with", () => {
+  // What rides on each answer: a key this admits is folded into the struct's
+  // synthetic `when` clause, and a key it refuses is recorded at its own path,
+  // where the presence floor can report it as unauthorable. Refusing a real
+  // condition invents a field; admitting a real field hides one.
+  it("reads a chained scope path by its head", () => {
+    expect(isRuleTriggerKey("owner.capital_scope")).toBe(true);
+  });
+
+  it("reads an optional scope path by its head", () => {
+    expect(isRuleTriggerKey("starbase?")).toBe(true);
+  });
+
+  it("admits a data-driven scope path whatever name follows the prefix", () => {
+    expect(isRuleTriggerKey("event_target:foo")).toBe(true);
+  });
+
+  it("refuses the bare name of a data-driven link, which is a prefix", () => {
+    // `pop_faction_parameter` is a `from_data` link: script writes it
+    // `parameter:x` and never on its own, so a definition writing the bare
+    // name is writing something else and has to stay visible.
+    expect(isRuleTriggerKey("pop_faction_parameter")).toBe(false);
+    expect(isRuleTriggerKey("parameter:some_parameter")).toBe(true);
+  });
+
+  it("admits a structural combinator, which no rule table declares", () => {
+    expect(isRuleTriggerKey("NOT")).toBe(true);
+  });
+
+  it("refuses a key the rules know nothing about", () => {
+    expect(isRuleTriggerKey("brand_new_field")).toBe(false);
   });
 });
 

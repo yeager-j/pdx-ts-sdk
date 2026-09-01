@@ -162,8 +162,11 @@ export function ruleScopesOf(clause: "trigger" | "effect", key: string): RuleSco
  */
 const RULE_TRIGGER_KEYS = new Set([
   ...[...rules.triggers.keys()].map((key) => key.toLowerCase()),
+  // `!fromData` the way `reconcile.ts` and the link classifier filter: a
+  // data-driven link is a prefix rather than a key the game takes literally,
+  // and `pop_faction_parameter` is only ever written `parameter:x`.
   ...[...rules.links.values()]
-    .filter((link) => link.type === "scope")
+    .filter((link) => link.type === "scope" && !link.fromData)
     .map((link) => link.name.toLowerCase()),
   ...SPECIAL_SCOPE_PATHS,
   "not",
@@ -177,15 +180,20 @@ const RULE_TRIGGER_KEYS = new Set([
 /**
  * Whether the vendored rules make `key` one a trigger clause admits.
  *
+ * A chained or optional scope path — `owner.capital_scope`, `starbase?` — is
+ * read by its head: the rest of the chain is several hops away, so the first
+ * hop is the whole decision.
+ *
  * Half of the `isTriggerKey` the corpus reader takes: the other half is
  * vanilla's scripted triggers, which cwtools resolves from the game files
  * rather than declaring, so {@link extractCorpus} adds them from the install.
  */
 export function isRuleTriggerKey(key: string): boolean {
-  // A data-driven scope path — `event_target:x`, `value:y`, `parameter:z` — is
-  // navigation whatever follows its prefix, the reading codegen-vanilla's
-  // `infer-scopes.ts` already gives a scope path's first segment.
-  return key.includes(":") || RULE_TRIGGER_KEYS.has(key.toLowerCase());
+  // The reading codegen-vanilla's `infer-scopes.ts` already gives a scope path:
+  // lowercase, first hop, optional marker dropped. A `prefix:name` head —
+  // `event_target:x`, `value:y` — is navigation whatever name follows it.
+  const head = key.toLowerCase().split(".")[0]!.replace(/\?$/, "");
+  return head.includes(":") || RULE_TRIGGER_KEYS.has(head);
 }
 
 /**
@@ -481,9 +489,11 @@ function globalVariables(installPath: string): ReadonlyMap<string, PdxValue> {
  */
 function scriptedTriggerNames(installPath: string): ReadonlySet<string> {
   const names = new Set<string>();
-  const dir = path.join(installPath, "common/scripted_triggers");
-  for (const file of readdirSync(dir).filter((name) => name.endsWith(".txt"))) {
-    for (const item of parse(readFileSync(path.join(dir, file), "utf8")).items) {
+  // Recursive, because the game loads the directory that way and so does
+  // `readScriptedDefinitions`, codegen-vanilla's reader for the same files.
+  const files = walkRegistryFiles(path.join(installPath, "common/scripted_triggers"), ".txt", true);
+  for (const file of files) {
+    for (const item of parse(readFileSync(file, "utf8")).items) {
       if (item.kind === "entry") {
         names.add(item.key.toLowerCase());
       }
