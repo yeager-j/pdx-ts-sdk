@@ -391,7 +391,7 @@ void CONTENT_CONVERSION_PROTOCOL_IS_EXACT;
  * dual cannot nest inside another dual, and a top-level splice
  * ({@link ContentInlineModifiersField}) is never built by the arm pipeline.
  * Narrowing here (rather than widening those two to carry a `form` they never
- * need) is what lets {@link dualArm} read `.form` off an arm without a runtime
+ * need) is what lets the dual-arm dispatcher read `.form` without a runtime
  * guard.
  */
 export type ContentDualArm = Exclude<

@@ -36,16 +36,9 @@ import {
   triggeredModifierBlock,
   weightBlock,
 } from "./blocks.ts";
+import { contentFieldDescent, mapContentFieldRecords } from "./field-descent.ts";
 import { childContext, collectRefs, joinPath, type LoweringContext } from "./lowering-context.ts";
-import {
-  aliasStructFieldsOf,
-  authoredForm,
-  type ContentDualArm,
-  type ContentDualField,
-  type ContentField,
-  type ContentFieldBase,
-  type ContentRefTypes,
-} from "./schema.ts";
+import { type ContentField, type ContentFieldBase, type ContentRefTypes } from "./schema.ts";
 import type {
   EconomicResourceBlock,
   EconomicResourceBlockNoProduce,
@@ -55,58 +48,6 @@ import type {
   TriggeredModifier,
   WeightBlock,
 } from "./types.ts";
-
-/**
- * Whether a value is a content reference: `TypedRef` is `{ id }`, which is an
- * object at runtime and a scalar in the file.
- *
- * The brand is a phantom property and absent at runtime, so `id` is the only
- * signature there is. That is why this alone cannot place a value — see
- * {@link dualArm}, which asks it only once an arm has claimed references.
- */
-function isReference(value: unknown): value is TypedRef<string> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    typeof (value as { readonly id?: unknown }).id === "string"
-  );
-}
-
-/**
- * The arm of a dual field that accepts what the author passed.
- *
- * A reference is the one value whose own shape cannot place it: `refId` unwraps
- * either an id string or a `{ id }` object, so an authored reference looks like
- * a block and belongs on a scalar arm. The arm's declared `conversion` settles
- * it — asking the metadata rather than guessing from the value keeps the
- * decision where the emitter already made it. Passing a reference where no arm
- * takes one falls through to the ordinary form matching, so a struct arm still
- * gets a struct that happens to carry an `id` member.
- *
- * Throws rather than guessing when nothing matches. The generated types make
- * the wrong form a compile error, so reaching there means either a cast or an
- * arm pair the emitter should not have produced, and both deserve to be loud.
- */
-export function dualArm(field: ContentDualField, value: unknown): ContentDualArm {
-  if (isReference(value)) {
-    const reference = field.arms.find(
-      (candidate) =>
-        candidate.form === "scalar" && "conversion" in candidate && candidate.conversion === "ref"
-    );
-    if (reference !== undefined) {
-      return reference;
-    }
-  }
-  const form = authoredForm(value);
-  const arm = field.arms.find((candidate) => candidate.form === form);
-  if (arm === undefined) {
-    const declared = field.arms.map((candidate) => candidate.form).join(" or ");
-    throw new Error(
-      `Field "${field.key}" was given a ${form} value, and its declarations accept ${declared}`
-    );
-  }
-  return arm;
-}
 
 /**
  * Shapes a {@link WithFrom} closure can stand in for: the declarative values
@@ -170,9 +111,8 @@ function resolveFromClosure(field: ContentField, value: unknown): unknown {
  * time also keeps what `DefinedContent.def` carries plain data: everything
  * downstream sees the same value the plain form would have produced.
  *
- * Recurses the same three ways the definition walk does — `dual` arms, plain
- * and repeated `struct` nesting, and `repeatedStruct` entries — since a
- * condition several levels down is scoped by the rules just the same.
+ * Structural descent comes from the same field model as definition rewriting,
+ * emission, and patch localization, so every nested shape resolves closures.
  */
 export function resolveFromClosures(
   def: Readonly<Record<string, unknown>>,
@@ -184,31 +124,19 @@ export function resolveFromClosures(
     if (value === undefined) {
       continue;
     }
-    if (field.shape === "dual") {
-      const arm = dualArm(field, value);
-      const nested = resolveFromClosures({ [arm.member]: value }, [arm]);
-      resolved[field.member] = nested[arm.member];
+    const descent = contentFieldDescent(field, value);
+    if (descent.kind === "field") {
+      const nested = resolveFromClosures({ [descent.field.member]: value }, [descent.field]);
+      resolved[field.member] = nested[descent.field.member];
       continue;
     }
     if (acceptsFromClosure(field)) {
       resolved[field.member] = resolveFromClosure(field, value);
       continue;
     }
-    if (field.shape === "struct" || field.shape === "triggerStruct") {
-      resolved[field.member] = field.repeated
-        ? (value as readonly Readonly<Record<string, unknown>>[]).map((item) =>
-            resolveFromClosures(item, field.fields)
-          )
-        : resolveFromClosures(value as Readonly<Record<string, unknown>>, field.fields);
-      continue;
-    }
-    if (field.shape === "repeatedStruct") {
-      const record = value as Readonly<Record<string, Readonly<Record<string, unknown>>>>;
-      resolved[field.member] = Object.fromEntries(
-        Object.entries(record).map(([id, nested]) => [
-          id,
-          resolveFromClosures(nested, field.fields),
-        ])
+    if (descent.kind === "records") {
+      resolved[field.member] = mapContentFieldRecords(descent, (occurrence) =>
+        resolveFromClosures(occurrence.value as Readonly<Record<string, unknown>>, descent.fields)
       );
     }
   }
@@ -379,6 +307,72 @@ export function fieldEntries(
       }
       continue;
     }
+    const descent = contentFieldDescent(field, value);
+    if (descent.kind === "field") {
+      entries.push(...fieldEntries({ [descent.field.member]: value }, [descent.field], ctx));
+      resolveField(writtenFrom);
+      continue;
+    }
+    if (descent.kind === "records") {
+      const nestedEntries = descent.occurrences.map((occurrence) =>
+        fieldEntries(
+          occurrence.value as Readonly<Record<string, unknown>>,
+          descent.fields,
+          childContext(
+            ctx,
+            descent.field.key,
+            descent.field.shape === "repeatedStruct" ? occurrence.key : undefined
+          )
+        )
+      );
+      switch (descent.field.shape) {
+        case "struct":
+          if (descent.field.wrapped === true) {
+            entries.push(
+              kv(descent.field.key, container(nestedEntries.map((nested) => container(nested))))
+            );
+          } else {
+            entries.push(...nestedEntries.map((nested) => block(descent.field.key, nested)));
+          }
+          break;
+        case "triggerStruct":
+        case "aliasStruct":
+          entries.push(...nestedEntries.map((nested) => block(descent.field.key, nested)));
+          break;
+        case "structMap":
+          entries.push(
+            block(
+              descent.field.key,
+              nestedEntries.map((nested, index) => block(descent.occurrences[index]!.key!, nested))
+            )
+          );
+          break;
+        case "repeatedStruct":
+          const repeatedStructField = descent.field;
+          if (repeatedStructField.keying === "container") {
+            entries.push(
+              block(
+                repeatedStructField.key,
+                nestedEntries.map((nested, index) =>
+                  block(descent.occurrences[index]!.key!, nested)
+                )
+              )
+            );
+          } else {
+            entries.push(
+              ...nestedEntries.map((nested, index) =>
+                block(repeatedStructField.key, [
+                  kv(repeatedStructField.identityKey!, descent.occurrences[index]!.key!),
+                  ...nested,
+                ])
+              )
+            );
+          }
+          break;
+      }
+      resolveField(writtenFrom);
+      continue;
+    }
     switch (field.shape) {
       case "value": {
         const values = field.repeated ? (value as readonly unknown[]) : [value];
@@ -486,14 +480,6 @@ export function fieldEntries(
       case "weightBlockWithLoc":
         entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>, ctx));
         break;
-      case "dual": {
-        // The arm is an ordinary field under the same member, so writing it is
-        // one more turn of this same loop rather than a second implementation
-        // of every shape a dual can reach.
-        const arm = dualArm(field, value);
-        entries.push(...fieldEntries({ [arm.member]: value }, [arm], ctx));
-        break;
-      }
       case "weightedEvents": {
         const arms = value as readonly { weight: number; event?: unknown }[];
         entries.push(
@@ -506,66 +492,6 @@ export function fieldEntries(
         );
         break;
       }
-      case "struct": {
-        if (field.wrapped) {
-          const items = value as readonly Readonly<Record<string, unknown>>[];
-          entries.push(
-            kv(
-              field.key,
-              container(
-                items.map((item) =>
-                  container(fieldEntries(item, field.fields, childContext(ctx, field.key)))
-                )
-              )
-            )
-          );
-          break;
-        }
-        const values = field.repeated
-          ? (value as readonly Readonly<Record<string, unknown>>[])
-          : [value as Readonly<Record<string, unknown>>];
-        entries.push(
-          ...values.map((item) =>
-            block(field.key, fieldEntries(item, field.fields, childContext(ctx, field.key)))
-          )
-        );
-        break;
-      }
-      case "triggerStruct": {
-        const values = field.repeated
-          ? (value as readonly Readonly<Record<string, unknown>>[])
-          : [value as Readonly<Record<string, unknown>>];
-        entries.push(
-          ...values.map((item) =>
-            block(field.key, fieldEntries(item, field.fields, childContext(ctx, field.key)))
-          )
-        );
-        break;
-      }
-      case "aliasStruct": {
-        const nested = aliasStructFieldsOf(field.category);
-        const values = field.repeated
-          ? (value as readonly Readonly<Record<string, unknown>>[])
-          : [value as Readonly<Record<string, unknown>>];
-        entries.push(
-          ...values.map((item) =>
-            block(field.key, fieldEntries(item, nested, childContext(ctx, field.key)))
-          )
-        );
-        break;
-      }
-      case "structMap": {
-        const record = value as Readonly<Record<string, Readonly<Record<string, unknown>>>>;
-        entries.push(
-          block(
-            field.key,
-            Object.entries(record).map(([name, item]) =>
-              block(name, fieldEntries(item, field.fields, childContext(ctx, field.key)))
-            )
-          )
-        );
-        break;
-      }
       case "scalarMap": {
         const record = value as Readonly<Record<string, number | string>>;
         entries.push(
@@ -574,33 +500,6 @@ export function fieldEntries(
             Object.entries(record).map(([name, amount]) => kv(name, amount))
           )
         );
-        break;
-      }
-      case "repeatedStruct": {
-        const record = value as Readonly<Record<string, Readonly<Record<string, unknown>>>>;
-        if (field.keying === "container") {
-          entries.push(
-            block(
-              field.key,
-              // The entry's own id becomes the nearest enclosing identity for
-              // anything nested inside it (a WeightBlock's desc keys among
-              // them) — the render-side mirror of
-              // `resolveFieldTree`'s identical rebind.
-              Object.entries(record).map(([id, item]) =>
-                block(id, fieldEntries(item, field.fields, childContext(ctx, field.key, id)))
-              )
-            )
-          );
-          break;
-        }
-        for (const [id, item] of Object.entries(record)) {
-          entries.push(
-            block(field.key, [
-              kv(field.identityKey!, id),
-              ...fieldEntries(item, field.fields, childContext(ctx, field.key, id)),
-            ])
-          );
-        }
         break;
       }
     }
