@@ -695,17 +695,17 @@ async function writeContentModules(
   const publicModules = [
     ...contents.map((content) => ({
       file: `${kebabCase(content.registry)}.ts`,
-      code: content.emission.code,
+      exportedNames: content.emission.exportedNames,
       publicTypes: content.emission.publicTypes,
     })),
     ...[...aliasCategories].map(([category, emission]) => ({
       file: `${category.replaceAll("_", "-")}.ts`,
-      code: emission.code,
+      exportedNames: emission.exportedNames,
       publicTypes: [],
     })),
     {
       file: "content-capability.ts",
-      code: definers.capabilityCode,
+      exportedNames: definers.capabilityExportedNames,
       publicTypes: definers.capabilityPublicTypes,
     },
   ];

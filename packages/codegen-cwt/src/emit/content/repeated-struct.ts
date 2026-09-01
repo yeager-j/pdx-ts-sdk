@@ -14,6 +14,7 @@ import {
   metadata,
   pickOrdinary,
   type EmittedField,
+  type FieldMetadata,
 } from "../../lower/fields.ts";
 import { wildcardBlockOf } from "../../lower/rule-shapes.ts";
 import type { FieldContext } from "../../lower/scope-context.ts";
@@ -37,14 +38,16 @@ import {
 export type RepeatedStructEmission = RepeatedStructKeying & {
   /** Generated nested interface and runtime tables. */
   readonly code: string;
+  /** Every name {@link RepeatedStructEmission.code} exports. */
+  readonly exportedNames: readonly string[];
   /** Name of the nested runtime field table. */
   readonly fieldsConstant: string;
   /** Name of the nested localisation descriptor table. */
   readonly localisationConstant: string;
   /** Type used by the owning registry member. */
   readonly memberType: string;
-  /** Runtime descriptor for the owning repeated-struct field. */
-  readonly metadata: string;
+  /** Renders the owning repeated-struct field's runtime descriptor. */
+  readonly metadata: FieldMetadata;
   /** Fields refused by `CONTENT_DECLINED_FIELDS`. */
   readonly declinedFields: readonly FieldOmissionRow[];
   /** Declared fields that cannot be represented or collide with another member. */
@@ -77,6 +80,8 @@ interface RepeatedStructMembers {
   readonly emittedFields: EmittedField[];
   readonly children: DescentNode[];
   readonly extraCode: string[];
+  /** Every name {@link RepeatedStructMembers.extraCode} exports. */
+  readonly exportedNames: string[];
   readonly memberDocs: Record<string, MemberDocRow>;
   readonly docTables: DocTable[];
 }
@@ -162,6 +167,7 @@ function lowerRepeatedStructMembers(
   const emittedFields: EmittedField[] = [];
   const children: DescentNode[] = [];
   const extraCode: string[] = [];
+  const exportedNames: string[] = [];
   const memberDocs: Record<string, MemberDocRow> = {};
   const docTables: DocTable[] = [];
 
@@ -201,9 +207,10 @@ function lowerRepeatedStructMembers(
       ...authoredLiterals(lowering.admits.literals),
     };
     docTables.push(...(lowering.docTables ?? []));
-    metadata.push(lowering.metadata);
+    metadata.push(lowering.metadata(member));
     if (lowering.code !== undefined) {
       extraCode.push(lowering.code);
+      exportedNames.push(...(lowering.exportedNames ?? []));
     }
     if (lowering.unsupported !== undefined) {
       unsupported.push(...lowering.unsupported);
@@ -226,6 +233,7 @@ function lowerRepeatedStructMembers(
     emittedFields,
     children,
     extraCode,
+    exportedNames,
     memberDocs,
     docTables,
   };
@@ -237,6 +245,7 @@ function renderRepeatedStruct(
   members: RepeatedStructMembers
 ): {
   readonly code: string;
+  readonly exportedNames: readonly string[];
   readonly fieldsConstant: string;
   readonly localisationConstant: string;
 } {
@@ -254,6 +263,12 @@ function renderRepeatedStruct(
   return {
     fieldsConstant,
     localisationConstant,
+    exportedNames: [
+      ...members.exportedNames,
+      `${plan.typeName}Fields`,
+      fieldsConstant,
+      localisationConstant,
+    ],
     code:
       members.extraCode.join("") +
       `export interface ${plan.typeName}Fields {\n` +

@@ -60,6 +60,8 @@ import { constArray, member as renderMember } from "../../render/writer.ts";
 export interface AliasSpliceEmission {
   /** Complete generated module text for the category. */
   readonly code: string;
+  /** Every name {@link AliasSpliceEmission.code} declares as an export. */
+  readonly exportedNames: readonly string[];
   /** The block interface, e.g. `PlanetInitializerFields`. */
   readonly typeName: string;
   /** The block's runtime field table, e.g. `PLANET_INITIALIZER_FIELDS`. */
@@ -113,6 +115,8 @@ interface AliasSpliceDraft {
   readonly emittedFields: EmittedField[];
   readonly corpusDescents: DescentNode[];
   readonly extraCode: string[];
+  /** Every name {@link AliasSpliceDraft.extraCode} exports. */
+  readonly exportedNames: string[];
   readonly spliceCategories: string[];
   readonly memberDocs: Record<string, MemberDocRow>;
   readonly docTables: DocTable[];
@@ -152,6 +156,7 @@ function emptyAliasSpliceDraft(): AliasSpliceDraft {
     emittedFields: [],
     corpusDescents: [],
     extraCode: [],
+    exportedNames: [],
     spliceCategories: [],
     memberDocs: {},
     docTables: [],
@@ -168,6 +173,7 @@ function combineAliasSpliceDrafts(...drafts: readonly AliasSpliceDraft[]): Alias
     emittedFields: drafts.flatMap((draft) => draft.emittedFields),
     corpusDescents: drafts.flatMap((draft) => draft.corpusDescents),
     extraCode: drafts.flatMap((draft) => draft.extraCode),
+    exportedNames: drafts.flatMap((draft) => draft.exportedNames),
     spliceCategories: drafts.flatMap((draft) => draft.spliceCategories),
     memberDocs: Object.assign({}, ...drafts.map((draft) => draft.memberDocs)),
     docTables: drafts.flatMap((draft) => draft.docTables),
@@ -226,9 +232,10 @@ function lowerNamedMembers(emitter: Emitter, context: AliasSpliceContext): Alias
       ...authoredLiterals(lowering.admits.literals),
     };
     draft.docTables.push(...(lowering.docTables ?? []));
-    draft.fieldMetadata.push(lowering.metadata);
+    draft.fieldMetadata.push(lowering.metadata(member));
     if (lowering.code !== undefined) {
       draft.extraCode.push(lowering.code);
+      draft.exportedNames.push(...(lowering.exportedNames ?? []));
     }
     if (lowering.unsupported !== undefined) {
       draft.unsupported.push(...lowering.unsupported);
@@ -315,6 +322,7 @@ function aliasSpliceEmission(
 
   return {
     code,
+    exportedNames: [...draft.exportedNames, context.typeName, context.fieldsConstant],
     typeName: context.typeName,
     fieldsConstant: context.fieldsConstant,
     memberKey: context.memberKey,

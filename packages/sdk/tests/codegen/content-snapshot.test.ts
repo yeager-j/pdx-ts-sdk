@@ -24,6 +24,14 @@ function fieldNames(fields: readonly EmittedField[]): string[] {
   return fields.map((field) => field.field);
 }
 
+/** Every member named by one key's dual descriptor: the dual itself, then its arms. */
+function dualMembers(code: string, key: string): string[] {
+  const descriptor = code
+    .split("\n")
+    .find((line) => line.includes(`key: ${JSON.stringify(key)}`) && line.includes('shape: "dual"'));
+  return [...(descriptor ?? "").matchAll(/member: "(\w+)"/g)].map((match) => match[1]!);
+}
+
 /** The member names one emitted interface declares, in declaration order. */
 function interfaceMembers(code: string, name: string): string[] {
   const start = code.indexOf(`export interface ${name} {`);
@@ -874,8 +882,15 @@ describe("content-type codegen", () => {
     const situation = emissions.get("situation_type");
     expect(situation?.code).toContain("conditionalDesc?: LocalizationInput | SituationTypeDesc[];");
     // The rename has to reach the arms too: the writer resolves an arm by its
-    // own member name, so a single-shot replace would leave them as `desc`.
+    // own member name, so an arm left as `desc` would be unreachable. The
+    // member is rendered from the name the emitter settled on, once for the
+    // dual and once per arm.
     expect(situation?.code).not.toContain('member: "desc", shape: "struct"');
+    expect(dualMembers(situation!.code, "desc")).toEqual([
+      "conditionalDesc",
+      "conditionalDesc",
+      "conditionalDesc",
+    ]);
   });
 
   it("derives every localization rename from the collision, and only those", () => {

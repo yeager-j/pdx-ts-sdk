@@ -61,6 +61,8 @@ import { constArray, refTypesSuffix, member as renderMember } from "../../render
 export interface AliasStructEmission {
   /** Complete generated module text for the category. */
   readonly code: string;
+  /** Every name {@link AliasStructEmission.code} declares as an export. */
+  readonly exportedNames: readonly string[];
   /** The block interface, e.g. `GovernmentTriggerBlock`. */
   readonly typeName: string;
   /** The block's runtime field table, e.g. `GOVERNMENT_TRIGGER_FIELDS`. */
@@ -157,6 +159,8 @@ interface AliasMemberEmission {
   readonly metadata: string;
   readonly docs: MemberDocRow;
   readonly clauseTables: readonly string[];
+  /** Every name {@link AliasMemberEmission.clauseTables} exports. */
+  readonly clauseTableNames: readonly string[];
   readonly docTables: readonly DocTable[];
 }
 
@@ -353,6 +357,7 @@ function valueMemberEmission(
     metadata: valueField(key, value),
     docs: { optional: true, docs, memberType: value.type },
     clauseTables: [],
+    clauseTableNames: [],
     docTables: [],
   };
 }
@@ -488,6 +493,7 @@ function memberEmission(
       clauseTables: [
         clauseFieldsCode(emitter, shape.ref, clauseFieldsConstant, groupFieldsConstant),
       ],
+      clauseTableNames: [groupFieldsConstant, clauseFieldsConstant],
       docTables: [
         ...clauseDocTables(
           emitter.use("LocalizationInput"),
@@ -516,6 +522,7 @@ function memberEmission(
       `category: ${JSON.stringify(category)}, repeated: true },\n`,
     docs: { optional: true, docs: declaration.docs, memberType },
     clauseTables: [],
+    clauseTableNames: [],
     docTables: [],
   };
 }
@@ -549,6 +556,7 @@ export function emitAliasStruct(
   // `<type>`, so a category-wide pair would carry (at best) only the first
   // member's `refTypes` and leave the guard unable to resolve the rest.
   const clauseTables: string[] = [];
+  const clauseTableNames: string[] = [];
   const docTables: DocTable[] = [];
   const emissions = [
     ...[...plan.scalars].map(([key, value]) => valueMemberEmission(emitter, key, value, [])),
@@ -561,6 +569,7 @@ export function emitAliasStruct(
     metadata.push(emission.metadata);
     memberDocs[emission.propertyName] = emission.docs;
     clauseTables.push(...emission.clauseTables);
+    clauseTableNames.push(...emission.clauseTableNames);
     docTables.push(...emission.docTables);
   }
   // The clause and group interfaces stay generic and category-wide — only
@@ -616,6 +625,12 @@ export function emitAliasStruct(
 
   return {
     code,
+    exportedNames: [
+      ...(plan.hasClauseMember ? [groupName, clauseName] : []),
+      ...clauseTableNames,
+      typeName,
+      fieldsConstant,
+    ],
     typeName,
     fieldsConstant,
     emittedMembers: plan.members.map((member) => member.name),

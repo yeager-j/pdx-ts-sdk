@@ -37,6 +37,7 @@ import {
   metadata,
   scalarMetadata,
   withMetadataEntry,
+  type FieldMetadata,
 } from "./field-metadata.ts";
 import {
   lowerScalarMap,
@@ -65,7 +66,13 @@ import {
   type FieldContext,
 } from "./scope-context.ts";
 
-export { authoredLiterals, memberOptional, metadata, repeatsSiblings } from "./field-metadata.ts";
+export {
+  authoredLiterals,
+  memberOptional,
+  metadata,
+  repeatsSiblings,
+  type FieldMetadata,
+} from "./field-metadata.ts";
 
 /**
  * Describes one lowered field in the terms used by corpus conformance checks.
@@ -113,8 +120,8 @@ export interface EmittedField {
 export interface LoweredField {
   /** The TypeScript type exposed on the generated authoring member. */
   readonly memberType: string;
-  /** The rendered runtime `ContentField` descriptor. */
-  readonly metadata: string;
+  /** Renders the runtime `ContentField` descriptor for the emitted member. */
+  readonly metadata: FieldMetadata;
   /**
    * The field forms admitted by corpus conformance checks.
    * Its shape and repetition must match {@link metadata}.
@@ -132,6 +139,8 @@ export interface LoweredField {
   readonly docs?: readonly string[];
   /** Extra top-level declarations a nested struct level needed, prepended by the caller. */
   readonly code?: string;
+  /** Every name {@link LoweredField.code} exports, for the public barrel's check. */
+  readonly exportedNames?: readonly string[];
   /** Rows bubbled up from a nested struct level, their paths already prefixed. */
   readonly unsupported?: readonly FieldOmissionRow[];
   /**
@@ -785,9 +794,11 @@ function lowerDual(
   }
   return {
     memberType: arms.map((arm) => arm.memberType).join(" | "),
-    metadata:
-      `{ key: ${JSON.stringify(name)}, member: ${JSON.stringify(camelCase(name))}, ` +
-      `shape: "dual", arms: [${arms.map((arm) => arm.metadata).join(", ")}] }`,
+    // Each arm carries the member too: the writer resolves an arm by its own
+    // member name, so every arm renders under the one the outer field takes.
+    metadata: (member) =>
+      `{ key: ${JSON.stringify(name)}, member: ${JSON.stringify(member)}, ` +
+      `shape: "dual", arms: [${arms.map((arm) => arm.metadata(member)).join(", ")}] }`,
     admits: {
       shape: "dual",
       // The key repeats if any arm lets it: `situation_type.picture` is one
@@ -798,6 +809,7 @@ function lowerDual(
       ...(block.admits.clause === undefined ? {} : { clause: block.admits.clause }),
     },
     code: arms.map((arm) => arm.code ?? "").join(""),
+    exportedNames: arms.flatMap((arm) => arm.exportedNames ?? []),
     unsupported: arms.flatMap((arm) => arm.unsupported ?? []),
     docTables: arms.flatMap((arm) => arm.docTables ?? []),
     // The block arm alone: a scalar arm has no interior, and both arms share

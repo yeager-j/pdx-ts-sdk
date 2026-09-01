@@ -51,6 +51,14 @@ export interface DefinerContent {
   emission: ContentEmission;
 }
 
+/** One method on the generated capability surface. */
+export interface CapabilityMember {
+  /** The method name, which must be unique across the whole surface. */
+  readonly method: string;
+  /** The rendered `ContentCapabilityMethods` member declaration. */
+  readonly declaration: string;
+}
+
 /** One row of the capability module's generated `EXACT_NAME_MINTS` table. */
 export interface ExactNameMintRow {
   /** Capability method that uses the exact-name mint policy. */
@@ -69,8 +77,8 @@ export interface RegistryDefinerPlan {
   readonly chunk: string;
   /** Runtime item types beyond `ContentItem` this registry's union names. */
   readonly itemTypes: readonly string[];
-  /** Method declarations contributed to `ContentCapabilityMethods`. */
-  readonly capabilityMembers: readonly string[];
+  /** Methods contributed to `ContentCapabilityMethods`. */
+  readonly capabilityMembers: readonly CapabilityMember[];
   /** Runtime method bindings contributed by the registry. */
   readonly capabilityBindings: readonly string[];
   /** Definer names the capability bindings call into `content-definers.ts`. */
@@ -290,9 +298,9 @@ function itemUnionType(facts: RegistryDefinerFacts): string {
 
 /** The capability's `defineX` surface: one member, its binding, its mint row. */
 function capabilityDefineMember(facts: RegistryDefinerFacts): {
-  readonly member: string;
+  readonly member: CapabilityMember;
   readonly binding: string;
-  readonly handleMember: string;
+  readonly handleMember: CapabilityMember;
   readonly handleBinding: string;
   readonly exactNameRow: ExactNameMintRow | null;
 } {
@@ -444,21 +452,24 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
   );
   if (exactName === undefined) {
     return {
-      member:
-        docComment(
-          [
-            `Defines ${article} ${spoken} from its logical name.`,
-            "The capability mints and owns the full id; the returned branded reference",
-            "flows into matching content-reference fields.",
-            ...(nestedDefinitionMembers.length === 0
-              ? []
-              : [
-                  "Nested-definition record keys are full ids and must belong to this capability's",
-                  "prefix, because other fields may reference them directly.",
-                ]),
-          ],
-          "  "
-        ) + signatures,
+      member: {
+        method,
+        declaration:
+          docComment(
+            [
+              `Defines ${article} ${spoken} from its logical name.`,
+              "The capability mints and owns the full id; the returned branded reference",
+              "flows into matching content-reference fields.",
+              ...(nestedDefinitionMembers.length === 0
+                ? []
+                : [
+                    "Nested-definition record keys are full ids and must belong to this capability's",
+                    "prefix, because other fields may reference them directly.",
+                  ]),
+            ],
+            "  "
+          ) + signatures,
+      },
       ...(() => {
         const bindings = capabilityBindings({
           method,
@@ -476,9 +487,12 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
         });
         return { binding: bindings.eager, handleBinding: bindings.handle };
       })(),
-      handleMember:
-        `${handleDoc}  ${method}Handle<const Name extends string>(\n` +
-        `    name: Name\n  ): ${handleReturn};`,
+      handleMember: {
+        method: `${method}Handle`,
+        declaration:
+          `${handleDoc}  ${method}Handle<const Name extends string>(\n` +
+          `    name: Name\n  ): ${handleReturn};`,
+      },
       exactNameRow: null,
     };
   }
@@ -494,40 +508,43 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
     );
   }
   return {
-    member:
-      docComment(
-        [
-          `Defines ${article} ${spoken} from its logical name.`,
-          "The capability mints and owns the full id; the returned branded reference",
-          "flows into matching content-reference fields.",
-          `A ${spoken} name is a raw engine label, so the logical name accepts`,
-          "interior uppercase after its leading lowercase letter ([a-z][A-Za-z0-9_]*).",
-        ],
-        "  "
-      ) +
-      `  ${method}<const Name extends string>(\n` +
-      `    name: Name,\n` +
-      `    def: ${input},\n` +
-      `    options?: { readonly prefix?: true }\n` +
-      `  ): ContentItem<${key}, ${result}>;\n` +
-      docComment(
-        [
-          `Defines ${article} ${spoken} from its complete name.`,
-          "`prefix: false` means only that the capability does not prepend the mod",
-          "prefix — the prefix is still required inside `name` as a `_`-delimited",
-          "segment (head, interior, or tail). The `Name` constraint enforces that at",
-          "compile time and the mint re-checks it at runtime, so the name stays",
-          "ownable and clear of other mods by construction. The minting capability",
-          "is recorded and placement verifies the record, so a name carrying a",
-          "second mod's prefix as another segment still places only with its minter.",
-        ],
-        "  "
-      ) +
-      `  ${method}<const Name extends ExactMintName<P>>(\n` +
-      `    name: Name,\n` +
-      `    def: Omit<${name}Def<Name>, "id">,\n` +
-      `    options: { readonly prefix: false }\n` +
-      `  ): ContentItem<${key}, ${name}Def<Name>>;`,
+    member: {
+      method,
+      declaration:
+        docComment(
+          [
+            `Defines ${article} ${spoken} from its logical name.`,
+            "The capability mints and owns the full id; the returned branded reference",
+            "flows into matching content-reference fields.",
+            `A ${spoken} name is a raw engine label, so the logical name accepts`,
+            "interior uppercase after its leading lowercase letter ([a-z][A-Za-z0-9_]*).",
+          ],
+          "  "
+        ) +
+        `  ${method}<const Name extends string>(\n` +
+        `    name: Name,\n` +
+        `    def: ${input},\n` +
+        `    options?: { readonly prefix?: true }\n` +
+        `  ): ContentItem<${key}, ${result}>;\n` +
+        docComment(
+          [
+            `Defines ${article} ${spoken} from its complete name.`,
+            "`prefix: false` means only that the capability does not prepend the mod",
+            "prefix — the prefix is still required inside `name` as a `_`-delimited",
+            "segment (head, interior, or tail). The `Name` constraint enforces that at",
+            "compile time and the mint re-checks it at runtime, so the name stays",
+            "ownable and clear of other mods by construction. The minting capability",
+            "is recorded and placement verifies the record, so a name carrying a",
+            "second mod's prefix as another segment still places only with its minter.",
+          ],
+          "  "
+        ) +
+        `  ${method}<const Name extends ExactMintName<P>>(\n` +
+        `    name: Name,\n` +
+        `    def: Omit<${name}Def<Name>, "id">,\n` +
+        `    options: { readonly prefix: false }\n` +
+        `  ): ContentItem<${key}, ${name}Def<Name>>;`,
+    },
     ...(() => {
       const bindings = capabilityBindings({
         method,
@@ -552,16 +569,19 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
     })(),
     // `prefix: false` is a mint-time option, so the handle carries the same
     // overload pair the eager method does and its `define` stays plain.
-    handleMember:
-      `${handleDoc}  ${method}Handle<const Name extends string>(\n` +
-      `    name: Name,\n` +
-      `    options?: { readonly prefix?: true }\n` +
-      `  ): ContentHandle<${key}, ${result}>;\n` +
-      handleDoc +
-      `  ${method}Handle<const Name extends ExactMintName<P>>(\n` +
-      `    name: Name,\n` +
-      `    options: { readonly prefix: false }\n` +
-      `  ): ContentHandle<${key}, ${name}Def<Name>>;`,
+    handleMember: {
+      method: `${method}Handle`,
+      declaration:
+        `${handleDoc}  ${method}Handle<const Name extends string>(\n` +
+        `    name: Name,\n` +
+        `    options?: { readonly prefix?: true }\n` +
+        `  ): ContentHandle<${key}, ${result}>;\n` +
+        handleDoc +
+        `  ${method}Handle<const Name extends ExactMintName<P>>(\n` +
+        `    name: Name,\n` +
+        `    options: { readonly prefix: false }\n` +
+        `  ): ContentHandle<${key}, ${name}Def<Name>>;`,
+    },
     exactNameRow: {
       method,
       namePattern: exactName.namePattern,
@@ -785,7 +805,7 @@ export function planRegistryDefiner(
     nestedDefinitionMembers,
   } = facts;
 
-  const capabilityMembers: string[] = [];
+  const capabilityMembers: CapabilityMember[] = [];
   const capabilityBindings: string[] = [];
   const runtimeDefiners: string[] = [];
   const shapeMintTypes: string[] = [];
@@ -835,22 +855,24 @@ export function planRegistryDefiner(
     }
   }
   if (patchable !== undefined) {
-    capabilityMembers.push(
-      docComment(
-        [
-          `Patches a vanilla ${spoken} as a whole-object override.`,
-          "Unlike a capability definition method, it mints no id and owns no new content —",
-          "but it does mint localisation keys for text it adds, from this capability's",
-          "prefix, which is why the method is bound to the capability rather than free.",
-          ...(patchable.example ?? []),
-        ],
-        "  "
-      ) +
+    capabilityMembers.push({
+      method: `patch${name}`,
+      declaration:
+        docComment(
+          [
+            `Patches a vanilla ${spoken} as a whole-object override.`,
+            "Unlike a capability definition method, it mints no id and owns no new content —",
+            "but it does mint localisation keys for text it adds, from this capability's",
+            "prefix, which is why the method is bound to the capability rather than free.",
+            ...(patchable.example ?? []),
+          ],
+          "  "
+        ) +
         `  patch${name}<Source extends Parsed${name}>(\n` +
         `    ${camelCase(registry)}: Source,\n` +
         `    patch: (${camelCase(registry)}: Source) => ${name}Patch\n` +
-        `  ): ${name}PatchItem;`
-    );
+        `  ): ${name}PatchItem;`,
+    });
     capabilityBindings.push(
       `    patch${name}: <Source extends Parsed${name}>(\n` +
         `      ${camelCase(registry)}: Source,\n` +
@@ -860,15 +882,17 @@ export function planRegistryDefiner(
     runtimeDefiners.push(`patch${name}`);
   }
   if (contribution !== undefined) {
-    capabilityMembers.push(
-      docComment(
-        [
-          `Adds ids to the shared ${contribution.sink} sink.`,
-          "This is an id-less additive contribution, not a capability-owned definition.",
-        ],
-        "  "
-      ) + `  readonly ${contribution.method}: typeof ${contribution.method};`
-    );
+    capabilityMembers.push({
+      method: contribution.method,
+      declaration:
+        docComment(
+          [
+            `Adds ids to the shared ${contribution.sink} sink.`,
+            "This is an id-less additive contribution, not a capability-owned definition.",
+          ],
+          "  "
+        ) + `  readonly ${contribution.method}: typeof ${contribution.method};`,
+    });
     capabilityBindings.push(`    ${contribution.method},`);
     runtimeDefiners.push(contribution.method);
   }
@@ -929,9 +953,9 @@ function shapeMintMethod(
 ): {
   readonly type: string;
   readonly typeName: string;
-  readonly member: string;
+  readonly member: CapabilityMember;
   readonly binding: string;
-  readonly handleMember: string;
+  readonly handleMember: CapabilityMember;
   readonly handleBinding: string;
   readonly refTypes: readonly string[];
 } {
@@ -1028,44 +1052,50 @@ function shapeMintMethod(
       docComment([`The name a \`${shape.method}\` mints.`, "", `Seed: ${shape.seed}.`]) +
       `export type ${alias}<\n  ${aliasParameters.join(",\n  ")},\n> = ${aliasBody};\n`,
     typeName: alias,
-    member:
-      docComment(
-        [
-          `Defines the \`${shape.head}\`-led sprite the game generates${
-            named ? " from a name" : ` from a ${spokenName(target!.targetRegistry)}`
-          }.`,
-          named
-            ? "The capability mints and owns the full name, exactly as an ordinary definition does."
-            : "The minted name carries the target's id rather than the mod prefix, so ownership " +
-              "rides on the item as mint provenance instead of on the string.",
-          `In every other respect this is an ordinary ${spokenName(SHAPE_MINT_REGISTRY)} definition.`,
-          "",
-          `Seed: ${shape.seed}`,
-        ],
-        "  "
-      ) +
-      `  ${shape.method}<\n    ${methodParameters},\n  >(\n` +
-      `    ${argument},\n` +
-      `    def: Omit<${def}, "id">${optionsParameter}\n` +
-      `  ): ContentItem<${JSON.stringify(SHAPE_MINT_REGISTRY)}, ${def}>;`,
+    member: {
+      method: shape.method,
+      declaration:
+        docComment(
+          [
+            `Defines the \`${shape.head}\`-led sprite the game generates${
+              named ? " from a name" : ` from a ${spokenName(target!.targetRegistry)}`
+            }.`,
+            named
+              ? "The capability mints and owns the full name, exactly as an ordinary definition does."
+              : "The minted name carries the target's id rather than the mod prefix, so ownership " +
+                "rides on the item as mint provenance instead of on the string.",
+            `In every other respect this is an ordinary ${spokenName(SHAPE_MINT_REGISTRY)} definition.`,
+            "",
+            `Seed: ${shape.seed}`,
+          ],
+          "  "
+        ) +
+        `  ${shape.method}<\n    ${methodParameters},\n  >(\n` +
+        `    ${argument},\n` +
+        `    def: Omit<${def}, "id">${optionsParameter}\n` +
+        `  ): ContentItem<${JSON.stringify(SHAPE_MINT_REGISTRY)}, ${def}>;`,
+    },
     // A shape mint's variants and target are read at mint time, so the handle
     // takes them and its `define` stays plain, exactly as the eager method's
     // `def` is the only thing deferred.
     binding: shapeBindings.eager,
-    handleMember:
-      docComment(
-        [
-          `Mints the \`${shape.head}\`-led sprite name without its definition.`,
-          "Define it later with its `define(...)` method when a cycle needs the name first.",
-          "The handle is a reference, not content: place the item `define(...)` returns.",
-          "",
-          `Seed: ${shape.seed}`,
-        ],
-        "  "
-      ) +
-      `  ${shape.method}Handle<\n    ${methodParameters},\n  >(\n` +
-      `    ${argument}${optionsParameter}\n` +
-      `  ): ContentHandle<${JSON.stringify(SHAPE_MINT_REGISTRY)}, ${def}>;`,
+    handleMember: {
+      method: `${shape.method}Handle`,
+      declaration:
+        docComment(
+          [
+            `Mints the \`${shape.head}\`-led sprite name without its definition.`,
+            "Define it later with its `define(...)` method when a cycle needs the name first.",
+            "The handle is a reference, not content: place the item `define(...)` returns.",
+            "",
+            `Seed: ${shape.seed}`,
+          ],
+          "  "
+        ) +
+        `  ${shape.method}Handle<\n    ${methodParameters},\n  >(\n` +
+        `    ${argument}${optionsParameter}\n` +
+        `  ): ContentHandle<${JSON.stringify(SHAPE_MINT_REGISTRY)}, ${def}>;`,
+    },
     handleBinding: shapeBindings.handle,
     refTypes: refType === undefined ? [] : [refType],
   };

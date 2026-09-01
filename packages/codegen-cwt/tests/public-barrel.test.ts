@@ -65,24 +65,36 @@ const { aliasCategories } = emitAliasCategories(
 );
 const definers = contentDefiners(contents);
 
-const modules: PublicBarrelModule[] = [
+/** One generated module offered to the barrel, beside the text it rendered. */
+const sources: (PublicBarrelModule & { readonly code: string })[] = [
   ...contents.map((content) => ({
     file: `${kebabCase(content.registry)}.ts`,
     code: content.emission.code,
+    exportedNames: content.emission.exportedNames,
     publicTypes: content.emission.publicTypes,
   })),
   ...[...aliasCategories].map(([category, emission]) => ({
     file: `${category.replaceAll("_", "-")}.ts`,
     code: emission.code,
+    exportedNames: emission.exportedNames,
     publicTypes: [],
   })),
   {
     file: "content-capability.ts",
     code: definers.capabilityCode,
+    exportedNames: definers.capabilityExportedNames,
     publicTypes: definers.capabilityPublicTypes,
   },
 ];
+const modules: PublicBarrelModule[] = sources;
 const barrel = contentPublicBarrel(modules);
+
+/** Every name one generated module's text declares as an export. */
+function declaredExports(code: string): string[] {
+  return [...code.matchAll(/^export (?:type|interface|const|function|class) (\w+)/gm)].map(
+    (match) => match[1]!
+  );
+}
 
 /** The names the rendered barrel re-exports, keyed by the module they come from. */
 function exportsByModule(rendered: string): Map<string, readonly string[]> {
@@ -185,6 +197,21 @@ describe("the generated public content barrel", () => {
     expect(missing).toEqual([]);
   });
 
+  it("records the export names each module actually declares", () => {
+    // The barrel trusts each emission's own list instead of reading its text
+    // back (SDK-361), so this is where the two are compared: a declaration
+    // whose name never reached the list would otherwise stay invisible until
+    // something tried to publish it.
+    const unrecorded = sources.flatMap((source) => {
+      const recorded = new Set(source.exportedNames);
+      return declaredExports(source.code)
+        .filter((name) => !recorded.has(name))
+        .map((name) => `${source.file}: ${name}`);
+    });
+
+    expect(unrecorded).toEqual([]);
+  });
+
   it("keeps the runtime field tables and internal helpers unpublished", () => {
     expect(barrel).not.toContain("TECHNOLOGY_FIELDS");
     expect(barrel).not.toContain("TECHNOLOGY_LOCALISATION");
@@ -203,13 +230,13 @@ describe("the generated public content barrel", () => {
     const [first] = PUBLIC_NESTED_TYPES;
     const stubs = PUBLIC_NESTED_TYPES.map((row) => ({
       file: row.module,
-      code: row.names.map((name) => `export interface ${name} {}\n`).join(""),
+      exportedNames: row.names,
       publicTypes: [],
     }));
 
     expect(() =>
       contentPublicBarrel(
-        stubs.map((stub) => (stub.file === first!.module ? { ...stub, code: "" } : stub))
+        stubs.map((stub) => (stub.file === first!.module ? { ...stub, exportedNames: [] } : stub))
       )
     ).toThrow(
       `The public barrel would export ${[...first!.names].sort().join(", ")} from ` +
