@@ -3,6 +3,7 @@ import {
   validateScriptReferences,
   type ScriptEffectReferenceRow,
   type ScriptTriggerReferenceRow,
+  type StructuralScriptClaims,
 } from "@pdx-ts/codegen-cwt/emit/script/script-reference";
 import { describe, expect, it } from "vitest";
 
@@ -27,10 +28,27 @@ const trigger = (
   ...overrides,
 });
 
+/** No hand-written structural rows, so a case exercises only the generated rows. */
+const NO_STRUCTURAL: StructuralScriptClaims = { methods: [], keys: [] };
+
+/**
+ * A miniature of the real structural surface: one method with a fixed key, one
+ * without, and a structural-owned key (`else`) that no public method records.
+ */
+const structural = (overrides: Partial<StructuralScriptClaims> = {}): StructuralScriptClaims => ({
+  methods: [
+    { method: "if", key: "if" },
+    { method: "run", key: null },
+  ],
+  keys: ["if", "else"],
+  ...overrides,
+});
+
 describe("script reference metadata validation", () => {
   it("emits canonical rows and preserves universal availability", () => {
     const result = emitScriptReferences(
       ["country", "planet"],
+      NO_STRUCTURAL,
       [effect({ availability: { kind: "universal" } })],
       [trigger()],
       [
@@ -54,6 +72,7 @@ describe("script reference metadata validation", () => {
     expect(() =>
       validateScriptReferences(
         ["country"],
+        NO_STRUCTURAL,
         [effect({ availability: { kind: "scopes", scopes: ["planet"] } })],
         [],
         []
@@ -62,12 +81,13 @@ describe("script reference metadata validation", () => {
   });
 
   it("rejects duplicate effect members and fixed keys", () => {
-    expect(() => validateScriptReferences(["country"], [effect(), effect()], [], [])).toThrowError(
-      'duplicate effect member "sampleEffect"'
-    );
+    expect(() =>
+      validateScriptReferences(["country"], NO_STRUCTURAL, [effect(), effect()], [], [])
+    ).toThrowError('duplicate effect member "sampleEffect"');
     expect(() =>
       validateScriptReferences(
         ["country"],
+        NO_STRUCTURAL,
         [effect({ method: "first" }), effect({ method: "second" })],
         [],
         []
@@ -79,6 +99,7 @@ describe("script reference metadata validation", () => {
     expect(() =>
       validateScriptReferences(
         ["country", "planet"],
+        NO_STRUCTURAL,
         [effect(), effect({ availability: { kind: "scopes", scopes: ["planet"] } })],
         [],
         []
@@ -87,6 +108,7 @@ describe("script reference metadata validation", () => {
     expect(() =>
       validateScriptReferences(
         ["country", "planet"],
+        NO_STRUCTURAL,
         [],
         [],
         [
@@ -101,21 +123,79 @@ describe("script reference metadata validation", () => {
     expect(() =>
       validateScriptReferences(
         ["country"],
+        NO_STRUCTURAL,
         [],
         [trigger({ availability: { kind: "scopes", scopes: ["planet"] } })],
         []
       )
     ).toThrowError('trigger sampleTrigger names unknown scope "planet"');
     expect(() =>
-      validateScriptReferences(["country"], [], [trigger(), trigger()], [])
+      validateScriptReferences(["country"], NO_STRUCTURAL, [], [trigger(), trigger()], [])
     ).toThrowError('duplicate trigger method "sampleTrigger"');
     expect(() =>
       validateScriptReferences(
         ["country"],
+        NO_STRUCTURAL,
         [],
         [trigger({ method: "first" }), trigger({ method: "second" })],
         []
       )
     ).toThrowError('duplicate fixed trigger key "sample_trigger"');
+  });
+});
+
+/**
+ * The emitted catalog appends the hand-written structural rows after the generated
+ * ones (SDK-363), so a generated row that steals a structural method or key would
+ * otherwise reach the committed module unchecked.
+ */
+describe("structural identity claims", () => {
+  it("rejects a generated key that duplicates a structural method's fixed key", () => {
+    expect(() =>
+      validateScriptReferences(["country"], structural(), [effect({ key: "if" })], [], [])
+    ).toThrowError('duplicate fixed script key "if" on if and sampleEffect');
+  });
+
+  it("rejects a generated method that duplicates a structural method", () => {
+    expect(() =>
+      validateScriptReferences(
+        ["country"],
+        structural(),
+        [effect({ method: "run", key: "run_effect" })],
+        [],
+        []
+      )
+    ).toThrowError('effect member "run" collides with a structural effect method');
+  });
+
+  it("rejects two structural identities sharing a fixed key", () => {
+    expect(() =>
+      validateScriptReferences(
+        ["country"],
+        structural({
+          methods: [
+            { method: "if", key: "if" },
+            { method: "whileLoop", key: "if" },
+          ],
+        }),
+        [],
+        [],
+        []
+      )
+    ).toThrowError('duplicate fixed script key "if" on if and whileLoop');
+  });
+
+  it("rejects a generated key that duplicates a structural key with no public method", () => {
+    expect(() =>
+      validateScriptReferences(["country"], structural(), [effect({ key: "else" })], [], [])
+    ).toThrowError(
+      'duplicate fixed script key "else" on the structural effect surface and sampleEffect'
+    );
+  });
+
+  it("accepts generated rows that avoid every structural method and key", () => {
+    expect(() =>
+      emitScriptReferences(["country"], structural(), [effect()], [], [])
+    ).not.toThrowError();
   });
 });

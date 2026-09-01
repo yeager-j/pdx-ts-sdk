@@ -1,6 +1,7 @@
 /** Machine-readable metadata for the public script reference surface. */
 
 import { compareStrings } from "../../naming.ts";
+import type { StructuralEffectIdentity } from "../../policy/effects.ts";
 
 /**
  * Describes whether a generated script member is universal or belongs to an exact scope set.
@@ -61,6 +62,18 @@ export interface ScriptScopeLinkReferenceRow {
   readonly toScope: string;
   /** Documentation lines attached to the public property. */
   readonly docs: readonly string[];
+}
+
+/**
+ * The names and fixed PDXScript keys the hand-written structural surface already owns.
+ * Generated rows are validated against these claims because the emitted catalog appends
+ * the structural rows to the generated ones.
+ */
+export interface StructuralScriptClaims {
+  /** Every public structural method with the fixed key it records, or `null` for none. */
+  readonly methods: readonly StructuralEffectIdentity[];
+  /** Every CWT effect key the structural surface owns, including keys with no public method. */
+  readonly keys: readonly string[];
 }
 
 /** Generated script-reference module text and its row counts. */
@@ -129,46 +142,96 @@ function validateScopes(
   }
 }
 
+/** How a claimed key with no public method is named in a collision message. */
+const STRUCTURAL_KEY_OWNER = "the structural effect surface";
+
+/** What already claims a public effect member name while generated rows are walked. */
+type EffectMemberClaim =
+  | { readonly kind: "generated"; readonly row: ScriptEffectReferenceRow }
+  | { readonly kind: "structural" };
+
 /**
- * Checks the generated rows before they become a public committed module.
+ * Records the structural surface's method and key claims so a generated row that
+ * collides with one is rejected. A key an identity already claims through its own
+ * method is the same fact rather than a duplicate.
+ */
+function claimStructuralIdentity(structural: StructuralScriptClaims): {
+  readonly members: Map<string, EffectMemberClaim>;
+  readonly keys: Map<string, string>;
+} {
+  const members = new Map<string, EffectMemberClaim>();
+  const keys = new Map<string, string>();
+  for (const identity of structural.methods) {
+    if (identity.method === "") {
+      throw new Error("structural effect identity has an empty method");
+    }
+    if (members.has(identity.method)) {
+      throw new Error(`duplicate structural effect method "${identity.method}"`);
+    }
+    members.set(identity.method, { kind: "structural" });
+    if (identity.key === null) {
+      continue;
+    }
+    const owner = keys.get(identity.key);
+    if (owner !== undefined) {
+      throw new Error(
+        `duplicate fixed script key "${identity.key}" on ${owner} and ${identity.method}`
+      );
+    }
+    keys.set(identity.key, identity.method);
+  }
+  for (const key of structural.keys) {
+    if (!keys.has(key)) {
+      keys.set(key, STRUCTURAL_KEY_OWNER);
+    }
+  }
+  return { members, keys };
+}
+
+/**
+ * Checks the generated rows against each other and against the structural surface's
+ * method and key claims, before they become a public committed module.
  * Keeping this validator independent makes malformed policy rows easy to test
  * without loading the full CWT corpus.
  */
 export function validateScriptReferences(
   scopes: readonly string[],
+  structural: StructuralScriptClaims,
   effects: readonly ScriptEffectReferenceRow[],
   triggers: readonly ScriptTriggerReferenceRow[],
   scopeLinks: readonly ScriptScopeLinkReferenceRow[]
 ): void {
   const knownScopes = new Set(scopes);
-  const members = new Map<string, ScriptEffectReferenceRow>();
-  const keys = new Map<string, ScriptEffectReferenceRow>();
+  const { members, keys } = claimStructuralIdentity(structural);
   for (const effect of effects) {
     validateAvailability(effect.availability, knownScopes, `effect ${effect.method}`);
     if (effect.method === "") {
       throw new Error("effect reference has an empty member");
     }
     const prior = members.get(effect.method);
+    if (prior?.kind === "structural") {
+      throw new Error(`effect member "${effect.method}" collides with a structural effect method`);
+    }
     if (prior !== undefined) {
       const contradiction =
-        prior.kind !== effect.kind ||
-        prior.key !== effect.key ||
-        !sameAvailability(prior.availability, effect.availability) ||
-        prior.signature !== effect.signature ||
-        JSON.stringify(prior.docs) !== JSON.stringify(effect.docs);
+        prior.row.kind !== effect.kind ||
+        prior.row.key !== effect.key ||
+        !sameAvailability(prior.row.availability, effect.availability) ||
+        prior.row.signature !== effect.signature ||
+        JSON.stringify(prior.row.docs) !== JSON.stringify(effect.docs);
       throw new Error(
         `${contradiction ? "contradictory" : "duplicate"} effect member "${effect.method}"`
       );
     }
-    members.set(effect.method, effect);
+    members.set(effect.method, { kind: "generated", row: effect });
     if (effect.key !== undefined) {
-      const keyPrior = keys.get(effect.key);
-      if (keyPrior !== undefined) {
+      const keyOwner = keys.get(effect.key);
+      if (keyOwner !== undefined) {
         throw new Error(
-          `duplicate fixed script key "${effect.key}" on ${keyPrior.method} and ${effect.method}`
+          `duplicate fixed script key "${effect.key}" on ${keyOwner} and ${effect.method}`
         );
       }
-      keys.set(effect.key, effect);
+      keys.set(effect.key, effect.method);
     }
   }
 
@@ -255,15 +318,19 @@ function linkCode(link: ScriptScopeLinkReferenceRow): string {
 
 /**
  * Validates, sorts, and emits the public script-reference catalog.
- * Duplicate members, fixed keys, or invalid scope sets fail before committed module text is returned.
+ * The emitted catalog appends the hand-written structural rows to the generated ones,
+ * so duplicate members, fixed keys, or invalid scope sets across both — including a
+ * generated row that collides with a structural method or key — fail before committed
+ * module text is returned.
  */
 export function emitScriptReferences(
   scopes: readonly string[],
+  structural: StructuralScriptClaims,
   effects: readonly ScriptEffectReferenceRow[],
   triggers: readonly ScriptTriggerReferenceRow[],
   scopeLinks: readonly ScriptScopeLinkReferenceRow[]
 ): ScriptReferenceEmission {
-  validateScriptReferences(scopes, effects, triggers, scopeLinks);
+  validateScriptReferences(scopes, structural, effects, triggers, scopeLinks);
   const effectRows = [...effects].sort((left, right) => compareStrings(left.method, right.method));
   const triggerRows = [...triggers].sort((left, right) =>
     compareStrings(left.method, right.method)

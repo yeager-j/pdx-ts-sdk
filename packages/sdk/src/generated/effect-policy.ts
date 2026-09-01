@@ -117,6 +117,28 @@ export const STRUCTURAL_EFFECT_METHODS = [
   "whileLoop",
 ] as const;
 
+/**
+ * The fixed PDXScript key each public structural method records, or `null` when
+ * the method records no fixed key. The sole authority for structural
+ * method-to-key identity; the hand-written reference ledger reads its keys from here.
+ */
+export const STRUCTURAL_EFFECT_IDENTITY = [
+  { method: "addEventChainCounter", key: "add_event_chain_counter" },
+  { method: "addResource", key: "add_resource" },
+  { method: "hiddenEffect", key: "hidden_effect" },
+  { method: "if", key: "if" },
+  { method: "lockedRandomList", key: "locked_random_list" },
+  { method: "previewModifier", key: null },
+  { method: "random", key: "random" },
+  { method: "randomList", key: "random_list" },
+  { method: "resetEventChainCounter", key: "reset_event_chain_counter" },
+  { method: "run", key: null },
+  { method: "saveEventTargetAs", key: "save_event_target_as" },
+  { method: "saveGlobalEventTargetAs", key: "save_global_event_target_as" },
+  { method: "target", key: "target" },
+  { method: "whileLoop", key: "while" },
+] as const;
+
 export const STRUCTURAL_EFFECT_KEYS = [
   "add_event_chain_counter",
   "add_resource",

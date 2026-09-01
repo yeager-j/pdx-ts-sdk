@@ -824,6 +824,7 @@ async function writeEventModules(input: EventModuleInput): Promise<EventModuleEm
 
   const scriptReferences = emitScriptReferences(
     canonicalScopes(rules.scopes),
+    { methods: effectPolicy.structuralIdentity, keys: [...effectPolicy.structuralKeys] },
     [...effects.references, ...events.fireReferences],
     triggers.references,
     effects.scopeLinkReferences
