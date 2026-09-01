@@ -150,17 +150,26 @@ type EffectMemberClaim =
   | { readonly kind: "generated"; readonly row: ScriptEffectReferenceRow }
   | { readonly kind: "structural" };
 
+/** The structural surface's claims, indexed for the walk over generated rows. */
+interface StructuralClaimIndex {
+  /** Public member names the structural surface owns. */
+  readonly members: Map<string, EffectMemberClaim>;
+  /** Fixed keys no generated row may record, by the name claiming each. */
+  readonly keys: Map<string, string>;
+  /** Fixed keys a structural method declares it shares, by that method's name. */
+  readonly sharedKeys: Map<string, string>;
+}
+
 /**
  * Records the structural surface's method and key claims so a generated row that
  * collides with one is rejected. A key an identity already claims through its own
- * method is the same fact rather than a duplicate.
+ * method is the same fact rather than a duplicate. A key an identity declares it
+ * shares is held apart, because a generated row is required to record it.
  */
-function claimStructuralIdentity(structural: StructuralScriptClaims): {
-  readonly members: Map<string, EffectMemberClaim>;
-  readonly keys: Map<string, string>;
-} {
+function claimStructuralIdentity(structural: StructuralScriptClaims): StructuralClaimIndex {
   const members = new Map<string, EffectMemberClaim>();
   const keys = new Map<string, string>();
+  const sharedKeys = new Map<string, string>();
   for (const identity of structural.methods) {
     if (identity.method === "") {
       throw new Error("structural effect identity has an empty method");
@@ -172,25 +181,31 @@ function claimStructuralIdentity(structural: StructuralScriptClaims): {
     if (identity.key === null) {
       continue;
     }
-    const owner = keys.get(identity.key);
+    const owner = keys.get(identity.key) ?? sharedKeys.get(identity.key);
     if (owner !== undefined) {
       throw new Error(
         `duplicate fixed script key "${identity.key}" on ${owner} and ${identity.method}`
       );
     }
-    keys.set(identity.key, identity.method);
+    if (identity.sharesKeyWithGenerated === undefined) {
+      keys.set(identity.key, identity.method);
+    } else {
+      sharedKeys.set(identity.key, identity.method);
+    }
   }
   for (const key of structural.keys) {
-    if (!keys.has(key)) {
+    if (!keys.has(key) && !sharedKeys.has(key)) {
       keys.set(key, STRUCTURAL_KEY_OWNER);
     }
   }
-  return { members, keys };
+  return { members, keys, sharedKeys };
 }
 
 /**
  * Checks the generated rows against each other and against the structural surface's
  * method and key claims, before they become a public committed module.
+ * A declared shared key must be recorded by a generated row, so a share left behind
+ * by a removed effect fails here rather than misdescribing the public surface.
  * Keeping this validator independent makes malformed policy rows easy to test
  * without loading the full CWT corpus.
  */
@@ -202,7 +217,8 @@ export function validateScriptReferences(
   scopeLinks: readonly ScriptScopeLinkReferenceRow[]
 ): void {
   const knownScopes = new Set(scopes);
-  const { members, keys } = claimStructuralIdentity(structural);
+  const { members, keys, sharedKeys } = claimStructuralIdentity(structural);
+  const matchedSharedKeys = new Set<string>();
   for (const effect of effects) {
     validateAvailability(effect.availability, knownScopes, `effect ${effect.method}`);
     if (effect.method === "") {
@@ -231,7 +247,18 @@ export function validateScriptReferences(
           `duplicate fixed script key "${effect.key}" on ${keyOwner} and ${effect.method}`
         );
       }
+      if (sharedKeys.has(effect.key)) {
+        matchedSharedKeys.add(effect.key);
+      }
       keys.set(effect.key, effect.method);
+    }
+  }
+
+  for (const [key, method] of sharedKeys) {
+    if (!matchedSharedKeys.has(key)) {
+      throw new Error(
+        `structural method "${method}" shares fixed script key "${key}" with a generated effect that does not exist`
+      );
     }
   }
 
@@ -320,8 +347,8 @@ function linkCode(link: ScriptScopeLinkReferenceRow): string {
  * Validates, sorts, and emits the public script-reference catalog.
  * The emitted catalog appends the hand-written structural rows to the generated ones,
  * so duplicate members, fixed keys, or invalid scope sets across both — including a
- * generated row that collides with a structural method or key — fail before committed
- * module text is returned.
+ * generated row that collides with a structural method or with a key no structural
+ * method declares it shares — fail before committed module text is returned.
  */
 export function emitScriptReferences(
   scopes: readonly string[],

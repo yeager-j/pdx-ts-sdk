@@ -44,16 +44,31 @@ const STRUCTURAL_EFFECTS = {
   },
 } as const satisfies Record<string, { readonly method: string | null; readonly reason: string }>;
 
+/** The fixed key an SDK-only structural method records, and whether a generated method records it too. */
+interface SyntheticStructuralEffect {
+  /** The fixed PDXScript key the method always records, or `null` when it records none. */
+  readonly key: string | null;
+  /** Present when a generated effect method records the same fixed key on purpose. */
+  readonly sharesKeyWithGenerated?: { readonly reason: string };
+}
+
 /**
- * SDK-only structural methods the CWT rules never declare, mapped to the fixed
- * PDXScript key each records. `target` writes a real `target = { ... }` block
- * even though the rules contain no `alias[effect:target]`.
+ * SDK-only structural methods the CWT rules never declare, with the fixed PDXScript
+ * key each records. `target` writes a real `target = { ... }` block even though the
+ * rules contain no `alias[effect:target]`, and `previewModifier` writes the `tooltip`
+ * block the generated `tooltip()` effect also writes.
  */
-const SYNTHETIC_STRUCTURAL_EFFECT_KEYS = {
-  previewModifier: null,
-  target: "target",
-  run: null,
-} as const satisfies Record<string, string | null>;
+const SYNTHETIC_STRUCTURAL_EFFECTS = {
+  previewModifier: {
+    key: "tooltip",
+    sharesKeyWithGenerated: {
+      reason:
+        "previewModifier renders a non-executing tooltip through the same `tooltip` block the generated tooltip() effect records; the two methods deliberately share the key",
+    },
+  },
+  target: { key: "target" },
+  run: { key: null },
+} as const satisfies Record<string, SyntheticStructuralEffect>;
 
 /** One public structural method and the fixed PDXScript key it records. */
 export interface StructuralEffectIdentity {
@@ -61,6 +76,8 @@ export interface StructuralEffectIdentity {
   readonly method: string;
   /** The fixed PDXScript key the method always records, or `null` when it records none. */
   readonly key: string | null;
+  /** Present when a generated effect method records the same fixed key on purpose. */
+  readonly sharesKeyWithGenerated?: { readonly reason: string };
 }
 
 /** Indexed effect ownership and the method sets consumed by generator validation. */
@@ -118,7 +135,10 @@ export function createEffectPolicy(rules: RuleSet): EffectPolicy {
     ...Object.entries(STRUCTURAL_EFFECTS).flatMap(([key, spec]) =>
       spec.method === null ? [] : [{ method: spec.method, key }]
     ),
-    ...Object.entries(SYNTHETIC_STRUCTURAL_EFFECT_KEYS).map(([method, key]) => ({ method, key })),
+    ...Object.entries(SYNTHETIC_STRUCTURAL_EFFECTS).map(([method, spec]) => ({
+      method,
+      ...spec,
+    })),
   ].sort((left, right) => compareStrings(left.method, right.method));
   const structuralMethods = new Set(structuralIdentity.map((identity) => identity.method));
   const structuralKeys = new Set(
@@ -149,6 +169,10 @@ export function emitEffectPolicyProtocol(policy: EffectPolicy): string {
     " * The fixed PDXScript key each public structural method records, or `null` when\n" +
     " * the method records no fixed key. The sole authority for structural\n" +
     " * method-to-key identity; the hand-written reference ledger reads its keys from here.\n" +
+    " *\n" +
+    " * A row carrying `sharesKeyWithGenerated` records a key that a generated effect\n" +
+    " * method also records, deliberately: both methods write the same block, so the\n" +
+    " * key identifies the block rather than the method that produced it.\n" +
     " */\n" +
     `export const STRUCTURAL_EFFECT_IDENTITY = ${JSON.stringify(policy.structuralIdentity)} as const;\n\n` +
     `export const STRUCTURAL_EFFECT_KEYS = ${JSON.stringify(structuralKeys)} as const;\n\n` +

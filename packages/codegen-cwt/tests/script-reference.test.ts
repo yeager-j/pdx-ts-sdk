@@ -5,6 +5,7 @@ import {
   type ScriptTriggerReferenceRow,
   type StructuralScriptClaims,
 } from "@pdx-ts/codegen-cwt/emit/script/script-reference";
+import type { StructuralEffectIdentity } from "@pdx-ts/codegen-cwt/policy/effects";
 import { describe, expect, it } from "vitest";
 
 const effect = (overrides: Partial<ScriptEffectReferenceRow> = {}): ScriptEffectReferenceRow => ({
@@ -42,6 +43,13 @@ const structural = (overrides: Partial<StructuralScriptClaims> = {}): Structural
   ],
   keys: ["if", "else"],
   ...overrides,
+});
+
+/** A structural method declaring it shares its fixed key with a generated effect. */
+const sharing = (method: string, key: string): StructuralEffectIdentity => ({
+  method,
+  key,
+  sharesKeyWithGenerated: { reason: "both methods record the same block" },
 });
 
 describe("script reference metadata validation", () => {
@@ -197,5 +205,45 @@ describe("structural identity claims", () => {
     expect(() =>
       emitScriptReferences(["country"], structural(), [effect()], [], [])
     ).not.toThrowError();
+  });
+
+  it("accepts a declared shared key that a generated row records", () => {
+    expect(() =>
+      emitScriptReferences(
+        ["country"],
+        structural({ methods: [sharing("previewModifier", "tooltip")] }),
+        [effect({ method: "tooltip", key: "tooltip" })],
+        [],
+        []
+      )
+    ).not.toThrowError();
+  });
+
+  it("rejects a declared shared key that no generated row records", () => {
+    expect(() =>
+      validateScriptReferences(
+        ["country"],
+        structural({ methods: [sharing("previewModifier", "tooltip")] }),
+        [effect()],
+        [],
+        []
+      )
+    ).toThrowError(
+      'structural method "previewModifier" shares fixed script key "tooltip" with a generated effect that does not exist'
+    );
+  });
+
+  it("rejects two structural identities sharing a fixed key even when the share is declared", () => {
+    expect(() =>
+      validateScriptReferences(
+        ["country"],
+        structural({
+          methods: [sharing("previewModifier", "tooltip"), sharing("whileLoop", "tooltip")],
+        }),
+        [effect({ method: "tooltip", key: "tooltip" })],
+        [],
+        []
+      )
+    ).toThrowError('duplicate fixed script key "tooltip" on previewModifier and whileLoop');
   });
 });

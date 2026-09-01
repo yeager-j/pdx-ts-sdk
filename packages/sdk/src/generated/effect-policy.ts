@@ -121,6 +121,10 @@ export const STRUCTURAL_EFFECT_METHODS = [
  * The fixed PDXScript key each public structural method records, or `null` when
  * the method records no fixed key. The sole authority for structural
  * method-to-key identity; the hand-written reference ledger reads its keys from here.
+ *
+ * A row carrying `sharesKeyWithGenerated` records a key that a generated effect
+ * method also records, deliberately: both methods write the same block, so the
+ * key identifies the block rather than the method that produced it.
  */
 export const STRUCTURAL_EFFECT_IDENTITY = [
   { method: "addEventChainCounter", key: "add_event_chain_counter" },
@@ -128,7 +132,14 @@ export const STRUCTURAL_EFFECT_IDENTITY = [
   { method: "hiddenEffect", key: "hidden_effect" },
   { method: "if", key: "if" },
   { method: "lockedRandomList", key: "locked_random_list" },
-  { method: "previewModifier", key: null },
+  {
+    method: "previewModifier",
+    key: "tooltip",
+    sharesKeyWithGenerated: {
+      reason:
+        "previewModifier renders a non-executing tooltip through the same `tooltip` block the generated tooltip() effect records; the two methods deliberately share the key",
+    },
+  },
   { method: "random", key: "random" },
   { method: "randomList", key: "random_list" },
   { method: "resetEventChainCounter", key: "reset_event_chain_counter" },
