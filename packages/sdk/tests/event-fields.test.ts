@@ -19,7 +19,13 @@ import { describe, expect, it } from "vitest";
 
 import { createMod, render } from "../src/index.ts";
 import { eventTarget } from "../src/script/effects/recorder.ts";
-import { exists, hasEventChain, hasGlobalFlag, target } from "../src/script/triggers.ts";
+import {
+  exists,
+  hasCountryFlag,
+  hasEventChain,
+  hasGlobalFlag,
+  target,
+} from "../src/script/triggers.ts";
 
 const CONFIG = {
   name: "Event fields tests",
@@ -195,6 +201,26 @@ describe("previously-omitted EventDef fields", () => {
     expect(rendered).toContain("trigger = {\n\t\thas_global_flag = event_fields_eligible");
     expect(rendered).toContain("abort_trigger = {\n\t\thas_global_flag = event_fields_abort");
     expect(rendered).toContain("abort_effect = {\n\t\tset_country_flag = event_fields_aborted");
+  });
+
+  it("lowers context-aware trigger and abort_trigger through declared FROM", () => {
+    const events = makeEvents();
+    const gated = events.country(1013, {
+      scopes: { from: "country" },
+      hideWindow: true,
+      isTriggeredOnly: true,
+      trigger: (ctx) => ctx.from.trigger(hasCountryFlag("event_fields_eligible_from")),
+      abortTrigger: (ctx) => ctx.from.trigger(hasCountryFlag("event_fields_abort_from")),
+    });
+    const rendered = render(mod.compile([mod.feature("events", [gated])])).get(
+      "events/event_fields_events.txt"
+    )!;
+    expect(rendered).toContain(
+      "trigger = {\n\t\tfrom = {\n\t\t\thas_country_flag = event_fields_eligible_from"
+    );
+    expect(rendered).toContain(
+      "abort_trigger = {\n\t\tfrom = {\n\t\t\thas_country_flag = event_fields_abort_from"
+    );
   });
 
   it("lowers mean_time_to_happen with its days/months/years and modifier rows", () => {
