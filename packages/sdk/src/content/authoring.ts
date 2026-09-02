@@ -95,6 +95,7 @@ function toEntry(
     collect,
     collectPath,
     path: "",
+    definitionId: def.id,
     ownerId: def.id,
     localization,
   });

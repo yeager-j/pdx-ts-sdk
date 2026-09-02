@@ -553,6 +553,12 @@ describe("patch members the transform cannot emit", () => {
     // for a typo on the way past.
     expect(() => patchTechnology(geneForging, () => ({ cost: 1, name: "Renamed" }))).not.toThrow();
   });
+
+  it("names the patched definition when refusing a malformed scalar", () => {
+    expect(() => patchTechnology(geneForging, () => ({ weight: { base: 10 } as never }))).toThrow(
+      'Cannot lower "tech_gene_forging.weight": expected a string, number, or boolean; received block'
+    );
+  });
 });
 
 /**
