@@ -25,6 +25,8 @@ export interface EventFieldPolicyEntry {
   readonly disposition: "supported" | "partial" | "unsupported";
   /** The supported meaning or the reason for exclusion. */
   readonly reason: string;
+  /** Public JSDoc lines when the field contract needs more detail than the support reason. */
+  readonly docs?: readonly string[];
   /** CWT forms deliberately omitted from a partially supported field. */
   readonly unsupportedForms?: readonly string[];
   /** Complete canonical CWT arm signature, attached after validation. */
@@ -231,20 +233,36 @@ const EVENT_FIELD_POLICY: readonly EventFieldPolicyEntry[] = [
     'S extends "astral_rift" ? number : never',
     "astral-rift difficulty"
   ),
-  supported(
-    "trigger",
-    "block 0..1 {alias_name[trigger]}",
-    "trigger",
-    "WithFrom<Trigger<S>, S, EventBodyContext<S, Context>>",
-    "event visibility gate"
-  ),
-  supported(
-    "abort_trigger",
-    "block 0..1 {alias_name[trigger]}",
-    "abortTrigger",
-    "WithFrom<Trigger<S>, S, EventBodyContext<S, Context>>",
-    "event cancellation gate"
-  ),
+  {
+    ...supported(
+      "trigger",
+      "block 0..1 {alias_name[trigger]}",
+      "trigger",
+      "WithFrom<Trigger<S>, S, EventBodyContext<S, Context>>",
+      "event visibility gate"
+    ),
+    docs: [
+      "Event visibility gate.",
+      "When `scopes` declares an ambient scope other than ROOT, a callback receives the event's `ScriptCtx`, including `self`, implicit `root`, and the declared ambient scopes. The callback runs once when the event is defined.",
+      "@example",
+      'trigger: (ctx) => ctx.from.trigger(hasCountryFlag("guardian_country"))',
+    ],
+  },
+  {
+    ...supported(
+      "abort_trigger",
+      "block 0..1 {alias_name[trigger]}",
+      "abortTrigger",
+      "WithFrom<Trigger<S>, S, EventBodyContext<S, Context>>",
+      "event cancellation gate"
+    ),
+    docs: [
+      "Event cancellation gate.",
+      "When `scopes` declares an ambient scope other than ROOT, a callback receives the event's `ScriptCtx`, including `self`, implicit `root`, and the declared ambient scopes. The callback runs once when the event is defined.",
+      "@example",
+      'abortTrigger: (ctx) => ctx.from.trigger(hasCountryFlag("abort_event"))',
+    ],
+  },
   supported(
     "abort_effect",
     "block 0..1 {alias_name[effect]}",
@@ -582,7 +600,7 @@ function emitInterfaceMembers(policy: readonly EventFieldPolicyEntry[]): string 
     .flatMap((entry) =>
       (entry.members ?? []).map(
         (member) =>
-          docComment([entry.reason], "  ") +
+          docComment(entry.docs ?? [entry.reason], "  ") +
           `  readonly ${member.member}${member.required ? "" : "?"}: ${member.type};\n`
       )
     )

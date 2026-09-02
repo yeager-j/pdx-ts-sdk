@@ -102,9 +102,19 @@ export interface GeneratedEventFields<S extends ScopeName, Context extends Ambie
   readonly astralRift?: S extends "astral_rift" ? boolean : never;
   /** astral-rift difficulty */
   readonly difficulty?: S extends "astral_rift" ? number : never;
-  /** event visibility gate */
+  /**
+   * Event visibility gate.
+   * When `scopes` declares an ambient scope other than ROOT, a callback receives the event's `ScriptCtx`, including `self`, implicit `root`, and the declared ambient scopes. The callback runs once when the event is defined.
+   * @example
+   * trigger: (ctx) => ctx.from.trigger(hasCountryFlag("guardian_country"))
+   */
   readonly trigger?: WithFrom<Trigger<S>, S, EventBodyContext<S, Context>>;
-  /** event cancellation gate */
+  /**
+   * Event cancellation gate.
+   * When `scopes` declares an ambient scope other than ROOT, a callback receives the event's `ScriptCtx`, including `self`, implicit `root`, and the declared ambient scopes. The callback runs once when the event is defined.
+   * @example
+   * abortTrigger: (ctx) => ctx.from.trigger(hasCountryFlag("abort_event"))
+   */
   readonly abortTrigger?: WithFrom<Trigger<S>, S, EventBodyContext<S, Context>>;
   /** effects run on abort */
   readonly abortEffect?: EventEffect<S, Context>;
