@@ -8,6 +8,7 @@
  * `capability.ts` folds them into the capability module.
  */
 
+import type { SubtypeReferenceRefinement } from "../../lower/content-reference.ts";
 import {
   camelCase,
   constantCase,
@@ -20,7 +21,6 @@ import { assertContentWitnessMembersKnown } from "../../overlay/audit.ts";
 import {
   CONTENT_CONTRIBUTION_SINKS,
   CONTENT_PATCH_REGISTRIES,
-  CONTENT_SUBTYPE_REFERENCE_REFINEMENTS,
   CONTENT_WITNESSES,
   EXACT_NAME_MINTS,
   HAND_WRITTEN_CONTENT_DEFINERS,
@@ -28,7 +28,6 @@ import {
   SHAPE_MINT_REGISTRY,
   SPRITE_SHAPE_MINTS,
   type ContentPatchRegistry,
-  type ContentSubtypeReferenceRefinement,
   type ContentWitness,
   type ContributionSink,
   type ExactNameMint,
@@ -38,6 +37,7 @@ import {
 } from "../../overlay/index.ts";
 import type { ContentManifestEntry } from "../../policy/manifest.ts";
 import type { ContentEmission } from "./content-type.ts";
+import { carriedWitnessOf } from "./scope-parameters.ts";
 
 /** One content registry as the definer emitters receive it. */
 export interface DefinerContent {
@@ -47,6 +47,13 @@ export interface DefinerContent {
   registry: string;
   /** CWT reference brand definitions from this registry satisfy. */
   referenceName: string;
+  /**
+   * The subtype the rules reference qualified and one authored flag selects,
+   * or `null`. The capability returns the qualified reference for a
+   * definition that sets the flag, and the item keeps the flag's literal as
+   * the witness.
+   */
+  referenceRefinement: SubtypeReferenceRefinement | null;
   /** Content-type emission the definers place and reference. */
   emission: ContentEmission;
 }
@@ -118,6 +125,8 @@ export interface RegistryDefinerPlan {
   readonly contributes: boolean;
   /** The report line for a grafted definer. */
   readonly grafted: string | null;
+  /** The qualified reference the capability's refined overload returns, or `null`. */
+  readonly refinedReference: string | null;
 }
 
 /**
@@ -144,7 +153,7 @@ interface RegistryDefinerFacts {
   readonly graft: HandWrittenDefiner | undefined;
   readonly patchable: ContentPatchRegistry | undefined;
   readonly contribution: ContributionSink | undefined;
-  readonly referenceRefinement: ContentSubtypeReferenceRefinement | undefined;
+  readonly referenceRefinement: SubtypeReferenceRefinement | undefined;
   readonly contentWitness: ContentWitness | undefined;
   /** The `Omit` member union an `intersects` witness carves out, `""` otherwise. */
   readonly economicWitnessOmit: string;
@@ -161,7 +170,7 @@ function registryDefinerFacts(content: DefinerContent): RegistryDefinerFacts {
   const graft = HAND_WRITTEN_CONTENT_DEFINERS.get(registry);
   const patchable = CONTENT_PATCH_REGISTRIES.get(registry);
   const contribution = CONTENT_CONTRIBUTION_SINKS.get(registry);
-  const referenceRefinement = CONTENT_SUBTYPE_REFERENCE_REFINEMENTS.get(registry);
+  const referenceRefinement = content.referenceRefinement ?? undefined;
   const method = camelCase(registry);
   const mintShape = MINT_SHAPE_OVERLAYS.get(registry);
   const exactName = EXACT_NAME_MINTS.get(registry);
@@ -198,8 +207,12 @@ function registryDefinerFacts(content: DefinerContent): RegistryDefinerFacts {
   // CONTENT_WITNESSES (packages/codegen-cwt/src/overlay/index.ts) replaces
   // per-registry branches here: a registry either has no row (ordinary def,
   // no `W`) or has exactly one of the two modes the schema carries evidence
-  // for (SDK-260).
-  const contentWitness = CONTENT_WITNESSES.get(registry);
+  // for (SDK-260). A rules-derived refinement is the third source: the flag
+  // that selects the referenced subtype must survive on the item as the
+  // literal the qualified overload was chosen by. Where the subtype is also a
+  // union arm, the arm's own discriminant already keeps that literal.
+  const contentWitness =
+    CONTENT_WITNESSES.get(registry) ?? derivedFlagWitness(referenceRefinement, emission);
   if (contentWitness !== undefined) {
     assertContentWitnessMembersKnown(registry, contentWitness, emittedMemberNames(emission));
   }
@@ -230,6 +243,37 @@ function registryDefinerFacts(content: DefinerContent): RegistryDefinerFacts {
   };
 }
 
+/**
+ * The `wraps` witness a rules-derived refinement needs, or `undefined` when
+ * the registry's subtype arms already carry the flag's literal on the def.
+ * The witness intersects the flag as a required member, so an optional flag
+ * with no arm to keep its literal fails here rather than silently requiring
+ * every definition to write it.
+ */
+function derivedFlagWitness(
+  refinement: SubtypeReferenceRefinement | undefined,
+  emission: ContentEmission
+): ContentWitness | undefined {
+  if (refinement === undefined || emission.modelledSubtypes.includes(refinement.subtype)) {
+    return undefined;
+  }
+  if (!refinement.required) {
+    throw new Error(
+      `type[${refinement.type}] is referenced as <${refinement.reference}>, selected by the ` +
+        `optional flag ${refinement.field}, and no subtype arm keeps that flag's literal on the ` +
+        "definition — the witness would make the flag required of every definition"
+    );
+  }
+  return {
+    mode: "wraps",
+    type: "boolean",
+    member: refinement.member,
+    reason:
+      `the rules reference <${refinement.reference}>, which ${refinement.field} = yes selects, ` +
+      "and no subtype arm keeps the literal",
+  };
+}
+
 /** The registry's exported `XItem` union, with its doc comment. */
 function itemUnionType(facts: RegistryDefinerFacts): string {
   const {
@@ -257,7 +301,7 @@ function itemUnionType(facts: RegistryDefinerFacts): string {
   // items still holds declared and undeclared definitions together, and a
   // value widened to that union is ambiguous at the call site rather than
   // unchecked.
-  const witness = declaredWitness(facts, graft);
+  const witness = carriedWitnessOf(emission.scopeParameter, graft);
   const erasedDef = storedDefType(`${name}Def${erased}`, emission);
   const modifierWitness = contentWitness?.type ?? null;
   const itemArms = [
@@ -325,7 +369,7 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
   // contract the starting effect's call sites are checked against, so it
   // rides on the item beside the erased def rather than inside it.
   const declaredFrom = scoped?.declaredFrom;
-  const declaredContract = declaredWitness(facts, facts.graft);
+  const declaredContract = carriedWitnessOf(emission.scopeParameter, facts.graft);
   const declaredFromParameter =
     declaredFrom === undefined
       ? ""
@@ -630,7 +674,7 @@ function definerFunctions(facts: RegistryDefinerFacts): {
     // A declared contract is stripped like `scope` and, unlike an ordinary
     // scope parameter, kept beside the erased def so its consumers can check it.
     const declaredFrom = scoped?.declaredFrom;
-    const declaredContract = declaredWitness(facts, graft);
+    const declaredContract = carriedWitnessOf(emission.scopeParameter, graft);
     const declaredFromParameter =
       declaredFrom === undefined
         ? ""
@@ -934,6 +978,7 @@ export function planRegistryDefiner(
     patchable: patchable !== undefined,
     contributes: contribution !== undefined,
     grafted,
+    refinedReference: facts.referenceRefinement?.reference ?? null,
   };
 }
 
@@ -1110,40 +1155,6 @@ function shapeMintMethod(
     handleBinding: shapeBindings.handle,
     refTypes: refType === undefined ? [] : [refType],
   };
-}
-
-/**
- * The declared contract a registry's item carries beside its def, from
- * whichever side owns the definer.
- *
- * Generated definers learn it from a carried scope member or `declaredFrom`;
- * a hand-written one has to say so itself, since nothing in the rules mentions
- * the property it returns. Either way the item type has to match what the
- * definer actually returns, which is what this keeps in one place.
- */
-function declaredWitness(
-  content: { readonly emission: ContentEmission },
-  graft: HandWrittenDefiner | undefined
-): { readonly member: string; readonly type: string; readonly parameter?: string } | null {
-  if (graft?.witness !== undefined) {
-    return graft.witness;
-  }
-  const scoped = content.emission.scopeParameter;
-  if (scoped === null) {
-    return null;
-  }
-  const scopeMember = scoped.authoringMember;
-  if (scopeMember?.carriesWitness === true) {
-    return {
-      member: scopeMember.member,
-      type: scoped.typeName,
-      parameter: scoped.parameterName,
-    };
-  }
-  const declaredFrom = scoped.declaredFrom;
-  return declaredFrom === undefined
-    ? null
-    : { member: declaredFrom.member, type: `${declaredFrom.typeName} | undefined`, parameter: "L" };
 }
 
 /**

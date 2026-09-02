@@ -246,6 +246,18 @@ export class Emitter {
     return `${pascalCase(name)}Ref`;
   }
 
+  /**
+   * Records a branded-reference alias for the run and the current file, and
+   * returns its name. For a reference spelled outside a lowered value — a
+   * subtype arm's qualified discriminant — where {@link Emitter.typeOf} is not
+   * the one writing it.
+   */
+  useRef(name: string): string {
+    this.usedRefs.add(name);
+    this.scopedRefs.add(name);
+    return this.refTypeName(name);
+  }
+
   /** Returns the generated TypeScript type name for a CWT value set. */
   valueSetTypeName(name: string): string {
     return pascalCase(name);

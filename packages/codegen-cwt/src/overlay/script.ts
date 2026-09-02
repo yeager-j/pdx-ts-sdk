@@ -294,14 +294,6 @@ export const ENCLOSING_SCOPE_TRIGGER_WRAPPERS = new Map<string, EnclosingScopeTr
   ],
 ]);
 
-/** Replaces the generated TypeScript input type for one effect field. */
-export interface EffectFieldTypeOverride {
-  /** Replaces the mechanically derived type outright. */
-  readonly type: string;
-  /** Audited reason the mechanical type admits an unsafe call. */
-  readonly reason: string;
-}
-
 /** Replaces the public input type of one scalar effect without changing its runtime lowering. */
 export interface EffectValueTypeOverride {
   /** TypeScript input type emitted for the effect value. */
@@ -467,125 +459,15 @@ export const EFFECT_FIELD_CARDINALITY_OVERRIDES = new Map<
 ]);
 
 /**
- * Type text for one named field of one effect's args object, replacing what
- * the rules lower to.
+ * Scalar effects whose public input type intentionally differs from mechanical
+ * rule lowering.
  *
- * The narrowest and most expensive table here, and deliberately so: unlike
- * {@link FIELD_WIDENINGS}, which adds a form the rules did not name, a row
- * here *removes* one the rules do name. It exists for the case where the
- * mechanical type is right about the game and wrong about TypeScript —
- * specifically, where a hand-written overload merged onto the same method
- * needs the generated one to stop catching calls it was never meant to catch.
- * Nothing else changes: `EFFECT_META`, `refTypes`, and the runtime recording
- * all still come from the rules' own lowering, so a row cannot make the
- * emitted script wrong, only the accepted inputs narrower.
- *
- * Keyed `<effect key>.<field key>`, both as the rules spell them.
+ * Not for refusing a declared witness on the fallback beneath a hand-written
+ * overload: `emit/script/effects.ts` derives that from
+ * {@link EFFECT_EXTENSION_SEAMS} and the registry's own witness, for every
+ * argument of every seam effect.
  */
-export const EFFECT_FIELD_TYPE_OVERRIDES = new Map<string, EffectFieldTypeOverride>([
-  [
-    "add_modifier.modifier",
-    {
-      type: "(StaticModifierRef & { hostScope?: never }) | string",
-      reason:
-        "SDK-229: an authored static modifier carries hostScope and must reach the hand-written " +
-        "overload that checks it against the receiving scope. Excluding hostScope here prevents " +
-        "a mismatch from falling through, while plain refs and strings remain unchecked.",
-    },
-  ],
-  [
-    "add_stage_modifier.modifier",
-    {
-      type: "(StaticModifierRef & { hostScope?: never }) | string",
-      reason:
-        "SDK-229: an authored stage modifier must reach the hand-written overload that checks " +
-        "its hostScope against the astral-rift or espionage-operation receiver.",
-    },
-  ],
-  [
-    "export_modifier_duration_to_variable.modifier",
-    {
-      type: "ModifierRef | (StaticModifierRef & { hostScope?: never }) | string",
-      reason:
-        "SDK-229: querying an authored static modifier's duration executes against the current " +
-        "host, so contract-bearing values must reach the checked overload.",
-    },
-  ],
-  [
-    "start_situation.type",
-    {
-      type: "(SituationTypeRef & { targetScope?: never }) | string",
-      reason:
-        "`SituationTargetContract` (src/script/effects/situations.ts) extends " +
-        '`TypedRef<"situation_type">` and is therefore structurally a `SituationTypeRef`, so a ' +
-        "contract-bearing ref matched this generated signature whenever the hand-written " +
-        "contract overload rejected its target — silently turning a wrong-scoped " +
-        "`startSituation` target into a legal call. Requiring `targetScope` to be absent makes a " +
-        "declared contract fail here too, so the only overload that can accept one is the " +
-        "hand-written one that checks it. Vanilla and third-party ids are unaffected: a plain " +
-        "`SituationTypeRef`, an id string, and a situation type defined without `targetScope` " +
-        "all carry no `targetScope` to conflict.",
-    },
-  ],
-  [
-    "enable_special_project.name",
-    {
-      type: "(SpecialProjectRef & { locationScope?: never }) | string",
-      reason:
-        "The same arrangement as `start_situation.type` above, for the same reason: " +
-        "`SpecialProjectLocationContract` (src/script/effects/special-projects.ts) is " +
-        "structurally a `SpecialProjectRef`, so a project that declares `locationScope` would " +
-        "match this generated signature exactly when the hand-written overload rejected its " +
-        "`location` — turning a contradicted declaration into a legal call. A project defined " +
-        "without `locationScope`, a vanilla id string and a plain ref all carry no " +
-        "`locationScope` to conflict.",
-    },
-  ],
-  [
-    "enable_mission.name",
-    {
-      type: "(MissionRef & { locationScope?: never }) | string",
-      reason:
-        "A mission carrying locationScope must reach the hand-written overload that checks the " +
-        "enable_mission location. Excluding that witness from the generated fallback prevents a " +
-        "mismatched authored mission from becoming an unchecked call, while undeclared, vanilla, " +
-        "and third-party mission references remain accepted.",
-    },
-  ],
-  [
-    "issue_contract.contract",
-    {
-      type: "(MissionRef & { locationScope?: never }) | string",
-      reason:
-        "A contract carrying locationScope must reach the hand-written overload that checks the " +
-        "issue_contract location. Excluding that witness from the generated fallback prevents a " +
-        "mismatched authored contract from becoming an unchecked call, while undeclared, vanilla, " +
-        "and third-party mission references remain accepted.",
-    },
-  ],
-]);
-
-/** Scalar effects whose public input type intentionally differs from mechanical rule lowering. */
 export const EFFECT_VALUE_TYPE_OVERRIDES = new Map<string, EffectValueTypeOverride>([
-  [
-    "remove_modifier",
-    {
-      type: "(StaticModifierRef & { hostScope?: never }) | string",
-      reason:
-        "SDK-229: removeModifier uses the same host contract and unchecked fallback as " +
-        "addModifier; excluding hostScope here prevents a mismatched authored item from " +
-        "matching the generated scalar signature.",
-    },
-  ],
-  [
-    "remove_stage_modifier",
-    {
-      type: "(StaticModifierRef & { hostScope?: never }) | string",
-      reason:
-        "SDK-229: removing an authored stage modifier must check its declared host against the " +
-        "astral-rift or espionage-operation receiver.",
-    },
-  ],
   [
     "set_situation_approach",
     {
@@ -631,6 +513,15 @@ export interface EffectExtensionSeam {
  * practice means a contract the definition declares and the rules cannot state
  * — the row and the overload are written together, and codegen fails loudly if
  * the effect leaves the rules.
+ *
+ * The row is also what makes the generated fallback refuse a declared
+ * contract: for every argument of a seam effect, a reference to a registry
+ * whose items carry a witness (`hostScope`, `targetScope`, `locationScope`) is
+ * emitted as `(XRef & { <witness>?: never }) | string`, so an authored item
+ * can only be accepted by the overload that checks it. Nothing else changes —
+ * `EFFECT_META`, `refTypes`, and the runtime recording all still come from the
+ * rules' own lowering — so the refusal narrows the accepted inputs and never
+ * the emitted script.
  */
 export const EFFECT_EXTENSION_SEAMS = new Map<string, EffectExtensionSeam>([
   [

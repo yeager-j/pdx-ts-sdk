@@ -105,6 +105,7 @@ import {
   defineJob,
   defineMegastructure,
   defineMenacePerk,
+  defineMission,
   defineMissionCategory,
   defineOpinionModifier,
   definePdxmesh,
@@ -154,7 +155,7 @@ import type {
 } from "./megastructure.ts";
 import type { MenacePerkDef } from "./menace-perk.ts";
 import type { MissionCategoryDef } from "./mission-category.ts";
-import type { MissionDef, MissionLocationScope, MissionScope } from "./mission.ts";
+import type { MissionDef, MissionFields, MissionLocationScope, MissionScope } from "./mission.ts";
 import type { OpinionModifierDef, OpinionModifierFields } from "./opinion-modifier.ts";
 import type { PdxmeshDef } from "./pdxmesh.ts";
 import type { PdxparticleDef } from "./pdxparticle.ts";
@@ -1368,6 +1369,39 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
   relicHandle<const Name extends string>(
     name: Name
   ): ContentHandle<"relic", RelicDef<MintedContentId<P, I, "relic", Name>>>;
+  /**
+   * Defines a mission from its logical name.
+   * The capability mints and owns the full id; the returned branded reference
+   * flows into matching content-reference fields.
+   */
+  mission<
+    const Name extends string,
+    S extends MissionScope = "country",
+    L extends MissionLocationScope | undefined = undefined,
+  >(
+    name: Name,
+    def: MissionFields<S, L>
+  ): ContentItem<"mission", MissionDef<MintedContentId<P, I, "mission", Name>, never>> & {
+    readonly locationScope: L;
+  };
+  /**
+   * Mints a mission id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a mission that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  missionHandle<const Name extends string>(
+    name: Name
+  ): ContentHandleBase<"mission", MintedContentId<P, I, "mission", Name>> & {
+    define<
+      S extends MissionScope = "country",
+      L extends MissionLocationScope | undefined = undefined,
+    >(
+      def: MissionFields<S, L>
+    ): ContentItem<"mission", MissionDef<MintedContentId<P, I, "mission", Name>, never>> & {
+      readonly locationScope: L;
+    };
+  };
   /**
    * Defines a mission category from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -2725,6 +2759,31 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
           return defineRelic(def);
         }
       ).define(def as unknown as Omit<RelicDef<MintedContentId<P, I, "relic", Name>>, "id">);
+    },
+    missionHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "mission",
+        mint("mission", name),
+        (def: MissionDef<MintedContentId<P, I, "mission", Name>>) => {
+          return defineMission(def);
+        }
+      );
+    },
+    mission: <
+      const Name extends string,
+      S extends MissionScope = "country",
+      L extends MissionLocationScope | undefined = undefined,
+    >(
+      name: Name,
+      def: MissionFields<S, L>
+    ) => {
+      return createContentHandle(
+        "mission",
+        mint("mission", name),
+        (def: MissionDef<MintedContentId<P, I, "mission", Name>>) => {
+          return defineMission(def);
+        }
+      ).define(def as unknown as MissionFields);
     },
     missionCategoryHandle: <const Name extends string>(name: Name) => {
       return createContentHandle(

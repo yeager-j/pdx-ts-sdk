@@ -389,7 +389,7 @@ describe("content type declarations", () => {
     ]);
   });
 
-  it("reads set-flag, presence, and literal selectors off the vendored rules", () => {
+  it("reads set-flag, presence, literal, and reference selectors off the vendored rules", () => {
     const selectorsOf = (types: ReturnType<typeof loadContentTypesFrom>, name: string) =>
       new Map(
         (types.contentTypes.get(name)?.subtypes ?? []).map((subtype) => [
@@ -423,7 +423,11 @@ describe("content type declarations", () => {
     const missions = loadContentTypesFrom(CONFIG, ["common/missions.cwt"]);
     // `category = <mission_category.contract>` selects by what the value names,
     // not by the field being present.
-    expect(selectorsOf(missions, "mission").get("contract")).toBeNull();
+    expect(selectorsOf(missions, "mission").get("contract")).toEqual({
+      kind: "reference",
+      field: "category",
+      reference: "mission_category.contract",
+    });
     expect(selectorsOf(missions, "mission_category").get("contract")).toEqual({
       kind: "flag",
       field: "is_contract",

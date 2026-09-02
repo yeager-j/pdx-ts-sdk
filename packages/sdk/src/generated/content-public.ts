@@ -218,14 +218,19 @@ export type {
 } from "./mission-category.ts";
 export type {
   DefinedMission,
+  MissionContractDef,
+  MissionContractFields,
   MissionCounterDefinition,
   MissionDef,
   MissionDesc,
   MissionDescIssuer,
   MissionDescOperator,
   MissionFields,
+  MissionFieldsBase,
   MissionLoc,
   MissionLocationScope,
+  MissionPlainDef,
+  MissionPlainFields,
   MissionScope,
 } from "./mission.ts";
 export type { MoonInitializerFields } from "./moon-initializer.ts";

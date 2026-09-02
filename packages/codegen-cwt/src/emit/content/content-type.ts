@@ -11,6 +11,7 @@ import type { RuleField } from "../../cwt/model.ts";
 import type { ContentBody, ContentType } from "../../cwt/rules.ts";
 import { Emitter } from "../../emit/typescript.ts";
 import type { EmittedField } from "../../lower/content-model.ts";
+import { subtypeReferenceRefinements } from "../../lower/content-reference.ts";
 import type { AliasNameField } from "../../lower/rule-shapes.ts";
 import { partitionSubtypeFields } from "../../lower/subtype-partition.ts";
 import {
@@ -73,6 +74,7 @@ import {
   planSubtypeUnions,
   renderSubtypeArm,
   type ClaimableMember,
+  type ReferenceWitnessLookup,
   type SubtypeUnionsPlan,
 } from "./subtype-unions.ts";
 
@@ -158,6 +160,8 @@ export interface ContentEmission {
   readonly localisationAliases: readonly string[];
   /** Subtypes emitted as union arms, each with the selector that picks it. */
   readonly subtypeUnions: readonly string[];
+  /** The names of the subtypes the union arms model. */
+  readonly modelledSubtypes: readonly string[];
   /**
    * Members a subtype arm requires that the authoring surface leaves optional,
    * each with why the arm could not become a union.
@@ -1171,6 +1175,28 @@ function flatRegistryReason(type: ContentType, parameter: ScopeParameter | null)
 }
 
 /**
+ * Resolves a reference selector's `<type.subtype>` to the witness the
+ * referenced registry's authored items carry, from the same rules-derived
+ * refinement the capability returns the qualified reference by. `null` where
+ * the rules refine nothing for that subtype, which keeps the arm flat.
+ */
+function referenceWitnessLookup(emitter: Emitter): ReferenceWitnessLookup {
+  const refinements = subtypeReferenceRefinements(emitter.rules);
+  return (reference) => {
+    const typeName = reference.slice(0, reference.indexOf("."));
+    const refinement = refinements.get(typeName);
+    if (refinement === undefined || refinement.reference !== reference) {
+      return null;
+    }
+    return {
+      qualifiedType: emitter.refTypeName(reference),
+      baseType: emitter.refTypeName(typeName),
+      member: refinement.member,
+    };
+  };
+}
+
+/**
  * The registry's `FLAT_SUBTYPE_ARMS` rows keyed by subtype. The planner
  * reports which of them it consulted; only those count as applied, so a row
  * left behind by a rule change fails the overlay audit.
@@ -1270,10 +1296,16 @@ export function emitContentType(
     type,
     draft.fieldMembers,
     flatRegistryReason(type, parameter),
-    flatSubtypeArms(type)
+    flatSubtypeArms(type),
+    referenceWitnessLookup(emitter)
   );
   for (const subtype of unions.flatSubtypesApplied) {
     emitter.overlayAudit.applied("FLAT_SUBTYPE_ARMS", `${type.name}.${subtype}`);
+  }
+  // The arm spells the qualified reference, so this file imports it and
+  // `refs.ts` declares it, before either module is written.
+  for (const reference of unions.references) {
+    emitter.useRef(reference);
   }
   applySubtypeUnions(draft, unions);
   const names = contentTypeNames(type, parameter, unions.arms.length > 0);
@@ -1347,6 +1379,9 @@ export function emitContentType(
     scopeParameter: parameter,
     localisationAliases: localisationRows.map(omissionLine),
     subtypeUnions: unions.modelled,
+    modelledSubtypes: [
+      ...new Set(unions.arms.flatMap((arm) => arm.selected.map((subtype) => subtype.name))),
+    ],
     subtypeCollapses: draft.collapsed.map(omissionLine),
     localisationRenames: draft.localisationRenames,
     patchExclusions: patchable ? draft.patchExclusions : [],

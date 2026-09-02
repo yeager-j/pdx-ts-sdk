@@ -111,7 +111,12 @@ import {
 } from "./megastructure.ts";
 import { MENACE_PERK_LOCALISATION, type MenacePerkDef } from "./menace-perk.ts";
 import { MISSION_CATEGORY_LOCALISATION, type MissionCategoryDef } from "./mission-category.ts";
-import type { MissionDef, MissionLocationScope, MissionScope } from "./mission.ts";
+import {
+  MISSION_LOCALISATION,
+  type MissionDef,
+  type MissionLocationScope,
+  type MissionScope,
+} from "./mission.ts";
 import { OPINION_MODIFIER_LOCALISATION, type OpinionModifierDef } from "./opinion-modifier.ts";
 import { PDXMESH_LOCALISATION, type PdxmeshDef } from "./pdxmesh.ts";
 import { PDXPARTICLE_LOCALISATION, type PdxparticleDef } from "./pdxparticle.ts";
@@ -882,9 +887,31 @@ export type MissionItem<
   W extends MissionLocationScope | undefined = MissionLocationScope | undefined,
 > = ContentItem<"mission", MissionDef<string, never>> & { readonly locationScope: W };
 
-// defineMission is hand-written; re-exported here so every definer this
-// SDK has comes from one module.
-export { defineMission } from "../content/missions.ts";
+/**
+ * Internal lowering primitive for a mission. Public authors call
+ * `mod.mission(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ * `locationScope` declares the location scope `issue_contract`
+ * hands the callbacks as FROM; it emits nothing and rides on the item,
+ * where the effect's own call sites are checked against it.
+ */
+export function defineMission<
+  const Id extends string,
+  S extends MissionScope = "country",
+  L extends MissionLocationScope | undefined = undefined,
+>(
+  def: MissionDef<Id, S, L>
+): ContentItem<"mission", MissionDef<Id, never>> & { readonly locationScope: L } {
+  const { locationScope, ...rest } = def;
+  return {
+    itemKind: "content",
+    type: "mission",
+    id: def.id,
+    def: snapshotAuthoredValue(rest) as unknown as MissionDef<Id, never>,
+    locationScope: locationScope as L,
+    loc: contentLocalizationRefs(def.id, MISSION_LOCALISATION),
+  };
+}
 
 /** What a mission category feature can contain. */
 export type MissionCategoryItem<W extends boolean = boolean> = ContentItem<

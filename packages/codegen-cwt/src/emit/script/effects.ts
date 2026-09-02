@@ -57,9 +57,9 @@ import {
   EFFECT_EXTENSION_SEAMS,
   EFFECT_FIELD_ADDITIONS,
   EFFECT_FIELD_CARDINALITY_OVERRIDES,
-  EFFECT_FIELD_TYPE_OVERRIDES,
   EFFECT_VALUE_TYPE_OVERRIDES,
   EXTRA_ALIAS_CATEGORIES,
+  HAND_WRITTEN_CONTENT_DEFINERS,
   SCRIPT_ALIAS_CATEGORIES,
   type AliasCategoryScriptList,
   type EffectFieldAddition,
@@ -68,6 +68,7 @@ import {
 import type { EffectPolicy } from "../../policy/effects.ts";
 import { member as renderMember } from "../../render/writer.ts";
 import { aliasStructTypeName } from "../content/alias-struct.ts";
+import { carriedWitnessOf, scopeParameterOf } from "../content/scope-parameters.ts";
 import { scopeUnionType } from "../scope-context.ts";
 import { canonicalScopes } from "../support.ts";
 import { effectMetaCode } from "./effect-meta.ts";
@@ -139,8 +140,13 @@ export interface EffectEmission {
    * exactly, so it reads them here rather than restating the rule.
    */
   readonly universalParameters: string;
-  /** `EFFECT_FIELD_TYPE_OVERRIDES` rows applied, with the reason each states. */
-  readonly fieldTypeOverrides: readonly string[];
+  /** `EFFECT_VALUE_TYPE_OVERRIDES` rows applied, with the reason each states. */
+  readonly valueTypeOverrides: readonly string[];
+  /**
+   * Arguments of seam effects whose generated fallback refuses a reference
+   * carrying a declared witness, one per argument and registry.
+   */
+  readonly witnessExclusions: readonly string[];
   /** `EFFECT_FIELD_ADDITIONS` rows applied, with their evidence and rationale. */
   readonly fieldAdditions: readonly string[];
   /** `EFFECT_FIELD_CARDINALITY_OVERRIDES` rows applied, with their evidence and rationale. */
@@ -647,19 +653,19 @@ function baseMemberType(
 ): string {
   switch (value.kind) {
     case "scalar":
-      return emitter.typeOf(value.value);
+      return scalarArgumentType(emitter, value.value, effectKey);
     case "fields":
       return argsType(emitter, value.fields, outerScope, effectKey);
     case "map":
       return mapType(emitter, value.map);
     case "scalarOrBlock":
       return (
-        `${emitter.typeOf(value.scalar)} | ` +
+        `${scalarArgumentType(emitter, value.scalar, effectKey)} | ` +
         `${baseMemberType(emitter, value.block, outerScope, effectKey)}`
       );
     case "valueList": {
       const arms = [
-        value.scalar === null ? undefined : emitter.typeOf(value.scalar),
+        value.scalar === null ? undefined : scalarArgumentType(emitter, value.scalar, effectKey),
         value.fields === null ? null : argsType(emitter, value.fields, outerScope, effectKey),
       ].filter((arm): arm is string => arm !== null && arm !== undefined);
       return cardinalityArrayType(arms.join(" | "), value.cardinality);
@@ -694,8 +700,67 @@ function baseMemberType(
 }
 
 /**
+ * The witness member an authored item of `registry` carries beside its def,
+ * or `null` when the registry declares none.
+ */
+function carriedWitnessMember(emitter: Emitter, registry: string): string | null {
+  return (
+    carriedWitnessOf(
+      scopeParameterOf(emitter, registry),
+      HAND_WRITTEN_CONTENT_DEFINERS.get(registry)
+    )?.member ?? null
+  );
+}
+
+/**
+ * The reference arms of one scalar argument of `effectKey` that refuse a
+ * carried witness, keyed by reference type name: every registry with a
+ * witness, whenever the effect has a hand-written overload to check it.
+ *
+ * The overload is the only place the witness is checked, and it is merged
+ * onto the generated cluster as a sibling signature: an authored item that
+ * fails it would otherwise match the generated fallback, since the item is
+ * structurally the plain reference too, and a contradicted declaration would
+ * become a legal call. Vanilla and third-party ids and definitions that
+ * declare nothing carry no witness and stay accepted.
+ */
+function witnessExclusionsOf(
+  emitter: Emitter,
+  value: LoweredValue,
+  effectKey: string
+): ReadonlyMap<string, string> {
+  const exclusions = new Map<string, string>();
+  if (!EFFECT_EXTENSION_SEAMS.has(effectKey)) {
+    return exclusions;
+  }
+  for (const type of value.types) {
+    if (type.kind !== "reference") {
+      continue;
+    }
+    const member = carriedWitnessMember(emitter, type.name);
+    if (member !== null) {
+      exclusions.set(emitter.refTypeName(type.name), member);
+    }
+  }
+  return exclusions;
+}
+
+/** A scalar argument's type, with each witness-carrying reference arm refused. */
+function scalarArgumentType(emitter: Emitter, value: LoweredValue, effectKey: string): string {
+  const exclusions = witnessExclusionsOf(emitter, value, effectKey);
+  return emitter
+    .typeOf(value)
+    .split(" | ")
+    .map((arm) => {
+      const member = exclusions.get(arm);
+      return member === undefined ? arm : `(${arm} & { ${member}?: never })`;
+    })
+    .join(" | ");
+}
+
+/**
  * The type text one args member emits, after the overlay and repetition policy apply.
- * `effectKey` lets an override target one effect field rather than every same-named field.
+ * `effectKey` names the effect so the witness exclusions can tell a seam effect's field apart.
  */
 function memberType(
   emitter: Emitter,
@@ -703,10 +768,6 @@ function memberType(
   outerScope: string,
   effectKey: string
 ): string {
-  const override = EFFECT_FIELD_TYPE_OVERRIDES.get(`${effectKey}.${field.name}`);
-  if (override !== undefined) {
-    return override.type;
-  }
   const single = baseMemberType(emitter, field.value, outerScope, effectKey);
   return field.repeated === undefined
     ? single
@@ -816,7 +877,7 @@ function methodSignatureText(emitter: Emitter, effect: EmittedEffect, outerScope
     case "bool":
       return `  ${method}(value?: boolean): void;\n`;
     case "value":
-      return `  ${method}(value: ${EFFECT_VALUE_TYPE_OVERRIDES.get(key)?.type ?? emitter.typeOf(shape.value)}): void;\n`;
+      return `  ${method}(value: ${EFFECT_VALUE_TYPE_OVERRIDES.get(key)?.type ?? scalarArgumentType(emitter, shape.value, key)}): void;\n`;
     case "fields":
       return `  ${method}(args: ${argsType(emitter, shape.fields, outerScope, key)}): void;\n`;
     case "map":
@@ -1128,21 +1189,6 @@ function clusterEffects(
  * here rather than quietly turning the row into decoration.
  */
 function assertFieldOverlayRowsMatched(clustered: ClusteredEffects): void {
-  const fieldKeys = new Set(
-    [...clustered.clusters.values()].flatMap((cluster) =>
-      cluster.effects.flatMap((effect) =>
-        effectFields(effect.shape).map((field) => `${effect.key}.${field.name}`)
-      )
-    )
-  );
-  for (const key of EFFECT_FIELD_TYPE_OVERRIDES.keys()) {
-    if (!fieldKeys.has(key)) {
-      throw new Error(
-        `EFFECT_FIELD_TYPE_OVERRIDES names "${key}", which no emitted effect field matches — ` +
-          "retire the overlay row or fix its key"
-      );
-    }
-  }
   const effects = [...clustered.clusters.values()].flatMap((cluster) => cluster.effects);
   for (const key of EFFECT_VALUE_TYPE_OVERRIDES.keys()) {
     const effect = effects.find((candidate) => candidate.key === key);
@@ -1515,10 +1561,49 @@ function scopeLinkReferenceRows(
   );
 }
 
-function fieldTypeOverrideReport(): string[] {
-  return [...EFFECT_FIELD_TYPE_OVERRIDES, ...EFFECT_VALUE_TYPE_OVERRIDES].map(
+function valueTypeOverrideReport(): string[] {
+  return [...EFFECT_VALUE_TYPE_OVERRIDES].map(
     ([key, override]) => `${key} → ${override.type} — ${override.reason}`
   );
+}
+
+/** The scalar positions of one argument value the witness exclusions apply to. */
+function scalarArms(value: ArgValue): LoweredValue[] {
+  switch (value.kind) {
+    case "scalar":
+      return [value.value];
+    case "scalarOrBlock":
+      return [value.scalar];
+    case "valueList":
+      return value.scalar === null ? [] : [value.scalar];
+    default:
+      return [];
+  }
+}
+
+function witnessExclusionReport(emitter: Emitter, clustered: ClusteredEffects): string[] {
+  const rows: string[] = [];
+  const describe = (position: string, value: LoweredValue, effectKey: string): void => {
+    for (const [refType, member] of witnessExclusionsOf(emitter, value, effectKey)) {
+      rows.push(
+        `${position} refuses ${refType} & { ${member} } — the hand-written overload checks it`
+      );
+    }
+  };
+  for (const cluster of clustered.clusters.values()) {
+    for (const effect of cluster.effects) {
+      const scalar = scalarShapeOfEffect(effect.shape);
+      if (scalar?.kind === "value") {
+        describe(effect.key, scalar.value, effect.key);
+      }
+      for (const field of effectFields(effect.shape)) {
+        for (const value of scalarArms(field.value)) {
+          describe(`${effect.key}.${field.name}`, value, effect.key);
+        }
+      }
+    }
+  }
+  return rows;
 }
 
 function fieldAdditionReport(): string[] {
@@ -1609,7 +1694,8 @@ export function emitEffects(
     skipped: clustered.skipped,
     clusterCount: sortedClusters.length,
     universalParameters: universalCluster === undefined ? "" : clusterParameters(universalCluster),
-    fieldTypeOverrides: fieldTypeOverrideReport(),
+    valueTypeOverrides: valueTypeOverrideReport(),
+    witnessExclusions: witnessExclusionReport(emitter, clustered),
     fieldAdditions: fieldAdditionReport(),
     fieldCardinalityOverrides: fieldCardinalityOverrideReport(),
     linkEmitted: links.length,

@@ -78,7 +78,12 @@ describe("content-type codegen", () => {
     expect(mission?.code).toContain(
       "counter?: Readonly<Record<string, MissionCounterDefinition>>;"
     );
-    expect(mission?.code).toContain("category?: MissionCategoryRef | string;");
+    // The contract arm is selected by the category's qualified reference; the
+    // plain arm refuses an authored category whose witness selects it.
+    expect(mission?.code).toContain("category: MissionCategoryContractRef;");
+    expect(mission?.code).toContain(
+      "category?: (MissionCategoryRef & { readonly def?: { readonly isContract?: false } }) | string;"
+    );
     expect(mission?.code).toContain("/** One named counter definition for a mission. */");
     expect(mission?.code).toContain(
       "/** Maximum counter value shown in the mission's localized counter display. */"
@@ -869,23 +874,27 @@ describe("content-type codegen", () => {
     );
   });
 
-  it("collapses a required arm the type cannot state into a visible row (SDK-360)", () => {
+  it("models a reference-selected arm through the referenced registry's witness (SDK-296)", () => {
     const mission = emissions.get("mission");
-    expect(mission?.subtypeUnions).toEqual([]);
-    expect(mission?.subtypeCollapses).toEqual([
-      "mission.event_chain required under subtype[contract], authored optional: the subtype's " +
-        "body is not one readable field",
-    ]);
-    expect(mission?.omissions).toContainEqual({
-      path: "mission.event_chain",
-      kind: "collapsed",
-      reason:
-        "required under subtype[contract], authored optional: the subtype's body is not one " +
-        "readable field",
-    });
-    // A flat registry keeps its interfaces exactly as before.
-    expect(mission?.code).toContain("export interface MissionDef<");
-    expect(mission?.code).toContain("Only when mission subtype `contract` applies.");
+    expect(mission?.subtypeUnions).toEqual(["contract (`category = <mission_category.contract>`)"]);
+    expect(mission?.subtypeCollapses).toEqual([]);
+    expect(mission?.code).toContain("export interface MissionContractFields<");
+    expect(mission?.code).toContain("export interface MissionPlainFields<");
+    // The contract arm requires what `subtype[contract]` requires and the
+    // plain arm forbids what it alone declares.
+    expect(mission?.code).toMatch(
+      /MissionContractFields<[\s\S]*?eventChain: EventChainRef \| string;/
+    );
+    expect(mission?.code).toMatch(
+      /MissionPlainFields<[\s\S]*?eventChain\?: EventChainRef \| string;/
+    );
+    expect(mission?.code).toMatch(/MissionPlainFields<[\s\S]*?timeToAccept\?: never;/);
+    // The qualified reference the arm spells is registered for refs.ts by the
+    // emission that spells it.
+    expect(emitter.usedRefs.has("mission_category.contract")).toBe(true);
+  });
+
+  it("collapses a required arm the type cannot state into a visible row (SDK-360)", () => {
     // An overlay row keeps a contradicted arm flat, naming the measurement.
     const shipSize = emissions.get("ship_size");
     expect(shipSize?.subtypeUnions).toEqual([

@@ -11,7 +11,12 @@ import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
-import type { EventChainRef, MissionCategoryRef, SpriteRef } from "./refs.ts";
+import type {
+  EventChainRef,
+  MissionCategoryContractRef,
+  MissionCategoryRef,
+  SpriteRef,
+} from "./refs.ts";
 
 /** The `desc` block inside `mission`. */
 export interface MissionDesc {
@@ -129,7 +134,7 @@ export type MissionLocationScope =
  * A mission, as the game's rules describe it.
  * Generated from `type[mission]` at `game/common/missions/missions`.
  */
-export interface MissionFields<
+export interface MissionFieldsBase<
   S extends MissionScope = "country",
   L extends MissionLocationScope | undefined = undefined,
 > {
@@ -154,7 +159,6 @@ export interface MissionFields<
    * A bare string is the English shorthand.
    */
   desc?: LocalizedText;
-  category?: MissionCategoryRef | string;
   /**
    * The description of the mission in the situation log. Supports triggered descriptions.
    * Both desc and desc_operator can be used here, prefer the latter if there is also a desc_issuer (for example for contracts).
@@ -172,11 +176,6 @@ export interface MissionFields<
    * Default: [mission_name]_issuer_desc
    */
   descIssuer?: LocalizationInput | MissionDescIssuer[];
-  /**
-   * The event chain this mission is part of. (Only REQUIRED for contracts)
-   * Only when mission subtype `contract` applies.
-   */
-  eventChain?: EventChainRef | string;
   /** Icon used for the situation log entry. Overrides mission category log_icon if such exists. */
   icon?: string;
   /** The image used for the mission in the situation log. */
@@ -347,31 +346,45 @@ export interface MissionFields<
   >;
   /** OPTIONAL, defaults to yes. Doesn't actually do anything. */
   sound?: boolean;
+}
+
+/** A mission the subtype `contract` (`subtype[contract]`, selected by `category = <mission_category.contract>`) covers. */
+export interface MissionContractFields<
+  S extends MissionScope = "country",
+  L extends MissionLocationScope | undefined = undefined,
+> extends MissionFieldsBase<S, L> {
+  /** Selects the `contract` subtype (CWT `subtype[contract]`). */
+  category: MissionCategoryContractRef;
+  /**
+   * The event chain this mission is part of. (Only REQUIRED for contracts)
+   * Required when `category` names a `<mission_category.contract>`.
+   */
+  eventChain: EventChainRef | string;
   /**
    * The image used in the list when players Issue Contracts. Not needed for internal contracts.
-   * Only when mission subtype `contract` applies.
+   * Only when `category` names a `<mission_category.contract>`.
    */
   smallPicture?: SpriteRef | string;
   /**
    * Sets the maximum amount of days to accept the mission before it times out. Only used for contracts.
    * Default: no time limit
-   * Only when mission subtype `contract` applies.
+   * Only when `category` names a `<mission_category.contract>`.
    */
   timeToAccept?: number;
   /**
    * Sets the maximum amount of days to complete the mission before it fails.
    * Default: no time limit
-   * Only when mission subtype `contract` applies.
+   * Only when `category` names a `<mission_category.contract>`.
    */
   timeToComplete?: number;
-  /** Only when mission subtype `contract` applies. */
+  /** Only when `category` names a `<mission_category.contract>`. */
   aiBehaviour?: "attack" | "raid";
   /**
    * OPTIONAL, Contracts only, Effect to be run when a country issues up the contract
    * this: issuer
    * from: the scope from the mission
    * fromfrom: contract location, if applicable
-   * Only when mission subtype `contract` applies.
+   * Only when `category` names a `<mission_category.contract>`.
    */
   onIssue?: EffectBlock<
     "country",
@@ -383,7 +396,7 @@ export interface MissionFields<
    * prev: issuer if applicable (the country that issued the contract)
    * from: the scope from the mission
    * fromfrom: contract location, if applicable
-   * Only when mission subtype `contract` applies.
+   * Only when `category` names a `<mission_category.contract>`.
    */
   onAccept?: EffectBlock<
     "country",
@@ -399,7 +412,7 @@ export interface MissionFields<
    * If the weight is equivalent between contracts, the closest contract will be selected.
    * he AI will heavily prefer picking up player-issued contracts adding the PLAYER_ISSUED_CONTRACT_PREFERENCE define to the weight.
    * this: operator country from: contract location fromfrom: issuer country
-   * Only when mission subtype `contract` applies.
+   * Only when `category` names a `<mission_category.contract>`.
    */
   aiWeight?: WithFrom<
     WeightBlock<"country">,
@@ -408,15 +421,89 @@ export interface MissionFields<
   >;
 }
 
-/** A mission with the id it is defined under. */
-export interface MissionDef<
+/** A mission none of the subtypes `contract` covers. */
+export interface MissionPlainFields<
+  S extends MissionScope = "country",
+  L extends MissionLocationScope | undefined = undefined,
+> extends MissionFieldsBase<S, L> {
+  category?: (MissionCategoryRef & { readonly def?: { readonly isContract?: false } }) | string;
+  /**
+   * The event chain this mission is part of. (Only REQUIRED for contracts)
+   * Required when `category` names a `<mission_category.contract>`.
+   */
+  eventChain?: EventChainRef | string;
+  /** The image used in the list when players Issue Contracts. Not needed for internal contracts. */
+  smallPicture?: never;
+  /**
+   * Sets the maximum amount of days to accept the mission before it times out. Only used for contracts.
+   * Default: no time limit
+   */
+  timeToAccept?: never;
+  /**
+   * Sets the maximum amount of days to complete the mission before it fails.
+   * Default: no time limit
+   */
+  timeToComplete?: never;
+  aiBehaviour?: never;
+  /**
+   * OPTIONAL, Contracts only, Effect to be run when a country issues up the contract
+   * this: issuer
+   * from: the scope from the mission
+   * fromfrom: contract location, if applicable
+   */
+  onIssue?: never;
+  /**
+   * OPTIONAL, Contracts only, Effect to be run when a country picks up the contract
+   * this: operator (the country doing the mission/contract)
+   * prev: issuer if applicable (the country that issued the contract)
+   * from: the scope from the mission
+   * fromfrom: contract location, if applicable
+   */
+  onAccept?: never;
+  /**
+   * OPTIONAL. Only used for contracts. Weight used to determine what contracts will be picked up by an AI operator.
+   * If the weight is equivalent between contracts, the closest contract will be selected.
+   * he AI will heavily prefer picking up player-issued contracts adding the PLAYER_ISSUED_CONTRACT_PREFERENCE define to the weight.
+   * this: operator country from: contract location fromfrom: issuer country
+   */
+  aiWeight?: never;
+}
+
+/**
+ * A mission, as the game's rules describe it:
+ * one arm per way its subtypes apply.
+ */
+export type MissionFields<
+  S extends MissionScope = "country",
+  L extends MissionLocationScope | undefined = undefined,
+> = MissionContractFields<S, L> | MissionPlainFields<S, L>;
+
+/** A MissionContractFields definition with its id. */
+export interface MissionContractDef<
   Id extends string = string,
   S extends MissionScope = "country",
   L extends MissionLocationScope | undefined = undefined,
-> extends MissionFields<S, L> {
+> extends MissionContractFields<S, L> {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/** A MissionPlainFields definition with its id. */
+export interface MissionPlainDef<
+  Id extends string = string,
+  S extends MissionScope = "country",
+  L extends MissionLocationScope | undefined = undefined,
+> extends MissionPlainFields<S, L> {
+  /** Full content id, including the mod prefix. */
+  id: Id;
+}
+
+/** A mission with the id it is defined under. */
+export type MissionDef<
+  Id extends string = string,
+  S extends MissionScope = "country",
+  L extends MissionLocationScope | undefined = undefined,
+> = MissionContractDef<Id, S, L> | MissionPlainDef<Id, S, L>;
 
 /**
  * The localization keys one `mission` mints, as references.
@@ -433,7 +520,7 @@ export type MissionLoc = {
 /** A mission registered with a mod, usable as a typed cross-reference. */
 export type DefinedMission<Id extends string = string> = DefinedContent<"mission", MissionDef<Id>>;
 
-/** How the writer lowers each member of {@link MissionFields} to PDXScript. */
+/** How the writer lowers each member of {@link MissionFieldsBase} to PDXScript. */
 export const MISSION_FIELDS: readonly ContentField[] = [
   {
     key: "category",

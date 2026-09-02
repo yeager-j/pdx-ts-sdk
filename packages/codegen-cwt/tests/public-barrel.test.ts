@@ -19,6 +19,7 @@ import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import {
   referenceNameOf,
+  subtypeReferenceRefinements,
   typesReferencedBySubtype,
 } from "@pdx-ts/codegen-cwt/lower/content-reference";
 import { kebabCase, pascalCase } from "@pdx-ts/codegen-cwt/naming";
@@ -40,6 +41,7 @@ const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const rules = loadRules(path.join(ROOT, "vendor/cwtools-stellaris-config/config"));
 const emitter = new Emitter(rules);
 const subtypeReferencedTypes = typesReferencedBySubtype(rules);
+const refinements = subtypeReferenceRefinements(rules);
 
 const contents = CONTENT_MANIFEST.map((manifestEntry) => {
   const entry: ContentManifestEntry = manifestEntry;
@@ -55,6 +57,7 @@ const contents = CONTENT_MANIFEST.map((manifestEntry) => {
     manifest: manifestEntry,
     registry: registryNameOf(entry),
     referenceName: referenceNameOf(type, entry.as, subtypeReferencedTypes),
+    referenceRefinement: entry.as === undefined ? (refinements.get(entry.type) ?? null) : null,
     emission,
   };
 });

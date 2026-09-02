@@ -811,6 +811,39 @@ describe("LoweredRule", () => {
     expect(emitted.interfaces).toContain("export interface EffectsInFleet {");
   });
 
+  it("refuses a carried witness on every seam effect's fallback, and only there", () => {
+    const emitted = emitEffects(
+      new Emitter(rules),
+      docs.effects,
+      scopes,
+      effects,
+      createEffectPolicy(rules),
+      []
+    );
+    // A block argument, a scalar effect, and an argument admitting two
+    // registries: each reference arm whose registry declares a witness
+    // refuses it, and the raw id stays accepted.
+    expect(emitted.interfaces).toContain(
+      "contract: (MissionRef & { locationScope?: never }) | string;"
+    );
+    expect(emitted.interfaces).toContain(
+      "removeStageModifier(value: (StaticModifierRef & { hostScope?: never }) | string): void;"
+    );
+    expect(emitted.interfaces).toContain(
+      "modifier: ModifierRef | string | (StaticModifierRef & { hostScope?: never });"
+    );
+    // An effect with no hand-written overload has nothing to check the
+    // witness against, so its fallback accepts the authored item as is.
+    expect(emitted.interfaces).toContain("mission: MissionRef | string;");
+    expect(emitted.witnessExclusions).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("issue_contract.contract refuses MissionRef & { locationScope }"),
+        expect.stringContaining("remove_stage_modifier refuses StaticModifierRef & { hostScope }"),
+        expect.stringContaining("start_situation.type refuses SituationTypeRef & { targetScope }"),
+      ])
+    );
+  });
+
   it("rejects a stale effect-field cardinality override", () => {
     const declareWar = effects.get("declare_war")!;
     const block = declareWar.blocks[0]!;

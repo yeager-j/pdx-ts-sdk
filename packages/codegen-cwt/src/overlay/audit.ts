@@ -6,7 +6,7 @@
  * A row naming a key nothing matches is not a type error: the lookup just
  * returns `undefined`, and the emitter silently falls back to its mechanical
  * reading, exactly as if the row had never been written. `emit/script/effects.ts`
- * already closes this gap for its own tables (`EFFECT_FIELD_TYPE_OVERRIDES`
+ * already closes this gap for its own tables (`EFFECT_VALUE_TYPE_OVERRIDES`
  * and its siblings); this module gives every other
  * overlay table the same treatment.
  *
@@ -37,8 +37,8 @@ export interface RegistryKeyedOverlayTable {
  *
  * Covers `MINT_SHAPE_OVERLAYS`, `EXACT_NAME_MINTS`, `FILE_STEM_OVERLAYS`,
  * `HAND_WRITTEN_CONTENT_DEFINERS`, `CONTENT_CONTRIBUTION_SINKS`,
- * `CONTENT_SUBTYPE_REFERENCE_REFINEMENTS`, `CONTENT_PATCH_REGISTRIES`, and
- * `CONTENT_SCOPE_PARAMETERS` — every overlay table keyed directly by a
+ * `CONTENT_PATCH_REGISTRIES`, `CONTENT_SCOPE_PARAMETERS`, and
+ * `CONTENT_WITNESSES` — every overlay table keyed directly by a
  * registry name, as opposed to a `<registry>.<field>` path.
  */
 export function assertOverlayRegistriesKnown(
@@ -310,7 +310,7 @@ export function assertHandWrittenTriggerExportsMatchRules(
  * Tracks which rows of a path-keyed overlay table (`CONTENT_FIELD_OVERRIDES`,
  * `REQUIRED_LOCALISATION`, `SYNTHETIC_LOCALISATION`, …) were actually read at
  * their consumption site, so a row nothing matches can be caught the same way
- * `EFFECT_FIELD_TYPE_OVERRIDES` and its siblings already are in
+ * `EFFECT_VALUE_TYPE_OVERRIDES` and its siblings already are in
  * `emit/script/effects.ts` — a `.get()`/`.has()` lookup alone cannot tell a matched
  * row from a stale one, since both return the same "nothing here" shape.
  *
