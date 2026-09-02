@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { loadContentTypesFrom } from "@pdx-ts/codegen-cwt/cwt/load";
 import { cardinalityOf, classify, scopeOf, supportedScopesOf } from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt, type CwtAssignment } from "@pdx-ts/codegen-cwt/cwt/parser";
+import { readContentTypes } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { describe, expect, it } from "vitest";
 
@@ -428,6 +429,28 @@ describe("content type declarations", () => {
       field: "is_contract",
       set: true,
     });
+  });
+
+  it("leaves a zero-cardinality block predicate unread rather than reading presence", () => {
+    // `## cardinality = 0..0` on a block selects by the block's absence, which
+    // the model does not state; reading it as presence would swap the arms.
+    const source = [
+      "types = {",
+      "  type[t] = {",
+      "    subtype[bare] = {",
+      "      ## cardinality = 0..0",
+      "      hero_ship = { }",
+      "    }",
+      "    subtype[written] = {",
+      "      hero_ship = { }",
+      "    }",
+      "  }",
+      "}",
+    ].join("\n");
+    const types = readContentTypes(parseCwt(source, "test.cwt").nodes);
+    const selectors = new Map(types[0]!.value.subtypes.map((s) => [s.name, s.selector]));
+    expect(selectors.get("bare")).toBeNull();
+    expect(selectors.get("written")).toEqual({ kind: "present", field: "hero_ship" });
   });
 
   it("states no selector for a subtype body outside those shapes", () => {

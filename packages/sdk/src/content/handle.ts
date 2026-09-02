@@ -59,8 +59,12 @@ export interface ContentHandle<
    * Attaches the body to the already-minted id, returning the item to place in
    * a Feature. Pure and stateless: calling it twice builds two definitions of
    * one id, which the Fold refuses exactly as it refuses two eager calls.
+   *
+   * The omit distributes over a definition whose fields are subtype arms, so
+   * a handle abstracted as this interface holds the same contract the
+   * generated one spells.
    */
-  define(def: Omit<D, "id">): ContentItem<K, D>;
+  define(def: DistributiveOmit<D, "id">): ContentItem<K, D>;
 }
 
 /**

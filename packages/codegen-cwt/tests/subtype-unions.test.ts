@@ -232,6 +232,26 @@ describe("planSubtypeUnions", () => {
     expect(plan.collapsed[0]?.reason).toBe(
       "required under subtype[!start], authored optional: vanilla writes cost on start technologies"
     );
+    expect(plan.flatSubtypesApplied).toEqual(["start"]);
+  });
+
+  it("counts a flat-arm row as applied only where it kept an arm flat", () => {
+    const rare = subtype("rare", { kind: "flag", field: "is_rare", set: true });
+    const contract = subtype("contract", null);
+    const rows = new Map([
+      ["rare", "no declaration sits under this arm"],
+      ["contract", "its selector is unreadable anyway"],
+    ]);
+    const plan = planSubtypeUnions(
+      contentType("technology", [rare, contract]),
+      [
+        member("is_rare", [named("is_rare", 0)]),
+        member("event_chain", [named("event_chain", 1, [under("contract")])]),
+      ],
+      null,
+      rows
+    );
+    expect(plan.flatSubtypesApplied).toEqual([]);
   });
 
   it("never reports a subtype's own selector field, and skips subtypes with no arm fields", () => {

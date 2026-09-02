@@ -1170,14 +1170,16 @@ function flatRegistryReason(type: ContentType, parameter: ScopeParameter | null)
   return null;
 }
 
-/** The registry's `FLAT_SUBTYPE_ARMS` rows keyed by subtype, each recorded as applied. */
-function flatSubtypeArms(emitter: Emitter, type: ContentType): ReadonlyMap<string, string> {
+/**
+ * The registry's `FLAT_SUBTYPE_ARMS` rows keyed by subtype. The planner
+ * reports which of them it consulted; only those count as applied, so a row
+ * left behind by a rule change fails the overlay audit.
+ */
+function flatSubtypeArms(type: ContentType): ReadonlyMap<string, string> {
   const rows = new Map<string, string>();
   for (const subtype of type.subtypes) {
-    const key = `${type.name}.${subtype.name}`;
-    const reason = FLAT_SUBTYPE_ARMS.get(key);
+    const reason = FLAT_SUBTYPE_ARMS.get(`${type.name}.${subtype.name}`);
     if (reason !== undefined) {
-      emitter.overlayAudit.applied("FLAT_SUBTYPE_ARMS", key);
       rows.set(subtype.name, reason);
     }
   }
@@ -1268,8 +1270,11 @@ export function emitContentType(
     type,
     draft.fieldMembers,
     flatRegistryReason(type, parameter),
-    flatSubtypeArms(emitter, type)
+    flatSubtypeArms(type)
   );
+  for (const subtype of unions.flatSubtypesApplied) {
+    emitter.overlayAudit.applied("FLAT_SUBTYPE_ARMS", `${type.name}.${subtype}`);
+  }
   applySubtypeUnions(draft, unions);
   const names = contentTypeNames(type, parameter, unions.arms.length > 0);
   const surface = scopeParameterDeclarations(type, parameter);

@@ -677,10 +677,12 @@ function subtypeSelectorOf(subtype: CwtAssignment): SubtypeSelector | null {
   }
   const field = only.key.text;
   const type = classify(only.value);
-  if (type.kind === "block") {
-    return { kind: "present", field };
-  }
   const { min, max } = cardinalityOf(only.options);
+  if (type.kind === "block") {
+    // `## cardinality = 0..0` on a block selects by its absence, which the
+    // model does not state; anything else is the block being written.
+    return min >= 1 ? { kind: "present", field } : null;
+  }
   if (type.kind === "literal" && (type.text === "yes" || type.text === "no")) {
     const set = type.text === "yes";
     if (min >= 1) {

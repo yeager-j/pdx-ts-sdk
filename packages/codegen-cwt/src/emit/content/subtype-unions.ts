@@ -96,6 +96,13 @@ export interface SubtypeUnionsPlan {
   readonly claimedDocs: ReadonlyMap<string, ClaimedMemberDocs>;
   /** Required arm declarations the flat reading authors optional. */
   readonly collapsed: readonly FieldOmissionRow[];
+  /**
+   * The `flatSubtypes` rows that kept a subtype flat which would otherwise
+   * have been an arm: the rows the overlay audit may count as applied. A row
+   * on a subtype no declaration sits under, or whose selector is unreadable
+   * anyway, changes nothing and is stale.
+   */
+  readonly flatSubtypesApplied: readonly string[];
 }
 
 /** A subtype the planner can model, with its discriminant member resolved. */
@@ -435,6 +442,14 @@ export function planSubtypeUnions(
     (verdict): verdict is ModelledSubtype =>
       !("reason" in verdict) && armed.has(verdict.subtype.name)
   );
+  const flatSubtypesApplied = type.subtypes
+    .filter(
+      (subtype) =>
+        flatSubtypes.has(subtype.name) &&
+        armed.has(subtype.name) &&
+        !("reason" in modelledSubtypeOf(subtype, members))
+    )
+    .map((subtype) => subtype.name);
 
   // A subtype's own selector field is what an author writes to select it, not
   // a contract the flat reading lost, so it never earns a row.
@@ -554,6 +569,7 @@ export function planSubtypeUnions(
     base,
     claimedDocs,
     collapsed,
+    flatSubtypesApplied,
   };
 }
 

@@ -2,7 +2,7 @@ import { describe, expectTypeOf, it } from "vitest";
 
 import type { CrisisCurrencyFamilyShape } from "../src/content/localization-families.ts";
 import { defineBuilding } from "../src/generated/content-definers.ts";
-import { createMod, type ContentItem } from "../src/index.ts";
+import { createMod, type ContentHandle, type ContentItem } from "../src/index.ts";
 import { anyOf } from "../src/installation/index.ts";
 // The generated patch members are spelled in terms of `PatchInput`, which the
 // package does not re-export — a consumer never names it, but pinning a member
@@ -109,6 +109,7 @@ import {
   type SpriteRef,
   type StaticModifierItem,
   type StrikeCraftComponentTemplateFields,
+  type TechnologyDef,
   type TechnologyFields,
   type TechnologyPatch,
   type TechnologyRef,
@@ -697,6 +698,12 @@ describe("generated content authoring types", () => {
     contentMod.technologyHandle("deferred").define({ ...plain, cost: 100, weight: 100 });
     // @ts-expect-error — the handle refuses an uncosted body too
     contentMod.technologyHandle("deferred_uncosted").define(plain);
+    // A handle abstracted as the exported interface keeps the same contract.
+    const abstracted: ContentHandle<"technology", TechnologyDef> =
+      contentMod.technologyHandle("abstracted");
+    abstracted.define({ ...plain, cost: 100, weight: 100 });
+    // @ts-expect-error — the exported interface distributes the omit too
+    abstracted.define(plain);
     // The item carries the whole union: reading it back narrows on `startTech`.
     const item = contentMod.technology("narrowed", { ...plain, startTech: true });
     expectTypeOf(item.def.startTech).toEqualTypeOf<boolean | undefined>();
