@@ -15,8 +15,10 @@ they cross into Authoring.
 To translate a higher-level description into one closer to the target, losing
 abstraction and gaining explicitness. Standard compiler vocabulary — LLVM's
 `TargetLowering`, rustc's AST lowering, MLIR's progressive lowering — used here
-in its ordinary sense. The pipeline is `parse → lower → emit`, and a
-`LoweredField` is the middle stage.
+in its ordinary sense. The pipeline is `parse → lower → emit`.
+`LoweredValue` and `LoweredRule` are semantic middle-stage values. A
+`FieldProjection` is different: it contains generated TypeScript and therefore
+belongs to emission.
 
 **Emit**:
 To write TypeScript. In Authoring the same word means writing PDXScript; the

@@ -2,10 +2,11 @@ import { readFileSync } from "node:fs";
 import type { RuleField } from "@pdx-ts/codegen-cwt/cwt/model";
 import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/content/alias-splice";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content/content-type";
-import { pickOrdinary, type EmittedField } from "@pdx-ts/codegen-cwt/emit/content/field-projection";
+import { pickOrdinary } from "@pdx-ts/codegen-cwt/emit/content/field-projection";
 import type { FieldContext } from "@pdx-ts/codegen-cwt/emit/scope-context";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
+import type { EmittedField } from "@pdx-ts/codegen-cwt/lower/content-model";
 import { camelCase, constantCase, pascalCase } from "@pdx-ts/codegen-cwt/naming";
 import {
   CONTENT_DECLINED_FIELDS,

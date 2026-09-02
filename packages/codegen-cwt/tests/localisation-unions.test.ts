@@ -180,19 +180,19 @@ describe("localisation union classification", () => {
   it("refuses to lower a localisation union holding a bare-string enum arm", () => {
     const emitter = new Emitter(rules);
     expect(() =>
-      emitter.unionFor([{ kind: "localisation" }, { kind: "enum", name: "research_area" }])
+      emitter.lowerer.unionFor([{ kind: "localisation" }, { kind: "enum", name: "research_area" }])
     ).toThrow(/whose members are bare strings/);
   });
 
   it("lowers a raw scalar arm as literal text and a reference arm without a string escape", () => {
     const emitter = new Emitter(rules);
-    const rawScalar = emitter.unionFor([{ kind: "localisation" }, { kind: "scalar" }]);
+    const rawScalar = emitter.lowerer.unionFor([{ kind: "localisation" }, { kind: "scalar" }]);
     expect(rawScalar === null ? null : emitter.typeOf(rawScalar)).toBe(
       "LocalizationInput | LiteralText"
     );
     expect(rawScalar?.localizationInput).toBe(true);
 
-    const reference = emitter.unionFor([
+    const reference = emitter.lowerer.unionFor([
       { kind: "localisation" },
       { kind: "typeRef", name: "job" },
     ]);
@@ -204,7 +204,7 @@ describe("localisation union classification", () => {
 
   it("keeps engine sentinels out of the display-text arm", () => {
     const emitter = new Emitter(rules);
-    const value = emitter.unionFor([
+    const value = emitter.lowerer.unionFor([
       { kind: "literal", text: "default" },
       { kind: "localisation" },
     ]);

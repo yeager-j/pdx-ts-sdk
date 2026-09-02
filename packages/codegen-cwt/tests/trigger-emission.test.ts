@@ -28,7 +28,7 @@ const authority = scopeAuthorityOf(loadBaseline(), scopes);
 const emission = emitTriggers(
   emitter,
   docs.triggers,
-  lowerRuleTable(rules.triggers, docs.triggers, emitter, scopes, authority.triggers)
+  lowerRuleTable(rules.triggers, docs.triggers, emitter.lowerer, scopes, authority.triggers)
 );
 
 /**
@@ -58,7 +58,7 @@ function emitInlineTriggers(source: string): TriggerEmission {
   return emitTriggers(
     inlineEmitter,
     docs.triggers,
-    lowerRuleTable(aliases, docs.triggers, inlineEmitter, scopes, new Map())
+    lowerRuleTable(aliases, docs.triggers, inlineEmitter.lowerer, scopes, new Map())
   );
 }
 

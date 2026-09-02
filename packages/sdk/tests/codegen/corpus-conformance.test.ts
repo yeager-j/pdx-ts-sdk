@@ -48,7 +48,7 @@ import {
   type RuleScopes,
 } from "@pdx-ts/codegen-cwt/corpus";
 import { OBSERVED_CASINGS } from "@pdx-ts/codegen-cwt/corpus/casing";
-import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/content/field-projection";
+import type { EmittedField } from "@pdx-ts/codegen-cwt/lower/content-model";
 import { describe, expect, it } from "vitest";
 
 import { InstallNotFoundError } from "../../src/errors.ts";

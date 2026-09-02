@@ -9,9 +9,10 @@
 
 import type { RuleType } from "../../cwt/model.ts";
 import type { AliasDecl } from "../../cwt/rules.ts";
-import { Emitter, recordsLocalization, type TsValue } from "../../emit/typescript.ts";
+import { Emitter } from "../../emit/typescript.ts";
 import type { DocEntry } from "../../logs/trigger-docs.ts";
 import { loweredRuleConflictSkips, type LoweredRule } from "../../lower/lowered-rule.ts";
+import { canonicalThisScope } from "../../lower/scopes.ts";
 import {
   bareBlockValue,
   clauseScopeContext,
@@ -25,6 +26,7 @@ import {
   type SkippedRule,
   type SkipReason,
 } from "../../lower/script-shape.ts";
+import { recordsLocalization, type LoweredValue } from "../../lower/value.ts";
 import {
   camelCase,
   docComment,
@@ -40,7 +42,7 @@ import {
 } from "../../overlay/index.ts";
 import { HAND_WRITTEN_TRIGGER_RULES_BY_KEY } from "../../policy/triggers.ts";
 import { member as renderMember } from "../../render/writer.ts";
-import { canonicalThisScope, ruleScopeType, scopeUnionType } from "../scope-context.ts";
+import { ruleScopeType, scopeUnionType } from "../scope-context.ts";
 import type { ScriptTriggerReferenceRow } from "./script-reference.ts";
 import {
   contributesRefs,
@@ -81,8 +83,8 @@ interface EmittedTriggerBuilder {
 
 type Shape =
   | { readonly kind: "bool" }
-  | { readonly kind: "comparison"; readonly value: TsValue }
-  | { readonly kind: "value"; readonly value: TsValue }
+  | { readonly kind: "comparison"; readonly value: LoweredValue }
+  | { readonly kind: "value"; readonly value: LoweredValue }
   | {
       readonly kind: "valueList";
       readonly value: Extract<ArgValue, { readonly kind: "valueList" }>;
@@ -90,7 +92,7 @@ type Shape =
   /** A scalar or a typed trigger block, dispatched by the scalar arm's object kinds. */
   | {
       readonly kind: "scalarOrFields";
-      readonly scalar: TsValue;
+      readonly scalar: LoweredValue;
       readonly fields: readonly ArgField[];
     }
   /**
@@ -104,7 +106,7 @@ type Shape =
 function shapeOf(emitter: Emitter, key: string, rule: LoweredRule): Shape | SkipReason {
   if (rule.comparison) {
     const value = comparisonValue(
-      emitter,
+      emitter.lowerer,
       rule.declarations
         .filter((declaration) => declaration.comparison)
         .map((declaration) => declaration.type)
@@ -112,7 +114,7 @@ function shapeOf(emitter: Emitter, key: string, rule: LoweredRule): Shape | Skip
     return "category" in value ? value : { kind: "comparison", value };
   }
   if (rule.blocks.length === 0) {
-    const value = emitter.unionFor(rule.scalars.map((declaration) => declaration.type));
+    const value = emitter.lowerer.unionFor(rule.scalars.map((declaration) => declaration.type));
     if (value === null) {
       return skipReason(
         "unsupported-value",
@@ -133,7 +135,7 @@ function shapeOf(emitter: Emitter, key: string, rule: LoweredRule): Shape | Skip
       return skipReason("bare-value-block", "block mixes bare values with named fields");
     }
     const value = bareBlockValue(
-      emitter,
+      emitter.lowerer,
       body.bare,
       clauseScopeContext(block.declaration.scope),
       TRIGGER_CLAUSES
@@ -167,7 +169,7 @@ function shapeOf(emitter: Emitter, key: string, rule: LoweredRule): Shape | Skip
       }
       return {
         kind: "wrapper",
-        scope: canonicalThisScope(emitter, pushedRaw, `${key}: trigger wrapper`),
+        scope: canonicalThisScope(emitter.lowerer, pushedRaw, `${key}: trigger wrapper`),
       };
     }
   }
@@ -175,7 +177,7 @@ function shapeOf(emitter: Emitter, key: string, rule: LoweredRule): Shape | Skip
   // A splice alongside named fields (`calc_true_if = { amount == int ... }`)
   // becomes one more argument, which `mergeBlock` names for what it splices.
   const lowered = mergeBlock(
-    emitter,
+    emitter.lowerer,
     body.fields,
     clauseScopeContext(block.declaration.scope),
     TRIGGER_CLAUSES
@@ -205,7 +207,7 @@ function scalarOrFields(
   if (rule.scalars.length === 0) {
     return shape;
   }
-  const scalar = emitter.unionFor(rule.scalars.map((declaration) => declaration.type));
+  const scalar = emitter.lowerer.unionFor(rule.scalars.map((declaration) => declaration.type));
   if (scalar === null) {
     return skipReason(
       "unsupported-scalar-arm",
@@ -296,10 +298,10 @@ function emitComparison(
   key: string,
   scope: string,
   docs: string[],
-  value: TsValue
+  value: LoweredValue
 ): EmittedTriggerBuilder {
   const signature =
-    `${fn}(op: ${emitter.use("PdxOp")}, value: ${emitter.useValue(value).type}): ` +
+    `${fn}(op: ${emitter.use("PdxOp")}, value: ${emitter.typeOf(value)}): ` +
     `${emitter.use("Trigger")}<${scope}>`;
   return {
     signature,
@@ -323,7 +325,7 @@ function emitComparison(
 function localizationEntryReturn(
   emitter: Emitter,
   key: string,
-  value: TsValue,
+  value: LoweredValue,
   access: string,
   indent: string
 ): string {
@@ -355,7 +357,7 @@ function localizationEntryReturn(
 function scalarEntryReturn(
   emitter: Emitter,
   key: string,
-  value: TsValue,
+  value: LoweredValue,
   access: string,
   indent: string
 ): string {
@@ -383,9 +385,9 @@ function emitValue(
   key: string,
   scope: string,
   docs: string[],
-  value: TsValue
+  value: LoweredValue
 ): EmittedTriggerBuilder {
-  const signature = `${fn}(value: ${emitter.useValue(value).type}): ${emitter.use("Trigger")}<${scope}>`;
+  const signature = `${fn}(value: ${emitter.typeOf(value)}): ${emitter.use("Trigger")}<${scope}>`;
   return {
     signature,
     code:
@@ -433,13 +435,13 @@ function clauseType(emitter: Emitter, scope: readonly string[] | null, outerScop
 function baseMemberType(emitter: Emitter, value: ArgValue, outerScope: string): string {
   switch (value.kind) {
     case "scalar":
-      return emitter.useValue(value.value).type;
+      return emitter.typeOf(value.value);
     case "fields":
       return `{ ${value.fields.map((nested) => `${camelCase(nested.name)}${nested.optional ? "?" : ""}: ${memberType(emitter, nested, outerScope)}`).join("; ")} }`;
     case "map":
       return mapType(emitter, value.map);
     case "scalarOrBlock":
-      return `${emitter.useValue(value.scalar).type} | ${baseMemberType(emitter, value.block, outerScope)}`;
+      return `${emitter.typeOf(value.scalar)} | ${baseMemberType(emitter, value.block, outerScope)}`;
     case "valueList":
       return valueListType(emitter, value, outerScope);
     case "clause":
@@ -455,7 +457,7 @@ function baseMemberType(emitter: Emitter, value: ArgValue, outerScope: string): 
       return unauthorableAliasValue(value);
     case "comparison": {
       const literals = value.literals.map((literal) => JSON.stringify(literal));
-      const scalar = emitter.useValue(value.value).type;
+      const scalar = emitter.typeOf(value.value);
       return [scalar, `readonly [${emitter.use("PdxOp")}, ${scalar}]`, ...literals].join(" | ");
     }
   }
@@ -502,7 +504,7 @@ function valueListType(
   outerScope: string
 ): string {
   const arms = [
-    value.scalar === null ? undefined : emitter.useValue(value.scalar).type,
+    value.scalar === null ? undefined : emitter.typeOf(value.scalar),
     value.fields === null
       ? null
       : `{ ${value.fields.map((field) => `${propertyName(camelCase(field.name))}${field.optional ? "?" : ""}: ${memberType(emitter, field, outerScope)}`).join("; ")} }`,
@@ -614,7 +616,7 @@ function emitScalarOrFields(
   key: string,
   scope: string,
   docs: string[],
-  scalar: TsValue,
+  scalar: LoweredValue,
   fields: readonly ArgField[]
 ): EmittedTriggerBuilder {
   const name = `${pascalCase(key)}Args`;
@@ -626,7 +628,7 @@ function emitScalarOrFields(
   const pushes = pushStatements(emitter, fields, key);
   const withRefs = fields.some(contributesRefs);
   const condition = emitter.use("Trigger");
-  const scalarType = emitter.useValue(scalar).type;
+  const scalarType = emitter.typeOf(scalar);
   const scalarSignature = `${fn}(value: ${scalarType}): ${condition}<${scope}>;`;
   const argsSignature = `${fn}${typeParameter}(args: ${argsType}): ${condition}<${returnScope}>;`;
   return {

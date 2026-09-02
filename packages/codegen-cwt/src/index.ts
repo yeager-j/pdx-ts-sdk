@@ -309,7 +309,7 @@ function emitScriptRules(
   const loweredTriggers = lowerRuleTable(
     rules.triggers,
     docs.triggers,
-    emitter,
+    emitter.lowerer,
     index,
     authority.triggers
   );
@@ -325,7 +325,7 @@ function emitScriptRules(
   const loweredEffects = lowerRuleTable(
     rules.effects,
     docs.effects,
-    emitter,
+    emitter.lowerer,
     index,
     authority.effects
   );
@@ -454,7 +454,7 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
   report.push(`cwtools-stellaris-config @ ${commit.slice(0, 12)}`);
   report.push(
     `\nscopes: ${canonicalScopes(rules.scopes).length}` +
-      ` | scope groups: ${emitter.usedScopeGroups.size} lowered of ${rules.scopeGroups.size} parsed` +
+      ` | scope groups: ${emitter.lowerer.usedScopeGroups.size} lowered of ${rules.scopeGroups.size} parsed` +
       ` | enums emitted: ${emitter.usedEnums.size}` +
       ` | refs emitted: ${emitter.usedRefs.size}` +
       ` | value sets emitted: ${emitter.usedValueSets.size}`
@@ -552,12 +552,12 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
   reportSection(
     report,
     "Scope parameters widened to string (scopes.cwt declares no such scope)",
-    [...emitter.unknownScopes].sort()
+    [...emitter.lowerer.unknownScopes].sort()
   );
   reportSection(
     report,
     "Scope parameters widened to string (scopes.cwt declares no such scope_group)",
-    [...emitter.unknownScopeGroups].sort()
+    [...emitter.lowerer.unknownScopeGroups].sort()
   );
   reportSection(report, "Content definers taken from the hand-written grafts", definers.grafted);
   reportSection(
@@ -628,7 +628,7 @@ async function writeSharedRuleModules(
   );
 
   const modifiers = emitModifiers(
-    joinModifierScopes(rules, modifierDocs, (token) => emitter.canonicalScope(token))
+    joinModifierScopes(rules, modifierDocs, (token) => emitter.lowerer.canonicalScope(token))
   );
   await output.write(
     "modifiers.ts",

@@ -3,24 +3,19 @@
  * point in a body's recursion, and the TypeScript scope argument or wrapper
  * that resolution becomes.
  *
- * `fields.ts` calls into this for every trigger, effect, weight, modifier, and
- * economic-operation shaped member it lowers. Nothing here knows how to lower
+ * `content/field-projection.ts` calls into this for every trigger, effect, weight, modifier, and
+ * economic-operation shaped member it projects. Nothing here knows how to project
  * a *shape* into a member type — only how the ambient scope context a shape
  * sits in turns into the `S`/FROM/ROOT arguments that shape's generic type
  * takes, and how a container field's own annotation changes that context for
  * its children.
  */
 
-import { scopeGroupName, type FieldKey, type RuleField, type ScopeContext } from "../cwt/model.ts";
+import type { FieldKey, RuleField, ScopeContext } from "../cwt/model.ts";
 import type { LoweredRuleScopes } from "../lower/lowered-rule.ts";
-import { UNIVERSAL_SCOPES } from "../overlay/index.ts";
+import { canonicalThisScope } from "../lower/scopes.ts";
 import { AMBIENT_SCOPE_KEYS, type AmbientScopeKey } from "../special-scope-paths.ts";
 import type { Emitter } from "./typescript.ts";
-
-interface CanonicalScope {
-  readonly type: string;
-  readonly scopes: readonly string[];
-}
 
 /** Renders canonical scope names as a TypeScript literal union. */
 export function scopeUnionType(scopes: readonly string[]): string {
@@ -30,52 +25,6 @@ export function scopeUnionType(scopes: readonly string[]): string {
 /** Renders a lowered rule's canonical scope set as a TypeScript type. */
 export function ruleScopeType(scopes: LoweredRuleScopes): string {
   return scopes === "universal" ? "ScopeName" : scopeUnionType(scopes);
-}
-
-/** The declared scope group one annotation names, or `null` for anything else. */
-function declaredScopeGroup(
-  emitter: Emitter,
-  declared: string
-): { readonly name: string; readonly members: readonly string[] } | null {
-  const group = scopeGroupName(declared);
-  if (group === null) {
-    return null;
-  }
-  const members = emitter.scopeGroup(group);
-  return members === null ? null : { name: group, members };
-}
-
-function knownScope(emitter: Emitter, declared: string, source: string): string {
-  const canonical = emitter.canonicalScope(declared);
-  if (canonical === null) {
-    throw new Error(
-      `${source} names unknown scope "${declared}". ` +
-        "The drift gate reports such names under unknownScopes."
-    );
-  }
-  return canonical;
-}
-
-function canonicalScope(emitter: Emitter, declared: string, source: string): CanonicalScope | null {
-  if (UNIVERSAL_SCOPES.has(declared.toLowerCase())) {
-    return null;
-  }
-  const group = declaredScopeGroup(emitter, declared);
-  if (group === null) {
-    const scope = knownScope(emitter, declared, source);
-    return { type: JSON.stringify(scope), scopes: [scope] };
-  }
-  const scopes = [
-    ...new Set(group.members.map((member) => knownScope(emitter, member, source))),
-  ].sort();
-  if (scopes.length === 0) {
-    throw new Error(`${source} names empty scope group "${group.name}".`);
-  }
-  emitter.usedScopeGroups.add(group.name);
-  return {
-    type: scopeUnionType(scopes),
-    scopes,
-  };
 }
 
 /**
@@ -93,24 +42,8 @@ export function canonicalAmbientScope(
   declared: string,
   source: string
 ): string | null {
-  return canonicalScope(emitter, declared, source)?.type ?? null;
-}
-
-/**
- * Canonicalizes the scope a THIS position names — a `push_scope`, the `this` of
- * a `replace_scopes`, or a nested clause's pushed scope. A declared scope
- * group resolves to the union of its members. A universal scope resolves to
- * `null`, leaving the block unpinned.
- *
- * @param source Where the annotation was read, named in the failure message.
- * @throws When the name is not a known scope or declared scope group.
- */
-export function canonicalThisScope(
-  emitter: Emitter,
-  declared: string,
-  source: string
-): readonly string[] | null {
-  return canonicalScope(emitter, declared, source)?.scopes ?? null;
+  const scopes = canonicalThisScope(emitter.lowerer, declared, source);
+  return scopes === null ? null : scopeUnionType(scopes);
 }
 
 function fieldLabel(key: FieldKey): string {
@@ -127,12 +60,12 @@ function fieldLabel(key: FieldKey): string {
 }
 
 /**
- * Carries the ambient scope and fallback TypeScript types used while lowering a field.
- * Pass the context returned by {@link containerContext} when recursively lowering
+ * Carries the ambient scope and fallback TypeScript types used while projecting a field.
+ * Pass the context returned by {@link containerContext} when recursively projecting
  * a nested struct.
  */
 export interface FieldContext {
-  /** The effective CWT scope context at this point in nested lowering. */
+  /** The effective CWT scope context at this point in nested projection. */
   readonly scope: ScopeContext | null;
   /** The TypeScript scope used when no rule or overlay pins the field. */
   readonly unpinned: string;
@@ -153,7 +86,7 @@ export interface FieldContext {
 }
 
 /**
- * Resolved TypeScript and runtime scope facts for one lowered field.
+ * Resolved TypeScript and runtime scope facts for one projected field.
  * Use these values when rendering generic arguments and conformance metadata.
  */
 export interface FieldScope {
@@ -241,7 +174,7 @@ export function scopeType(
   const from = context.from;
   const root = context.root;
   if (asserted !== undefined) {
-    const canonical = emitter.canonicalScope(asserted);
+    const canonical = emitter.lowerer.canonicalScope(asserted);
     if (canonical === null) {
       throw new Error(`Overlay asserts unknown scope "${asserted}"`);
     }
@@ -260,10 +193,8 @@ export function scopeType(
     return unpinned;
   }
   const source = `Scope annotation "this" on field "${fieldLabel(field.key)}"`;
-  const canonical = canonicalScope(emitter, declared, source);
-  return canonical === null
-    ? unpinned
-    : { type: canonical.type, scopes: canonical.scopes, from, root, context };
+  const scopes = canonicalThisScope(emitter.lowerer, declared, source);
+  return scopes === null ? unpinned : { type: scopeUnionType(scopes), scopes, from, root, context };
 }
 
 /**

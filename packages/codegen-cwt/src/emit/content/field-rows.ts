@@ -24,7 +24,7 @@ export interface MemberDocRow {
   readonly docs: readonly string[];
   /** The TypeScript type text shown for the emitted member. */
   readonly memberType: string;
-  /** Every scalar the member admits, when the lowering closed the set. */
+  /** Every scalar the member admits, when the projection closed the set. */
   readonly literals?: readonly string[];
 }
 

@@ -43,12 +43,12 @@ import { relativeRegistryPath, walkRegistryFiles } from "@pdx-ts/codegen-cwt/cor
 import { scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/content/alias-splice";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content/content-type";
-import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/content/field-projection";
 import { joinModifierScopes } from "@pdx-ts/codegen-cwt/emit/script/modifiers";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
+import type { EmittedField } from "@pdx-ts/codegen-cwt/lower/content-model";
 import { canonicalScopeSet } from "@pdx-ts/codegen-cwt/lower/script-shape";
 import { CONTENT_DECLINED_FIELDS } from "@pdx-ts/codegen-cwt/overlay";
 import {
@@ -118,7 +118,7 @@ const MODIFIER_NAMES = (() => {
   const join = joinModifierScopes(
     rules,
     parseModifierDocs(readFileSync(path.join(SCRIPT_DOCS, "modifiers.log"), "utf8")),
-    (token) => emitter.canonicalScope(token)
+    (token) => emitter.lowerer.canonicalScope(token)
   );
   return new Set([...join.universal, ...[...join.groups.values()].flat()]);
 })();

@@ -6,8 +6,8 @@
  * `LoweringContext` (an enum's members, an alias category's members) — and returns
  * either a verdict (`null` for "not this shape") or the structural pieces the
  * verdict already found (which block, which trigger declaration, which enum
- * values). None of them knows how to lower what they find into TypeScript;
- * that is `fields.ts`'s job as the one consumer of every recognizer here.
+ * values). None of them knows how to project what they find into TypeScript;
+ * that is `emit/content/field-projection.ts`'s job as the consumer of these recognizers.
  */
 
 import { type FieldKey, type RuleField, type RuleType } from "../cwt/model.ts";

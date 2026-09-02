@@ -227,7 +227,7 @@ export function localisationRefType(
 /**
  * `pointers` maps a localisation member to the body member the game actually
  * reads its text through, for the synthetic slots that have one. Passed in
- * rather than looked up, because it is a *result* of lowering the body: the
+ * rather than looked up, because it is a *result* of projection the body: the
  * pointer is the renamed body field, and the rename is only known once the
  * field loop has run. See `renamedOffLocalisation` (`content-type.ts`).
  */

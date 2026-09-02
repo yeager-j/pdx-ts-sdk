@@ -48,10 +48,15 @@ describe("codegen stage boundaries", () => {
     expect(violations).toEqual([]);
   });
 
-  it("keeps lowered values free of rendered TypeScript callbacks and type text", () => {
-    const source = readFileSync(path.join(SOURCE, "lower/value.ts"), "utf8");
+  it("keeps scalar interpretation owned by lowering", () => {
+    const lowering = readFileSync(path.join(SOURCE, "lower/value.ts"), "utf8");
+    const emission = readFileSync(path.join(SOURCE, "emit/typescript.ts"), "utf8");
 
-    expect(source).not.toMatch(/readonly type:\s*string/);
-    expect(source).not.toContain("toScalar");
+    expect(lowering).toContain("export class ValueLowerer");
+    expect(lowering).toMatch(/\bvalueFor\s*\(/);
+    expect(lowering).toMatch(/\bunionFor\s*\(/);
+    expect(emission).not.toMatch(/\bvalueFor\s*\(/);
+    expect(emission).not.toMatch(/\bunionFor\s*\(/);
+    expect(emission).not.toContain("implements LoweringContext");
   });
 });

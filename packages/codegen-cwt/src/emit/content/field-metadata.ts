@@ -1,7 +1,7 @@
 /**
- * How one lowered field describes itself: the runtime metadata literal, the
+ * How one projected field describes itself: the runtime metadata literal, the
  * member-type text helpers, and the admitted-shape descriptors the corpus gate
- * measures against. Every lowering in `fields.ts` and its siblings speaks
+ * measures against. Every projection in `field-projection.ts` and its siblings speaks
  * through these, which is what keeps the metadata, the member type, and the
  * gate's view of a field from disagreeing.
  */
@@ -105,7 +105,7 @@ export function metadata(
  *
  * Overlay corrections applied after a shape has been chosen (`pickOrdinary`)
  * have no other way in: threading every overlay property through each
- * {@link metadata} call site would make every lowering carry properties only
+ * {@link metadata} call site would make every projection carry properties only
  * one of them can use.
  */
 export function withMetadataEntry(descriptor: FieldMetadata, entry: string): FieldMetadata {

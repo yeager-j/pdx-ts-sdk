@@ -1,7 +1,7 @@
 /**
  * The scope-parameter machinery of the content-type emitter: resolving a
  * registry's `CONTENT_SCOPE_PARAMETERS` overlay row against the rules, and
- * re-describing lowered fields and their contexts under the definition's own
+ * re-describing projected fields and their contexts under the definition's own
  * scope parameter.
  */
 
@@ -90,7 +90,7 @@ function declaredFromOf(
     );
   }
   const scopes = members.map((member) => {
-    const scope = emitter.canonicalScope(member);
+    const scope = emitter.lowerer.canonicalScope(member);
     if (scope === null) {
       throw new Error(
         `Scope group "${row.scopeGroup}" names unknown scope "${member}" for ${registry}`
@@ -117,7 +117,7 @@ export function scopeParameterOf(emitter: Emitter, registry: string): ScopeParam
   // the `scope` assertion follows: silently widening on a typo would recreate
   // the unfillable field the row exists to fix.
   const canonical = (name: string): string => {
-    const scope = emitter.canonicalScope(name);
+    const scope = emitter.lowerer.canonicalScope(name);
     if (scope === null) {
       throw new Error(`Overlay scope parameter for ${registry} names unknown scope "${name}"`);
     }
@@ -220,10 +220,10 @@ export function underParameter(
 }
 
 /**
- * The context one member of a scope-parameterised registry lowers against.
+ * The context one member of a scope-parameterised registry projects against.
  *
  * `fieldContext.unpinned` carries the selected scope, so which member is being
- * lowered decides where that type lands: the member the selector scopes gets it
+ * projected decides where that type lands: the member the selector scopes gets it
  * as its own scope — plus the declared FROM, where the registry has one — a
  * member the selector supplies as FROM gets it there and runs in the registry's
  * fallback scope instead, and everything else is the fallback with no FROM. A

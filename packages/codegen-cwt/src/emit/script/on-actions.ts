@@ -2,7 +2,7 @@ import { scopeIndex, type OnActionDecl, type RuleSet } from "../../cwt/rules.ts"
 import { camelCase, docComment, isPlainName } from "../../naming.ts";
 import { AMBIENT_SCOPE_KEYS, type AmbientScopeKey } from "../../special-scope-paths.ts";
 
-/** Generated on-action reference module text and its lowering report. */
+/** Generated on-action reference module text and its projection report. */
 export interface OnActionsEmission {
   /** Complete generated on-action reference module text. */
   readonly code: string;
@@ -14,7 +14,7 @@ export interface OnActionsEmission {
   readonly noScope: number;
 }
 
-interface LoweredOnAction {
+interface ProjectedOnAction {
   readonly name: string;
   readonly member: string;
   readonly scope: string | null;
@@ -28,19 +28,19 @@ interface LoweredOnAction {
  */
 export function emitOnActions(rules: RuleSet): OnActionsEmission {
   const scopes = scopeIndex(rules);
-  const lowered: LoweredOnAction[] = [];
+  const projected: ProjectedOnAction[] = [];
   const skipped: string[] = [];
 
   for (const hook of rules.onActions) {
-    const result = lower(hook, scopes);
+    const result = project(hook, scopes);
     if (typeof result === "string") {
       skipped.push(`${hook.name} — ${result}`);
     } else {
-      lowered.push(result);
+      projected.push(result);
     }
   }
 
-  const members = lowered
+  const members = projected
     .map((hook) => {
       const docs = docComment(hook.docs, "  ");
       const scope = hook.scope === null ? "null" : JSON.stringify(hook.scope);
@@ -67,13 +67,16 @@ export function emitOnActions(rules: RuleSet): OnActionsEmission {
       "export const onActions = {\n" +
       members +
       "} as const satisfies Record<string, OnActionRef>;\n",
-    emitted: lowered.length,
+    emitted: projected.length,
     skipped,
-    noScope: lowered.filter((hook) => hook.scope === null).length,
+    noScope: projected.filter((hook) => hook.scope === null).length,
   };
 }
 
-function lower(hook: OnActionDecl, scopes: ReadonlyMap<string, string>): LoweredOnAction | string {
+function project(
+  hook: OnActionDecl,
+  scopes: ReadonlyMap<string, string>
+): ProjectedOnAction | string {
   if (!isPlainName(hook.name)) {
     return "name is not a plain on-action identifier";
   }

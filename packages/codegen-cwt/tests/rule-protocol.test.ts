@@ -27,6 +27,7 @@ import {
   type MapValue,
   type SkipReason,
 } from "@pdx-ts/codegen-cwt/lower/script-shape";
+import { ValueLowerer } from "@pdx-ts/codegen-cwt/lower/value";
 import {
   deriveContentSwapIdentities,
   type ContentSwapSource,
@@ -125,7 +126,7 @@ function mergedFields(
   blockEmitter: Emitter,
   fields: readonly RuleField[]
 ): ArgField[] | SkipReason {
-  const block = mergeBlock(blockEmitter, fields, null, new Set<string>());
+  const block = mergeBlock(blockEmitter.lowerer, fields, null, new Set<string>());
   if ("detail" in block) {
     return block;
   }
@@ -190,7 +191,7 @@ function syntheticEffectInput(source: string, emitter: Emitter) {
   const effects = new Map([...rules.effects, ...aliases]);
   return {
     policy: createEffectPolicy({ ...rules, effects }),
-    rules: lowerRuleTable(effects, docs.effects, emitter, scopes, authority.effects),
+    rules: lowerRuleTable(effects, docs.effects, emitter.lowerer, scopes, authority.effects),
   };
 }
 
@@ -339,11 +340,17 @@ describe("LoweredRule", () => {
   const triggers = lowerRuleTable(
     rules.triggers,
     docs.triggers,
-    emitter,
+    emitter.lowerer,
     scopes,
     authority.triggers
   );
-  const effects = lowerRuleTable(rules.effects, docs.effects, emitter, scopes, authority.effects);
+  const effects = lowerRuleTable(
+    rules.effects,
+    docs.effects,
+    emitter.lowerer,
+    scopes,
+    authority.effects
+  );
 
   it("carries legal scopes and nested-clause facts through one model", () => {
     const rule = triggers.get("count_owned_planet")!;
@@ -377,7 +384,7 @@ describe("LoweredRule", () => {
 
     expect(declarations).toHaveLength(2);
     expect(() =>
-      lowerRule("mixed_status", declarations, undefined, emitter, scopes, undefined)
+      lowerRule("mixed_status", declarations, undefined, emitter.lowerer, scopes, undefined)
     ).toThrow(
       'mixed_status: some declarations are marked "## api_status = removed" and some are not'
     );
@@ -459,7 +466,7 @@ describe("LoweredRule", () => {
       .blocks[0]!.named.find((field) => field.key.kind === "name" && field.key.name === "effect")!;
     const inherited = { ...effect, scope: null };
     const push = mergeBlock(
-      new Emitter(rules),
+      new ValueLowerer(rules),
       [inherited],
       clauseScopeContext({
         this: "bypass",
@@ -477,7 +484,7 @@ describe("LoweredRule", () => {
       new Set(["effect"])
     );
     const replacement = mergeBlock(
-      new Emitter(rules),
+      new ValueLowerer(rules),
       [inherited],
       clauseScopeContext({
         this: "bypass",
@@ -552,7 +559,7 @@ describe("LoweredRule", () => {
       .get("create_bypass")!
       .blocks[0]!.named.find((field) => field.key.kind === "name" && field.key.name === "effect")!;
     const conflicting = mergeBlock(
-      new Emitter(rules),
+      new ValueLowerer(rules),
       [
         {
           ...effect,
@@ -982,7 +989,7 @@ describe("LoweredRule", () => {
   it("declines a mixed block whose open keys come from two key filters", () => {
     const debris = effects.get("add_resource_from_debris")!.blocks[0]!.named;
     const patron = effects.get("add_attunement")!.blocks[0]!.named[0]!;
-    const block = mergeBlock(new Emitter(rules), [...debris, patron], null, new Set<string>());
+    const block = mergeBlock(new ValueLowerer(rules), [...debris, patron], null, new Set<string>());
 
     expect(block).toEqual({
       category: "computed-field-key",
@@ -1020,7 +1027,13 @@ describe("LoweredRule", () => {
 });
 
 describe("a spliced alias category with a script authoring surface", () => {
-  const effects = lowerRuleTable(rules.effects, docs.effects, emitter, scopes, authority.effects);
+  const effects = lowerRuleTable(
+    rules.effects,
+    docs.effects,
+    emitter.lowerer,
+    scopes,
+    authority.effects
+  );
   const emitted = emitEffects(
     new Emitter(rules),
     docs.effects,
@@ -1118,7 +1131,7 @@ describe("a spliced alias category with a script authoring surface", () => {
       (field) => field.key.kind === "name" && field.key.name === "government_restrictions"
     )!;
     const merged = mergeBlock(
-      new Emitter(rules),
+      new ValueLowerer(rules),
       [
         {
           ...restrictions,
@@ -1176,7 +1189,7 @@ describe("a repeated argument's declared bound", () => {
       new Emitter(rules),
       docs.effects,
       scopes,
-      lowerRuleTable(rules.effects, docs.effects, emitter, scopes, authority.effects),
+      lowerRuleTable(rules.effects, docs.effects, emitter.lowerer, scopes, authority.effects),
       createEffectPolicy(rules),
       []
     );
@@ -1267,7 +1280,13 @@ describe("the effect ownership policy", () => {
   });
 
   it("reserves the effect-path terminal against generated scope links", () => {
-    const lowered = lowerRuleTable(rules.effects, docs.effects, emitter, scopes, authority.effects);
+    const lowered = lowerRuleTable(
+      rules.effects,
+      docs.effects,
+      emitter.lowerer,
+      scopes,
+      authority.effects
+    );
     expect(() =>
       emitEffects(emitter, docs.effects, scopes, lowered, policy, [
         {

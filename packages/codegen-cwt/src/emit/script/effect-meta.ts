@@ -6,8 +6,9 @@
  * typed interfaces over the same per-effect record.
  */
 
-import { aliasCategoryModule, type TsValue } from "../../emit/typescript.ts";
+import { aliasCategoryModule } from "../../emit/typescript.ts";
 import type { ArgField, BlockValue, MapValue } from "../../lower/script-shape.ts";
+import type { LoweredValue } from "../../lower/value.ts";
 import { camelCase, compareStrings, docComment } from "../../naming.ts";
 import type {
   EffectCluster,
@@ -17,7 +18,7 @@ import type {
   ScopeLinkCluster,
 } from "./effects.ts";
 
-function scalarMetaMembers(value: TsValue): string[] {
+function scalarMetaMembers(value: LoweredValue): string[] {
   return [
     value.refTypes === undefined ? null : `refTypes: ${JSON.stringify(value.refTypes)}`,
     value.booleanLiterals === undefined
@@ -31,12 +32,12 @@ function scalarMetaMembers(value: TsValue): string[] {
   ].filter((member): member is string => member !== null);
 }
 
-function scalarMeta(value: TsValue): string {
+function scalarMeta(value: LoweredValue): string {
   const members = scalarMetaMembers(value);
   return members.length === 0 ? "{}" : `{ ${members.join(", ")} }`;
 }
 
-function scalarMetaSuffix(value: TsValue): string {
+function scalarMetaSuffix(value: LoweredValue): string {
   const members = scalarMetaMembers(value);
   return members.length === 0 ? "" : `, ${members.join(", ")}`;
 }

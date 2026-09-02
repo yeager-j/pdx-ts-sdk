@@ -7,17 +7,28 @@ import { canonicalScopeSet, skippedRule, type SkippedRule } from "./script-shape
 
 /** A static scope link with canonical input and output evidence. */
 export interface ClassifiedLink {
+  /** The PDXScript key, such as `capital_scope`. */
   readonly key: string;
+  /** The generated method identifier, such as `capitalScope`. */
   readonly method: string;
+  /** Raw input-scope tokens that resolve through the canonical scope index. */
   readonly inputScopes: readonly string[];
+  /** The canonical scope reached through the link. */
   readonly outputScope: string;
+  /** Documentation attached to each emitted overload. */
   readonly docs: readonly string[];
 }
 
 /** Classified links, explicit skips, and the complete navigation vocabulary. */
 export interface LinkClassification {
+  /** Static links whose input and output scopes can both be typed. */
   readonly links: readonly ClassifiedLink[];
+  /** Link declarations excluded from typed wrappers, with stable reasons. */
   readonly skipped: readonly SkippedRule[];
+  /**
+   * Every scope-navigation link mapped to its destination.
+   * `"any"` retains runtime-polymorphic links that typed wrappers cannot expose.
+   */
   readonly navigation: ReadonlyMap<string, string>;
 }
 

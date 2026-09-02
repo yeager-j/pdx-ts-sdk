@@ -2,8 +2,8 @@
  * The scope facts this generator already computes, kept as data.
  *
  * Every trigger, effect, and scope link's legal scopes are resolved on the way
- * to emitting `Trigger<"country">`, then stringified away by `scopeType`. Its
- * sibling `canonicalScopeSet` returns the same thing as a list; `classifyLinks`
+ * to emitting `Trigger<"country">`, then projected into type text. The lower
+ * stage's `canonicalScopeSet` retains the same fact as a list; `classifyLinks`
  * already returns each link's input set and output scope. This module joins the
  * three readers and keeps the lists, so a consumer that needs to *reason* about
  * scope rather than print it has somewhere to read from.

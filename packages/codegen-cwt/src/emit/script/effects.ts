@@ -19,7 +19,7 @@
  */
 
 import type { Cardinality, RuleField, RuleType } from "../../cwt/model.ts";
-import { Emitter, type TsValue } from "../../emit/typescript.ts";
+import { Emitter } from "../../emit/typescript.ts";
 import type { DocEntry } from "../../logs/trigger-docs.ts";
 import type { ClassifiedLink } from "../../lower/links.ts";
 import {
@@ -27,6 +27,7 @@ import {
   type LoweredRule,
   type LoweredRuleBlock,
 } from "../../lower/lowered-rule.ts";
+import { canonicalThisScope } from "../../lower/scopes.ts";
 import {
   aliasListMembers,
   canonicalScopeSet,
@@ -43,6 +44,7 @@ import {
   type SkippedRule,
   type SkipReason,
 } from "../../lower/script-shape.ts";
+import type { LoweredValue } from "../../lower/value.ts";
 import {
   camelCase,
   compareStrings,
@@ -66,7 +68,7 @@ import {
 import type { EffectPolicy } from "../../policy/effects.ts";
 import { member as renderMember } from "../../render/writer.ts";
 import { aliasStructTypeName } from "../content/alias-struct.ts";
-import { canonicalThisScope, scopeUnionType } from "../scope-context.ts";
+import { scopeUnionType } from "../scope-context.ts";
 import { canonicalScopes } from "../support.ts";
 import { effectMetaCode } from "./effect-meta.ts";
 import type { ScriptEffectReferenceRow, ScriptScopeLinkReferenceRow } from "./script-reference.ts";
@@ -86,14 +88,14 @@ const UNBOUNDED: Cardinality = { min: 0, max: null };
  */
 const EFFECT_SPLICES = new Set<string>([...EFFECT_CLAUSES, ...SCRIPT_ALIAS_CATEGORIES]);
 
-/** One spliced alias category's lowered members and the type they are authored as. */
+/** One spliced alias category's semantic members and the type they are authored as. */
 interface AliasListSurface extends AliasCategoryScriptList {
-  /** The category's members, lowered as ordinary argument fields. */
+  /** The category's members, interpreted as ordinary argument fields. */
   readonly members: readonly ArgField[];
 }
 
 /**
- * Lowers every alias category the overlay lists as a script list.
+ * Builds an authoring surface for every alias category the overlay lists as a script list.
  *
  * A row promises an authoring surface, so a member the field model cannot
  * lower fails generation here rather than silently removing an action from the
@@ -105,7 +107,7 @@ function aliasListSurfaces(emitter: Emitter): Map<string, AliasListSurface> {
     if (row.scriptList === undefined) {
       continue;
     }
-    const members = aliasListMembers(emitter, category, EFFECT_SPLICES);
+    const members = aliasListMembers(emitter.lowerer, category, EFFECT_SPLICES);
     if (!Array.isArray(members)) {
       throw new Error(
         `EXTRA_ALIAS_CATEGORIES gives "${category}" a script list, but its members do not ` +
@@ -164,7 +166,7 @@ type ScalarEffectShape =
       /** Identifies one required scalar argument. */
       readonly kind: "value";
       /** Scalar type and conversion used by the signature and recorder. */
-      readonly value: TsValue;
+      readonly value: LoweredValue;
     };
 
 type BlockEffectShape =
@@ -321,7 +323,7 @@ function addedFields(
       );
     }
     names.add(addition.name);
-    const value = emitter.valueFor(addition.type);
+    const value = emitter.lowerer.valueFor(addition.type);
     if (value === null) {
       throw new Error(
         `EFFECT_FIELD_ADDITIONS names "${key}.${addition.name}" with an unsupported ` +
@@ -419,7 +421,7 @@ function scalarShapeOf(emitter: Emitter, rule: LoweredRule): ScalarEffectShape |
   if (scalars.every((declaration) => isBooleanToggle(declaration.type))) {
     return { kind: "bool" };
   }
-  const value = emitter.unionFor(scalars.map((declaration) => declaration.type));
+  const value = emitter.lowerer.unionFor(scalars.map((declaration) => declaration.type));
   if (value === null) {
     return skipReason(
       "unsupported-value",
@@ -462,7 +464,9 @@ function blockShapeOf(emitter: Emitter, block: LoweredRuleBlock): BlockEffectSha
   if (spliced !== null && EXTRA_ALIAS_CATEGORIES.get(spliced)?.scriptList !== undefined) {
     const pushed = inherited.scope;
     const scope =
-      pushed === null ? null : canonicalThisScope(emitter, pushed, `Alias list "${spliced}"`);
+      pushed === null
+        ? null
+        : canonicalThisScope(emitter.lowerer, pushed, `Alias list "${spliced}"`);
     return { kind: "aliasList", category: spliced, scope };
   }
   const categories = new Set(
@@ -477,7 +481,7 @@ function blockShapeOf(emitter: Emitter, block: LoweredRuleBlock): BlockEffectSha
   const argumentFields = body.fields.filter(
     (field) => field.key.kind !== "aliasName" || field.key.category !== "effect"
   );
-  const named = expandAliasFields(emitter, argumentFields);
+  const named = expandAliasFields(emitter.lowerer, argumentFields);
   if (!Array.isArray(named)) {
     return named;
   }
@@ -485,7 +489,7 @@ function blockShapeOf(emitter: Emitter, block: LoweredRuleBlock): BlockEffectSha
   const merged =
     named.length === 0
       ? ({ kind: "fields", fields: [] } as const)
-      : mergeBlock(emitter, named, inherited, EFFECT_SPLICES);
+      : mergeBlock(emitter.lowerer, named, inherited, EFFECT_SPLICES);
   if ("detail" in merged) {
     return merged;
   }
@@ -505,7 +509,7 @@ function blockShapeOf(emitter: Emitter, block: LoweredRuleBlock): BlockEffectSha
     }
     let scope: readonly string[] | null = null;
     if (pushedRaw !== null) {
-      scope = canonicalThisScope(emitter, pushedRaw, "Effect wrapper");
+      scope = canonicalThisScope(emitter.lowerer, pushedRaw, "Effect wrapper");
     }
     return {
       kind: "wrapper",
@@ -643,19 +647,19 @@ function baseMemberType(
 ): string {
   switch (value.kind) {
     case "scalar":
-      return emitter.useValue(value.value).type;
+      return emitter.typeOf(value.value);
     case "fields":
       return argsType(emitter, value.fields, outerScope, effectKey);
     case "map":
       return mapType(emitter, value.map);
     case "scalarOrBlock":
       return (
-        `${emitter.useValue(value.scalar).type} | ` +
+        `${emitter.typeOf(value.scalar)} | ` +
         `${baseMemberType(emitter, value.block, outerScope, effectKey)}`
       );
     case "valueList": {
       const arms = [
-        value.scalar === null ? undefined : emitter.useValue(value.scalar).type,
+        value.scalar === null ? undefined : emitter.typeOf(value.scalar),
         value.fields === null ? null : argsType(emitter, value.fields, outerScope, effectKey),
       ].filter((arm): arm is string => arm !== null && arm !== undefined);
       return cardinalityArrayType(arms.join(" | "), value.cardinality);
@@ -683,7 +687,7 @@ function baseMemberType(
       return emitter.useAliasCategory(value.category, aliasStructTypeName(value.category));
     case "comparison": {
       const literals = value.literals.map((literal) => JSON.stringify(literal));
-      const scalar = emitter.useValue(value.value).type;
+      const scalar = emitter.typeOf(value.value);
       return [scalar, `readonly [${emitter.use("PdxOp")}, ${scalar}]`, ...literals].join(" | ");
     }
   }
@@ -812,7 +816,7 @@ function methodSignatureText(emitter: Emitter, effect: EmittedEffect, outerScope
     case "bool":
       return `  ${method}(value?: boolean): void;\n`;
     case "value":
-      return `  ${method}(value: ${EFFECT_VALUE_TYPE_OVERRIDES.get(key)?.type ?? emitter.useValue(shape.value).type}): void;\n`;
+      return `  ${method}(value: ${EFFECT_VALUE_TYPE_OVERRIDES.get(key)?.type ?? emitter.typeOf(shape.value)}): void;\n`;
     case "fields":
       return `  ${method}(args: ${argsType(emitter, shape.fields, outerScope, key)}): void;\n`;
     case "map":
@@ -968,7 +972,7 @@ interface GeneratedEffectRule {
   readonly scopes: readonly string[] | "universal";
 }
 
-interface LoweredEffect {
+interface ProjectedEffect {
   readonly effect: EmittedEffect;
   readonly appliesFieldAdditions: boolean;
   readonly appliesFieldCardinalityOverrides: boolean;
@@ -1025,19 +1029,19 @@ function generatedEffectRule(
   return { key, rule, scopes: rule.scopes };
 }
 
-function lowersNameAliasUsage(rule: LoweredRule): boolean {
+function usesNameAlias(rule: LoweredRule): boolean {
   return rule.blocks.some((block) =>
     block.splices.some((field) => field.key.kind === "aliasName" && field.key.category === "name")
   );
 }
 
-function lowerEffect(
+function projectEffect(
   emitter: Emitter,
   docs: ReadonlyMap<string, DocEntry>,
   candidate: GeneratedEffectRule
-): LoweredEffect | SkipReason {
+): ProjectedEffect | SkipReason {
   const { key, rule } = candidate;
-  const isolatesNameAliasUsage = lowersNameAliasUsage(rule);
+  const isolatesNameAliasUsage = usesNameAlias(rule);
   const ruleEmitter = isolatesNameAliasUsage ? new Emitter(emitter.rules) : emitter;
   const shape = shapeOf(ruleEmitter, rule);
   if ("detail" in shape) {
@@ -1069,7 +1073,7 @@ function addEffectToCluster(
   clusters.set(clusterKey, cluster);
 }
 
-/** The rule loop: lowers each generated-owned effect and clusters it by scope set. */
+/** Projects each generated-owned effect and clusters it by scope set. */
 function clusterEffects(
   emitter: Emitter,
   docs: ReadonlyMap<string, DocEntry>,
@@ -1093,19 +1097,19 @@ function clusterEffects(
       skipped.push(...loweredRuleConflictSkips(candidate.rule));
       continue;
     }
-    const lowered = lowerEffect(emitter, docs, candidate);
-    if ("detail" in lowered) {
-      skipped.push({ name: key, ...lowered });
+    const projected = projectEffect(emitter, docs, candidate);
+    if ("detail" in projected) {
+      skipped.push({ name: key, ...projected });
       continue;
     }
-    if (lowered.appliesFieldAdditions) {
+    if (projected.appliesFieldAdditions) {
       appliedFieldAdditions.add(key);
     }
-    if (lowered.appliesFieldCardinalityOverrides) {
+    if (projected.appliesFieldCardinalityOverrides) {
       appliedFieldCardinalityOverrides.add(key);
     }
-    addEffectToCluster(clusters, candidate.scopes, lowered.effect);
-    byShape.set(lowered.effect.shape.kind, (byShape.get(lowered.effect.shape.kind) ?? 0) + 1);
+    addEffectToCluster(clusters, candidate.scopes, projected.effect);
+    byShape.set(projected.effect.shape.kind, (byShape.get(projected.effect.shape.kind) ?? 0) + 1);
   }
 
   return {

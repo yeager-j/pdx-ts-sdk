@@ -37,13 +37,13 @@ const effectEmitter = new Emitter(rules);
 const triggers = emitTriggers(
   triggerEmitter,
   docs.triggers,
-  lowerRuleTable(rules.triggers, docs.triggers, triggerEmitter, scopes, authority.triggers)
+  lowerRuleTable(rules.triggers, docs.triggers, triggerEmitter.lowerer, scopes, authority.triggers)
 );
 const effects = emitEffects(
   effectEmitter,
   docs.effects,
   scopes,
-  lowerRuleTable(rules.effects, docs.effects, effectEmitter, scopes, authority.effects),
+  lowerRuleTable(rules.effects, docs.effects, effectEmitter.lowerer, scopes, authority.effects),
   createEffectPolicy(rules),
   []
 );
@@ -63,7 +63,7 @@ function removedRuleTable(
 ): ReadonlyMap<string, LoweredRule> {
   const declarations = new Map([[key, removedDeclarations(category, key)]]);
   const ruleDocs = category === "trigger" ? docs.triggers : docs.effects;
-  return lowerRuleTable(declarations, ruleDocs, emitter, scopes, new Map());
+  return lowerRuleTable(declarations, ruleDocs, emitter.lowerer, scopes, new Map());
 }
 
 function row(overrides: Partial<ScriptGenerationGap> = {}): ScriptGenerationGap {

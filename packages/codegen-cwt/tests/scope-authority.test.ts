@@ -5,18 +5,14 @@ import { fileURLToPath } from "node:url";
 import { scopeOf, type RuleField } from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { readAliases, scopeIndex, type AliasDecl } from "@pdx-ts/codegen-cwt/cwt/rules";
-import {
-  canonicalThisScope,
-  scopeType,
-  splitRootMetadata,
-  withFrom,
-} from "@pdx-ts/codegen-cwt/emit/scope-context";
+import { scopeType, splitRootMetadata, withFrom } from "@pdx-ts/codegen-cwt/emit/scope-context";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseScopeLinks } from "@pdx-ts/codegen-cwt/logs/scopes";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRule } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
+import { canonicalThisScope } from "@pdx-ts/codegen-cwt/lower/scopes";
 import { compareToBaseline, loadBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
 import {
   reconcile,
@@ -255,7 +251,7 @@ describe("a rule whose two sources disagree", () => {
   const declarations = countryScopedDeclarations(key);
   const doc = { scopes: ["planet"] };
   const lower = (decision: RuleScopeDecision | undefined, decls = declarations) =>
-    lowerRule(key, decls, doc, emitter, scopes, decision);
+    lowerRule(key, decls, doc, emitter.lowerer, scopes, decision);
 
   it("takes the CWT scopes when the baseline selected the rules", () => {
     expect(lower({ resolution: "r", authority: "rules" }).scopes).toEqual(["country"]);
@@ -296,7 +292,7 @@ describe("the reviewed mixed resolution for export_modifier_to_variable", () => 
       key,
       rules.effects.get(key)!,
       docs.effects.get(key),
-      emitter,
+      emitter.lowerer,
       scopes,
       authority.effects.get(key)
     );
@@ -394,9 +390,9 @@ describe("a scope annotation naming a declared scope group", () => {
 
     expect(scope.type).toBe(spatialObjectType);
     expect(scope.scopes).toEqual(spatialObjectScopes);
-    expect(canonicalThisScope(emitter, "scope_group[spatial_object]", "test annotation")).toEqual(
-      spatialObjectScopes
-    );
+    expect(
+      canonicalThisScope(emitter.lowerer, "scope_group[spatial_object]", "test annotation")
+    ).toEqual(spatialObjectScopes);
   });
 
   it("lowers an ambient slot without disturbing the field's own scope", () => {
@@ -425,7 +421,7 @@ describe("a scope annotation naming a declared scope group", () => {
     );
 
     expect(() => scopeType(emitter, replaced, ctx)).toThrowError(
-      'names unknown scope "scope_group[not_a_group]"'
+      'names unknown scope group "not_a_group"'
     );
   });
 
@@ -449,6 +445,6 @@ describe("a scope annotation naming a declared scope group", () => {
   });
 
   it("matches a group name however the annotation spells it", () => {
-    expect(emitter.scopeGroup("SPATIAL_OBJECT")).not.toBeNull();
+    expect(emitter.lowerer.scopeGroup("SPATIAL_OBJECT")).not.toBeNull();
   });
 });
