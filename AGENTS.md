@@ -165,5 +165,4 @@ available Labels from Linear before filing. Use AskUserQuestion for Priority and
 
 ## Codex Code Review Rules
 
-Apply the `code-style` Skill when reviewing code. This is a public library meant to be consumed, so be especially
-strict about Rule #5 regarding JSDocs.
+Apply the `code-style` Skill (`.agents/skills/code-style/SKILL.md`) when reviewing code. Use the Diagnostics section of the Skill as a rubric, literally. Create a temporary file and list the diagnostics. As you review the diff, list any violations under the correct diagnostic item with a code citation and reasoning.
