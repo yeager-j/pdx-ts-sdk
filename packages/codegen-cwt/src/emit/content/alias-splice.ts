@@ -28,7 +28,7 @@
  */
 
 import type { DescentNode } from "../../corpus/observations.ts";
-import { isOptional, type RuleField, type ScopeContext } from "../../cwt/model.ts";
+import type { RuleField, ScopeContext } from "../../cwt/model.ts";
 import type { Emitter } from "../../emit/typescript.ts";
 import type { EmittedField } from "../../lower/content-model.ts";
 import { structuralSpliceOf } from "../../lower/rule-shapes.ts";
@@ -43,6 +43,8 @@ import type { FieldContext } from "../scope-context.ts";
 import {
   authoredLiterals,
   emittedMemberType,
+  fieldDocs,
+  memberOptional,
   mergeByName,
   pickOrdinary,
   projectStructuralSplice,
@@ -222,8 +224,8 @@ function projectNamedMembers(emitter: Emitter, context: AliasSpliceContext): Ali
       });
       continue;
     }
-    const optional = group.every((field) => isOptional(field.cardinality));
-    const docs = [...new Set(group.flatMap((field) => field.docs))];
+    const optional = memberOptional(group, override);
+    const docs = [...new Set(group.flatMap(fieldDocs))];
     const member = camelCase(name);
     draft.members.push(
       renderMember({ name: member, type: emittedMemberType(projection), optional, docs })
@@ -263,7 +265,7 @@ function projectNestedSplices(emitter: Emitter, context: AliasSpliceContext): Al
     if (draft.spliceCategories.includes(nestedCategory)) {
       continue;
     }
-    const projected = projectStructuralSplice(emitter, nestedCategory, nested.docs);
+    const projected = projectStructuralSplice(emitter, nestedCategory, fieldDocs(nested));
     if (projected === null) {
       draft.unsupported.push({
         path: `${context.category}.alias_name[${nestedCategory}]`,

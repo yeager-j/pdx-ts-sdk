@@ -379,24 +379,71 @@ describe("content type declarations", () => {
     ]);
   });
 
-  it("reads the absent-key discriminator off a zero-cardinality subtype body", () => {
+  it("reads the unset-flag selector off a zero-cardinality subtype body", () => {
     const swapped = traditions.get("swapped_tradition")?.subtypes ?? [];
-    expect(swapped.map((subtype) => [subtype.name, subtype.absentUnless])).toEqual([
-      ["not_inheriting_name", "inherit_name"],
-      ["not_inheriting_icon", "inherit_icon"],
-      ["not_inheriting_effects", "inherit_effects"],
+    expect(swapped.map((subtype) => [subtype.name, subtype.selector])).toEqual([
+      ["not_inheriting_name", { kind: "flag", field: "inherit_name", set: false }],
+      ["not_inheriting_icon", { kind: "flag", field: "inherit_icon", set: false }],
+      ["not_inheriting_effects", { kind: "flag", field: "inherit_effects", set: false }],
     ]);
   });
 
-  it("states no discriminator for a subtype body outside that one shape", () => {
+  it("reads set-flag, presence, and literal selectors off the vendored rules", () => {
+    const selectorsOf = (types: ReturnType<typeof loadContentTypesFrom>, name: string) =>
+      new Map(
+        (types.contentTypes.get(name)?.subtypes ?? []).map((subtype) => [
+          subtype.name,
+          subtype.selector,
+        ])
+      );
+    const technology = selectorsOf(
+      loadContentTypesFrom(CONFIG, ["common/technologies_consolidated.cwt"]),
+      "technology"
+    );
+    expect(technology.get("start")).toEqual({ kind: "flag", field: "start_tech", set: true });
+    expect(technology.get("repeatable")).toEqual({ kind: "present", field: "levels" });
+
+    const shipSizes = loadContentTypesFrom(CONFIG, ["common/ship_sizes.cwt"]);
+    const shipSize = selectorsOf(shipSizes, "ship_size");
+    expect(shipSize.get("starbase")).toEqual({
+      kind: "literal",
+      field: "class",
+      token: "shipclass_starbase",
+    });
+    // `## cardinality = 0..1  is_space_station = no`: the flag is not set.
+    expect(shipSize.get("ship")).toEqual({ kind: "flag", field: "is_space_station", set: false });
+    // `## cardinality = 0..1  is_designable = yes` is vacuous: it excludes nothing.
+    expect(shipSize.get("designable")).toBeNull();
+    // `is_bio_ship = bool` matches the field written with either value.
+    expect(shipSize.get("bio_ship")).toEqual({ kind: "present", field: "is_bio_ship" });
+    // `hero_ship = { }` selects on the block being written.
+    expect(shipSize.get("hero_ship")).toEqual({ kind: "present", field: "hero_ship" });
+
+    const missions = loadContentTypesFrom(CONFIG, ["common/missions.cwt"]);
+    // `category = <mission_category.contract>` selects by what the value names,
+    // not by the field being present.
+    expect(selectorsOf(missions, "mission").get("contract")).toBeNull();
+    expect(selectorsOf(missions, "mission_category").get("contract")).toEqual({
+      kind: "flag",
+      field: "is_contract",
+      set: true,
+    });
+  });
+
+  it("states no selector for a subtype body outside those shapes", () => {
     const subtypes = traits.get("trait")?.subtypes ?? [];
-    const absentUnless = new Map(subtypes.map((subtype) => [subtype.name, subtype.absentUnless]));
+    const selectors = new Map(subtypes.map((subtype) => [subtype.name, subtype.selector]));
     // `## cardinality = 0..0` but the field asserts `$any`, not `yes`.
-    expect(absentUnless.get("species_trait")).toBeNull();
-    // `auto_mod = yes` with no cardinality annotation: presence, not absence.
-    expect(absentUnless.get("auto_mod")).toBeNull();
-    // More than one field, so no single key's absence selects it.
-    expect(absentUnless.get("starting_ruler_trait")).toBeNull();
+    expect(selectors.get("species_trait")).toBeNull();
+    // More than one field, so no single key selects it.
+    expect(selectors.get("starting_ruler_trait")).toBeNull();
+    // Two fields in agreements.cwt's `has_parent`, an empty body in sprites.cwt.
+    const agreements = loadContentTypesFrom(CONFIG, ["common/agreements.cwt"]);
+    const presets = agreements.contentTypes.get("agreement_preset")?.subtypes ?? [];
+    expect(presets.find((subtype) => subtype.name === "has_parent")?.selector).toBeNull();
+    const sprites = loadContentTypesFrom(CONFIG, ["interface/sprites.cwt"]);
+    const sprite = sprites.contentTypes.get("sprite")?.subtypes ?? [];
+    expect(sprite.find((subtype) => subtype.name === "normal")?.selector).toBeNull();
   });
 });
 

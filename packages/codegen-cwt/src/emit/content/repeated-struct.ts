@@ -17,6 +17,7 @@ import type { FieldContext } from "../scope-context.ts";
 import {
   authoredLiterals,
   emittedMemberType,
+  fieldDocs,
   memberOptional,
   mergeByName,
   metadata,
@@ -199,9 +200,7 @@ function projectRepeatedStructMembers(
       continue;
     }
     const optional = memberOptional(group, undefined);
-    const docs = [
-      ...new Set([...group.flatMap((field) => field.docs), ...(projection.docs ?? [])]),
-    ];
+    const docs = [...new Set([...group.flatMap(fieldDocs), ...(projection.docs ?? [])])];
     members.push(
       renderMember({ name: member, type: emittedMemberType(projection), optional, docs })
     );

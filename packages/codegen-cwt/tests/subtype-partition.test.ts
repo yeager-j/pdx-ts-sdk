@@ -19,7 +19,7 @@ function subtype(name: string, keyFilter: string | null, negated = false): Conte
     keyFilter: keyFilter === null ? null : { key: keyFilter, negated },
     pushScope: null,
     displayName: null,
-    absentUnless: null,
+    selector: null,
   };
 }
 

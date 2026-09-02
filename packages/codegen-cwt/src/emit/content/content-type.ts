@@ -37,6 +37,7 @@ import type { FieldContext } from "../scope-context.ts";
 import {
   authoredLiterals,
   emittedMemberType,
+  fieldDocs,
   flatten,
   memberOptional,
   mergeByName,
@@ -512,7 +513,7 @@ function declareRepeatedStruct(
     return;
   }
   const optional = memberOptional(group, override);
-  const docLines = [...new Set(group.flatMap((field) => field.docs))];
+  const docLines = [...new Set(group.flatMap(fieldDocs))];
   draft.members.push(
     renderMember({ name: member, type: nested.memberType, optional, docs: docLines })
   );
@@ -610,11 +611,7 @@ function declareOrdinaryField(
     emitter.overlayAudit.applied("CONTENT_FIELD_DOCS", path);
   }
   const docLines = [
-    ...new Set([
-      ...(overlayDocs ?? []),
-      ...group.flatMap((field) => field.docs),
-      ...(projected.docs ?? []),
-    ]),
+    ...new Set([...(overlayDocs ?? []), ...group.flatMap(fieldDocs), ...(projected.docs ?? [])]),
   ];
   // The selector member is the scope parameter itself rather than a projected type.
   const selectorType = parameter?.selector?.member === member ? parameter.parameterName : undefined;

@@ -66,7 +66,8 @@ export function syntheticIdentityLocalisation(typeName: string): ContentType {
  * write `inherit_name`. So the slot is required unless `inheritName` is set,
  * which is neither CWT's unconditional `## required` nor the plain optional a
  * flattened reading of the same table produces. `readLocalisation` keeps the
- * provenance and `absentUnless` states the discriminator; this joins them.
+ * provenance and the subtype's unset-flag selector states the discriminator;
+ * this joins them.
  *
  * A slot the rules explicitly mark `## optional` states its own requiredness
  * and is left alone — `flavor` and `effects` sit in the same subtype blocks.
@@ -81,11 +82,11 @@ function conditionalRequirement(type: ContentType, entry: LocalisationPlanEntry)
   if (entry.subtype === null || entry.optional) {
     return null;
   }
-  const subtype = type.subtypes.find((candidate) => candidate.name === entry.subtype);
-  if (subtype?.absentUnless == null) {
+  const selector = type.subtypes.find((candidate) => candidate.name === entry.subtype)?.selector;
+  if (selector?.kind !== "flag" || selector.set) {
     return null;
   }
-  return camelCase(subtype.absentUnless);
+  return camelCase(selector.field);
 }
 
 /**

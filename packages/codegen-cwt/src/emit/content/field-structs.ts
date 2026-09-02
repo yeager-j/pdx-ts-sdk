@@ -32,6 +32,7 @@ import type { Emitter } from "../typescript.ts";
 import {
   arrayType,
   authoredLiterals,
+  fieldDocs,
   memberOptional,
   metadata,
   repeatsSiblings,
@@ -226,11 +227,7 @@ function projectNamedStructMembers(
       emitter.overlayAudit.applied("CONTENT_FIELD_DOCS", fieldPath);
     }
     const docs = [
-      ...new Set([
-        ...(overlayDocs ?? []),
-        ...group.flatMap((field) => field.docs),
-        ...(projected.docs ?? []),
-      ]),
+      ...new Set([...(overlayDocs ?? []), ...group.flatMap(fieldDocs), ...(projected.docs ?? [])]),
     ];
     members.push(
       renderMember({ name: member, type: emittedMemberType(projected), optional, docs })
