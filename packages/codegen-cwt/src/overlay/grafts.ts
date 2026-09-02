@@ -76,21 +76,6 @@ export const HAND_WRITTEN_CONTENT_DEFINERS = new Map<string, HandWrittenDefiner>
       definer: "defineEventChain",
     },
   ],
-  [
-    "mission",
-    {
-      reason:
-        "A contract category is a witness carried by another definition, and selecting one " +
-        "requires eventChain while unlocking contract-only fields. CWT declares the subtype " +
-        "relationship, but the mechanical definer flattens subtype fields into one optional body.",
-      module: "../content/missions.ts",
-      definer: "defineMission",
-      witness: {
-        member: "locationScope",
-        type: "MissionLocationScope | undefined",
-      },
-    },
-  ],
 ]);
 
 /** Identifies a `vanilla.*` reference surface supplied by hand-written SDK code. */

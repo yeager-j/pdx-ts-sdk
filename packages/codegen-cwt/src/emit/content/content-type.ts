@@ -11,6 +11,7 @@ import type { RuleField } from "../../cwt/model.ts";
 import type { ContentBody, ContentType } from "../../cwt/rules.ts";
 import { Emitter } from "../../emit/typescript.ts";
 import type { EmittedField } from "../../lower/content-model.ts";
+import { subtypeReferenceRefinements } from "../../lower/content-reference.ts";
 import type { AliasNameField } from "../../lower/rule-shapes.ts";
 import { partitionSubtypeFields } from "../../lower/subtype-partition.ts";
 import {
@@ -73,6 +74,8 @@ import {
   planSubtypeUnions,
   renderSubtypeArm,
   type ClaimableMember,
+  type ReferenceWitnessLookup,
+  type SubtypeArm,
   type SubtypeUnionsPlan,
 } from "./subtype-unions.ts";
 
@@ -158,6 +161,8 @@ export interface ContentEmission {
   readonly localisationAliases: readonly string[];
   /** Subtypes emitted as union arms, each with the selector that picks it. */
   readonly subtypeUnions: readonly string[];
+  /** The names of the subtypes the union arms model. */
+  readonly modelledSubtypes: readonly string[];
   /**
    * Members a subtype arm requires that the authoring surface leaves optional,
    * each with why the arm could not become a union.
@@ -930,6 +935,11 @@ function scopeParameterDeclarations(
             `\`${camelCase(declaredFrom.effect)}\` call for this definition to a`,
             "location of the same scope. Omitted, that ambient scope stays unreadable and the",
             "call sites stay unchecked.",
+            ...(declaredFrom.subtype === null
+              ? []
+              : [
+                  `Only a definition the \`${declaredFrom.subtype}\` subtype covers may declare it.`,
+                ]),
           ],
           "  "
         ) + `  ${declaredFrom.member}?: L;\n`;
@@ -1042,6 +1052,38 @@ function definitionType(
 }
 
 /**
+ * The arm with the declared FROM refused, where the declaration belongs to a
+ * subtype (`declaredFrom.subtype`) the arm does not select. The arm keeps the
+ * base's `L` so every callback is contextually typed the same way across the
+ * union — a definition's `(ctx) => …` needs one candidate type — and refuses
+ * the member that would infer it, so `L` can only be `undefined` there: the
+ * callbacks read no ambient location and the item stays off the checked
+ * call-site overloads.
+ */
+function withDeclaredFromWithheld(arm: SubtypeArm, parameter: ScopeParameter | null): SubtypeArm {
+  const declaredFrom = parameter?.declaredFrom;
+  const owner = declaredFrom?.subtype ?? null;
+  if (declaredFrom === undefined || owner === null) {
+    return arm;
+  }
+  if (arm.selected.some((subtype) => subtype.name === owner)) {
+    return arm;
+  }
+  return {
+    ...arm,
+    members: [
+      {
+        member: declaredFrom.member,
+        type: "never",
+        optional: true,
+        docs: [`Only a definition the \`${owner}\` subtype covers may declare it.`],
+      },
+      ...arm.members,
+    ],
+  };
+}
+
+/**
  * Assembles the registry's generated module text from the projected pieces, and
  * the names it exports.
  *
@@ -1098,7 +1140,7 @@ function contentTypeCode(
     unions.arms
       .map((arm) =>
         renderSubtypeArm(
-          arm,
+          withDeclaredFromWithheld(arm, parameter),
           `${indefiniteArticle(type.name)} ${type.name}`,
           fieldsName,
           surface.generic,
@@ -1168,6 +1210,55 @@ function flatRegistryReason(type: ContentType, parameter: ScopeParameter | null)
     return "the registry's definer infers a witness from the definition, which a union defeats";
   }
   return null;
+}
+
+/**
+ * A `declaredFrom.subtype` row must name a subtype the registry emits as an
+ * arm: the arms are what withhold the declaration from every other
+ * definition, and without one the row would claim a restriction the
+ * generated surface does not make.
+ */
+function assertDeclaredFromOwnerIsArm(
+  type: ContentType,
+  parameter: ScopeParameter | null,
+  unions: SubtypeUnionsPlan
+): void {
+  const owner = parameter?.declaredFrom?.subtype ?? null;
+  if (owner === null) {
+    return;
+  }
+  const modelled = unions.arms.some((arm) =>
+    arm.selected.some((subtype) => subtype.name === owner)
+  );
+  if (!modelled) {
+    throw new Error(
+      `Overlay declared FROM for ${type.name} is owned by subtype "${owner}", which the ` +
+        "registry does not emit as an arm, so nothing would withhold the declaration from " +
+        "other definitions"
+    );
+  }
+}
+
+/**
+ * Resolves a reference selector's `<type.subtype>` to the witness the
+ * referenced registry's authored items carry, from the same rules-derived
+ * refinement the capability returns the qualified reference by. `null` where
+ * the rules refine nothing for that subtype, which keeps the arm flat.
+ */
+function referenceWitnessLookup(emitter: Emitter): ReferenceWitnessLookup {
+  const refinements = subtypeReferenceRefinements(emitter.rules);
+  return (reference) => {
+    const typeName = reference.slice(0, reference.indexOf("."));
+    const refinement = refinements.get(typeName);
+    if (refinement === undefined || refinement.reference !== reference) {
+      return null;
+    }
+    return {
+      qualifiedType: emitter.refTypeName(reference),
+      baseType: emitter.refTypeName(typeName),
+      member: refinement.member,
+    };
+  };
 }
 
 /**
@@ -1270,11 +1361,18 @@ export function emitContentType(
     type,
     draft.fieldMembers,
     flatRegistryReason(type, parameter),
-    flatSubtypeArms(type)
+    flatSubtypeArms(type),
+    referenceWitnessLookup(emitter)
   );
   for (const subtype of unions.flatSubtypesApplied) {
     emitter.overlayAudit.applied("FLAT_SUBTYPE_ARMS", `${type.name}.${subtype}`);
   }
+  // The arm spells the qualified reference, so this file imports it and
+  // `refs.ts` declares it, before either module is written.
+  for (const reference of unions.references) {
+    emitter.useRef(reference);
+  }
+  assertDeclaredFromOwnerIsArm(type, parameter, unions);
   applySubtypeUnions(draft, unions);
   const names = contentTypeNames(type, parameter, unions.arms.length > 0);
   const surface = scopeParameterDeclarations(type, parameter);
@@ -1347,6 +1445,9 @@ export function emitContentType(
     scopeParameter: parameter,
     localisationAliases: localisationRows.map(omissionLine),
     subtypeUnions: unions.modelled,
+    modelledSubtypes: [
+      ...new Set(unions.arms.flatMap((arm) => arm.selected.map((subtype) => subtype.name))),
+    ],
     subtypeCollapses: draft.collapsed.map(omissionLine),
     localisationRenames: draft.localisationRenames,
     patchExclusions: patchable ? draft.patchExclusions : [],

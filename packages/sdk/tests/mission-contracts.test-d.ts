@@ -31,11 +31,23 @@ describe("contract missions", () => {
 
     // @ts-expect-error — a contract category requires eventChain
     mod.mission("missing_chain", { category, picture: "GFX_event_pictures_space_battle" });
+    // @ts-expect-error — contract-only fields are unavailable on an ordinary mission
     mod.mission("ordinary", {
       category: ordinary,
       picture: "GFX_event_pictures_space_battle",
-      // @ts-expect-error — contract-only fields are unavailable on an ordinary mission
       timeToAccept: 30,
+    });
+    mod.mission("plain", { category: ordinary, picture: "GFX_event_pictures_space_battle" });
+    // @ts-expect-error — only a contract declares the location its callbacks read
+    mod.mission("located_plain", {
+      category: ordinary,
+      picture: "GFX_event_pictures_space_battle",
+      locationScope: "planet",
+    });
+    mod.mission("uncategorised", { picture: "GFX_event_pictures_space_battle" });
+    mod.mission("vanilla_category", {
+      category: "a_vanilla_category",
+      picture: "GFX_event_pictures_space_battle",
     });
   });
 

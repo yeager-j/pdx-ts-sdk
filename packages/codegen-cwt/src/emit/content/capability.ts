@@ -7,7 +7,6 @@
  */
 
 import { docComment, kebabCase, pascalCase } from "../../naming.ts";
-import { CONTENT_SUBTYPE_REFERENCE_REFINEMENTS } from "../../overlay/index.ts";
 import { importList } from "../../render/symbols.ts";
 import type { RegistryDefinerPlan } from "./definer-plan.ts";
 
@@ -129,8 +128,8 @@ function contentCapabilityImports(
       .join("") +
     importList(
       "./refs.ts",
-      [...CONTENT_SUBTYPE_REFERENCE_REFINEMENTS.values()].map(
-        (refinement) => `${pascalCase(refinement.reference)}Ref`
+      plans.flatMap((plan) =>
+        plan.refinedReference === null ? [] : [`${pascalCase(plan.refinedReference)}Ref`]
       )
     ) +
     (shapeMintTypes.length === 0 && exactNameRows.length === 0

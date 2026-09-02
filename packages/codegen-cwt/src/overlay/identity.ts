@@ -1,7 +1,12 @@
 /**
  * Registry-identity overlay rows: the witness a registry's item type carries
- * beside its def, subtype-qualified references and vanilla id projections,
- * and the canonical file stems SDK-121 fixed.
+ * beside its def, vanilla subtype id projections, and the canonical file
+ * stems SDK-121 fixed.
+ *
+ * A subtype the rules reference qualified and one flag selects
+ * (`<mission_category.contract>`, `is_contract = yes`) needs no row: the
+ * capability's qualified overload and the flag's witness are derived from the
+ * rules by `lower/content-reference.ts`.
  *
  * See `./index.ts` for what this directory is and how a row here earns its
  * place.
@@ -118,63 +123,6 @@ export const CONTENT_WITNESSES = new Map<string, ContentWitness>([
         "the author writes for these seven fields, which a mechanically-typed Def field cannot " +
         "carry. defineEconomicCategory Omits the mechanical members and re-admits them through a " +
         "const-inferred W instead.",
-    },
-  ],
-  [
-    "mission_category",
-    {
-      mode: "wraps",
-      type: "boolean",
-      member: "isContract",
-      reason:
-        "The mission definer distinguishes authored contract categories from ordinary ones and " +
-        "requires eventChain only for the former, so the literal is_contract value must survive " +
-        "instead of widening back to boolean on the returned item.",
-    },
-  ],
-]);
-
-/**
- * Preserves a qualified CWT subtype reference when a definition selects that subtype.
- * The refined capability result remains assignable to fields that require the qualified reference.
- */
-export interface ContentSubtypeReferenceRefinement {
-  /** Authored boolean member that selects the CWT subtype. */
-  readonly member: string;
-  /** Qualified CWT reference carried by definitions that select the subtype. */
-  readonly reference: string;
-  /** Why the general registry reference is not sufficient at consuming fields. */
-  readonly reason: string;
-}
-
-/**
- * Attribute-selected subtypes whose capability return must retain a qualified
- * reference. The rules use these qualified references at consuming fields, so
- * widening the returned item to the registry's general reference would force
- * authors through the field's raw-string escape hatch.
- */
-export const CONTENT_SUBTYPE_REFERENCE_REFINEMENTS = new Map<
-  string,
-  ContentSubtypeReferenceRefinement
->([
-  [
-    "component_set",
-    {
-      member: "requiredComponentSet",
-      reference: "component_set.required_component",
-      reason:
-        "ship_size.required_component_set accepts only the required_component subtype, which " +
-        "component_set selects with required_component_set = yes.",
-    },
-  ],
-  [
-    "mission_category",
-    {
-      member: "isContract",
-      reference: "mission_category.contract",
-      reason:
-        "A mission using an SDK-authored contract category must require event_chain and expose " +
-        "contract-only fields, so is_contract = yes must survive as a qualified reference.",
     },
   ],
 ]);

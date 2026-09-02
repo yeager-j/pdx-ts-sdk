@@ -8,7 +8,11 @@
 import { Emitter } from "../../emit/typescript.ts";
 import type { EmittedField } from "../../lower/content-model.ts";
 import { pascalCase } from "../../naming.ts";
-import { CONTENT_SCOPE_PARAMETERS, type ContentScopeParameter } from "../../overlay/index.ts";
+import {
+  CONTENT_SCOPE_PARAMETERS,
+  type ContentScopeParameter,
+  type HandWrittenDefiner,
+} from "../../overlay/index.ts";
 import type { AmbientScopeKey } from "../../special-scope-paths.ts";
 import type { FieldContext } from "../scope-context.ts";
 
@@ -22,6 +26,8 @@ export interface DeclaredFrom {
   readonly scopes: readonly string[];
   /** Definition members and ambient slots that receive this scope. */
   readonly members: Readonly<Record<string, AmbientScopeKey>>;
+  /** The one subtype whose definitions may declare it, or `null` for any definition. */
+  readonly subtype: string | null;
   /** Effect whose argument supplies the declared location. */
   readonly effect: string;
 }
@@ -57,6 +63,49 @@ export interface ScopeParameter {
   readonly selector?: NonNullable<ContentScopeParameter["selector"]>;
   /** Optional declaration tying callback FROM to a starting effect argument. */
   readonly declaredFrom?: DeclaredFrom;
+}
+
+/** The contract a registry's item carries beside its def. */
+export interface CarriedWitness {
+  /** Item property that carries the declaration. */
+  readonly member: string;
+  /** TypeScript type of the property. */
+  readonly type: string;
+  /** The definer's type parameter the property is typed by, when generated. */
+  readonly parameter?: string;
+}
+
+/**
+ * The declared contract a registry's item carries beside its def, or `null`.
+ *
+ * A generated definer learns it from a carried scope member or `declaredFrom`;
+ * a hand-written one states it on its graft row, since nothing in the rules
+ * mentions the property it returns. Definer planning types the item by it
+ * and the effect emitter refuses that item on the generated fallback beneath
+ * a hand-written overload by it, so the two read one answer.
+ */
+export function carriedWitnessOf(
+  scoped: ScopeParameter | null,
+  graft: HandWrittenDefiner | undefined
+): CarriedWitness | null {
+  if (graft?.witness !== undefined) {
+    return graft.witness;
+  }
+  if (scoped === null) {
+    return null;
+  }
+  const scopeMember = scoped.authoringMember;
+  if (scopeMember?.carriesWitness === true) {
+    return {
+      member: scopeMember.member,
+      type: scoped.typeName,
+      parameter: scoped.parameterName,
+    };
+  }
+  const declaredFrom = scoped.declaredFrom;
+  return declaredFrom === undefined
+    ? null
+    : { member: declaredFrom.member, type: `${declaredFrom.typeName} | undefined`, parameter: "L" };
 }
 
 /**
@@ -103,6 +152,7 @@ function declaredFromOf(
     typeName: `${pascalCase(registry)}${pascalCase(row.member)}`,
     scopes: [...new Set(scopes)].sort(),
     members: row.members,
+    subtype: row.subtype ?? null,
     effect: row.effect,
   };
 }

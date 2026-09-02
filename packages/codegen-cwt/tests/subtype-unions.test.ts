@@ -68,6 +68,35 @@ const under = (subtypeName: string, negated = false): SubtypeCondition => ({
 
 const START = subtype("start", { kind: "flag", field: "start_tech", set: true });
 const REPEATABLE = subtype("repeatable", { kind: "present", field: "levels" });
+const CONTRACT = subtype("contract", {
+  kind: "reference",
+  field: "category",
+  reference: "mission_category.contract",
+});
+
+/** The witness an authored `<mission_category.contract>` carries, as the emitter resolves it. */
+const contractWitness = (reference: string) =>
+  reference === "mission_category.contract"
+    ? {
+        qualifiedType: "MissionCategoryContractRef",
+        baseType: "MissionCategoryRef",
+        member: "isContract",
+      }
+    : null;
+
+/** The mission body as the rules declare it, already inlined. */
+function missionMembers(): ClaimableMember[] {
+  return [
+    member("category", [named("category", 0)], "MissionCategoryRef | string"),
+    member(
+      "event_chain",
+      [named("event_chain", 0), named("event_chain", 1, [under("contract")])],
+      "EventChainRef | string"
+    ),
+    member("time_to_accept", [named("time_to_accept", 0, [under("contract")])], "number"),
+    member("picture", [named("picture")], "string"),
+  ];
+}
 
 /** The technology body as the rules declare it, already inlined. */
 function technologyMembers(): ClaimableMember[] {
@@ -269,6 +298,81 @@ describe("planSubtypeUnions", () => {
     expect(plan.collapsed).toEqual([]);
     expect(plan.arms).toEqual([]);
     expect(plan.modelled).toEqual([]);
+  });
+
+  it("selects a reference arm by the qualified reference and refuses its witness on the other", () => {
+    const plan = planSubtypeUnions(
+      contentType("mission", [CONTRACT]),
+      missionMembers(),
+      null,
+      new Map(),
+      contractWitness
+    );
+    expect(plan.modelled).toEqual(["contract (`category = <mission_category.contract>`)"]);
+    expect(plan.references).toEqual(["mission_category.contract"]);
+    expect(plan.collapsed).toEqual([]);
+    expect(plan.arms.map((entry) => entry.typeName)).toEqual([
+      "MissionContractFields",
+      "MissionPlainFields",
+    ]);
+    const spelled = (armName: string, name: string) =>
+      plan.arms
+        .find((entry) => entry.typeName === armName)!
+        .members.find((entry) => entry.member === name)!;
+    expect(spelled("MissionContractFields", "category")).toMatchObject({
+      type: "MissionCategoryContractRef",
+      optional: false,
+    });
+    expect(spelled("MissionContractFields", "event_chain")).toMatchObject({
+      type: "EventChainRef | string",
+      optional: false,
+    });
+    expect(spelled("MissionContractFields", "time_to_accept")).toMatchObject({
+      type: "number",
+      optional: true,
+    });
+    // The plain arm still takes a raw id, and an authored category only when
+    // its witness does not select the subtype.
+    expect(spelled("MissionPlainFields", "category")).toMatchObject({
+      type: "(MissionCategoryRef & { readonly def?: { readonly isContract?: false } }) | string",
+      optional: true,
+    });
+    expect(spelled("MissionPlainFields", "event_chain")).toMatchObject({
+      optional: true,
+      docs: ["Required when `category` names a `<mission_category.contract>`."],
+    });
+    expect(spelled("MissionPlainFields", "time_to_accept")).toMatchObject({ type: "never" });
+  });
+
+  it("keeps a reference arm flat where no authored item witnesses the referenced subtype", () => {
+    const plan = planSubtypeUnions(
+      contentType("mission", [CONTRACT]),
+      missionMembers(),
+      null,
+      new Map(),
+      () => null
+    );
+    expect(plan.arms).toEqual([]);
+    expect(plan.references).toEqual([]);
+    expect(plan.collapsed.map((row) => row.reason)).toEqual([
+      "required under subtype[contract], authored optional: the subtype selects by a " +
+        "`<mission_category.contract>`, and no authored item carries that subtype as a witness",
+    ]);
+  });
+
+  it("rejects a reference discriminant whose type does not spell the referenced reference", () => {
+    const members = missionMembers().map((entry) =>
+      entry.name === "category" ? { ...entry, type: "string" } : entry
+    );
+    expect(() =>
+      planSubtypeUnions(
+        contentType("mission", [CONTRACT]),
+        members,
+        null,
+        new Map(),
+        contractWitness
+      )
+    ).toThrow("does not spell the referenced registry's `MissionCategoryRef` arm");
   });
 
   it("leaves a literal selector and an unauthored selector field flat", () => {

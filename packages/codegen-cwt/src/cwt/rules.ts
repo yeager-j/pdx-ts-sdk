@@ -93,12 +93,14 @@ export interface ContentSubtype {
  * `flag` is `X = yes` (`set`), or `X = no` under `0..1` / `X = yes` under
  * `0..0` (not set). `present` is `X = <type>` or `X = { }`: the subtype applies
  * when the field is written at all. `literal` is `X = token`: the field holds
- * that exact value.
+ * that exact value. `reference` is `X = <type.subtype>`: the field names a
+ * definition of that subtype.
  */
 export type SubtypeSelector =
   | { readonly kind: "flag"; readonly field: string; readonly set: boolean }
   | { readonly kind: "present"; readonly field: string }
-  | { readonly kind: "literal"; readonly field: string; readonly token: string };
+  | { readonly kind: "literal"; readonly field: string; readonly token: string }
+  | { readonly kind: "reference"; readonly field: string; readonly reference: string };
 
 /** A CWT `type[...]` declaration and its file-layout metadata. */
 export interface ContentType {
@@ -663,9 +665,8 @@ function readLocalisation(
  * Deliberately narrow: exactly one field, in one of the shapes
  * {@link SubtypeSelector} names. Anything else returns `null` — the body may
  * still be a real discriminator, but an approximation here would silently
- * mis-declare requiredness downstream. A `yes` under `0..1` is vacuous, and a
- * subtype-qualified reference (`<mission_category.contract>`) selects by what
- * the value names rather than by its presence, so both stay unread.
+ * mis-declare requiredness downstream. A `yes` under `0..1` is vacuous, so it
+ * stays unread.
  */
 function subtypeSelectorOf(subtype: CwtAssignment): SubtypeSelector | null {
   if (subtype.value.kind !== "block" || subtype.value.nodes.length !== 1) {
@@ -701,7 +702,7 @@ function subtypeSelectorOf(subtype: CwtAssignment): SubtypeSelector | null {
     return { kind: "literal", field, token: type.text };
   }
   if (type.kind === "typeRef" && type.name.includes(".")) {
-    return null;
+    return { kind: "reference", field, reference: type.name };
   }
   return { kind: "present", field };
 }

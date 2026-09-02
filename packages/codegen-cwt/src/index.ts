@@ -42,7 +42,12 @@ import { loadRules } from "./load-rules.ts";
 import { parseModifierDocs } from "./logs/modifier-docs.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";
-import { referenceNameOf, typesReferencedBySubtype } from "./lower/content-reference.ts";
+import {
+  referenceNameOf,
+  subtypeReferenceRefinements,
+  typesReferencedBySubtype,
+  type SubtypeReferenceRefinement,
+} from "./lower/content-reference.ts";
 import { emitContentShapeProtocol } from "./lower/content-shape.ts";
 import { classifyLinks } from "./lower/links.ts";
 import { lowerRuleTable } from "./lower/lowered-rule.ts";
@@ -63,7 +68,6 @@ import {
   CONTENT_FIELD_OVERRIDES,
   CONTENT_PATCH_REGISTRIES,
   CONTENT_SCOPE_PARAMETERS,
-  CONTENT_SUBTYPE_REFERENCE_REFINEMENTS,
   CONTENT_WITNESSES,
   EXACT_NAME_MINTS,
   FIELD_WIDENINGS,
@@ -114,6 +118,7 @@ interface EmittedManifestContent {
   readonly manifest: (typeof CONTENT_MANIFEST)[number];
   readonly registry: string;
   readonly referenceName: string;
+  readonly referenceRefinement: SubtypeReferenceRefinement | null;
   readonly keyword: string | undefined;
   readonly type: ContentType;
   readonly emission: ContentEmission;
@@ -265,6 +270,7 @@ function emitManifestContents(rules: RuleSet, emitter: Emitter): ManifestContent
   const contents: EmittedManifestContent[] = [];
   const registryNames = new Set<string>();
   const subtypeReferencedTypes = typesReferencedBySubtype(rules);
+  const refinements = subtypeReferenceRefinements(rules);
 
   for (const manifestEntry of CONTENT_MANIFEST) {
     const entry: ContentManifestEntry = manifestEntry;
@@ -281,10 +287,20 @@ function emitManifestContents(rules: RuleSet, emitter: Emitter): ManifestContent
     emitter.beginFile();
     const emission = emitContentType(emitter, type, body, registry, entry.as);
     const usage = emitter.endFile();
+    // A registry that is one subtype of its type has nothing to refine: its
+    // brand is already the qualified one wherever the rules reference it.
+    const referenceRefinement =
+      entry.as === undefined ? (refinements.get(entry.type) ?? null) : null;
+    if (referenceRefinement !== null) {
+      // The capability module imports the qualified reference, so the record
+      // that carries the refinement is what puts it in `refs.ts`.
+      emitter.usedRefs.add(referenceRefinement.reference);
+    }
     contents.push({
       manifest: manifestEntry,
       registry,
       referenceName: referenceNameOf(type, entry.as, subtypeReferencedTypes),
+      referenceRefinement,
       keyword: entry.keyword,
       type,
       emission,
@@ -366,10 +382,6 @@ function assertGenerationPolicies(
       { tableId: "FILE_STEM_OVERLAYS", keys: FILE_STEM_OVERLAYS.keys() },
       { tableId: "HAND_WRITTEN_CONTENT_DEFINERS", keys: HAND_WRITTEN_CONTENT_DEFINERS.keys() },
       { tableId: "CONTENT_CONTRIBUTION_SINKS", keys: CONTENT_CONTRIBUTION_SINKS.keys() },
-      {
-        tableId: "CONTENT_SUBTYPE_REFERENCE_REFINEMENTS",
-        keys: CONTENT_SUBTYPE_REFERENCE_REFINEMENTS.keys(),
-      },
       { tableId: "CONTENT_PATCH_REGISTRIES", keys: CONTENT_PATCH_REGISTRIES.keys() },
       { tableId: "CONTENT_SCOPE_PARAMETERS", keys: CONTENT_SCOPE_PARAMETERS.keys() },
       { tableId: "CONTENT_WITNESSES", keys: CONTENT_WITNESSES.keys() },
@@ -526,7 +538,12 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
     "Scope links not emitted",
     classifiedLinks.skipped.map((entry) => `${entry.name} — ${entry.detail}`)
   );
-  reportSection(report, "Effect field types replaced by the overlay", effects.fieldTypeOverrides);
+  reportSection(report, "Effect value types replaced by the overlay", effects.valueTypeOverrides);
+  reportSection(
+    report,
+    "Effect arguments whose generated fallback refuses a carried witness (derived from the seams)",
+    effects.witnessExclusions
+  );
   reportSection(
     report,
     "Effect field cardinality replaced by the overlay",
@@ -565,6 +582,18 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
     [...emitter.lowerer.unknownScopeGroups].sort()
   );
   reportSection(report, "Content definers taken from the hand-written grafts", definers.grafted);
+  reportSection(
+    report,
+    "Subtype references refined from the rules (capability returns the qualified reference)",
+    contents.flatMap((content) =>
+      content.referenceRefinement === null
+        ? []
+        : [
+            `${content.registry}: <${content.referenceRefinement.reference}> when ` +
+              `${content.referenceRefinement.member} is true`,
+          ]
+    )
+  );
   reportSection(
     report,
     "Body fields renamed off a colliding localization slot",
@@ -938,9 +967,6 @@ async function main(): Promise<void> {
       VANILLA_REF_EXTRAS,
       new Map(contents.map((content) => [content.registry, content.referenceName]))
     );
-    for (const refinement of CONTENT_SUBTYPE_REFERENCE_REFINEMENTS.values()) {
-      emitter.usedRefs.add(refinement.reference);
-    }
 
     const modifiers = await writeSharedRuleModules({
       output,

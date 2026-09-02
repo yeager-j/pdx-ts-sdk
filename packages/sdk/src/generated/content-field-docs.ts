@@ -3723,7 +3723,11 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     MISSION_FIELDS,
     {
-      category: { optional: true, docs: [], memberType: "MissionCategoryRef | string" },
+      category: {
+        optional: true,
+        docs: ["Selects the `contract` subtype (CWT `subtype[contract]`)."],
+        memberType: "MissionCategoryRef | string",
+      },
       conditionalDesc: {
         optional: true,
         docs: [
@@ -3754,7 +3758,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [
           "The event chain this mission is part of. (Only REQUIRED for contracts)",
-          "Only when mission subtype `contract` applies.",
+          "Required when `category` names a `<mission_category.contract>`.",
         ],
         memberType: "EventChainRef | string",
       },
@@ -3942,7 +3946,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [
           "The image used in the list when players Issue Contracts. Not needed for internal contracts.",
-          "Only when mission subtype `contract` applies.",
+          "Only when `category` names a `<mission_category.contract>`.",
         ],
         memberType: "SpriteRef | string",
       },
@@ -3951,7 +3955,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [
           "Sets the maximum amount of days to accept the mission before it times out. Only used for contracts.",
           "Default: no time limit",
-          "Only when mission subtype `contract` applies.",
+          "Only when `category` names a `<mission_category.contract>`.",
         ],
         memberType: "number",
       },
@@ -3960,13 +3964,13 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [
           "Sets the maximum amount of days to complete the mission before it fails.",
           "Default: no time limit",
-          "Only when mission subtype `contract` applies.",
+          "Only when `category` names a `<mission_category.contract>`.",
         ],
         memberType: "number",
       },
       aiBehaviour: {
         optional: true,
-        docs: ["Only when mission subtype `contract` applies."],
+        docs: ["Only when `category` names a `<mission_category.contract>`."],
         memberType: '"attack" | "raid"',
         literals: ["attack", "raid"],
       },
@@ -3977,7 +3981,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "this: issuer",
           "from: the scope from the mission",
           "fromfrom: contract location, if applicable",
-          "Only when mission subtype `contract` applies.",
+          "Only when `category` names a `<mission_category.contract>`.",
         ],
         memberType:
           'EffectBlock<"country", { readonly root: "country"; readonly from: "country"; readonly fromfrom: NoInfer<L> }>',
@@ -3990,7 +3994,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "prev: issuer if applicable (the country that issued the contract)",
           "from: the scope from the mission",
           "fromfrom: contract location, if applicable",
-          "Only when mission subtype `contract` applies.",
+          "Only when `category` names a `<mission_category.contract>`.",
         ],
         memberType:
           'EffectBlock<"country", { readonly root: "country"; readonly from: "country"; readonly fromfrom: NoInfer<L>; readonly prev: "country" }>',
@@ -4002,7 +4006,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "If the weight is equivalent between contracts, the closest contract will be selected.",
           "he AI will heavily prefer picking up player-issued contracts adding the PLAYER_ISSUED_CONTRACT_PREFERENCE define to the weight.",
           "this: operator country from: contract location fromfrom: issuer country",
-          "Only when mission subtype `contract` applies.",
+          "Only when `category` names a `<mission_category.contract>`.",
         ],
         memberType:
           'WithFrom<WeightBlock<"country">, "country", { readonly root: "country"; readonly from: NoInfer<L>; readonly fromfrom: "country" }>',
@@ -7033,12 +7037,6 @@ export const CONTENT_FIELD_OMISSIONS: Readonly<
       path: "mission.localisation.desc",
       kind: "collapsed",
       reason: "(desc) has no `$` id placeholder — not a static <id>-keyed slot, excluded",
-    },
-    {
-      path: "mission.event_chain",
-      kind: "collapsed",
-      reason:
-        "required under subtype[contract], authored optional: the subtype's body is not one readable field",
     },
   ],
   mission_category: [],

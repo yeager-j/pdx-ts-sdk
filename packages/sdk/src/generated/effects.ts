@@ -422,7 +422,7 @@ export interface AddStageModifierEffectsExtension<S extends StaticModifierScope>
 
 /** The arguments `exportModifierDurationToVariable` takes, as the rules declare them. */
 export type ExportModifierDurationToVariableArgs = {
-  modifier: ModifierRef | (StaticModifierRef & { hostScope?: never }) | string;
+  modifier: ModifierRef | string | (StaticModifierRef & { hostScope?: never });
   variable: Variable;
 };
 /**

@@ -6,7 +6,8 @@
  * required, only for definitions the subtype covers. Read flat, every such
  * field is an optional member with a doc line, and a non-start technology
  * without a `cost` typechecks. Where a subtype's selector is one readable
- * field an author writes (`start_tech = yes`, a written `levels`), the
+ * field an author writes (`start_tech = yes`, a written `levels`, a
+ * `category` naming a `<mission_category.contract>`), the
  * registry's fields type becomes a union instead: one named interface per
  * way the modelled subtypes can apply together, each extending the shared
  * base and spelling the arm members' requiredness as the rules declare it.
@@ -103,6 +104,27 @@ export interface SubtypeUnionsPlan {
    * anyway, changes nothing and is stale.
    */
   readonly flatSubtypesApplied: readonly string[];
+  /** The qualified references the arms spell as discriminants, for the emitter to import. */
+  readonly references: readonly string[];
+}
+
+/**
+ * How a reference-selected subtype reads its discriminant: the qualified
+ * reference the selected arm requires, and the witness member an authored
+ * item of the referenced registry carries, which the unselected arm excludes.
+ *
+ * A branded reference alone cannot tell the arms apart: an authored
+ * `<mission_category.contract>` item is structurally a `MissionCategoryRef`
+ * too, so without the exclusion the plain arm would accept a contract
+ * category and its required `eventChain` would go unchecked.
+ */
+export interface SubtypeReferenceWitness {
+  /** The qualified reference type, `MissionCategoryContractRef`. */
+  readonly qualifiedType: string;
+  /** The unqualified reference type, `MissionCategoryRef`. */
+  readonly baseType: string;
+  /** The referenced definition's flag member selecting the subtype, `isContract`. */
+  readonly member: string;
 }
 
 /** A subtype the planner can model, with its discriminant member resolved. */
@@ -110,6 +132,8 @@ interface ModelledSubtype {
   readonly subtype: ContentSubtype;
   readonly selector: SubtypeSelector;
   readonly discriminant: ClaimableMember;
+  /** Set for a `reference` selector. */
+  readonly reference?: SubtypeReferenceWitness;
 }
 
 function singleCondition(field: RuleField): SubtypeCondition | null {
@@ -179,6 +203,8 @@ function selectedPhrase(modelled: ModelledSubtype): string {
       return `\`${member}\` is set`;
     case "literal":
       return `\`${member}\` is \`${JSON.stringify(modelled.selector.token)}\``;
+    case "reference":
+      return `\`${member}\` names a \`<${modelled.selector.reference}>\``;
   }
 }
 
@@ -191,6 +217,8 @@ function selectorSpelling(selector: SubtypeSelector): string {
       return `a written \`${selector.field}\``;
     case "literal":
       return `\`${selector.field} = ${selector.token}\``;
+    case "reference":
+      return `\`${selector.field} = <${selector.reference}>\``;
   }
 }
 
@@ -250,6 +278,13 @@ function discriminantArms(modelled: ModelledSubtype): {
   if (selector.kind === "present") {
     return { selected: written, unselected: absent };
   }
+  if (selector.kind === "reference") {
+    const witness = modelled.reference!;
+    return {
+      selected: { member, type: witness.qualifiedType, optional: false },
+      unselected: { member, type: withoutSubtypeWitness(type, witness), optional: true },
+    };
+  }
   const token = JSON.stringify(selector.token);
   return {
     selected: { member, type: token, optional: false },
@@ -258,13 +293,34 @@ function discriminantArms(modelled: ModelledSubtype): {
 }
 
 /**
- * Whether a subtype can be a union: its selector is a flag or a written field
- * that the registry authors as a scalar member. A literal selector's negation
- * is only sound over a closed literal union, so it stays flat.
+ * The discriminant's flat type with the referenced registry's own reference
+ * arm narrowed to items whose witness does not select the subtype. The flat
+ * type is the union `typeOf` spelled — `MissionCategoryRef | string` — so the
+ * arm to wrap is found by name and every other arm (the raw id) stays as is.
+ */
+function withoutSubtypeWitness(flatType: string, witness: SubtypeReferenceWitness): string {
+  const excluded = `(${witness.baseType} & { readonly def?: { readonly ${witness.member}?: false } })`;
+  const arms = flatType.split(" | ");
+  if (!arms.includes(witness.baseType)) {
+    throw new Error(
+      `A reference-selected subtype's discriminant is typed \`${flatType}\`, which does not ` +
+        `spell the referenced registry's \`${witness.baseType}\` arm to narrow`
+    );
+  }
+  return arms.map((arm) => (arm === witness.baseType ? excluded : arm)).join(" | ");
+}
+
+/**
+ * Whether a subtype can be a union: its selector is a flag, a written field,
+ * or a qualified reference whose registry witnesses the subtype on its
+ * authored items, and the registry authors the selector field as a member. A
+ * literal selector's negation is only sound over a closed literal union, so
+ * it stays flat.
  */
 function modelledSubtypeOf(
   subtype: ContentSubtype,
-  members: readonly ClaimableMember[]
+  members: readonly ClaimableMember[],
+  referenceWitness: ReferenceWitnessLookup
 ): ModelledSubtype | { readonly reason: string } {
   const selector = subtype.selector;
   if (selector === null) {
@@ -277,8 +333,25 @@ function modelledSubtypeOf(
   if (discriminant === undefined) {
     return { reason: `its selector field \`${selector.field}\` is not an authored member` };
   }
-  return { subtype, selector, discriminant };
+  if (selector.kind !== "reference") {
+    return { subtype, selector, discriminant };
+  }
+  const reference = referenceWitness(selector.reference);
+  if (reference === null) {
+    return {
+      reason:
+        `the subtype selects by a \`<${selector.reference}>\`, and no authored item carries ` +
+        "that subtype as a witness",
+    };
+  }
+  return { subtype, selector, discriminant, reference };
 }
+
+/**
+ * Resolves a qualified reference to the witness its registry's authored items
+ * carry, or `null` where nothing selects that subtype by one flag.
+ */
+export type ReferenceWitnessLookup = (reference: string) => SubtypeReferenceWitness | null;
 
 /** Why one declaration's arm cannot be a union, or `null` when it can. */
 function unmodelledReason(
@@ -420,14 +493,17 @@ export function planSubtypeUnions(
   type: ContentType,
   members: readonly ClaimableMember[],
   registryReason: string | null,
-  flatSubtypes: ReadonlyMap<string, string>
+  flatSubtypes: ReadonlyMap<string, string>,
+  referenceWitness: ReferenceWitnessLookup = () => null
 ): SubtypeUnionsPlan {
   const verdicts = new Map(
     type.subtypes.map((subtype) => {
       const flatReason = registryReason ?? flatSubtypes.get(subtype.name);
       return [
         subtype.name,
-        flatReason === undefined ? modelledSubtypeOf(subtype, members) : { reason: flatReason },
+        flatReason === undefined
+          ? modelledSubtypeOf(subtype, members, referenceWitness)
+          : { reason: flatReason },
       ];
     })
   );
@@ -447,7 +523,7 @@ export function planSubtypeUnions(
       (subtype) =>
         flatSubtypes.has(subtype.name) &&
         armed.has(subtype.name) &&
-        !("reason" in modelledSubtypeOf(subtype, members))
+        !("reason" in modelledSubtypeOf(subtype, members, referenceWitness))
     )
     .map((subtype) => subtype.name);
 
@@ -570,6 +646,9 @@ export function planSubtypeUnions(
     claimedDocs,
     collapsed,
     flatSubtypesApplied,
+    references: modelled.flatMap((entry) =>
+      entry.selector.kind === "reference" ? [entry.selector.reference] : []
+    ),
   };
 }
 

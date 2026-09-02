@@ -58,11 +58,10 @@ declare module "../../generated/effects.ts" {
      *
      * The generated signature remains beneath this one for vanilla or
      * third-party project ids and for projects that declare no location, none
-     * of which carry a contract to check. The overlay's
-     * `EFFECT_FIELD_TYPE_OVERRIDES` row for `enable_special_project.name`
-     * refuses a `locationScope`-bearing ref there, so a declaration can only
-     * ever be accepted by this overload — which is what keeps a contradicted
-     * location a compile error rather than a fall-through.
+     * of which carry a contract to check. Codegen derives from this seam that
+     * the generated `name` refuses a `locationScope`-bearing ref, so a
+     * declaration can only ever be accepted by this overload — which is what
+     * keeps a contradicted location a compile error rather than a fall-through.
      */
     enableSpecialProject<L extends SpecialProjectLocationScope>(
       args: Omit<EnableSpecialProjectArgs, "name" | "location"> & {
