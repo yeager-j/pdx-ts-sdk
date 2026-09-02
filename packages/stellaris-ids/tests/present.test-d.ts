@@ -20,6 +20,7 @@ import {
   type CivicOrOriginCivicRef,
   type CivicOrOriginOriginRef,
   type ComponentSlot,
+  type CountryTypeRef,
   type EventRef,
   type EventScopelessRef,
   type ScopeName,
@@ -98,6 +99,20 @@ describe("checked registry helpers", () => {
     expectTypeOf(category).toExtend<SituationLogCategoryRef>();
     // @ts-expect-error this category does not exist in vanilla.
     vanilla.situationLogCategory("definitely_not_a_category");
+  });
+
+  it("checks country type ids", () => {
+    const guardian = vanilla.countryType("guardian");
+    expectTypeOf(guardian.id).toEqualTypeOf<"guardian">();
+    expectTypeOf(guardian).toExtend<CountryTypeRef>();
+    makeScope<"country">([]).createCountry({ type: guardian });
+    createMod({
+      name: "Country type",
+      prefix: "country_type",
+      supportedVersion: "4.4.*",
+    }).globalShipDesign("guardian", { countryType: guardian });
+    // @ts-expect-error this country type does not exist in vanilla.
+    vanilla.countryType("guardain");
   });
 
   it("checks the solar-system initializer vocabularies", () => {

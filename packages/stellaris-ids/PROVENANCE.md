@@ -72,7 +72,7 @@ that moved every run would fail it unconditionally. **Bump `-r.<n>` by hand as
 part of publishing**, which is the decision it records — a second publish of one
 game build.
 
-The 4.4.6 generation read 43 registries and 31,180 ids, 9,995 events across
+The 4.4.6 generation read 44 registries and 31,280 ids, 9,995 events across
 114 namespaces, plus 1,618 scripted triggers (86 parameterized) and 1,657
 scripted effects (382 parameterized). Of those events, 9,856 have an exact
 scope and kind from `events.cwt`; the 139 generic `event = {}` definitions are

@@ -158,6 +158,12 @@ Use the SDK's `vanilla.*` helpers for content defined by Stellaris:
 prerequisites: [spectralSurveying, vanilla.technology("tech_lasers_1")];
 ```
 
+The same helpers cover non-content references such as country types:
+
+```ts
+const guardian = vanilla.countryType("guardian");
+```
+
 The hard peer dependency `@pdx-ts/stellaris-ids` supplies the literal ids for
 the game version the installed package was generated from. A typo such as
 `tech_lazers_1` is therefore a TypeScript error. The helper returns a reference

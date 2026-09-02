@@ -48,6 +48,7 @@ import type { VanillaCivicOrOriginId } from "./registries/civic-or-origin.ts";
 import type { VanillaComponentSetId } from "./registries/component-set.ts";
 import type { VanillaCouncilorId } from "./registries/councilor.ts";
 import type { VanillaCountryShipOfSizeLimitId } from "./registries/country-ship-of-size-limit.ts";
+import type { VanillaCountryTypeId } from "./registries/country-type.ts";
 import type { VanillaCrisisLevelId } from "./registries/crisis-level.ts";
 import type { VanillaCrisisObjectiveId } from "./registries/crisis-objective.ts";
 import type { VanillaCrisisPathId } from "./registries/crisis-path.ts";
@@ -163,6 +164,7 @@ export interface VanillaIds {
   readonly anomaly_category: VanillaAnomalyCategoryId;
   readonly planet_modifier: VanillaPlanetModifierId;
   readonly asteroid_belt_type: VanillaAsteroidBeltTypeId;
+  readonly country_type: VanillaCountryTypeId;
 }
 export interface VanillaEnums {
   readonly component_tag: VanillaComponentTagMember;

@@ -64,6 +64,7 @@ import type {
   ComponentTemplateWeaponComponentTemplateRef,
   CouncilorRef,
   CountryShipOfSizeLimitRef,
+  CountryTypeRef,
   CrisisLevelRef,
   CrisisObjectiveRef,
   CrisisPathRef,
@@ -837,6 +838,18 @@ export function asteroidBeltType<const Id extends VanillaId<"asteroid_belt_type"
   id: Id
 ): AsteroidBeltTypeRef & { readonly id: Id } {
   return makeVanillaRef(id) as AsteroidBeltTypeRef & { readonly id: Id };
+}
+
+/**
+ * A checked reference to a vanilla country type id.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
+ */
+export function countryType<const Id extends VanillaId<"country_type">>(
+  id: Id
+): CountryTypeRef & { readonly id: Id } {
+  return makeVanillaRef(id) as CountryTypeRef & { readonly id: Id };
 }
 
 /**
