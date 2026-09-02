@@ -1,19 +1,19 @@
 /**
- * How one lowered field describes itself: the runtime metadata literal, the
+ * How one projected field describes itself: the runtime metadata literal, the
  * member-type text helpers, and the admitted-shape descriptors the corpus gate
- * measures against. Every lowering in `fields.ts` and its siblings speaks
+ * measures against. Every projection in `field-projection.ts` and its siblings speaks
  * through these, which is what keeps the metadata, the member type, and the
  * gate's view of a field from disagreeing.
  */
 
-import { isOptional, isRepeated, type RuleField } from "../cwt/model.ts";
-import type { ContentFieldOverride } from "../overlay/index.ts";
-import { contentConversionOf, type TsValue } from "../render/emitter.ts";
-import { refTypesEntries } from "../render/writer.ts";
-import { formOfShape } from "./authored-form.ts";
-import { contentShape } from "./content-shape.ts";
-import type { EmittedField } from "./fields.ts";
-import type { FieldScope } from "./scope-context.ts";
+import { isOptional, isRepeated, type RuleField } from "../../cwt/model.ts";
+import { formOfShape } from "../../lower/authored-form.ts";
+import type { EmittedField } from "../../lower/content-model.ts";
+import { contentShape } from "../../lower/content-shape.ts";
+import { contentConversionOf, type LoweredValue } from "../../lower/value.ts";
+import type { ContentFieldOverride } from "../../overlay/index.ts";
+import type { FieldScope } from "../scope-context.ts";
+import { refTypesEntries } from "../value-metadata.ts";
 
 /**
  * Selects literal tokens suitable for generated authoring documentation.
@@ -33,7 +33,7 @@ export function authoredLiterals(literals: readonly string[] | undefined): {
  * Renders the conversion metadata for an authored scalar.
  * Closed reference values also include the registry names their ids must satisfy.
  */
-export function scalarMetadata(value: TsValue): string[] {
+export function scalarMetadata(value: LoweredValue): string[] {
   return [
     `conversion: ${JSON.stringify(contentConversionOf(value.conversion))}`,
     ...refTypesEntries(value),
@@ -105,7 +105,7 @@ export function metadata(
  *
  * Overlay corrections applied after a shape has been chosen (`pickOrdinary`)
  * have no other way in: threading every overlay property through each
- * {@link metadata} call site would make every lowering carry properties only
+ * {@link metadata} call site would make every projection carry properties only
  * one of them can use.
  */
 export function withMetadataEntry(descriptor: FieldMetadata, entry: string): FieldMetadata {
@@ -119,7 +119,7 @@ export function withMetadataEntry(descriptor: FieldMetadata, entry: string): Fie
 export function admitsScalars(
   field: RuleField,
   shape: string,
-  value: TsValue | null
+  value: LoweredValue | null
 ): Omit<EmittedField, "field"> {
   return {
     shape,

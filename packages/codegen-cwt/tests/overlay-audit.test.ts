@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/content/alias-splice";
 import { emitAliasStruct } from "@pdx-ts/codegen-cwt/emit/content/alias-struct";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content/content-type";
+import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { structuralSpliceOf } from "@pdx-ts/codegen-cwt/lower/rule-shapes";
 import { camelCase } from "@pdx-ts/codegen-cwt/naming";
@@ -58,7 +59,6 @@ import {
   handWrittenTriggerRulesByKey,
   type HandWrittenTriggerExport,
 } from "@pdx-ts/codegen-cwt/policy/triggers";
-import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 // Read by path rather than through `@pdx-ts/sdk`: neither table is on any of
@@ -642,7 +642,7 @@ describe("the real pipeline's overlay tables", () => {
         emitter.endFile();
         return;
       }
-      if (structuralSpliceOf(emitter, category) === null) {
+      if (structuralSpliceOf(emitter.lowerer, category) === null) {
         return;
       }
       emitter.beginFile();
@@ -764,7 +764,7 @@ describe("the real pipeline's overlay tables", () => {
   });
 
   it("does not leak ASSET_PATH_FIELDS state between separate pipeline runs (SDK-256)", () => {
-    // The bug this guards: emit/fields.ts used to track which ASSET_PATH_FIELDS
+    // The bug this guards: emit/content/field-projection.ts used to track which ASSET_PATH_FIELDS
     // rows had been applied in a module-level Set with no reset. A *second*
     // in-process pipeline run — this test file's own pattern, and something
     // several other suites do too — would find the first run's entries still

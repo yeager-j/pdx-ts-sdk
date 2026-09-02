@@ -724,7 +724,7 @@ export type AcknowledgedFamily =
   /**
    * Two declarations whose arms are indistinguishable. A dual dispatches on what
    * the author passed, so two arms that both author as arrays cannot be told
-   * apart. See `lowerDual`.
+   * apart. See `projectDual`.
    */
   | "indistinguishable-arms"
   /**

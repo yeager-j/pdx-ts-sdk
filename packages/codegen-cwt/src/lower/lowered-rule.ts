@@ -1,8 +1,7 @@
 import type { RuleField, RuleType } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
 import { resolveRuleScopes, type RuleScopeDecision } from "../reconcile/scope-authority.ts";
-import type { Emitter } from "../render/emitter.ts";
-import { canonicalThisScope } from "./scope-context.ts";
+import { canonicalThisScope, type ScopeLoweringContext } from "./scopes.ts";
 import {
   canonicalScopeSet,
   clauseOf,
@@ -69,8 +68,6 @@ export interface LoweredRule {
   readonly supportedScopes: readonly string[];
   /** Canonical supported scopes, or `null` when no safe set can be derived. */
   readonly scopes: LoweredRuleScopes | null;
-  /** The rendered TypeScript scope type, when scopes are known. */
-  readonly scopeType: string | null;
   /** Whether any declaration uses comparison syntax. */
   readonly comparison: boolean;
   /** Whether the rules declare the rule removed from the game's script API. */
@@ -109,15 +106,6 @@ function declaredRemoved(key: string, declarations: readonly AliasDecl[]): boole
   return true;
 }
 
-function renderedScopeType(scopes: LoweredRuleScopes | null): string | null {
-  if (scopes === null) {
-    return null;
-  }
-  return scopes === "universal"
-    ? "ScopeName"
-    : scopes.map((scope) => JSON.stringify(scope)).join(" | ");
-}
-
 /**
  * Normalizes all declarations of one trigger or effect rule for emitters and
  * scope-fact consumers. It preserves declaration and field order.
@@ -134,7 +122,7 @@ export function lowerRule(
         readonly scopes: readonly string[];
       }
     | undefined,
-  emitter: Emitter,
+  emitter: ScopeLoweringContext,
   scopeIndex: ReadonlyMap<string, string>,
   decision: RuleScopeDecision | undefined
 ): LoweredRule {
@@ -233,7 +221,6 @@ export function lowerRule(
     declarations,
     supportedScopes,
     scopes,
-    scopeType: renderedScopeType(scopes),
     comparison: declarations.some((declaration) => declaration.comparison),
     removed: declaredRemoved(key, declarations),
     scalars,
@@ -258,7 +245,7 @@ export function lowerRuleTable(
       readonly scopes: readonly string[];
     }
   >,
-  emitter: Emitter,
+  emitter: ScopeLoweringContext,
   scopeIndex: ReadonlyMap<string, string>,
   authority: ReadonlyMap<string, RuleScopeDecision>
 ): ReadonlyMap<string, LoweredRule> {

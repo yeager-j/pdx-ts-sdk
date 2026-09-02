@@ -671,7 +671,7 @@ export interface ContentFieldOverride {
    * category, see `CONTENT_SCOPE_PARAMETERS`) and leaves real checking on the
    * table when the scope is fixed but simply unannotated. A `scope` row here
    * buys that checking back for one field. `ModifierClosure` fields keep the
-   * separate `ScopeName` sentinel `lower/scope-context.ts`'s `contravariantScopeType`
+   * separate `ScopeName` sentinel `emit/scope-context.ts`'s `contravariantScopeType`
    * does not touch, since an unpinned modifier closure already resolves to a
    * real, writable recorder.
    *

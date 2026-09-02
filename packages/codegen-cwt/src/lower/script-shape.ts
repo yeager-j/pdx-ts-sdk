@@ -31,8 +31,9 @@ import {
   SCRIPT_ALIAS_CATEGORIES,
   UNIVERSAL_SCOPES,
 } from "../overlay/index.ts";
-import { referenceTargetsOf, type Emitter, type TsValue } from "../render/emitter.ts";
-import { canonicalThisScope } from "./scope-context.ts";
+import type { LoweringContext } from "./context.ts";
+import { canonicalThisScope } from "./scopes.ts";
+import { referenceTargetsOf, type LoweredValue } from "./value.ts";
 
 /** Stable reasons the shared trigger/effect generator can reject a CWT rule. */
 export type ScriptGenerationSkipCategory =
@@ -110,25 +111,7 @@ export function skippedRule(
   return { name, category, detail };
 }
 
-/**
- * Renders a supported-scopes list as the TS type parameter: a sorted literal
- * union, `"ScopeName"` for universal rules, `null` when a name is unknown.
- */
-export function scopeType(
-  scopes: readonly string[],
-  index: ReadonlyMap<string, string>
-): string | null {
-  const canonical = canonicalScopeSet(scopes, index);
-  if (canonical === "universal") {
-    return "ScopeName";
-  }
-  if (canonical === null) {
-    return null;
-  }
-  return canonical.map((scope) => JSON.stringify(scope)).join(" | ");
-}
-
-/** The canonical scope set behind `scopeType`, or "universal", or null. */
+/** Canonical scopes, `"universal"`, or `null` when a name is unknown. */
 export function canonicalScopeSet(
   scopes: readonly string[],
   index: ReadonlyMap<string, string>
@@ -164,7 +147,7 @@ export interface MapValue {
   /** The registries a key may name, when every key form is a content reference. */
   readonly keyRefTypes?: readonly string[];
   /** The value one entry holds. */
-  readonly value: TsValue;
+  readonly value: LoweredValue;
   /** Whether entries are written as comparisons rather than assignments. */
   readonly comparison?: true;
   /** The entry count the declarations admit together. */
@@ -192,7 +175,7 @@ export type BlockValue =
       /** Selects one braced list of anonymous values. */
       readonly kind: "valueList";
       /** The scalar item arm, when the list admits scalar items. */
-      readonly scalar: TsValue | null;
+      readonly scalar: LoweredValue | null;
       /** The structured item arm, when the list admits object items. */
       readonly fields: readonly ArgField[] | null;
       /** The combined item count admitted by the anonymous declarations. */
@@ -209,18 +192,18 @@ export type ArgValue =
       /** Selects a plain scalar argument. */
       readonly kind: "scalar";
       /** The scalar TypeScript and runtime representation. */
-      readonly value: TsValue;
+      readonly value: LoweredValue;
     }
   /**
    * A field that accepts either one scalar value or a block. The scalar arm's
-   * runtime object kinds are carried by `TsValue`, so generated code can
+   * runtime object kinds are carried by `LoweredValue`, so generated code can
    * distinguish SDK scalar values from the block.
    */
   | {
       /** Selects an overload between a scalar and a block. */
       readonly kind: "scalarOrBlock";
       /** The scalar arm of the overload. */
-      readonly scalar: TsValue;
+      readonly scalar: LoweredValue;
       /** The block arm of the overload. */
       readonly block: BlockValue;
     }
@@ -287,7 +270,7 @@ export type ArgValue =
       /** Selects a comparison operand with optional literal overloads. */
       readonly kind: "comparison";
       /** The supported numeric or boolean comparison operand. */
-      readonly value: TsValue;
+      readonly value: LoweredValue;
       /** Literal tokens accepted in place of the comparison operand. */
       readonly literals: readonly string[];
     };
@@ -319,7 +302,7 @@ export interface ArgField {
  * carries its own script authoring surface and must not be flattened into one.
  */
 export function expandAliasFields(
-  emitter: Emitter,
+  emitter: LoweringContext,
   fields: readonly RuleField[]
 ): RuleField[] | SkipReason {
   const expanded: RuleField[] = [];
@@ -389,7 +372,7 @@ const ENUM_KEY_EXPANSION_LIMIT = 12;
  * Expands enum-typed key filters into one optional field per enum value:
  * `enum[days_months_year] = int` becomes `days`/`months`/`years` fields.
  */
-function expandEnumKeys(emitter: Emitter, fields: readonly RuleField[]): RuleField[] {
+function expandEnumKeys(emitter: LoweringContext, fields: readonly RuleField[]): RuleField[] {
   return fields.flatMap((field) => {
     if (field.key.kind !== "computed" || field.key.type.kind !== "enum") {
       return [field];
@@ -463,7 +446,7 @@ function inheritedClauseScope(scope: ClauseScope | string | null): ClauseScope {
 }
 
 function clauseScope(
-  emitter: Emitter,
+  emitter: LoweringContext,
   name: string,
   fields: readonly RuleField[],
   inherited: ClauseScope
@@ -493,7 +476,7 @@ function clauseScope(
 }
 
 function bareClauseScope(
-  emitter: Emitter,
+  emitter: LoweringContext,
   value: RuleBareValue,
   inherited: ClauseScope
 ): ResolvedClauseScope | SkipReason {
@@ -515,15 +498,19 @@ function bareClauseScope(
 
 /** The authored operand type for a CWT comparison, or its skip reason. */
 export function comparisonValue(
-  emitter: Emitter,
+  emitter: LoweringContext,
   types: readonly RuleType[]
-): TsValue | SkipReason {
+): LoweredValue | SkipReason {
   const value = emitter.unionFor(types);
   if (
     value === null ||
-    value.type
-      .split(" | ")
-      .some((part) => part !== "number" && part !== "ScriptValue" && part !== "boolean")
+    value.types.some(
+      (type) =>
+        !(
+          (type.kind === "primitive" && (type.name === "number" || type.name === "boolean")) ||
+          (type.kind === "sdk" && type.name === "ScriptValue")
+        )
+    )
   ) {
     return skipReason(
       "unsupported-comparison-operand",
@@ -565,77 +552,9 @@ function widestCardinality(fields: readonly RuleField[]): Cardinality {
   };
 }
 
-/**
- * Renders the index-signature type an open-keyed block admits.
- *
- * A reference-keyed map keys on `string` rather than the branded reference:
- * the brand is an object, and an object cannot key one.
- */
-export function mapType(emitter: Emitter, map: MapValue): string {
-  const value = emitter.useValue(map.value).type;
-  const entry =
-    map.comparison === true ? `${value} | readonly [${emitter.use("PdxOp")}, ${value}]` : value;
-  return `{ readonly [${map.keyName}: ${map.indexType}]: ${entry} }`;
-}
-
-/**
- * Renders the readonly tuple or array type admitted by an item cardinality.
- * Finite ranges become tuple unions; unbounded ranges preserve their minimum prefix.
- */
-/**
- * The widest maximum still worth spelling as a tuple union.
- *
- * Each permitted length is its own arm, so `0..100` — how `effects.cwt` writes
- * "as many as you like" for starbase modules and message variables — would be
- * 101 arms of up to 100 members each, which states the bound far less clearly
- * than an array does. Eight is the widest union the rules already produce
- * (`create_country.flag.colors`, two 0..4 declarations of one block).
- */
-const TUPLE_UNION_LIMIT = 8;
-
-export function cardinalityArrayType(item: string, cardinality: Cardinality): string {
-  const tuple = (length: number): string =>
-    `readonly [${Array.from({ length }, () => item).join(", ")}]`;
-  if (cardinality.max !== null && cardinality.max <= TUPLE_UNION_LIMIT) {
-    return Array.from({ length: cardinality.max - cardinality.min + 1 }, (_, index) =>
-      tuple(cardinality.min + index)
-    ).join(" | ");
-  }
-  // `A | B[]` is an array of B beside an A, so only the array forms bracket a
-  // union item. A tuple element already ends at its comma.
-  const element = item.includes(" | ") ? `(${item})` : item;
-  return cardinality.min === 0
-    ? `readonly ${element}[]`
-    : `readonly [${Array.from({ length: cardinality.min }, () => item).join(", ")}, ...${element}[]]`;
-}
-
-/**
- * The type text a repeated member emits, given the type text one occurrence
- * admits.
- *
- * A repeated comparison keeps its single forms and gains a non-empty list of
- * operator/operand pairs instead of a plain array: `readonly (ScriptValue |
- * readonly [PdxOp, ScriptValue])[]` would accept `[">", 2]` as two bare
- * operands and silently write two keys where the author meant one comparison,
- * and an empty list would name an operator the author never wrote.
- */
-export function repeatedMemberType(
-  emitter: Emitter,
-  value: ArgValue,
-  single: string,
-  cardinality: Cardinality
-): string {
-  if (value.kind === "comparison") {
-    const operand = emitter.useValue(value.value).type;
-    const pair = `readonly [${emitter.use("PdxOp")}, ${operand}]`;
-    return `${single} | readonly [${pair}, ...(${pair})[]]`;
-  }
-  return cardinalityArrayType(single, cardinality);
-}
-
 /** Lowers the anonymous contents of one braced field. */
 export function bareBlockValue(
-  emitter: Emitter,
+  emitter: LoweringContext,
   bare: readonly RuleBareValue[],
   inheritedScope: ClauseScope | string | null,
   allowedSplices: ReadonlySet<string>
@@ -810,7 +729,7 @@ function keyedClauseCategory(key: FieldKey, type: RuleType): ClauseCategory | nu
  * computed keys. Declines a block whose keys no model can name.
  */
 function partitionBlock(
-  emitter: Emitter,
+  emitter: LoweringContext,
   fields: readonly RuleField[]
 ): PartitionedBlock | SkipReason {
   const named = new Map<string, RuleField[]>();
@@ -850,7 +769,7 @@ function partitionBlock(
  * `splice` states whether its entries are written beside the block's named keys.
  */
 function openMapValue(
-  emitter: Emitter,
+  emitter: LoweringContext,
   declarations: readonly OpenKeyDeclaration[],
   splice: boolean
 ): MapValue | SkipReason {
@@ -895,7 +814,7 @@ function openMapValue(
 
 /** The one clause category and scope a group of clause declarations agrees on. */
 function mergedClause(
-  emitter: Emitter,
+  emitter: LoweringContext,
   name: string,
   group: readonly RuleField[],
   inheritedScope: ClauseScope,
@@ -926,7 +845,7 @@ function mergedClause(
 
 /** Merges a group whose every declaration is a clause hole into one typed hole. */
 function mergedClauseValue(
-  emitter: Emitter,
+  emitter: LoweringContext,
   name: string,
   group: readonly RuleField[],
   inheritedScope: ClauseScope,
@@ -942,7 +861,7 @@ function mergedClauseValue(
  * {@link bareBlockValue}.
  */
 function structuredArmValue(
-  emitter: Emitter,
+  emitter: LoweringContext,
   name: string,
   declaration: RuleField & { readonly type: Extract<RuleType, { readonly kind: "block" }> },
   inheritedScope: ClauseScope,
@@ -970,7 +889,7 @@ function structuredArmValue(
  * kind says which authored shapes belong to it.
  */
 function mergedStructuredValue(
-  emitter: Emitter,
+  emitter: LoweringContext,
   name: string,
   group: readonly RuleField[],
   inheritedScope: ClauseScope,
@@ -1011,7 +930,7 @@ function mergedStructuredValue(
 
 /** Merges a comparison group: the operand type plus any literal overloads. */
 function mergedComparisonValue(
-  emitter: Emitter,
+  emitter: LoweringContext,
   name: string,
   group: readonly RuleField[]
 ): ArgValue | SkipReason {
@@ -1042,7 +961,7 @@ function mergedComparisonValue(
  * when the group is not that, so the caller can go on classifying it.
  */
 function mergedAliasValue(
-  emitter: Emitter,
+  emitter: LoweringContext,
   name: string,
   group: readonly RuleField[],
   inheritedScope: ClauseScope,
@@ -1078,7 +997,7 @@ function mergedAliasValue(
  * merges them into the one typed value the field carries.
  */
 function mergedArgValue(
-  emitter: Emitter,
+  emitter: LoweringContext,
   name: string,
   group: readonly RuleField[],
   inheritedScope: ClauseScope,
@@ -1142,7 +1061,7 @@ const CLAUSE_SPLICE_MEMBERS: readonly {
  * into the block.
  */
 function splicedMember(
-  emitter: Emitter,
+  emitter: LoweringContext,
   splices: readonly RuleField[],
   inheritedScope: ClauseScope,
   allowedSplices: ReadonlySet<string>
@@ -1195,7 +1114,7 @@ function splicedMember(
  * becomes a repeated field.
  */
 function mergeNamedGroups(
-  emitter: Emitter,
+  emitter: LoweringContext,
   grouped: ReadonlyMap<string, RuleField[]>,
   inheritedScope: ClauseScope,
   allowedSplices: ReadonlySet<string>
@@ -1227,7 +1146,7 @@ function mergeNamedGroups(
  * category's name rather than expanding it.
  */
 export function aliasListMembers(
-  emitter: Emitter,
+  emitter: LoweringContext,
   category: string,
   allowedSplices: ReadonlySet<string>
 ): ArgField[] | SkipReason {
@@ -1287,7 +1206,7 @@ function keyedClauseDocs(cardinality: Cardinality, reservedKeys: readonly string
 
 /** Merges the clause-valued computed keys of one block into the member they describe. */
 function keyedClausesField(
-  emitter: Emitter,
+  emitter: LoweringContext,
   declarations: readonly RuleField[],
   inheritedScope: ClauseScope,
   allowedSplices: ReadonlySet<string>,
@@ -1345,7 +1264,7 @@ function withComputedMember(
  * so clause fields without their own annotation run in that exact context.
  */
 export function mergeBlock(
-  emitter: Emitter,
+  emitter: LoweringContext,
   fields: readonly RuleField[],
   inheritedScope: ClauseScope | string | null,
   allowedSplices: ReadonlySet<string>
@@ -1419,7 +1338,7 @@ export function mergeBlock(
  * unchanged when the block splices nothing.
  */
 function appendSplicedMember(
-  emitter: Emitter,
+  emitter: LoweringContext,
   merged: readonly ArgField[],
   splices: readonly RuleField[],
   inheritedScope: ClauseScope,

@@ -16,6 +16,7 @@ import {
   type DefinerContent,
   type RegistryDefinerPlan,
 } from "@pdx-ts/codegen-cwt/emit/content/definer-plan";
+import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import {
   referenceNameOf,
@@ -26,7 +27,6 @@ import {
   registryNameOf,
   type ContentManifestEntry,
 } from "@pdx-ts/codegen-cwt/policy/manifest";
-import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));

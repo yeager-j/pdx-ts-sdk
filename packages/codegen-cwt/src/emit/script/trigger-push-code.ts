@@ -6,25 +6,23 @@
  * builder it emits.
  */
 
+import { Emitter } from "../../emit/typescript.ts";
 import type { ArgField, ArgValue, BlockValue, MapValue } from "../../lower/script-shape.ts";
+import { recordsLocalization, type LoweredValue } from "../../lower/value.ts";
 import { camelCase, propertyAccess } from "../../naming.ts";
-import { Emitter, recordsLocalization, type TsValue } from "../../render/emitter.ts";
 
 /**
- * The expression a scalar `TsValue` pushes into `kv()`, `scriptValueScalar`-
- * wrapped when the value is a `ScriptValue` (see `TsValue.scriptValue`) so a
+ * The expression a scalar `LoweredValue` pushes into `kv()`, `scriptValueScalar`-
+ * wrapped when the value is a `ScriptValue` (see `LoweredValue.scriptValue`) so a
  * `@name` input becomes a `var` node rather than a defensively-quoted string.
  */
-export function pushExpr(emitter: Emitter, value: TsValue, expr: string): string {
-  if (value.scalarSymbol !== undefined) {
-    emitter.use(value.scalarSymbol);
-  }
-  const scalar = value.toScalar(expr);
+export function pushExpr(emitter: Emitter, value: LoweredValue, expr: string): string {
+  const scalar = emitter.scalarExpression(value, expr);
   return value.scriptValue === true ? `${emitter.use("scriptValueScalar")}(${scalar})` : scalar;
 }
 
 /**
- * The expression one scalar `TsValue` lowers to, routed through
+ * The expression one scalar `LoweredValue` projects to, routed through
  * `localizationScalar` when the rules type the position as a localisation key.
  *
  * That conversion needs the field's own path, which {@link pushExpr} has no
@@ -35,7 +33,7 @@ export function pushExpr(emitter: Emitter, value: TsValue, expr: string): string
  */
 export function scalarExpr(
   emitter: Emitter,
-  value: TsValue,
+  value: LoweredValue,
   expr: string,
   fieldPath: string
 ): string {
@@ -56,7 +54,7 @@ export function contributesRefs(field: ArgField): boolean {
 }
 
 /** Whether one scalar records anything: a content id, a consumed localization item, or both. */
-function scalarContributesRefs(value: TsValue): boolean {
+function scalarContributesRefs(value: LoweredValue): boolean {
   return value.refTypes !== undefined || recordsLocalization(value);
 }
 
@@ -95,7 +93,7 @@ function valueContributesRefs(value: ArgValue): boolean {
  */
 export function localizationRecordCode(
   emitter: Emitter,
-  value: TsValue,
+  value: LoweredValue,
   access: string,
   fieldPath: string
 ): string {
@@ -106,7 +104,12 @@ export function localizationRecordCode(
 }
 
 /** The `cmp()` arguments one comparison occurrence supplies. */
-function comparisonArgs(emitter: Emitter, operand: TsValue, key: string, access: string): string {
+function comparisonArgs(
+  emitter: Emitter,
+  operand: LoweredValue,
+  key: string,
+  access: string
+): string {
   return `${key}, ${access}[0], ${pushExpr(emitter, operand, `${access}[1]`)}`;
 }
 
@@ -169,7 +172,7 @@ export function unauthorableAliasValue(
  */
 function scalarPushCode(
   emitter: Emitter,
-  value: TsValue,
+  value: LoweredValue,
   access: string,
   key: string,
   fieldPath: string,
@@ -196,9 +199,6 @@ function scalarPushCode(
   // Indexed rather than named after the field, so the local can never
   // collide with `args`, `entries`, `refs`, or a sibling field's name.
   const local = `id${index}`;
-  if (value.scalarSymbol !== undefined) {
-    emitter.use(value.scalarSymbol);
-  }
   return (
     `const ${local} = ${scalarExpr(emitter, value, access, fieldPath)};\n` +
     `    ${sink}.push(${emitter.use("kv")}(${key}, ${local}));\n` +
@@ -388,9 +388,6 @@ export function pushValueListCode(
       return `${items}.push(${pdxScalar});` + recordLoc;
     }
     const id = `id${index}`;
-    if (scalar.scalarSymbol !== undefined) {
-      emitter.use(scalar.scalarSymbol);
-    }
     return (
       `const ${id} = ${scalarExpr(emitter, scalar, item, fieldPath)};\n` +
       `${items}.push(${emitter.use("scalar")}(${id}));\n` +

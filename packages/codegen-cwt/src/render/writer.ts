@@ -1,7 +1,6 @@
 /** Shared textual renderers for generated interface members and metadata declarations. */
 
 import { docComment, propertyName } from "../naming.ts";
-import type { TsValue } from "./emitter.ts";
 
 /** The author-facing shape of one generated TypeScript interface member. */
 export interface MemberOptions {
@@ -45,36 +44,4 @@ export function constArray(
   docs: readonly string[]
 ): string {
   return docComment(docs) + `export const ${name}: readonly ${elementType}[] = [\n${rows}];\n\n`;
-}
-
-/**
- * Whether every form a value admits is a `<type>` reference, as unadorned
- * `refTypes: [...]` metadata text — undefined when it is not, since an
- * id-shaped value alongside a non-reference arm proves nothing about any
- * registry. The one fact {@link refTypesSuffix} and {@link refTypesEntries}
- * format into two different shapes below.
- */
-function refTypesEntry(value: TsValue | undefined): string | undefined {
-  if (value?.refTypes === undefined) {
-    return undefined;
-  }
-  return `refTypes: ${JSON.stringify(value.refTypes)}`;
-}
-
-/**
- * Renders reference metadata for appending to a non-empty object literal.
- * Returns a comma-prefixed property, or an empty string when the value has no reference types.
- */
-export function refTypesSuffix(value: TsValue | undefined): string {
-  const entry = refTypesEntry(value);
-  return entry === undefined ? "" : `, ${entry}`;
-}
-
-/**
- * Renders reference metadata as zero or one standalone object-member entries.
- * Use this when composing metadata members as an array rather than an object-literal suffix.
- */
-export function refTypesEntries(value: TsValue | undefined): readonly string[] {
-  const entry = refTypesEntry(value);
-  return entry === undefined ? [] : [entry];
 }

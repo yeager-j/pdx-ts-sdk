@@ -5,6 +5,7 @@ import { parseCwt } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { readAliases, scopeIndex, type AliasDecl } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitEffects } from "@pdx-ts/codegen-cwt/emit/script/effects";
 import { emitTriggers } from "@pdx-ts/codegen-cwt/emit/script/triggers";
+import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRuleTable, type LoweredRule } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
@@ -19,7 +20,6 @@ import {
 } from "@pdx-ts/codegen-cwt/policy/script-gaps";
 import { loadBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
 import { scopeAuthorityOf } from "@pdx-ts/codegen-cwt/reconcile/scope-authority";
-import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -37,13 +37,13 @@ const effectEmitter = new Emitter(rules);
 const triggers = emitTriggers(
   triggerEmitter,
   docs.triggers,
-  lowerRuleTable(rules.triggers, docs.triggers, triggerEmitter, scopes, authority.triggers)
+  lowerRuleTable(rules.triggers, docs.triggers, triggerEmitter.lowerer, scopes, authority.triggers)
 );
 const effects = emitEffects(
   effectEmitter,
   docs.effects,
   scopes,
-  lowerRuleTable(rules.effects, docs.effects, effectEmitter, scopes, authority.effects),
+  lowerRuleTable(rules.effects, docs.effects, effectEmitter.lowerer, scopes, authority.effects),
   createEffectPolicy(rules),
   []
 );
@@ -63,7 +63,7 @@ function removedRuleTable(
 ): ReadonlyMap<string, LoweredRule> {
   const declarations = new Map([[key, removedDeclarations(category, key)]]);
   const ruleDocs = category === "trigger" ? docs.triggers : docs.effects;
-  return lowerRuleTable(declarations, ruleDocs, emitter, scopes, new Map());
+  return lowerRuleTable(declarations, ruleDocs, emitter.lowerer, scopes, new Map());
 }
 
 function row(overrides: Partial<ScriptGenerationGap> = {}): ScriptGenerationGap {

@@ -1,7 +1,7 @@
 /**
  * Documents the contract `writer.ts`'s helpers promise their emit-layer
  * callers: `member`'s doc-comment-plus-declaration shape, `constArray`'s
- * field-table wrapper, and the refTypes suffix the trio in `fields.ts`,
+ * field-table wrapper, and the refTypes suffix the trio in `field-projection.ts`,
  * `effects.ts`, and `alias-struct.ts` used to format three separate ways.
  * The real gate for "the output did not change" is `codegen:check`'s
  * byte-identical diff against committed generated output; these tests only
@@ -9,20 +9,16 @@
  * against.
  */
 
-import type { TsValue } from "@pdx-ts/codegen-cwt/render/emitter";
-import {
-  constArray,
-  member,
-  refTypesEntries,
-  refTypesSuffix,
-} from "@pdx-ts/codegen-cwt/render/writer";
+import { refTypesEntries, refTypesSuffix } from "@pdx-ts/codegen-cwt/emit/value-metadata";
+import type { LoweredValue } from "@pdx-ts/codegen-cwt/lower/value";
+import { constArray, member } from "@pdx-ts/codegen-cwt/render/writer";
 import { describe, expect, it } from "vitest";
 
-/** A minimal `TsValue` for testing writer metadata. */
-function tsValue(
-  overrides: Partial<TsValue> & Pick<TsValue, "type" | "toScalar" | "conversion">
-): TsValue {
-  return overrides;
+/** A minimal `LoweredValue` for testing writer metadata. */
+function loweredValue(
+  overrides: Partial<LoweredValue> & Pick<LoweredValue, "types" | "conversion">
+): LoweredValue {
+  return overrides as LoweredValue;
 }
 
 describe("member", () => {
@@ -91,13 +87,15 @@ describe("constArray", () => {
   });
 });
 
-const referencing: TsValue = tsValue({
-  type: "TechnologyRef",
-  toScalar: (e) => `refId(${e})`,
+const referencing: LoweredValue = loweredValue({
+  types: [{ kind: "reference", name: "technology", unchecked: false }],
   conversion: "refId",
   refTypes: ["technology"],
 });
-const plain: TsValue = tsValue({ type: "string", toScalar: (e) => e, conversion: "identity" });
+const plain: LoweredValue = loweredValue({
+  types: [{ kind: "primitive", name: "string" }],
+  conversion: "identity",
+});
 
 describe("refTypesSuffix / refTypesEntries share one fact about a value", () => {
   it("format the same presence/absence of refTypes two different ways", () => {

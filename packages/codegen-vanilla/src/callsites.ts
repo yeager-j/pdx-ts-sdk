@@ -24,7 +24,7 @@
 
 import { readFileSync } from "node:fs";
 import type { EventKindSpec } from "@pdx-ts/codegen-cwt/lower/event-kinds";
-import type { RuleScopes } from "@pdx-ts/codegen-cwt/lower/scope-facts";
+import type { RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
 import { parse, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { compareIdentifiers } from "./emit.ts";

@@ -1,18 +1,34 @@
-/** Lowers CWT block fields into generated struct declarations and metadata. */
+/** Projects CWT block fields into generated struct declarations and metadata. */
 
-import type { DescentNode } from "../corpus/observations.ts";
-import { isRepeated, type RuleField } from "../cwt/model.ts";
-import { camelCase, constantCase, docComment, pascalCase } from "../naming.ts";
+import type { DescentNode } from "../../corpus/observations.ts";
+import { isRepeated, type RuleField } from "../../cwt/model.ts";
+import { formOfShape } from "../../lower/authored-form.ts";
+import type { EmittedField } from "../../lower/content-model.ts";
+import {
+  enumKeyedEntryOf,
+  structBlockOf,
+  triggerStructOf,
+  wildcardBlockOf,
+  type BlockType,
+  type EnumKeyedEntry,
+} from "../../lower/rule-shapes.ts";
+import { camelCase, constantCase, docComment, pascalCase } from "../../naming.ts";
 import {
   CONTENT_FIELD_DOCS,
   CONTENT_FIELD_OVERRIDES,
   FIELD_WIDENINGS,
   type ContentFieldOverride,
-} from "../overlay/index.ts";
-import { Emitter } from "../render/emitter.ts";
-import type { DocTable, FieldOmissionRow, MemberDocRow } from "../render/field-rows.ts";
-import { constArray, member as renderMember } from "../render/writer.ts";
-import { formOfShape } from "./authored-form.ts";
+} from "../../overlay/index.ts";
+import { constArray, member as renderMember } from "../../render/writer.ts";
+import {
+  containerContext,
+  contravariantScopeType,
+  scopeArg,
+  withFrom,
+  type FieldContext,
+  type FieldScope,
+} from "../scope-context.ts";
+import type { Emitter } from "../typescript.ts";
 import {
   arrayType,
   authoredLiterals,
@@ -25,28 +41,12 @@ import {
   mergeByName,
   pickOrdinary,
   useWideningSymbols,
-  type EmittedField,
-  type LoweredField,
-} from "./fields.ts";
-import {
-  enumKeyedEntryOf,
-  structBlockOf,
-  triggerStructOf,
-  wildcardBlockOf,
-  type BlockType,
-  type EnumKeyedEntry,
-} from "./rule-shapes.ts";
-import {
-  containerContext,
-  contravariantScopeType,
-  scopeArg,
-  withFrom,
-  type FieldContext,
-  type FieldScope,
-} from "./scope-context.ts";
+  type FieldProjection,
+} from "./field-projection.ts";
+import type { DocTable, FieldOmissionRow, MemberDocRow } from "./field-rows.ts";
 
 /**
- * Lowers an anonymous, identity-less block field: the fallback that
+ * Projects an anonymous, identity-less block field: the fallback that
  * generalizes shape 3 ("repeated siblings with no id") down to whatever
  * cardinality CWT actually declares, so a singular fixed-shape block like
  * `forbidden_peace_offers` is just the N=0..1 case of the same mechanism.
@@ -161,7 +161,7 @@ function enumKeyedMembers(
   };
 }
 
-/** The generated artifacts accumulated while lowering one struct block. */
+/** The generated artifacts accumulated while projection one struct block. */
 interface StructDraft {
   readonly members: string[];
   readonly fieldMetadata: string[];
@@ -175,7 +175,7 @@ interface StructDraft {
   readonly docTables: DocTable[];
 }
 
-function lowerNamedStructMembers(
+function projectNamedStructMembers(
   emitter: Emitter,
   grouped: ReadonlyMap<string, readonly RuleField[]>,
   path: string,
@@ -203,7 +203,7 @@ function lowerNamedStructMembers(
       emitter.overlayAudit.applied("FIELD_WIDENINGS", fieldPath);
       useWideningSymbols(emitter, widening);
     }
-    const lowered = pickOrdinary(
+    const projected = pickOrdinary(
       emitter,
       group,
       fieldName,
@@ -212,7 +212,7 @@ function lowerNamedStructMembers(
       widening?.extraType,
       fieldPath
     );
-    if (lowered === null) {
+    if (projected === null) {
       unsupported.push({
         path: fieldPath,
         kind: "unsupported",
@@ -229,33 +229,35 @@ function lowerNamedStructMembers(
       ...new Set([
         ...(overlayDocs ?? []),
         ...group.flatMap((field) => field.docs),
-        ...(lowered.docs ?? []),
+        ...(projected.docs ?? []),
       ]),
     ];
-    members.push(renderMember({ name: member, type: emittedMemberType(lowered), optional, docs }));
+    members.push(
+      renderMember({ name: member, type: emittedMemberType(projected), optional, docs })
+    );
     memberDocs[member] = {
       optional,
       docs,
-      memberType: lowered.memberType,
-      ...authoredLiterals(lowered.admits.literals),
+      memberType: projected.memberType,
+      ...authoredLiterals(projected.admits.literals),
     };
-    docTables.push(...(lowered.docTables ?? []));
-    fieldMetadata.push(lowered.metadata(member));
-    if (lowered.code !== undefined) {
-      extraCode.push(lowered.code);
-      exportedNames.push(...(lowered.exportedNames ?? []));
+    docTables.push(...(projected.docTables ?? []));
+    fieldMetadata.push(projected.metadata(member));
+    if (projected.code !== undefined) {
+      extraCode.push(projected.code);
+      exportedNames.push(...(projected.exportedNames ?? []));
     }
-    if (lowered.unsupported !== undefined) {
-      unsupported.push(...lowered.unsupported);
+    if (projected.unsupported !== undefined) {
+      unsupported.push(...projected.unsupported);
     }
     nested.push(
-      { field: fieldPath, authoredPath: [member], ...lowered.admits },
-      ...(lowered.nested ?? []).map((field) => ({
+      { field: fieldPath, authoredPath: [member], ...projected.admits },
+      ...(projected.nested ?? []).map((field) => ({
         ...field,
         authoredPath: [member, ...(field.authoredPath ?? [])],
       }))
     );
-    children.push(...(lowered.descents ?? []));
+    children.push(...(projected.descents ?? []));
   }
 
   return {
@@ -303,8 +305,8 @@ function enumKeysCollideWithMembers(
  * *enum*-keyed block is the one computed key that does not decline, because its
  * key set is closed and named — see {@link enumKeyedMembers}.
  *
- * Shared by every shape whose value is an anonymous block — `lowerStruct` and
- * `lowerStructMap` differ only in how they find that block and what they wrap
+ * Shared by every shape whose value is an anonymous block — `projectStruct` and
+ * `projectStructMap` differ only in how they find that block and what they wrap
  * the resulting type in.
  */
 /** Naming and extra members a caller adds to the block interface it asks for. */
@@ -330,7 +332,7 @@ function structShape(
   inlineTrigger?: FieldScope,
   options: StructShapeOptions = {}
 ): StructShape | null {
-  const keyed = enumKeyedEntryOf(emitter, block);
+  const keyed = enumKeyedEntryOf(emitter.lowerer, block);
   const ordinary =
     keyed === null ? block.fields : block.fields.filter((inner) => inner !== keyed.declaration);
   if (ordinary.some((inner) => inner.key.kind !== "name")) {
@@ -341,7 +343,7 @@ function structShape(
     return null;
   }
   const typeName = options.typeName ?? pascalCase(path);
-  const draft = lowerNamedStructMembers(emitter, grouped, path, ctx);
+  const draft = projectNamedStructMembers(emitter, grouped, path, ctx);
   if (options.localisationMember !== undefined) {
     const textType = emitter.use("LocalizedText");
     const docs = ["Display text emitted to localization under this entry's own key."];
@@ -416,18 +418,18 @@ function structShape(
 }
 
 /**
- * Lowers a wildcard-keyed block whose keys are engine-defined names.
+ * Projects a wildcard-keyed block whose keys are engine-defined names.
  * Callers must select this shape explicitly because CWT cannot distinguish it from
  * an id-keyed repeated struct.
  */
-export function lowerStructMap(
+export function projectStructMap(
   emitter: Emitter,
   field: RuleField,
   name: string,
   path: string,
   ctx: FieldContext,
   override: ContentFieldOverride | undefined
-): LoweredField | null {
+): FieldProjection | null {
   const block = wildcardBlockOf(field.type);
   if (block === null) {
     return null;
@@ -469,14 +471,14 @@ export function lowerStructMap(
 }
 
 /**
- * Lowers a block of computed keys and scalar values to a readonly record.
+ * Projects a block of computed keys and scalar values to a readonly record.
  * Keys remain strings because branded reference objects cannot be record keys.
  */
-export function lowerScalarMap(
+export function projectScalarMap(
   emitter: Emitter,
   field: RuleField,
   name: string
-): LoweredField | null {
+): FieldProjection | null {
   if (field.type.kind !== "block") {
     return null;
   }
@@ -484,28 +486,28 @@ export function lowerScalarMap(
   if (values.length === 0 || values.length !== field.type.fields.length) {
     return null;
   }
-  const value = emitter.unionFor(values.map((inner) => inner.type));
+  const value = emitter.lowerer.unionFor(values.map((inner) => inner.type));
   if (value === null) {
     return null;
   }
   return {
-    memberType: `Readonly<Record<string, ${emitter.useValue(value).type}>>`,
+    memberType: `Readonly<Record<string, ${emitter.typeOf(value)}>>`,
     metadata: metadata(field, name, "scalarMap"),
     admits: { shape: "scalarMap", repeated: repeatsSiblings(field, "scalarMap") },
   };
 }
 
 /**
- * Lowers a fixed-shape anonymous block, including the wrapped anonymous-list
+ * Projects a fixed-shape anonymous block, including the wrapped anonymous-list
  * spelling. Returns `null` when the block contains structure this model cannot preserve.
  */
-export function lowerStruct(
+export function projectStruct(
   emitter: Emitter,
   field: RuleField,
   name: string,
   path: string,
   ctx: FieldContext
-): LoweredField | null {
+): FieldProjection | null {
   const located = structBlockOf(field.type);
   if (located === null) {
     return null;
@@ -549,16 +551,16 @@ export function lowerStruct(
 }
 
 /**
- * Lowers a block that combines ordinary struct members with one trigger splice.
+ * Projects a block that combines ordinary struct members with one trigger splice.
  * The generated interface exposes the splice as its optional `when` member.
  */
-export function lowerTriggerStruct(
+export function projectTriggerStruct(
   emitter: Emitter,
   field: RuleField,
   name: string,
   path: string,
   ctx: FieldContext
-): LoweredField | null {
+): FieldProjection | null {
   const located = triggerStructOf(field.type);
   if (located === null) {
     return null;

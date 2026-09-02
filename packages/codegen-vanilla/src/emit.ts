@@ -32,13 +32,13 @@
  * what went through all three.
  */
 
-import type { RuleScopes } from "@pdx-ts/codegen-cwt/lower/scope-facts";
 import {
   camelCase,
   pascalCase,
   kebabCase as registryStem,
   safeIdentifier,
 } from "@pdx-ts/codegen-cwt/naming";
+import type { RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
 import { compareUtf8, isWindowsDeviceName } from "@pdx-ts/sdk/internals";
 
 import type { ScriptedCallShape, ScriptedDefinition } from "./read-scripted.ts";

@@ -2,7 +2,7 @@
 
 import { camelCase, docComment, pascalCase, pluralize } from "../naming.ts";
 import { COMPLEX_ENUM_REFERENCE_OVERLAYS } from "../overlay/index.ts";
-import type { Emitter } from "../render/emitter.ts";
+import type { Emitter } from "./typescript.ts";
 
 /**
  * Returns the sorted SDK scope names derived from the CWT scope table.

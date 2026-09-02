@@ -3,9 +3,14 @@
  * These shapes have no ordinary CWT field table from which to derive their descents.
  */
 
-import type { Emitter } from "../render/emitter.ts";
-import type { LoweredField } from "./fields.ts";
-import type { FieldScope } from "./scope-context.ts";
+import type { DescentNode } from "../corpus/observations.ts";
+import type { EmittedField, FieldScopeFacts } from "./content-model.ts";
+import type { LoweringContext } from "./context.ts";
+
+interface FieldInterior {
+  readonly nested?: readonly EmittedField[];
+  readonly descents?: readonly DescentNode[];
+}
 
 /**
  * The keys a `modifier` row spends on arithmetic or display rather than on
@@ -17,7 +22,7 @@ import type { FieldScope } from "./scope-context.ts";
  * corpus reader would then record `add` and `factor` as trigger keys, and every
  * weight block in the game would report a scope mismatch against them.
  */
-function weightRowOperations(emitter: Emitter): ReadonlySet<string> {
+function weightRowOperations(emitter: LoweringContext): ReadonlySet<string> {
   const members = (name: string): readonly string[] => {
     const values = emitter.rules.enums.get(name);
     if (values === undefined || values.length === 0) {
@@ -36,11 +41,11 @@ function weightRowOperations(emitter: Emitter): ReadonlySet<string> {
  * The returned field evidence and corpus descent use the holder's scope.
  */
 export function weightInterior(
-  emitter: Emitter,
+  emitter: LoweringContext,
   name: string,
   path: string,
-  scope: FieldScope
-): Pick<LoweredField, "nested" | "descents"> {
+  scope: FieldScopeFacts
+): FieldInterior {
   return {
     nested: [
       {
@@ -68,8 +73,8 @@ export function weightInterior(
 export function triggeredModifierInterior(
   name: string,
   path: string,
-  potentialScope: FieldScope
-): Pick<LoweredField, "nested" | "descents"> {
+  potentialScope: FieldScopeFacts
+): FieldInterior {
   return {
     nested: [
       {
@@ -88,8 +93,8 @@ export function triggeredModifierInterior(
 export function economicResourceOperationInterior(
   name: string,
   path: string,
-  scope: FieldScope
-): Pick<LoweredField, "nested" | "descents"> {
+  scope: FieldScopeFacts
+): FieldInterior {
   return {
     nested: [
       {

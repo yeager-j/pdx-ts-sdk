@@ -5,13 +5,13 @@ import { parseCwt } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { readAliases, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { pushCode } from "@pdx-ts/codegen-cwt/emit/script/trigger-push-code";
 import { emitTriggers, type TriggerEmission } from "@pdx-ts/codegen-cwt/emit/script/triggers";
+import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
 import type { ArgField } from "@pdx-ts/codegen-cwt/lower/script-shape";
 import { loadBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
 import { scopeAuthorityOf } from "@pdx-ts/codegen-cwt/reconcile/scope-authority";
-import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -28,7 +28,7 @@ const authority = scopeAuthorityOf(loadBaseline(), scopes);
 const emission = emitTriggers(
   emitter,
   docs.triggers,
-  lowerRuleTable(rules.triggers, docs.triggers, emitter, scopes, authority.triggers)
+  lowerRuleTable(rules.triggers, docs.triggers, emitter.lowerer, scopes, authority.triggers)
 );
 
 /**
@@ -58,7 +58,7 @@ function emitInlineTriggers(source: string): TriggerEmission {
   return emitTriggers(
     inlineEmitter,
     docs.triggers,
-    lowerRuleTable(aliases, docs.triggers, inlineEmitter, scopes, new Map())
+    lowerRuleTable(aliases, docs.triggers, inlineEmitter.lowerer, scopes, new Map())
   );
 }
 
@@ -499,8 +499,7 @@ describe("trigger emission", () => {
       value: {
         kind: "scalar",
         value: {
-          type: "TraitRef | string",
-          toScalar: (expr) => expr,
+          types: [{ kind: "reference", name: "trait", unchecked: true }],
           conversion: "identity",
           refTypes: ["trait"],
         },

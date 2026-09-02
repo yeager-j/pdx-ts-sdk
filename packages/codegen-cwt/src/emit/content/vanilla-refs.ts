@@ -13,6 +13,7 @@
  * owned id without shipping every vanilla id as runtime data.
  */
 
+import type { Emitter } from "../../emit/typescript.ts";
 import { camelCase, docComment, spokenName } from "../../naming.ts";
 import {
   HAND_WRITTEN_VANILLA_REFS,
@@ -23,7 +24,6 @@ import {
   type ContentManifestEntry,
   type VanillaRefExtra,
 } from "../../policy/manifest.ts";
-import type { Emitter } from "../../render/emitter.ts";
 
 /** Generated vanilla-reference module text and its report totals. */
 export interface VanillaRefsEmission {

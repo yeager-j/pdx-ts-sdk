@@ -7,7 +7,7 @@
  * needs beyond that — the doc prose that otherwise exists only as JSDoc, the
  * optionality that otherwise exists only as the interface's `?`, the member
  * type text intellisense shows — is emitted here, in the same codegen pass
- * from the same lowerings, so the two cannot drift.
+ * from the same projections, so the two cannot drift.
  *
  * The map is keyed by the field-table arrays themselves rather than by paths:
  * a consumer walking a descriptor tree holds each nested table by reference
@@ -22,7 +22,7 @@
  * accidental hole.
  */
 
-import type { DocTable, FieldOmissionRow, MemberDocRow } from "../../render/field-rows.ts";
+import type { DocTable, FieldOmissionRow, MemberDocRow } from "./field-rows.ts";
 
 /** Field-table documentation imported from one generated registry or alias module. */
 export interface FieldDocsModule {

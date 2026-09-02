@@ -24,7 +24,7 @@ import { contentRegistry } from "./emit/content/registry.ts";
 import { emitVanillaRefs } from "./emit/content/vanilla-refs.ts";
 import { emitEffects } from "./emit/script/effects.ts";
 import { emitEvents } from "./emit/script/events.ts";
-import { classifyLinks, emitScopeLinkNavigation, emitScopeLinks } from "./emit/script/links.ts";
+import { emitScopeLinkNavigation, emitScopeLinks } from "./emit/script/links.ts";
 import { emitModifiers, joinModifierScopes } from "./emit/script/modifiers.ts";
 import { emitOnActions } from "./emit/script/on-actions.ts";
 import { emitScriptReferences } from "./emit/script/script-reference.ts";
@@ -37,12 +37,14 @@ import {
   emitValueSets,
   valuelessEnums,
 } from "./emit/support.ts";
+import { Emitter, type Usage } from "./emit/typescript.ts";
 import { loadRules } from "./load-rules.ts";
 import { parseModifierDocs } from "./logs/modifier-docs.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";
 import { referenceNameOf, typesReferencedBySubtype } from "./lower/content-reference.ts";
 import { emitContentShapeProtocol } from "./lower/content-shape.ts";
+import { classifyLinks } from "./lower/links.ts";
 import { lowerRuleTable } from "./lower/lowered-rule.ts";
 import { kebabCase } from "./naming.ts";
 import {
@@ -95,7 +97,6 @@ import { CWT_SCRIPT_DOCS_VERSION, readCwtCommit } from "./provenance.ts";
 import { checkDrift, loadBaseline } from "./reconcile/baseline.ts";
 import { reconcile } from "./reconcile/reconcile.ts";
 import { scopeAuthorityOf, type ScopeAuthority } from "./reconcile/scope-authority.ts";
-import { Emitter, type Usage } from "./render/emitter.ts";
 import { GeneratedOutput, header } from "./render/generated-file.ts";
 import { importList } from "./render/symbols.ts";
 import { eventFieldSupportLossLines, printReport, reportSection } from "./report.ts";
@@ -308,7 +309,7 @@ function emitScriptRules(
   const loweredTriggers = lowerRuleTable(
     rules.triggers,
     docs.triggers,
-    emitter,
+    emitter.lowerer,
     index,
     authority.triggers
   );
@@ -316,7 +317,7 @@ function emitScriptRules(
   const triggerUsage = emitter.endFile();
 
   const documentedLinks = new Map(links.links.map((link) => [link.name, link]));
-  const classifiedLinks = classifyLinks(emitter, documentedLinks, index);
+  const classifiedLinks = classifyLinks(rules, documentedLinks, index);
   const reservedScopeLinkNames = new Set([...triggers.names, ...RESERVED_TRIGGER_EXPORT_NAMES]);
   const scopeLinks = emitScopeLinks(classifiedLinks, index, reservedScopeLinkNames);
 
@@ -324,7 +325,7 @@ function emitScriptRules(
   const loweredEffects = lowerRuleTable(
     rules.effects,
     docs.effects,
-    emitter,
+    emitter.lowerer,
     index,
     authority.effects
   );
@@ -453,7 +454,7 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
   report.push(`cwtools-stellaris-config @ ${commit.slice(0, 12)}`);
   report.push(
     `\nscopes: ${canonicalScopes(rules.scopes).length}` +
-      ` | scope groups: ${emitter.usedScopeGroups.size} lowered of ${rules.scopeGroups.size} parsed` +
+      ` | scope groups: ${emitter.lowerer.usedScopeGroups.size} lowered of ${rules.scopeGroups.size} parsed` +
       ` | enums emitted: ${emitter.usedEnums.size}` +
       ` | refs emitted: ${emitter.usedRefs.size}` +
       ` | value sets emitted: ${emitter.usedValueSets.size}`
@@ -551,12 +552,12 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
   reportSection(
     report,
     "Scope parameters widened to string (scopes.cwt declares no such scope)",
-    [...emitter.unknownScopes].sort()
+    [...emitter.lowerer.unknownScopes].sort()
   );
   reportSection(
     report,
     "Scope parameters widened to string (scopes.cwt declares no such scope_group)",
-    [...emitter.unknownScopeGroups].sort()
+    [...emitter.lowerer.unknownScopeGroups].sort()
   );
   reportSection(report, "Content definers taken from the hand-written grafts", definers.grafted);
   reportSection(
@@ -627,7 +628,7 @@ async function writeSharedRuleModules(
   );
 
   const modifiers = emitModifiers(
-    joinModifierScopes(rules, modifierDocs, (token) => emitter.canonicalScope(token))
+    joinModifierScopes(rules, modifierDocs, (token) => emitter.lowerer.canonicalScope(token))
   );
   await output.write(
     "modifiers.ts",

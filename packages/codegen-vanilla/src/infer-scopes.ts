@@ -35,7 +35,7 @@
  * the event-body walk cannot see those calls.
  */
 
-import type { RuleFact, RuleScopes, ScopeFacts } from "@pdx-ts/codegen-cwt/lower/scope-facts";
+import type { RuleFact, RuleScopes, ScopeFacts } from "@pdx-ts/codegen-cwt/scope-facts";
 import { SPECIAL_SCOPE_PATHS } from "@pdx-ts/codegen-cwt/special-scope-paths";
 import type { PdxItem, PdxValue } from "@pdx-ts/pdxscript";
 

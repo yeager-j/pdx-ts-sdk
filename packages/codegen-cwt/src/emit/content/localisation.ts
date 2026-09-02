@@ -7,11 +7,11 @@
  */
 
 import type { ContentType } from "../../cwt/rules.ts";
+import { Emitter } from "../../emit/typescript.ts";
 import { camelCase, docComment } from "../../naming.ts";
 import { REQUIRED_LOCALISATION, SYNTHETIC_LOCALISATION } from "../../overlay/index.ts";
-import { Emitter } from "../../render/emitter.ts";
-import type { FieldOmissionRow } from "../../render/field-rows.ts";
 import { member as renderMember } from "../../render/writer.ts";
+import type { FieldOmissionRow } from "./field-rows.ts";
 
 /** One canonical localisation slot and its resolved authoring requiredness. */
 export interface LocalisationPlanEntry {
@@ -227,7 +227,7 @@ export function localisationRefType(
 /**
  * `pointers` maps a localisation member to the body member the game actually
  * reads its text through, for the synthetic slots that have one. Passed in
- * rather than looked up, because it is a *result* of lowering the body: the
+ * rather than looked up, because it is a *result* of projection the body: the
  * pointer is the renamed body field, and the rename is only known once the
  * field loop has run. See `renamedOffLocalisation` (`content-type.ts`).
  */

@@ -16,8 +16,14 @@ import { fileURLToPath } from "node:url";
 import { format, resolveConfig } from "prettier";
 
 import { referencesIdentifier } from "../naming.ts";
-import type { Emitter, Usage } from "./emitter.ts";
 import { assertRecordedImportsAreUsed, importList, renderImports } from "./symbols.ts";
+import type { Usage } from "./usage.ts";
+
+interface GeneratedNameResolver {
+  enumTypeName(name: string): string;
+  refTypeName(name: string): string;
+  valueSetTypeName(name: string): string;
+}
 
 /** Anchor output to this module so the caller's working directory cannot redirect generated files. */
 const REPOSITORY_ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
@@ -54,7 +60,7 @@ export function header(commit: string, sources: readonly string[]): string {
 function renderGeneratedModule(
   commit: string,
   sources: readonly string[],
-  emitter: Emitter,
+  emitter: GeneratedNameResolver,
   usage: Usage,
   body: string
 ): string {
@@ -188,7 +194,7 @@ export class GeneratedOutput {
     outputFile: string,
     commit: string,
     sources: readonly string[],
-    emitter: Emitter,
+    emitter: GeneratedNameResolver,
     usage: Usage,
     body: string
   ): Promise<void> {

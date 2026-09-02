@@ -9,8 +9,9 @@
 
 import type { RuleType } from "@pdx-ts/codegen-cwt/cwt/model";
 import { emitScopes } from "@pdx-ts/codegen-cwt/emit/support";
+import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
+import { referenceTargetsOf } from "@pdx-ts/codegen-cwt/lower/value";
 import { referencesIdentifier } from "@pdx-ts/codegen-cwt/naming";
-import { Emitter, referenceTargetsOf } from "@pdx-ts/codegen-cwt/render/emitter";
 import {
   assertRecordedImportsAreUsed,
   ImportRecorder,

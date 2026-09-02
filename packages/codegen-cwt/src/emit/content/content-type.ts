@@ -1,28 +1,17 @@
 /**
  * Emits one content registry's authoring types and runtime field metadata.
  *
- * Registry-specific judgment lives in overlay rows. This module only lowers
+ * Registry-specific judgment lives in overlay rows. This module only projects
  * rule shapes that the runtime content writer understands; the per-field
- * lowering itself lives in `fields.ts`, shared with the alias emitters.
+ * projection itself lives in `field-projection.ts`, shared with the alias emitters.
  */
 
 import type { DescentNode } from "../../corpus/observations.ts";
 import type { RuleField } from "../../cwt/model.ts";
 import type { ContentBody, ContentType } from "../../cwt/rules.ts";
-import {
-  authoredLiterals,
-  emittedMemberType,
-  flatten,
-  lowerTopLevelSplice,
-  memberOptional,
-  mergeByName,
-  pickOrdinary,
-  repeatsSiblings,
-  useWideningSymbols,
-  type EmittedField,
-} from "../../lower/fields.ts";
+import { Emitter } from "../../emit/typescript.ts";
+import type { EmittedField } from "../../lower/content-model.ts";
 import type { AliasNameField } from "../../lower/rule-shapes.ts";
-import type { FieldContext } from "../../lower/scope-context.ts";
 import { partitionSubtypeFields } from "../../lower/subtype-partition.ts";
 import {
   camelCase,
@@ -43,14 +32,25 @@ import {
   SYNTHETIC_LOCALISATION,
   type ContentFieldOverride,
 } from "../../overlay/index.ts";
-import { Emitter } from "../../render/emitter.ts";
+import { constArray, member as renderMember } from "../../render/writer.ts";
+import type { FieldContext } from "../scope-context.ts";
+import {
+  authoredLiterals,
+  emittedMemberType,
+  flatten,
+  memberOptional,
+  mergeByName,
+  pickOrdinary,
+  projectTopLevelSplice,
+  repeatsSiblings,
+  useWideningSymbols,
+} from "./field-projection.ts";
 import {
   omissionLine,
   type DocTable,
   type FieldOmissionRow,
   type MemberDocRow,
-} from "../../render/field-rows.ts";
-import { constArray, member as renderMember } from "../../render/writer.ts";
+} from "./field-rows.ts";
 import {
   localisationMembers,
   localisationMetadata,
@@ -89,7 +89,7 @@ export interface ContentEmission {
    * The type names an author can name, for the generated public barrel: the
    * authoring and definition types, the scope unions the registry declares,
    * its patch vocabulary, and its repeated-struct interfaces. Everything else
-   * the module exports is lowering machinery.
+   * the module exports is projection machinery.
    */
   readonly publicTypes: readonly string[];
   /** Name of the registry's generated runtime field table. */
@@ -105,14 +105,14 @@ export interface ContentEmission {
   /** Top-level fields represented by the authoring interface. */
   readonly emittedFields: readonly EmittedField[];
   /**
-   * Fields lowered inside a block-valued field, e.g. `tradition_swap.on_enabled`
+   * Fields projected inside a block-valued field, e.g. `tradition_swap.on_enabled`
    * or `term_data.discrete_terms.key` — invisible to `emittedFields`, which only
    * names the owning field itself (`tradition_swap`). Their paths carry the
    * registry prefix; `emittedFields` names are bare.
    */
   readonly nestedEmittedFields: readonly EmittedField[];
   /**
-   * How the corpus reader reaches those interiors, from the same lowerings.
+   * How the corpus reader reaches those interiors, from the same projections.
    * The reader's configuration is emission-derived rather than a second table
    * to keep in step: a walk the emitter did not lower would report interiors
    * nothing ever claimed to author.
@@ -134,14 +134,14 @@ export interface ContentEmission {
   readonly declinedFields: readonly string[];
   /**
    * Alias categories spliced unkeyed at the definition's top level, each
-   * lowered to one authoring member. Their legal keys are the category's
+   * projected to one authoring member. Their legal keys are the category's
    * members rather than anything `emittedFields` can name, so a consumer
    * measuring coverage has to resolve the category itself.
    */
   readonly inlineSplices: readonly string[];
   /**
    * Present in the rules but not expressible: blocked on emitter machinery,
-   * each with what stopped the lowering. The only reason a declared field is
+   * each with what stopped the projection. The only reason a declared field is
    * absent from the authoring surface other than `declinedFields`.
    */
   readonly unsupported: readonly string[];
@@ -358,7 +358,7 @@ function contentTypeDraft(): ContentTypeDraft {
   };
 }
 
-/** The context every field of this registry lowers against. */
+/** The context every field of this registry projects against. */
 function scopeFieldContext(
   scope: ContentBody["scope"],
   registry: string,
@@ -413,7 +413,7 @@ interface FieldDeclaration {
 }
 
 /**
- * Lowers one alias category spliced unkeyed at the definition's top level
+ * Projects one alias category spliced unkeyed at the definition's top level
  * into a single authoring member, or records why it has none.
  */
 function declareSplice(
@@ -425,8 +425,8 @@ function declareSplice(
   draft: ContentTypeDraft
 ): void {
   const category = declaration.key.category;
-  const lowered = lowerTopLevelSplice(emitter, declaration, fieldContext);
-  if (lowered === null) {
+  const projected = projectTopLevelSplice(emitter, declaration, fieldContext);
+  if (projected === null) {
     draft.unsupported.push({
       path: `alias_name[${category}]`,
       kind: "unsupported",
@@ -434,57 +434,57 @@ function declareSplice(
     });
     return;
   }
-  if (draft.emittedMembers.has(lowered.member) || localisationMemberNames.has(lowered.member)) {
+  if (draft.emittedMembers.has(projected.member) || localisationMemberNames.has(projected.member)) {
     draft.unsupported.push({
       path: `alias_name[${category}]`,
       kind: "unsupported",
-      reason: `spliced unkeyed at the top level; its "${lowered.member}" member is already taken`,
+      reason: `spliced unkeyed at the top level; its "${projected.member}" member is already taken`,
     });
     return;
   }
   draft.members.push(
     renderMember({
-      name: lowered.member,
-      type: lowered.memberType,
+      name: projected.member,
+      type: projected.memberType,
       optional: true,
-      docs: lowered.docs,
+      docs: projected.docs,
     })
   );
-  draft.memberDocs[lowered.member] = {
+  draft.memberDocs[projected.member] = {
     optional: true,
-    docs: lowered.docs,
-    memberType: lowered.memberType,
+    docs: projected.docs,
+    memberType: projected.memberType,
   };
-  draft.fieldMetadata.push(lowered.metadata);
-  draft.emittedMembers.add(lowered.member);
+  draft.fieldMetadata.push(projected.metadata);
+  draft.emittedMembers.add(projected.member);
   draft.inlineSplices.push(category);
   // A splice the game reads at the block root writes no key of its own, so
   // a patch has no slot in the parsed body to substitute for it.
-  if (lowered.key === undefined) {
+  if (projected.key === undefined) {
     draft.patchExclusions.push(
-      `${type.name}.${lowered.member} — spliced unkeyed into the definition's own body, ` +
+      `${type.name}.${projected.member} — spliced unkeyed into the definition's own body, ` +
         "so a patch has no key to replace"
     );
   } else {
     draft.patchMembers.push({
-      member: lowered.member,
-      docs: lowered.docs,
-      memberType: lowered.memberType,
+      member: projected.member,
+      docs: projected.docs,
+      memberType: projected.memberType,
     });
   }
   // A structural splice names a real key the corpus can be measured
   // against; `inlineModifiers` does not, since its rows carry no key.
-  if (lowered.key !== undefined) {
+  if (projected.key !== undefined) {
     draft.emittedFields.push({
-      field: lowered.key,
-      authoredPath: [lowered.member],
-      ...lowered.admits!,
+      field: projected.key,
+      authoredPath: [projected.member],
+      ...projected.admits!,
     });
   }
 }
 
 /**
- * Lowers an overlay-configured repeated-struct field through its own nested
+ * Projects an overlay-configured repeated-struct field through its own nested
  * emission and records the member, the nested tables, and the corpus descent.
  */
 function declareRepeatedStruct(
@@ -556,7 +556,7 @@ function declareRepeatedStruct(
   );
 }
 
-/** Lowers one ordinary body field and records its member, docs, and tables. */
+/** Projects one ordinary body field and records its member, docs, and tables. */
 function declareOrdinaryField(
   emitter: Emitter,
   field: FieldDeclaration,
@@ -572,7 +572,7 @@ function declareOrdinaryField(
   }
   const ambient = Object.fromEntries(
     Object.entries(override?.ambient ?? {}).map(([key, scope]) => {
-      const canonical = emitter.canonicalScope(scope);
+      const canonical = emitter.lowerer.canonicalScope(scope);
       if (canonical === null) {
         throw new Error(`Overlay asserts unknown ambient scope "${scope}" at ${path}`);
       }
@@ -587,7 +587,7 @@ function declareOrdinaryField(
           assertedAmbient: { ...fieldContext.assertedAmbient, ...ambient },
         };
   const loweredContext = selectedContext(assertedContext, parameter, member);
-  const lowered = pickOrdinary(
+  const projected = pickOrdinary(
     emitter,
     group,
     name,
@@ -596,7 +596,7 @@ function declareOrdinaryField(
     widening?.extraType,
     path
   );
-  if (lowered === null) {
+  if (projected === null) {
     draft.unsupported.push({
       path: name,
       kind: "unsupported",
@@ -613,16 +613,16 @@ function declareOrdinaryField(
     ...new Set([
       ...(overlayDocs ?? []),
       ...group.flatMap((field) => field.docs),
-      ...(lowered.docs ?? []),
+      ...(projected.docs ?? []),
     ]),
   ];
-  // The selector member is the scope parameter itself rather than a lowered type.
+  // The selector member is the scope parameter itself rather than a projected type.
   const selectorType = parameter?.selector?.member === member ? parameter.parameterName : undefined;
-  const memberType = selectorType ?? lowered.memberType;
+  const memberType = selectorType ?? projected.memberType;
   draft.members.push(
     renderMember({
       name: member,
-      type: selectorType ?? emittedMemberType(lowered),
+      type: selectorType ?? emittedMemberType(projected),
       optional,
       docs: docLines,
     })
@@ -631,33 +631,33 @@ function declareOrdinaryField(
     optional,
     docs: docLines,
     memberType,
-    ...authoredLiterals(lowered.admits.literals),
+    ...authoredLiterals(projected.admits.literals),
   };
-  draft.docTables.push(...(lowered.docTables ?? []));
+  draft.docTables.push(...(projected.docTables ?? []));
   draft.patchMembers.push({ member, docs: docLines, memberType });
-  draft.fieldMetadata.push(lowered.metadata(member));
-  if (lowered.code !== undefined) {
-    draft.extraCode.push(lowered.code);
-    draft.exportedNames.push(...(lowered.exportedNames ?? []));
+  draft.fieldMetadata.push(projected.metadata(member));
+  if (projected.code !== undefined) {
+    draft.extraCode.push(projected.code);
+    draft.exportedNames.push(...(projected.exportedNames ?? []));
   }
-  if (lowered.unsupported !== undefined) {
-    draft.unsupported.push(...lowered.unsupported);
+  if (projected.unsupported !== undefined) {
+    draft.unsupported.push(...projected.unsupported);
   }
   draft.emittedMembers.add(member);
   draft.emittedFields.push({
     field: name,
     authoredPath: [member],
-    ...underParameter(lowered.admits, parameter),
+    ...underParameter(projected.admits, parameter),
   });
   draft.nestedEmittedFields.push(
-    ...(lowered.nested ?? [])
+    ...(projected.nested ?? [])
       .map((emitted) => parameterised(emitted, parameter))
       .map((emitted) => ({
         ...emitted,
         authoredPath: [member, ...(emitted.authoredPath ?? [])],
       }))
   );
-  draft.corpusDescents.push(...(lowered.descents ?? []));
+  draft.corpusDescents.push(...(projected.descents ?? []));
 }
 
 /**
@@ -675,7 +675,7 @@ function declareOrdinaryField(
  * twice, once per subtype — which a second pass would instead report as a
  * member-name collision.
  */
-function lowerDeclarations(
+function projectDeclarations(
   emitter: Emitter,
   type: ContentType,
   fields: readonly RuleField[],
@@ -941,7 +941,7 @@ function scopeParameterDeclarations(
 }
 
 /**
- * Assembles the registry's generated module text from the lowered pieces, and
+ * Assembles the registry's generated module text from the projected pieces, and
  * the names it exports.
  *
  * The two are returned together because the public barrel checks every name it
@@ -1081,7 +1081,7 @@ export function emitContentType(
   );
 
   const draft = contentTypeDraft();
-  lowerDeclarations(
+  projectDeclarations(
     emitter,
     type,
     fields,

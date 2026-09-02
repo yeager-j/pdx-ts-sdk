@@ -3,7 +3,7 @@
  *
  * `government_trigger` is the shape this exists for. It looks like a trigger
  * category and is not one: the game reads it as a fixed list of empire
- * requirements, not as a script condition tree, so lowering it to `Trigger<S>`
+ * requirements, not as a script condition tree, so projection it to `Trigger<S>`
  * would hand authors an API whose output the game silently ignores. Its members
  * come in exactly three shapes:
  *
@@ -46,16 +46,18 @@
 
 import type { RuleField, RuleType } from "../../cwt/model.ts";
 import type { AliasDecl } from "../../cwt/rules.ts";
+import type { Emitter } from "../../emit/typescript.ts";
 import { formOfShape } from "../../lower/authored-form.ts";
+import { contentConversionOf, type LoweredValue } from "../../lower/value.ts";
 import { camelCase, docComment, isPlainName, pascalCase } from "../../naming.ts";
-import { contentConversionOf, type Emitter, type TsValue } from "../../render/emitter.ts";
+import { constArray, member as renderMember } from "../../render/writer.ts";
+import { refTypesSuffix } from "../value-metadata.ts";
 import {
   omissionLine,
   type DocTable,
   type FieldOmissionRow,
   type MemberDocRow,
-} from "../../render/field-rows.ts";
-import { constArray, refTypesSuffix, member as renderMember } from "../../render/writer.ts";
+} from "./field-rows.ts";
 
 /** Generated authoring code and coverage evidence for one fixed-shape alias category. */
 export interface AliasStructEmission {
@@ -67,7 +69,7 @@ export interface AliasStructEmission {
   readonly typeName: string;
   /** The block's runtime field table, e.g. `GOVERNMENT_TRIGGER_FIELDS`. */
   readonly fieldsConstant: string;
-  /** Category member names lowered onto the block, in declaration order. */
+  /** Category member names projected onto the block, in declaration order. */
   readonly emittedMembers: readonly string[];
   /** Members matching no known shape, each with its reason. */
   readonly declinedMembers: readonly string[];
@@ -124,12 +126,12 @@ function namedFields(type: RuleType): readonly RuleField[] | null {
 interface ClauseShape {
   readonly kind: "clause";
   /** The content type every `value` in the clause references. */
-  readonly ref: TsValue;
+  readonly ref: LoweredValue;
 }
 
 interface ScalarShape {
   readonly kind: "scalar";
-  readonly value: TsValue;
+  readonly value: LoweredValue;
 }
 
 interface CombinatorShape {
@@ -148,7 +150,7 @@ interface ShapedAliasMember {
 
 interface AliasStructPlan {
   readonly members: readonly ShapedAliasMember[];
-  readonly scalars: ReadonlyMap<string, TsValue>;
+  readonly scalars: ReadonlyMap<string, LoweredValue>;
   readonly omissions: readonly FieldOmissionRow[];
   readonly hasClauseMember: boolean;
 }
@@ -209,7 +211,7 @@ function clauseShape(emitter: Emitter, type: RuleType): ClauseShape | null {
   if (referenced.size !== 1 || referenced.has(null)) {
     return null;
   }
-  const ref = emitter.valueFor(values[0]!);
+  const ref = emitter.lowerer.valueFor(values[0]!);
   return ref === null ? null : { kind: "clause", ref };
 }
 
@@ -244,7 +246,7 @@ function shapeOf(emitter: Emitter, type: RuleType, category: string): MemberShap
   if (type.kind === "block") {
     return "a block matching neither the value/OR/NOT/NOR clause template nor a self-splice";
   }
-  const value = emitter.valueFor(type);
+  const value = emitter.lowerer.valueFor(type);
   return value === null ? "a scalar type the emitter cannot express" : { kind: "scalar", value };
 }
 
@@ -257,7 +259,7 @@ function shapeOf(emitter: Emitter, type: RuleType, category: string): MemberShap
 function blockScalars(
   emitter: Emitter,
   combinators: readonly CombinatorShape[]
-): Map<string, TsValue> | string {
+): Map<string, LoweredValue> | string {
   const grouped = new Map<string, RuleType[]>();
   for (const combinator of combinators) {
     for (const field of combinator.fields) {
@@ -265,9 +267,9 @@ function blockScalars(
       grouped.set(key, [...(grouped.get(key) ?? []), field.type]);
     }
   }
-  const merged = new Map<string, TsValue>();
+  const merged = new Map<string, LoweredValue>();
   for (const [key, types] of grouped) {
-    const value = emitter.unionFor(types);
+    const value = emitter.lowerer.unionFor(types);
     if (value === null) {
       return `block-level field "${key}" has a type the emitter cannot express`;
     }
@@ -276,7 +278,7 @@ function blockScalars(
   return merged;
 }
 
-function valueField(key: string, value: TsValue): string {
+function valueField(key: string, value: LoweredValue): string {
   return (
     `  { key: ${JSON.stringify(key)}, member: ${JSON.stringify(memberName(key))}, ` +
     `shape: "value", form: ${JSON.stringify(formOfShape({ shape: "value" }))}, ` +
@@ -342,20 +344,21 @@ function planAliasStruct(
 function valueMemberEmission(
   emitter: Emitter,
   key: string,
-  value: TsValue,
+  value: LoweredValue,
   docs: readonly string[]
 ): AliasMemberEmission {
   const propertyName = memberName(key);
+  const memberType = emitter.typeOf(value);
   return {
     propertyName,
     blockMember: renderMember({
       name: propertyName,
-      type: emitter.useValue(value).type,
+      type: memberType,
       optional: true,
       docs,
     }),
     metadata: valueField(key, value),
-    docs: { optional: true, docs, memberType: value.type },
+    docs: { optional: true, docs, memberType },
     clauseTables: [],
     clauseTableNames: [],
     docTables: [],
@@ -370,12 +373,12 @@ function valueMemberEmission(
  */
 function clauseDocTables(
   localizationInputType: string,
-  ref: TsValue,
+  refType: string,
   clauseFieldsConstant: string,
   groupFieldsConstant: string,
   groupName: string
 ): readonly DocTable[] {
-  const groupType = `readonly ${groupName}<${ref.type}>[]`;
+  const groupType = `readonly ${groupName}<${refType}>[]`;
   return [
     {
       constant: clauseFieldsConstant,
@@ -383,7 +386,7 @@ function clauseDocTables(
         value: {
           optional: true,
           docs: ["The single value the requirement accepts."],
-          memberType: ref.type,
+          memberType: refType,
         },
         or: {
           optional: true,
@@ -416,7 +419,7 @@ function clauseDocTables(
         values: {
           optional: false,
           docs: ["The group's operands, emitted as repeated `value` keys."],
-          memberType: `readonly ${ref.type.includes(" | ") ? `(${ref.type})` : ref.type}[]`,
+          memberType: `readonly ${refType.includes(" | ") ? `(${refType})` : refType}[]`,
         },
       },
     },
@@ -425,7 +428,7 @@ function clauseDocTables(
 
 function clauseFieldsCode(
   emitter: Emitter,
-  ref: TsValue,
+  ref: LoweredValue,
   clauseFieldsConstant: string,
   groupFieldsConstant: string
 ): string {
@@ -480,7 +483,7 @@ function memberEmission(
     const memberConstant = `${constant}_${name.toUpperCase()}`;
     const clauseFieldsConstant = `${memberConstant}_CLAUSE_FIELDS`;
     const groupFieldsConstant = `${memberConstant}_CLAUSE_GROUP_FIELDS`;
-    const memberType = `${clauseName}<${emitter.useValue(shape.ref).type}>`;
+    const memberType = `${clauseName}<${emitter.typeOf(shape.ref)}>`;
     return {
       propertyName,
       blockMember: renderMember({
@@ -501,7 +504,7 @@ function memberEmission(
       docTables: [
         ...clauseDocTables(
           emitter.use("LocalizationInput"),
-          shape.ref,
+          emitter.typeOf(shape.ref),
           clauseFieldsConstant,
           groupFieldsConstant,
           groupName

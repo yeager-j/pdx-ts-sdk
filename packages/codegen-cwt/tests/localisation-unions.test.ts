@@ -13,8 +13,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { RuleType } from "@pdx-ts/codegen-cwt/cwt/model";
 import type { AliasDecl } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
-import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -180,27 +180,31 @@ describe("localisation union classification", () => {
   it("refuses to lower a localisation union holding a bare-string enum arm", () => {
     const emitter = new Emitter(rules);
     expect(() =>
-      emitter.unionFor([{ kind: "localisation" }, { kind: "enum", name: "research_area" }])
+      emitter.lowerer.unionFor([{ kind: "localisation" }, { kind: "enum", name: "research_area" }])
     ).toThrow(/whose members are bare strings/);
   });
 
   it("lowers a raw scalar arm as literal text and a reference arm without a string escape", () => {
     const emitter = new Emitter(rules);
-    const rawScalar = emitter.unionFor([{ kind: "localisation" }, { kind: "scalar" }]);
-    expect(rawScalar?.type).toBe("LocalizationInput | LiteralText");
+    const rawScalar = emitter.lowerer.unionFor([{ kind: "localisation" }, { kind: "scalar" }]);
+    expect(rawScalar === null ? null : emitter.typeOf(rawScalar)).toBe(
+      "LocalizationInput | LiteralText"
+    );
     expect(rawScalar?.localizationInput).toBe(true);
 
-    const reference = emitter.unionFor([
+    const reference = emitter.lowerer.unionFor([
       { kind: "localisation" },
       { kind: "typeRef", name: "job" },
     ]);
-    expect(reference?.type).toBe("LocalizationInput | JobRef");
+    expect(reference === null ? null : emitter.typeOf(reference)).toBe(
+      "LocalizationInput | JobRef"
+    );
     expect(reference?.objectKinds).toContain("typed-ref");
   });
 
   it("keeps engine sentinels out of the display-text arm", () => {
     const emitter = new Emitter(rules);
-    const value = emitter.unionFor([
+    const value = emitter.lowerer.unionFor([
       { kind: "literal", text: "default" },
       { kind: "localisation" },
     ]);

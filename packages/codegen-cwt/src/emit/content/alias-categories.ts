@@ -1,7 +1,7 @@
 /**
  * The alias-category worklist: every category emitted as its own shared
  * module, from either of the two reasons a category needs one — an overlay
- * row lowering a *keyed* field onto it (`civic_or_origin.potential` ->
+ * row projection a *keyed* field onto it (`civic_or_origin.potential` ->
  * `government_trigger`), or a body splicing it unkeyed
  * (`solar_system_initializer` -> `planet_initializer`). Both produce a named
  * interface plus a `registerAliasStructFields` call, so they share a write
@@ -13,12 +13,12 @@
  */
 
 import type { RuleSet } from "../../cwt/rules.ts";
+import type { Emitter, Usage } from "../../emit/typescript.ts";
 import { structuralSpliceOf } from "../../lower/rule-shapes.ts";
 import { CONTENT_FIELD_OVERRIDES } from "../../overlay/index.ts";
-import type { Emitter, Usage } from "../../render/emitter.ts";
-import type { DocTable, FieldOmissionRow } from "../../render/field-rows.ts";
 import { emitAliasSplice, type AliasSpliceEmission } from "./alias-splice.ts";
 import { emitAliasStruct } from "./alias-struct.ts";
+import type { DocTable, FieldOmissionRow } from "./field-rows.ts";
 
 /** One generated module and report entry for a structural alias category. */
 export interface AliasCategoryEmission {
@@ -77,7 +77,7 @@ function emitAliasCategory(
   // `modifier`, whose authoring member is the `ModifierClosure` the runtime
   // already knows and whose members the rules keep outside `aliasCategories`
   // entirely — so there is no interface and no field table to emit.
-  if (structuralSpliceOf(emitter, category) === null) {
+  if (structuralSpliceOf(emitter.lowerer, category) === null) {
     return;
   }
   emitter.beginFile(category);
@@ -110,7 +110,7 @@ export function emitAliasCategories(
 ): {
   /** Every emitted category, including structurally spliced categories. */
   aliasCategories: Map<string, AliasCategoryEmission>;
-  /** Categories lowered specifically through the recursive structural-splice path. */
+  /** Categories projected specifically through the recursive structural-splice path. */
   aliasSplices: Map<string, AliasSpliceEmission>;
 } {
   const state: AliasCategoryEmissionState = {

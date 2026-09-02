@@ -16,7 +16,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { RuleScopes } from "@pdx-ts/codegen-cwt/lower/scope-facts";
+import type { RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
 import { locateInstall, requireGameVersion } from "@pdx-ts/sdk/installation";
 import { beforeAll, describe, expect, it } from "vitest";
 

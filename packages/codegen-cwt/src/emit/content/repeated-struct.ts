@@ -7,6 +7,13 @@
 import type { DescentNode, RepeatedStructKeying } from "../../corpus/observations.ts";
 import type { RuleField } from "../../cwt/model.ts";
 import type { ContentType } from "../../cwt/rules.ts";
+import { Emitter } from "../../emit/typescript.ts";
+import type { EmittedField } from "../../lower/content-model.ts";
+import { wildcardBlockOf } from "../../lower/rule-shapes.ts";
+import { camelCase, constantCase, docComment } from "../../naming.ts";
+import { CONTENT_DECLINED_FIELDS, type RepeatedStructDefinition } from "../../overlay/index.ts";
+import { constArray, member as renderMember } from "../../render/writer.ts";
+import type { FieldContext } from "../scope-context.ts";
 import {
   authoredLiterals,
   emittedMemberType,
@@ -14,16 +21,9 @@ import {
   mergeByName,
   metadata,
   pickOrdinary,
-  type EmittedField,
   type FieldMetadata,
-} from "../../lower/fields.ts";
-import { wildcardBlockOf } from "../../lower/rule-shapes.ts";
-import type { FieldContext } from "../../lower/scope-context.ts";
-import { camelCase, constantCase, docComment } from "../../naming.ts";
-import { CONTENT_DECLINED_FIELDS, type RepeatedStructDefinition } from "../../overlay/index.ts";
-import { Emitter } from "../../render/emitter.ts";
-import type { DocTable, FieldOmissionRow, MemberDocRow } from "../../render/field-rows.ts";
-import { constArray, member as renderMember } from "../../render/writer.ts";
+} from "./field-projection.ts";
+import type { DocTable, FieldOmissionRow, MemberDocRow } from "./field-rows.ts";
 import {
   localisationMembers,
   localisationMetadata,
@@ -53,7 +53,7 @@ export type RepeatedStructEmission = RepeatedStructKeying & {
   readonly declinedFields: readonly FieldOmissionRow[];
   /** Declared fields that cannot be represented or collide with another member. */
   readonly unsupported: readonly FieldOmissionRow[];
-  /** Successfully lowered fields, including nested field paths. */
+  /** Successfully projected fields, including nested field paths. */
   readonly emittedFields: readonly EmittedField[];
   /** Corpus-reader descents into the entry's block-valued fields. */
   readonly children: readonly DescentNode[];
@@ -150,7 +150,7 @@ function planRepeatedStruct(
   };
 }
 
-function lowerRepeatedStructMembers(
+function projectRepeatedStructMembers(
   emitter: Emitter,
   plan: RepeatedStructPlan,
   ownerPath: string,
@@ -189,8 +189,8 @@ function lowerRepeatedStructMembers(
       });
       continue;
     }
-    const lowering = pickOrdinary(emitter, group, name, ctx, undefined, undefined, fieldPath);
-    if (lowering === null) {
+    const projection = pickOrdinary(emitter, group, name, ctx, undefined, undefined, fieldPath);
+    if (projection === null) {
       unsupported.push({
         path: fieldPath,
         kind: "unsupported",
@@ -199,31 +199,35 @@ function lowerRepeatedStructMembers(
       continue;
     }
     const optional = memberOptional(group, undefined);
-    const docs = [...new Set([...group.flatMap((field) => field.docs), ...(lowering.docs ?? [])])];
-    members.push(renderMember({ name: member, type: emittedMemberType(lowering), optional, docs }));
+    const docs = [
+      ...new Set([...group.flatMap((field) => field.docs), ...(projection.docs ?? [])]),
+    ];
+    members.push(
+      renderMember({ name: member, type: emittedMemberType(projection), optional, docs })
+    );
     memberDocs[member] = {
       optional,
       docs,
-      memberType: lowering.memberType,
-      ...authoredLiterals(lowering.admits.literals),
+      memberType: projection.memberType,
+      ...authoredLiterals(projection.admits.literals),
     };
-    docTables.push(...(lowering.docTables ?? []));
-    metadata.push(lowering.metadata(member));
-    if (lowering.code !== undefined) {
-      extraCode.push(lowering.code);
-      exportedNames.push(...(lowering.exportedNames ?? []));
+    docTables.push(...(projection.docTables ?? []));
+    metadata.push(projection.metadata(member));
+    if (projection.code !== undefined) {
+      extraCode.push(projection.code);
+      exportedNames.push(...(projection.exportedNames ?? []));
     }
-    if (lowering.unsupported !== undefined) {
-      unsupported.push(...lowering.unsupported);
+    if (projection.unsupported !== undefined) {
+      unsupported.push(...projection.unsupported);
     }
     emittedFields.push(
-      { field: fieldPath, authoredPath: [member], ...lowering.admits },
-      ...(lowering.nested ?? []).map((field) => ({
+      { field: fieldPath, authoredPath: [member], ...projection.admits },
+      ...(projection.nested ?? []).map((field) => ({
         ...field,
         authoredPath: [member, ...(field.authoredPath ?? [])],
       }))
     );
-    children.push(...(lowering.descents ?? []));
+    children.push(...(projection.descents ?? []));
   }
 
   return {
@@ -297,7 +301,7 @@ function renderRepeatedStruct(
 }
 
 /**
- * Lowers one overlay-configured repeated struct into a record member, nested authoring types,
+ * Projects one overlay-configured repeated struct into a record member, nested authoring types,
  * runtime metadata, and coverage evidence. Returns `null` when the declaration does not supply a
  * usable block or identity key.
  *
@@ -315,7 +319,7 @@ export function repeatedStructEmission(
   if (plan === null) {
     return null;
   }
-  const members = lowerRepeatedStructMembers(emitter, plan, ownerPath, ctx);
+  const members = projectRepeatedStructMembers(emitter, plan, ownerPath, ctx);
   if (plan.localisation.kind === "missing") {
     members.unsupported.push({
       path: ownerPath,

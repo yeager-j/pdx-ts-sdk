@@ -4,8 +4,9 @@ import { describe, expect, it } from "vitest";
 
 import type { RuleField, RuleType } from "../src/cwt/model.ts";
 import type { RuleSet } from "../src/cwt/rules.ts";
+import { Emitter } from "../src/emit/typescript.ts";
 import { loadRules } from "../src/load-rules.ts";
-import { Emitter, type TsValue } from "../src/render/emitter.ts";
+import type { LoweredValue } from "../src/lower/value.ts";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const rules = loadRules(path.join(ROOT, "vendor/cwtools-stellaris-config/config"));
@@ -80,7 +81,7 @@ function collectRuleTypes(rules: RuleSet): CollectedRuleTypes {
  * it. Tagging `refId(x)` and `x.path` alike is what let a union merge hand one
  * arm's expression to the other arm's values.
  */
-const CONVERSION_EXPRESSIONS: Record<TsValue["conversion"], string> = {
+const CONVERSION_EXPRESSIONS: Record<LoweredValue["conversion"], string> = {
   identity: "x",
   refId: "refId(x)",
   stringRefId: "String(refId(x))",
@@ -94,18 +95,18 @@ describe("emitter scalar conversions", () => {
     const emitter = new Emitter(rules);
     const values = [
       ...collected.scalarTypes
-        .map((type) => emitter.valueFor(type))
-        .filter((value): value is TsValue => value !== null),
+        .map((type) => emitter.lowerer.valueFor(type))
+        .filter((value): value is LoweredValue => value !== null),
       ...collected.unions
-        .map((types) => emitter.unionFor(types))
-        .filter((value): value is TsValue => value !== null),
+        .map((types) => emitter.lowerer.unionFor(types))
+        .filter((value): value is LoweredValue => value !== null),
     ];
 
     expect(values.length).toBeGreaterThan(100);
-    expect(values.some((value) => value.type.includes("LiteralText"))).toBe(true);
+    expect(values.some((value) => emitter.typeOf(value).includes("LiteralText"))).toBe(true);
 
     for (const value of values) {
-      expect(value.toScalar("x")).toBe(CONVERSION_EXPRESSIONS[value.conversion]);
+      expect(emitter.scalarExpression(value, "x")).toBe(CONVERSION_EXPRESSIONS[value.conversion]);
     }
   });
 
@@ -119,20 +120,20 @@ describe("emitter scalar conversions", () => {
     let mixed = 0;
 
     for (const types of collected.unions) {
-      const arms = types.map((type) => emitter.valueFor(type));
+      const arms = types.map((type) => emitter.lowerer.valueFor(type));
       // A union with an arm the emitter cannot lower has no merged value to
       // check; `unionFor` returns null for the whole union rather than a
       // partial one.
-      if (!arms.every((arm): arm is TsValue => arm !== null)) {
+      if (!arms.every((arm): arm is LoweredValue => arm !== null)) {
         continue;
       }
       if (new Set(arms.map((arm) => arm.conversion)).size < 2) {
         continue;
       }
       mixed += 1;
-      const merged = emitter.unionFor(types);
+      const merged = emitter.lowerer.unionFor(types);
       expect(merged?.conversion).toBe("refId");
-      expect(merged?.toScalar("x")).toBe("refId(x)");
+      expect(merged === null ? null : emitter.scalarExpression(merged, "x")).toBe("refId(x)");
     }
 
     expect(mixed).toBeGreaterThan(0);

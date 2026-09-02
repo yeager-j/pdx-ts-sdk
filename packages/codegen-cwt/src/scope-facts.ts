@@ -2,8 +2,8 @@
  * The scope facts this generator already computes, kept as data.
  *
  * Every trigger, effect, and scope link's legal scopes are resolved on the way
- * to emitting `Trigger<"country">`, then stringified away by `scopeType`. Its
- * sibling `canonicalScopeSet` returns the same thing as a list; `classifyLinks`
+ * to emitting `Trigger<"country">`, then projected into type text. The lower
+ * stage's `canonicalScopeSet` retains the same fact as a list; `classifyLinks`
  * already returns each link's input set and output scope. This module joins the
  * three readers and keeps the lists, so a consumer that needs to *reason* about
  * scope rather than print it has somewhere to read from.
@@ -37,18 +37,18 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { scopeIndex } from "../cwt/rules.ts";
-import { classifyLinks } from "../emit/script/links.ts";
-import { loadRules } from "../load-rules.ts";
-import { parseModifierDocs } from "../logs/modifier-docs.ts";
-import { parseScopeLinks } from "../logs/scopes.ts";
-import { parseTriggerDocs } from "../logs/trigger-docs.ts";
-import { compareToBaseline, loadBaseline } from "../reconcile/baseline.ts";
-import { reconcile, type DriftBaseline, type DriftReport } from "../reconcile/reconcile.ts";
-import { scopeAuthorityOf } from "../reconcile/scope-authority.ts";
-import { Emitter } from "../render/emitter.ts";
-import { lowerRuleTable, type LoweredRule } from "./lowered-rule.ts";
-import { canonicalScopeSet } from "./script-shape.ts";
+import { scopeIndex } from "./cwt/rules.ts";
+import { loadRules } from "./load-rules.ts";
+import { parseModifierDocs } from "./logs/modifier-docs.ts";
+import { parseScopeLinks } from "./logs/scopes.ts";
+import { parseTriggerDocs } from "./logs/trigger-docs.ts";
+import { classifyLinks } from "./lower/links.ts";
+import { lowerRuleTable, type LoweredRule } from "./lower/lowered-rule.ts";
+import { ScopeResolver } from "./lower/scopes.ts";
+import { canonicalScopeSet } from "./lower/script-shape.ts";
+import { compareToBaseline, loadBaseline } from "./reconcile/baseline.ts";
+import { reconcile, type DriftBaseline, type DriftReport } from "./reconcile/reconcile.ts";
+import { scopeAuthorityOf } from "./reconcile/scope-authority.ts";
 
 /**
  * A scope set, or `"universal"` for a rule legal everywhere. `"universal"` is
@@ -157,7 +157,7 @@ function assertBaselineMatches(baseline: DriftBaseline, report: DriftReport): vo
 
 function readScopeFacts(configRoot: string, docsRoot: string): ScopeFacts {
   const rules = loadRules(configRoot);
-  const emitter = new Emitter(rules);
+  const scopeResolver = new ScopeResolver(rules);
   const index = scopeIndex(rules);
   const docs = parseTriggerDocs(
     readFileSync(path.join(docsRoot, "triggers.log"), "utf8"),
@@ -175,14 +175,20 @@ function readScopeFacts(configRoot: string, docsRoot: string): ScopeFacts {
   const triggers = lowerRuleTable(
     rules.triggers,
     docs.triggers,
-    emitter,
+    scopeResolver,
     index,
     authority.triggers
   );
-  const effects = lowerRuleTable(rules.effects, docs.effects, emitter, index, authority.effects);
+  const effects = lowerRuleTable(
+    rules.effects,
+    docs.effects,
+    scopeResolver,
+    index,
+    authority.effects
+  );
   const dumpLinks = new Map(scopeLinks.links.map((link) => [link.name, link]));
 
-  const links = linkFactsOf(classifyLinks(emitter, dumpLinks, index).links, index);
+  const links = linkFactsOf(classifyLinks(rules, dumpLinks, index).links, index);
 
   return {
     triggers: factsOf(triggers),
