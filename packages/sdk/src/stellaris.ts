@@ -46,6 +46,7 @@ export type {
   ComplexTriggerModifierMode,
   ComplexTriggerModifierWithLoc,
   EffectPath,
+  EffectScope,
   EventTarget,
   IfChain,
   Modifier,

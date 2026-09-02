@@ -77,7 +77,14 @@ const SYMBOL_MODULES: readonly ModuleSymbols[] = [
   },
   {
     module: "../script/effects/types.ts",
-    types: ["EffectPath", "EffectPathTransition", "Modifier", "ScopeValue", "StructuralEffects"],
+    types: [
+      "EffectPath",
+      "EffectPathTransition",
+      "EffectScope",
+      "Modifier",
+      "ScopeValue",
+      "StructuralEffects",
+    ],
   },
   {
     module: "../script/scalar.ts",

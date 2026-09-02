@@ -1419,6 +1419,7 @@ function scopeInterfaces(
 ): string[] {
   return allScopes.map((scope) => {
     const parents = [
+      `${emitter.use("EffectScope")}<${JSON.stringify(scope)}>`,
       `${emitter.use("StructuralEffects")}<${JSON.stringify(scope)}>`,
       ...clusters
         .filter((cluster) => cluster.scopes === "universal" || cluster.scopes.includes(scope))

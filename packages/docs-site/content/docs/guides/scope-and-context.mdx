@@ -85,8 +85,29 @@ immediate: (country) => {
 };
 ```
 
-The callback parameter exists only for a scope push. A captured ancestor proxy
-records in the nested block through the game's `PREV` path. Up to four verified
+The callback parameter exists only for a scope push. It is an effect proxy: use
+its methods to record effects, or its `.ref` property when a field needs the
+same scope as a scalar value.
+
+```ts
+immediate: (system) => {
+  system.createCountry({
+    type: "guardian",
+    effect: (country) => {
+      country.createFleet({
+        effect: (fleet) => {
+          fleet.setOwner(country.ref); // set_owner = prev
+          fleet.setLocation(system.ref); // set_location = prevprev
+        },
+      });
+    },
+  });
+};
+```
+
+The recorder resolves `.ref` where the value is consumed. A captured ancestor
+therefore records through the game's `PREV` path even if the value or a link
+built from it was created before the nested callback. Up to four verified
 pushes are supported (`PREV` through `PREVPREVPREVPREV`); a replacement or an
 unknown scope transition fails rather than guessing a path.
 
@@ -104,6 +125,13 @@ Use named context references such as `ctx.root`, `ctx.from`, `ctx.fromfrom`,
 and `ctx.prev`, plus saved targets, when the script needs their
 absolute game meaning. Captured proxies describe lexical ancestors only; they
 do not infer `ROOT` or `FROM`.
+
+The three forms have different jobs:
+
+- An effect proxy records effects in the callback scope.
+- `scope.ref` is a non-openable `ScopeValue` for that lexical callback scope.
+- `ctx.*` and saved targets are stable references to ambient or explicitly
+  saved scopes; the openable forms can also create effect or trigger blocks.
 
 ## Context keeps stable scopes available
 
@@ -203,12 +231,13 @@ a misleading event fire.
 The difference is easiest to remember by asking what happens after a nested
 scope change:
 
-| Reference           | Meaning inside nested script                  |
-| ------------------- | --------------------------------------------- |
-| `this` / `ctx.self` | Relative to the block where it is written     |
-| `root` / `ctx.root` | The same execution root throughout the script |
-| `from` / `ctx.from` | The same declared FROM throughout the script  |
-| Saved event target  | The scope captured when the target was saved  |
+| Reference             | Meaning inside nested script                    |
+| --------------------- | ----------------------------------------------- |
+| `this` / `ctx.self`   | Relative to the block where it is written       |
+| Captured `scope.ref`  | `this` or the verified lexical `prev*` ancestor |
+| `root` / `ctx.root`   | The same execution root throughout the script   |
+| `from` / `ctx.from`   | The same declared FROM throughout the script    |
+| Saved event target    | The scope captured when the target was saved    |
 
 Use relative navigation when the relationship should move with the current
 block. Use an absolute reference when the script must keep naming one known

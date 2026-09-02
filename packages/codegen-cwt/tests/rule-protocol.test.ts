@@ -800,7 +800,7 @@ describe("LoweredRule", () => {
     expect(emitted.universalParameters).toBe("<S extends ScopeName>");
     expect(emitted.interfaces).toContain("trigger?: Trigger<S> }[] }): void;");
     expect(emitted.interfaces).toContain(
-      'export interface CountryScope extends StructuralEffects<"country">,'
+      'export interface CountryScope extends EffectScope<"country">, StructuralEffects<"country">,'
     );
     expect(emitted.interfaces).toContain('EffectsIn8Scopes39a9<"country">,');
     // A cluster valid in one scope names that scope directly: there is no

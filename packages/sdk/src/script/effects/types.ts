@@ -38,6 +38,20 @@ export interface ScopeValue<S extends ScopeName = ScopeName> {
   readonly [refScopeBrand]?: S;
 }
 
+/**
+ * The lexical scope capability carried by every generated effect proxy.
+ *
+ * Effects record through the proxy itself. Use `.ref` when an effect
+ * field needs that same scope as a scalar value. The reference stays relative
+ * to the recording where it is consumed, so a captured outer proxy becomes
+ * `prev` or a deeper verified PREV path inside nested callbacks. Reading it
+ * after its callback returns or across an unverified transition throws.
+ */
+export interface EffectScope<S extends ScopeName> {
+  /** The proxy's current scope as a lexical, non-openable scalar reference. */
+  readonly ref: ScopeValue<S>;
+}
+
 /** A scope value that may satisfy an event fire by omission or explicit override. */
 export type FireFromWitness<S extends ScopeName> = ScopeValue<S> & {
   readonly [cannotWitnessNaturalFromBrand]?: never;
