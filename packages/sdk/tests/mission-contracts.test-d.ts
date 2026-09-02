@@ -38,6 +38,12 @@ describe("contract missions", () => {
       timeToAccept: 30,
     });
     mod.mission("plain", { category: ordinary, picture: "GFX_event_pictures_space_battle" });
+    // @ts-expect-error — only a contract declares the location its callbacks read
+    mod.mission("located_plain", {
+      category: ordinary,
+      picture: "GFX_event_pictures_space_battle",
+      locationScope: "planet",
+    });
     mod.mission("uncategorised", { picture: "GFX_event_pictures_space_battle" });
     mod.mission("vanilla_category", {
       category: "a_vanilla_category",

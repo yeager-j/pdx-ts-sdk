@@ -147,6 +147,7 @@ export interface MissionFieldsBase<
    * `issueContract` call for this definition to a
    * location of the same scope. Omitted, that ambient scope stays unreadable and the
    * call sites stay unchecked.
+   * Only a definition the `contract` subtype covers may declare it.
    */
   locationScope?: L;
   /**
@@ -426,6 +427,8 @@ export interface MissionPlainFields<
   S extends MissionScope = "country",
   L extends MissionLocationScope | undefined = undefined,
 > extends MissionFieldsBase<S, L> {
+  /** Only a definition the `contract` subtype covers may declare it. */
+  locationScope?: never;
   category?: (MissionCategoryRef & { readonly def?: { readonly isContract?: false } }) | string;
   /**
    * The event chain this mission is part of. (Only REQUIRED for contracts)

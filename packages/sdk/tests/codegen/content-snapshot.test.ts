@@ -889,6 +889,12 @@ describe("content-type codegen", () => {
       /MissionPlainFields<[\s\S]*?eventChain\?: EventChainRef \| string;/
     );
     expect(mission?.code).toMatch(/MissionPlainFields<[\s\S]*?timeToAccept\?: never;/);
+    // The location declaration belongs to contracts: the plain arm refuses it,
+    // and keeps `L` so its callbacks are contextually typed like the contract arm's.
+    const armBody = (name: string) =>
+      mission!.code.slice(mission!.code.indexOf(`export interface ${name}<`)).split("\n}\n")[0]!;
+    expect(armBody("MissionPlainFields")).toContain("locationScope?: never;");
+    expect(armBody("MissionContractFields")).not.toContain("locationScope?: never;");
     // The qualified reference the arm spells is registered for refs.ts by the
     // emission that spells it.
     expect(emitter.usedRefs.has("mission_category.contract")).toBe(true);

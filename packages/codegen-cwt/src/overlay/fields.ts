@@ -356,6 +356,13 @@ export interface ContentScopeParameter {
     readonly scopeGroup: string;
     /** Members and ambient slots that receive the declared scope. */
     readonly members: Readonly<Record<string, AmbientScopeKey>>;
+    /**
+     * The subtype whose definitions may declare the scope, when only one
+     * may. Every other subtype arm fixes the declaration to `undefined`, so
+     * a definition outside that subtype cannot type an ambient scope the game
+     * never hands it. The subtype must be one the registry emits as an arm.
+     */
+    readonly subtype?: string;
     /** The effect whose argument the scope actually is, and that argument. */
     readonly effect: string;
     /** Effect argument that supplies the declared FROM scope. */
@@ -527,13 +534,16 @@ export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
           onAccept: "fromfrom",
           aiWeight: "from",
         },
+        subtype: "contract",
         effect: "issue_contract",
         argument: "location",
         reason:
           "A contract's location is selected by issue_contract.location. The contract callbacks " +
           "and the effect both declare it as scope_group[spatial_object], so the authored " +
           "declaration chooses one supported spatial scope and the checked overload requires " +
-          "that same scope at call sites.",
+          "that same scope at call sites. Only contracts declare it: 99_README_MISSIONS.txt " +
+          "calls FROMFROM the contract location, and of the three ordinary Stellaris 4.4.6 " +
+          "missions with `location = yes`, none reads FROMFROM in any callback.",
       },
       reason:
         "Mission callbacks run in country scope. Contract callbacks additionally receive the " +

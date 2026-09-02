@@ -26,6 +26,8 @@ export interface DeclaredFrom {
   readonly scopes: readonly string[];
   /** Definition members and ambient slots that receive this scope. */
   readonly members: Readonly<Record<string, AmbientScopeKey>>;
+  /** The one subtype whose definitions may declare it, or `null` for any definition. */
+  readonly subtype: string | null;
   /** Effect whose argument supplies the declared location. */
   readonly effect: string;
 }
@@ -150,6 +152,7 @@ function declaredFromOf(
     typeName: `${pascalCase(registry)}${pascalCase(row.member)}`,
     scopes: [...new Set(scopes)].sort(),
     members: row.members,
+    subtype: row.subtype ?? null,
     effect: row.effect,
   };
 }

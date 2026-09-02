@@ -75,6 +75,7 @@ import {
   renderSubtypeArm,
   type ClaimableMember,
   type ReferenceWitnessLookup,
+  type SubtypeArm,
   type SubtypeUnionsPlan,
 } from "./subtype-unions.ts";
 
@@ -934,6 +935,11 @@ function scopeParameterDeclarations(
             `\`${camelCase(declaredFrom.effect)}\` call for this definition to a`,
             "location of the same scope. Omitted, that ambient scope stays unreadable and the",
             "call sites stay unchecked.",
+            ...(declaredFrom.subtype === null
+              ? []
+              : [
+                  `Only a definition the \`${declaredFrom.subtype}\` subtype covers may declare it.`,
+                ]),
           ],
           "  "
         ) + `  ${declaredFrom.member}?: L;\n`;
@@ -1046,6 +1052,38 @@ function definitionType(
 }
 
 /**
+ * The arm with the declared FROM refused, where the declaration belongs to a
+ * subtype (`declaredFrom.subtype`) the arm does not select. The arm keeps the
+ * base's `L` so every callback is contextually typed the same way across the
+ * union — a definition's `(ctx) => …` needs one candidate type — and refuses
+ * the member that would infer it, so `L` can only be `undefined` there: the
+ * callbacks read no ambient location and the item stays off the checked
+ * call-site overloads.
+ */
+function withDeclaredFromWithheld(arm: SubtypeArm, parameter: ScopeParameter | null): SubtypeArm {
+  const declaredFrom = parameter?.declaredFrom;
+  const owner = declaredFrom?.subtype ?? null;
+  if (declaredFrom === undefined || owner === null) {
+    return arm;
+  }
+  if (arm.selected.some((subtype) => subtype.name === owner)) {
+    return arm;
+  }
+  return {
+    ...arm,
+    members: [
+      {
+        member: declaredFrom.member,
+        type: "never",
+        optional: true,
+        docs: [`Only a definition the \`${owner}\` subtype covers may declare it.`],
+      },
+      ...arm.members,
+    ],
+  };
+}
+
+/**
  * Assembles the registry's generated module text from the projected pieces, and
  * the names it exports.
  *
@@ -1102,7 +1140,7 @@ function contentTypeCode(
     unions.arms
       .map((arm) =>
         renderSubtypeArm(
-          arm,
+          withDeclaredFromWithheld(arm, parameter),
           `${indefiniteArticle(type.name)} ${type.name}`,
           fieldsName,
           surface.generic,
@@ -1172,6 +1210,33 @@ function flatRegistryReason(type: ContentType, parameter: ScopeParameter | null)
     return "the registry's definer infers a witness from the definition, which a union defeats";
   }
   return null;
+}
+
+/**
+ * A `declaredFrom.subtype` row must name a subtype the registry emits as an
+ * arm: the arms are what withhold the declaration from every other
+ * definition, and without one the row would claim a restriction the
+ * generated surface does not make.
+ */
+function assertDeclaredFromOwnerIsArm(
+  type: ContentType,
+  parameter: ScopeParameter | null,
+  unions: SubtypeUnionsPlan
+): void {
+  const owner = parameter?.declaredFrom?.subtype ?? null;
+  if (owner === null) {
+    return;
+  }
+  const modelled = unions.arms.some((arm) =>
+    arm.selected.some((subtype) => subtype.name === owner)
+  );
+  if (!modelled) {
+    throw new Error(
+      `Overlay declared FROM for ${type.name} is owned by subtype "${owner}", which the ` +
+        "registry does not emit as an arm, so nothing would withhold the declaration from " +
+        "other definitions"
+    );
+  }
 }
 
 /**
@@ -1307,6 +1372,7 @@ export function emitContentType(
   for (const reference of unions.references) {
     emitter.useRef(reference);
   }
+  assertDeclaredFromOwnerIsArm(type, parameter, unions);
   applySubtypeUnions(draft, unions);
   const names = contentTypeNames(type, parameter, unions.arms.length > 0);
   const surface = scopeParameterDeclarations(type, parameter);
