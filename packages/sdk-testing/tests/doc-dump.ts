@@ -1,8 +1,8 @@
 /**
- * Reads the vendored Paradox documentation dump for the whitelist audit gate.
+ * Reads a Paradox documentation dump from the CWT config fork for the whitelist audit gate.
  *
  * This lives under `tests/` rather than `src/` on purpose: the published
- * package must never reach for a file outside itself, and the vendored dump is
+ * package must never reach for a file outside itself, and the checked-out dump is
  * a repository input, not a runtime one. The whitelist carries only the pins —
  * a name and a hash — and this is what turns them back into evidence.
  *
@@ -21,7 +21,7 @@ import { parseTriggerDocs, type DocEntry } from "@pdx-ts/codegen-cwt/logs/trigge
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const SCRIPT_DOCS = path.join(ROOT, "vendor/cwtools-stellaris-config/script-docs");
 
-/** Which of the three vendored logs a whitelist category is audited against. */
+/** Which of the three CWT logs a whitelist category is audited against. */
 export type DumpName = "triggers" | "effects" | "scopes";
 
 export interface DocBlock {
@@ -32,15 +32,15 @@ export interface DocBlock {
   readonly deprecated: boolean;
 }
 
-export interface VendoredDocDump {
-  /** The single version directory under `script-docs/`, e.g. `v4.4.1`. */
+export interface CwtDocDump {
+  /** The selected version directory under `script-docs/`, e.g. `v4.4.1`. */
   readonly version: string;
   readonly blocks: Readonly<Record<DumpName, ReadonlyMap<string, DocBlock>>>;
 }
 
 /**
  * Line endings and trailing spaces are not evidence: normalizing them keeps a
- * revendor that only rewrites whitespace from reporting every pin as broken,
+ * source update that only rewrites whitespace from reporting every pin as broken,
  * which would train a maintainer to re-pin without reading. Blank lines
  * *inside* a usage example are kept — `kill_leader`'s example has one.
  */
@@ -88,29 +88,15 @@ function index<T>(source: Iterable<readonly [string, T]>, toBlock: (value: T) =>
   return new Map([...source].map(([name, value]) => [name, toBlock(value)]));
 }
 
-/**
- * Throws rather than picking a directory when `script-docs/` holds more than
- * one version: which dump the whitelist was audited against is exactly the
- * question this gate exists to answer, so guessing here would defeat it.
- */
-function locateDump(): { version: string; dir: string } {
-  const versions = fs
-    .readdirSync(SCRIPT_DOCS, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .sort();
-  if (versions.length !== 1) {
+/** Reads the named documentation dump and indexes its audited paragraphs. */
+export function readCwtDocDump(version: string): CwtDocDump {
+  const dir = path.join(SCRIPT_DOCS, version);
+  if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {
     throw new Error(
-      `Expected exactly one version directory under ${SCRIPT_DOCS}, found ${versions.length}` +
-        `${versions.length === 0 ? "" : ` (${versions.join(", ")})`}.`
+      `CWT documentation dump ${version} does not exist under ${SCRIPT_DOCS}. ` +
+        "Run git submodule update --init."
     );
   }
-  const version = versions[0]!;
-  return { version, dir: path.join(SCRIPT_DOCS, version) };
-}
-
-export function readVendoredDocDump(): VendoredDocDump {
-  const { version, dir } = locateDump();
   const read = (name: string): string => fs.readFileSync(path.join(dir, name), "utf8");
   const docs = parseTriggerDocs(read("triggers.log"), read("effects.log"));
   return {

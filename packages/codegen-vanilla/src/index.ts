@@ -2,8 +2,8 @@
  * Regenerates `packages/stellaris-ids/` from an installed copy of the game.
  *
  * Run with `npm run codegen:vanilla`. Separate from `@pdx-ts/codegen-cwt` because
- * the source is different in kind: cwtools rules are
- * vendored and versioned in-repo, an install is a machine-local artifact that
+ * the source is different in kind: cwtools rules come from a pinned submodule,
+ * while an install is a machine-local artifact that
  * changes when Paradox ships a patch. Different sources, different regeneration
  * triggers, different failure modes — one script each.
  *
@@ -14,6 +14,7 @@
 import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { CWT_SCRIPT_DOCS_VERSION } from "@pdx-ts/codegen-cwt/provenance";
 import { locateInstall, requireGameVersion } from "@pdx-ts/sdk/installation";
 import { stampedVanillaPackageVersion } from "@pdx-ts/sdk/internals";
 
@@ -27,7 +28,11 @@ import { generateVanillaPackage } from "./generate.ts";
  */
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const CONFIG = path.join(ROOT, "vendor/cwtools-stellaris-config/config");
-const DOCS = path.join(ROOT, "vendor/cwtools-stellaris-config/script-docs/v4.4.1");
+const DOCS = path.join(
+  ROOT,
+  "vendor/cwtools-stellaris-config/script-docs",
+  CWT_SCRIPT_DOCS_VERSION
+);
 /** Repo-relative, for the report; {@link PACKAGE_DIR} is what the writes use. */
 const PACKAGE = "packages/stellaris-ids";
 const PACKAGE_DIR = path.join(ROOT, PACKAGE);

@@ -460,9 +460,7 @@ const SCOPE_CONTEXT_KEYS: ReadonlySet<string> = new Set<string>(["this", ...AMBI
  * block-valued assignment resolves to `null` — and because `replace_scopes`
  * states the whole context, `null` *clears* the slot rather than inheriting it.
  * A typo therefore drops a scope the rules meant to declare, silently changing
- * the generated API. `common/missions.cwt:305` is the case in the vendored
- * rules: it writes `fromform = country` where its own documentation comment
- * two lines above says `fromfrom`.
+ * the generated API, so every member is validated.
  *
  * Diagnostics carry the option's line rather than the member's, because an
  * option value is tokenized from the annotation's text alone and every line

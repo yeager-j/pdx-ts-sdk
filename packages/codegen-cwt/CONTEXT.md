@@ -1,6 +1,6 @@
 # CWT Codegen
 
-Reading cwtools' vendored rule files and emitting the SDK's typed authoring
+Reading the pinned cwtools config fork and emitting the SDK's typed authoring
 surface into `packages/sdk/src/generated/`. Its output is committed, reviewed
 as a public-API change, and never hand-edited.
 
@@ -125,6 +125,6 @@ A field the game writes that no author can produce through the emitted
 interface. A gate failure unless acknowledged with a reason and an issue.
 
 **Drift**:
-Disagreement between the vendored `.cwt` rules and the game's own documentation
+Disagreement between the pinned `.cwt` rules and the game's own documentation
 dumps. Recorded in the drift baseline and accepted deliberately, never
 rebaselined reflexively.

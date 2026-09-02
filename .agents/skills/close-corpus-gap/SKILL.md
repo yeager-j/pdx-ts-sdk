@@ -20,7 +20,7 @@ generated diff as public API, commit generated output with its source change).
 
 ## Steps
 
-1. **Read the declaration at every site.** Grep the vendored `.cwt` for the
+1. **Read the declaration at every site.** Grep the pinned `.cwt` files for the
    key: a field declared once at the type's top level and again inside a nested
    struct is two gap rows and one fix, and the corpus gate's struct descent
    makes the nested instance visible independently. Done when you can state,

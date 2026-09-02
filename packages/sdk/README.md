@@ -432,7 +432,7 @@ files under `dist/`.
 
 ## Code generation and verification
 
-`@pdx-ts/codegen-cwt` generates `src/generated/` from vendored cwtools rules and
+`@pdx-ts/codegen-cwt` generates `src/generated/` from the pinned cwtools config fork and
 version-matched Stellaris documentation dumps. Deliberate departures from a
 mechanical reading of those inputs live in audited overlay tables.
 

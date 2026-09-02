@@ -1,5 +1,5 @@
-# Hermetic on purpose: every step runs from committed inputs — vendored CWT
-# rules, the committed corpus fixture, generated output in-tree. The
+# Hermetic on purpose: every step runs from pinned inputs — the CWT submodule,
+# committed corpus fixture, and generated output in-tree. The
 # install-gated gates (corpus:check, codegen:vanilla:check, test:vanilla) are
 # maintainer-local and are deliberately absent: a runner has no Stellaris
 # install, and AGENTS.md is explicit that none of them may be made to pass
@@ -28,6 +28,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -36,7 +38,7 @@ jobs:
       - run: npm run format:check
       - run: npm run typecheck
       - run: npm run codegen:verified-build:check
-      # The CI-style codegen drift gate: regenerates from vendored inputs and
+      # The CI-style codegen drift gate: regenerates from the pinned fork and
       # fails on any diff against the committed packages/sdk/src/generated.
       - run: npm run codegen:check
 
@@ -55,6 +57,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
@@ -68,6 +72,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -98,6 +104,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
       - uses: actions/setup-node@v7
         with:
           node-version: 24

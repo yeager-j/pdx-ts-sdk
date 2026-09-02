@@ -1,5 +1,5 @@
 /**
- * Regenerates `packages/sdk/src/generated/` from the vendored cwtools config.
+ * Regenerates `packages/sdk/src/generated/` from the cwtools config fork.
  *
  * Run with `npm run codegen`. The output is committed, so a rules bump shows up
  * as a reviewable diff on the SDK's public API.
@@ -91,7 +91,7 @@ import {
 } from "./policy/modifiers.ts";
 import { formatScriptGapReport, reconcileScriptGaps } from "./policy/script-gaps.ts";
 import { HAND_WRITTEN_TRIGGER_EXPORTS, RESERVED_TRIGGER_EXPORT_NAMES } from "./policy/triggers.ts";
-import { parseUpstreamCommit } from "./provenance.ts";
+import { CWT_SCRIPT_DOCS_VERSION, readCwtCommit } from "./provenance.ts";
 import { checkDrift, loadBaseline } from "./reconcile/baseline.ts";
 import { reconcile } from "./reconcile/reconcile.ts";
 import { scopeAuthorityOf, type ScopeAuthority } from "./reconcile/scope-authority.ts";
@@ -101,9 +101,13 @@ import { importList } from "./render/symbols.ts";
 import { eventFieldSupportLossLines, printReport, reportSection } from "./report.ts";
 
 const REPOSITORY_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
-const CWT_VENDOR_DIRECTORY = path.join(REPOSITORY_ROOT, "vendor/cwtools-stellaris-config");
-const CWT_CONFIG_DIRECTORY = path.join(CWT_VENDOR_DIRECTORY, "config");
-const SCRIPT_DOCS_DIRECTORY = path.join(CWT_VENDOR_DIRECTORY, "script-docs/v4.4.1");
+const CWT_REPOSITORY_DIRECTORY = path.join(REPOSITORY_ROOT, "vendor/cwtools-stellaris-config");
+const CWT_CONFIG_DIRECTORY = path.join(CWT_REPOSITORY_DIRECTORY, "config");
+const SCRIPT_DOCS_DIRECTORY = path.join(
+  CWT_REPOSITORY_DIRECTORY,
+  "script-docs",
+  CWT_SCRIPT_DOCS_VERSION
+);
 
 interface EmittedManifestContent {
   readonly manifest: (typeof CONTENT_MANIFEST)[number];
@@ -210,11 +214,6 @@ interface CodegenReportInput {
   readonly scriptGapLines: ReturnType<typeof formatScriptGapReport>;
   readonly classifiedLinks: ReturnType<typeof classifyLinks>;
   readonly eventFieldPolicy: ReturnType<typeof createEventFieldPolicy>;
-}
-
-function readUpstreamCommit(vendorDirectory: string): string {
-  const version = readFileSync(path.join(vendorDirectory, "VERSION.md"), "utf8");
-  return parseUpstreamCommit(version);
 }
 
 function readGeneratorSources(
@@ -884,7 +883,7 @@ async function writeEventModules(input: EventModuleInput): Promise<EventModuleEm
 
 async function main(): Promise<void> {
   const rebaseline = process.argv.includes("--rebaseline");
-  const commit = readUpstreamCommit(CWT_VENDOR_DIRECTORY);
+  const commit = readCwtCommit(CWT_REPOSITORY_DIRECTORY);
   const { docs, links, modifierDocs, rules } = readGeneratorSources(
     CWT_CONFIG_DIRECTORY,
     SCRIPT_DOCS_DIRECTORY

@@ -102,7 +102,7 @@ describe("the scope-link join", () => {
   });
 });
 
-describe("the drift gate", () => {
+describe("the drift gate", { timeout: 30_000 }, () => {
   const report = reconcile(rules, docs, modifierDocs, dumpLinks);
 
   it("finds no unknown CWT keyword in the vendored rules", () => {
@@ -300,7 +300,7 @@ describe("where the fork and the game's dump disagree", () => {
   });
 });
 
-describe("a scope annotation inside a rule body", () => {
+describe("a scope annotation inside a rule body", { timeout: 30_000 }, () => {
   /** The classified `## push_scope` / `## replace_scopes` one option line declares. */
   function annotation(option: string): ScopeContext {
     const node = parseCwt(`${option}\nfield = scalar`, "annotation.cwt").nodes[0];

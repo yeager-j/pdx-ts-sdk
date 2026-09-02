@@ -52,13 +52,13 @@ export interface ExecCtx {
 export class InterpreterError extends Error {}
 
 /**
- * The vendored documentation dump every `docs` pin below was taken from.
+ * The documentation dump every `docs` pin below was taken from.
  *
- * `packages/sdk-testing/tests/whitelist-audit.test.ts` fails when
- * `vendor/cwtools-stellaris-config/script-docs/` holds a different version, so
- * revendoring a newer dump is what forces the whole table to be re-read rather
- * than assumed. The calibration was a one-shot manual record before that gate
- * existed; this is what makes it repeat.
+ * `packages/sdk-testing/tests/whitelist-audit.test.ts` reads this version from
+ * the CWT config fork and fails when its pinned paragraphs change. Selecting a
+ * newer dump forces the whole table to be re-read rather than assumed. The
+ * calibration was a one-shot manual record before that gate existed; this is
+ * what makes it repeat.
  */
 export const AUDITED_DOC_DUMP = "v4.4.1";
 

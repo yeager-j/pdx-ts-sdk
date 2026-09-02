@@ -30,10 +30,10 @@ Anything absent throws at evaluation time with a coverage summary; nothing
 evaluates silently.
 
 **Doc pin**:
-The paragraph of Paradox's vendored documentation dump a whitelist entry's note
+The paragraph of Paradox's pinned documentation dump a whitelist entry's note
 was read from, recorded by hash. Turns the audit from a one-time reading into a
 standing one: `tests/whitelist-audit.test.ts` fails on a changed paragraph, on
-an unacknowledged deprecation marker, and on a dump revendored at a version the
+an unacknowledged deprecation marker, and on selecting a dump version the
 table was never read against. The one claim no paragraph settles — event-target
 lifetime, recorded live in-game — is pinned to the verified game build instead.
 

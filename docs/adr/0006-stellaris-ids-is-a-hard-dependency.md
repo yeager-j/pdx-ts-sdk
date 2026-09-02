@@ -13,8 +13,8 @@ SDK-119's carve-out making vanilla path evidence mandatory only for
 author-minted paths, the `PDX_UNCHECKED_VANILLA_PATHS` escape).
 
 The first risk — a game patch outrunning the package — turns out to be insured
-elsewhere. The SDK's typed surface is game-version-locked through the vendored
-CWT rules, an upstream cadence this repo does not control, while
+elsewhere. The SDK's typed surface is game-version-locked through the pinned
+CWT config fork, while
 `stellaris-ids` regenerates self-serve from an install. Whenever the SDK
 supports a game version at all, the matching identifier package can exist the
 same day; a game version without rules has no typed surface regardless. The

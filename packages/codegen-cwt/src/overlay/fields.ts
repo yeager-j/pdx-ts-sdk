@@ -278,6 +278,8 @@ export const CONTENT_DECLINED_FIELDS = new Map<string, string>([
 export interface ContentScopeParameter {
   /** Every scope a definition may declare, or the effect whose receiving scopes are authoritative. */
   readonly scopes: readonly string[] | { readonly effect: string };
+  /** CWT's common scope to narrow to the definition's concrete parameter. Defaults to `any`. */
+  readonly mechanicalScope?: string;
   /** The scope a definition that declares none runs in. Required unless the declaration is required. */
   readonly fallback?: string;
   /** Customizes the synthetic scope declaration and optionally preserves it as a contract witness. */
@@ -369,13 +371,12 @@ export interface ContentScopeParameter {
  * Registries whose unpinned field scopes are a property of the *definition*
  * rather than a constant the rules could state.
  *
- * The `scope` assertion fixes a field CWT failed to annotate. This is the case
- * where CWT annotates `this = any` and is **right**: a decision taken on a
- * nomadic ship colony really is ship-scoped and one taken on a planet really is
- * planet-scoped, and the rules say so in a comment. The trouble is that
- * `Trigger<S>` is contravariant, so "valid in every scope" as a field type
- * admits only rules legal in every scope — leaving the field emitted, required,
- * and unfillable.
+ * The `scope` assertion fixes one field CWT failed to annotate. This is the
+ * registry-level case where CWT can state only an open scope or a common parent:
+ * a decision taken on a nomadic ship colony really is ship-scoped and one taken
+ * on a planet really is planet-scoped. The trouble is that `Trigger<S>` is
+ * contravariant, so the wider mechanical type loses the concrete APIs each
+ * definition is allowed to use.
  *
  * A row turns every field the registry left unpinned into `Trigger<NoInfer<S>>`
  * and adds one authoring member, `scope`, that names S and emits nothing. It
@@ -391,10 +392,21 @@ export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
     "decision",
     {
       scopes: ["planet", "ship"],
+      mechanicalScope: "carrier",
       fallback: "planet",
+      authoringMember: {
+        member: "scope",
+        required: false,
+        carriesWitness: false,
+        docs: [
+          "The concrete scope this definition's own clauses run in.",
+          "",
+          "Emits nothing. The rules expose only their common `carrier` parent.",
+        ],
+      },
       reason:
-        "decisions.cwt annotates the body `this = any` and explains why: on a nomadic ship " +
-        "colony a decision is ship-scoped, on a planet planet-scoped. Every non-universal " +
+        "decisions.cwt annotates the body with the common `carrier` parent: on a nomadic ship " +
+        "colony a decision is concretely ship-scoped, on a planet planet-scoped. Every non-universal " +
         "condition across all 111 shipped decisions is planet-valid — none writes a country-only " +
         "condition directly, they navigate through `owner` — so `planet` is the fallback and " +
         "`ship` the case that has to be declared.",
@@ -906,15 +918,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       reason:
         "The possible-operator block has the same documented issuer-country FROMFROM as " +
         "potential_operator and the same omission in its replace_scopes declaration.",
-    },
-  ],
-  [
-    "mission.ai_weight",
-    {
-      ambient: { fromfrom: "country" },
-      reason:
-        "missions.cwt documents the issuer country as FROMFROM but misspells the slot as " +
-        "fromform in replace_scopes. The correction restores the documented ambient scope.",
     },
   ],
   [

@@ -32,6 +32,8 @@ export interface ScopeParameter {
   readonly typeName: string;
   /** Canonical scopes the definition may declare. */
   readonly scopes: readonly string[];
+  /** CWT's common scope narrowed to the definition's concrete parameter. */
+  readonly mechanicalScope: string;
   /** Scope used when the author omits the declaration, or null when it is required. */
   readonly fallback: string | null;
   /** Generic parameter name used by the generated definition. */
@@ -126,6 +128,8 @@ export function scopeParameterOf(emitter: Emitter, registry: string): ScopeParam
       ? effectReceivingScopes(emitter, registry, row.scopes.effect)
       : row.scopes;
   const scopes = scopeNames.map(canonical);
+  const mechanicalScope =
+    row.mechanicalScope === undefined ? "any" : canonical(row.mechanicalScope);
   const authoringMember =
     row.authoringMember === undefined
       ? {
@@ -157,6 +161,7 @@ export function scopeParameterOf(emitter: Emitter, registry: string): ScopeParam
     return {
       typeName: `${pascalCase(registry)}Scope`,
       scopes,
+      mechanicalScope,
       fallback,
       parameterName: "E",
       parameterType: selector.typeName,
@@ -171,6 +176,7 @@ export function scopeParameterOf(emitter: Emitter, registry: string): ScopeParam
   return {
     typeName: `${pascalCase(registry)}Scope`,
     scopes,
+    mechanicalScope,
     fallback,
     parameterName: "S",
     parameterType: `${pascalCase(registry)}Scope`,
@@ -234,7 +240,10 @@ export function selectedContext(
   }
   const selector = parameter.selector;
   const declaredFrom = parameter.declaredFrom;
-  let selected = fieldContext;
+  let selected =
+    parameter.mechanicalScope !== "any" && fieldContext.scope?.this === parameter.mechanicalScope
+      ? { ...fieldContext, scope: { ...fieldContext.scope, this: null } }
+      : fieldContext;
   if (selector !== undefined && selector.scopedMembers.includes(member)) {
     selected = fieldContext;
   } else if (selector?.fromMembers?.includes(member) === true) {

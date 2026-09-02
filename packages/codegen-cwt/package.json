@@ -1,7 +1,7 @@
 {
   "name": "@pdx-ts/codegen-cwt",
   "version": "1.0.0",
-  "description": "Generates @pdx-ts/sdk's committed TypeScript surface from the vendored cwtools rules and Stellaris documentation dumps",
+  "description": "Generates @pdx-ts/sdk's committed TypeScript surface from the cwtools rules and Stellaris documentation dumps",
   "type": "module",
   "private": true,
   "exports": {

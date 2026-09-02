@@ -115,7 +115,6 @@ import {
   type TraditionSwapFields,
   type Trigger,
   type TriggeredModifier,
-  type UndeclaredAmbientScope,
   type UtilityComponentTemplateFields,
   type WarGoalRef,
   type WeaponComponentTemplateFields,
@@ -2827,17 +2826,15 @@ describe("generated content authoring types", () => {
     });
   });
 
-  it("leaves ROOT unreadable where the rules never name one", () => {
-    contentMod.decision("root_sentinel", {
+  it("exposes ROOT where the decision rules name its common carrier scope", () => {
+    contentMod.decision("carrier_root", {
       name: "X",
-      // A decision's effect declares FROM and no ROOT, so FROM is a ref and
-      // ROOT is the sentinel — the two are independent, and neither is
-      // inferred from the other or from the block's own scope.
+      // The concrete THIS remains the definition's planet or ship scope while
+      // the rules expose their common carrier parent through ROOT.
       effect: (planet, ctx) => {
         planet.setPlanetFlag("content_types_planet_only");
         expectTypeOf(ctx.from).toEqualTypeOf<ScopeRef<"country">>();
-        expectTypeOf(ctx.root).toEqualTypeOf<UndeclaredAmbientScope<"root">>();
-        // @ts-expect-error — nothing declares what ROOT holds here
+        expectTypeOf(ctx.root).toEqualTypeOf<ScopeRef<"carrier">>();
         ctx.root.effects(() => {});
       },
     });

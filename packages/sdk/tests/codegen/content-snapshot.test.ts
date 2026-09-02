@@ -149,23 +149,6 @@ describe("content-type codegen", () => {
     ).toBeNull();
   });
 
-  /**
-   * The one manifest source the generator cannot read cleanly, pinned so the
-   * claim below stays a gate rather than becoming a blanket allowance.
-   *
-   * `common/missions.cwt:305` writes `fromform = country` inside a
-   * `replace_scopes` block where its own documentation comment two lines above
-   * says `fromfrom`. `replace_scopes` states the whole scope context, so the
-   * slot the generator cannot read is cleared rather than inherited — that
-   * field's nested block loses its `fromfrom` scope. Correcting the rule
-   * belongs in the vendored fork, with the generated diff that follows from it;
-   * until then the loss is visible here and in the drift baseline instead of
-   * silent.
-   */
-  const KNOWN_MANIFEST_SOURCE_DIAGNOSTICS = [
-    'common/missions.cwt:305 ## replace_scopes names "fromform", which is not a scope context key',
-  ];
-
   it("parses every manifest source without unrecorded recovery", () => {
     const manifestSources = new Set<string>(CONTENT_MANIFEST.map((entry) => entry.source));
 
@@ -174,7 +157,7 @@ describe("content-type codegen", () => {
         .filter((diagnostic) => manifestSources.has(diagnostic.file))
         .map((diagnostic) => `${diagnostic.file}:${diagnostic.line} ${diagnostic.text}`)
         .sort()
-    ).toEqual(KNOWN_MANIFEST_SOURCE_DIAGNOSTICS);
+    ).toEqual([]);
   });
 
   it("carries a registry's body scope into trigger fields", () => {
@@ -516,7 +499,7 @@ describe("content-type codegen", () => {
     const decision = emissions.get("decision");
     expect(decision?.code).toContain("export interface DecisionDef");
     expect(decision?.code).toContain(
-      'resources?: WithFrom<EconomicResourceBlock<NoInfer<S>>[], NoInfer<S>, { readonly from: "country" }>;'
+      'resources?: WithFrom<EconomicResourceBlock<NoInfer<S>>[], NoInfer<S>, { readonly root: "carrier"; readonly from: "country" }>;'
     );
     expect(decision?.code).toContain("prerequisites?: (TechnologyRef | string)[];");
     expect(decision?.code).toContain('shape: "economicResources"');
@@ -1093,26 +1076,26 @@ describe("content-type codegen", () => {
     expect(limit?.code).toContain('show: Trigger<"country">;');
     expect(limit?.code).not.toContain("show: Trigger<ScopeName>;");
     // The assertion is surgical, and its counterpart is a different mechanism:
-    // a decision's scope really does vary per definition, so it takes a scope
-    // parameter rather than an asserted constant.
+    // a decision's concrete scope varies below CWT's common carrier parent, so
+    // it takes a scope parameter rather than an asserted constant.
     expect(emissions.get("decision")?.code).toContain(
-      'potential?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>;'
+      'potential?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly root: "carrier"; readonly from: "country" }>;'
     );
   });
 
   it("parameterises a registry whose scope is a property of the definition", () => {
-    // CWT annotates the decision body `this = any` and is right to: the same
-    // registry is planet-scoped on a planet and ship-scoped on a nomadic
-    // colony ship. Asserting a constant would be overriding that; the
-    // definition declares which it is instead, and every unpinned field
-    // follows. `NoInfer` keeps `scope` the sole inference site — inferring
-    // from the contravariant `Trigger<S>` positions lands elsewhere entirely.
+    // CWT annotates the decision body with the common `carrier` parent, while
+    // the same registry is concretely planet-scoped on a planet and ship-scoped
+    // on a nomadic colony ship. The definition declares which subtype it is,
+    // and every field at the common parent follows. `NoInfer` keeps `scope` the
+    // sole inference site — inferring from contravariant positions lands
+    // elsewhere entirely.
     const decision = emissions.get("decision")!;
     expect(decision.code).toContain('export type DecisionScope = "planet" | "ship";');
     expect(decision.code).toContain("export interface DecisionFields<S extends DecisionScope");
     expect(decision.code).toContain("  scope?: S;");
     expect(decision.code).toContain(
-      'effect: EffectBlock<NoInfer<S>, { readonly from: "country" }>;'
+      'effect: EffectBlock<NoInfer<S>, { readonly root: "carrier"; readonly from: "country" }>;'
     );
     // A field CWT does pin keeps its own scope: the parameter fills the gap
     // rather than flattening everything into it.
@@ -1661,7 +1644,7 @@ describe("content-type codegen", () => {
     const decision = emissions.get("decision");
     expect(decision?.code).toContain("customTooltip?: DecisionCustomTooltip<S>;");
     expect(decision?.code).toContain(
-      'when?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>;'
+      'when?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly root: "carrier"; readonly from: "country" }>;'
     );
     expect(decision?.nestedEmittedFields).toContainEqual({
       field: "decision.custom_tooltip.when",

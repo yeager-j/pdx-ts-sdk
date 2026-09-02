@@ -869,17 +869,10 @@ function scopeParameterDeclarations(
     parameter?.authoringMember === null || parameter?.authoringMember === undefined
       ? ""
       : docComment(
-          parameter.authoringMember.member === "scope" && parameter.fallback !== null
-            ? [
-                "The scope this definition's own clauses run in.",
-                "",
-                "Emits nothing — it names a fact the game already knows and the rules",
-                `decline to state (\`this = any\`). Defaults to \`${parameter.fallback}\`.`,
-              ]
-            : [
-                ...parameter.authoringMember.docs,
-                ...(parameter.fallback === null ? [] : [`Defaults to \`${parameter.fallback}\`.`]),
-              ],
+          [
+            ...parameter.authoringMember.docs,
+            ...(parameter.fallback === null ? [] : [`Defaults to \`${parameter.fallback}\`.`]),
+          ],
           "  "
         ) +
         `  ${parameter.authoringMember.member}${parameter.authoringMember.required ? "" : "?"}: S;\n`;

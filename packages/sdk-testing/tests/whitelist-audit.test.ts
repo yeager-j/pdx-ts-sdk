@@ -4,12 +4,12 @@
  * The creed this package is built on — a wrong emulator is worse than no
  * emulator — had no mechanism behind it: the notes were a one-shot manual
  * reading, and nothing made a game patch reopen them. `num_owned_planets` was
- * the proof, deprecated in the very dump this repository vendors and modeled
+ * the proof, deprecated in the very dump this repository pins and modeled
  * here as though it were not.
  *
  * So this is `packages/codegen-vanilla/tests/callsites.test.ts`'s shape applied
  * to the whitelist: every entry pins the paragraph it was audited against, and
- * a revendored dump has to answer for each one. It cannot tell a right note
+ * a changed dump has to answer for each one. It cannot tell a right note
  * from a wrong one — only a maintainer reading the paragraph can — but it can
  * make sure nobody gets to skip the reading.
  */
@@ -17,6 +17,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { CWT_SCRIPT_DOCS_VERSION } from "@pdx-ts/codegen-cwt/provenance";
 import { parse } from "@pdx-ts/pdxscript";
 import { locateInstall } from "@pdx-ts/sdk/installation";
 import { EVENT_FIELD_SUPPORT, scopeLinkOutput } from "@pdx-ts/sdk/internals";
@@ -38,7 +39,7 @@ import {
   TRIGGER_SEMANTICS,
   type DocPin,
 } from "../src/whitelist.ts";
-import { readVendoredDocDump, type DumpName } from "./doc-dump.ts";
+import { readCwtDocDump, type DumpName } from "./doc-dump.ts";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 
@@ -78,13 +79,11 @@ const PINNED: readonly Pinned[] = [
   ...pinsOf("link", "scopes", LINK_SEMANTICS),
 ];
 
-const dump = readVendoredDocDump();
+const dump = readCwtDocDump(AUDITED_DOC_DUMP);
 
 describe("whitelist audit", () => {
-  it("was audited against the dump the repository actually vendors", () => {
-    // The crack this gate was built for: the notes claimed a 4.4.6 calibration
-    // while `script-docs/` held v4.4.1, and nothing anywhere compared them.
-    expect(dump.version).toBe(AUDITED_DOC_DUMP);
+  it("was audited against the documentation selected by the generators", () => {
+    expect(AUDITED_DOC_DUMP).toBe(CWT_SCRIPT_DOCS_VERSION);
   });
 
   it("keeps the live in-game record level with the verified build", () => {

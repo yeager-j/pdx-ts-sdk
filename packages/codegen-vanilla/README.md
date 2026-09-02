@@ -217,7 +217,7 @@ revision when publishing another generator result for the same game build,
 because npm versions cannot be reused.
 
 The generator runs when Stellaris changes or when extraction logic changes. The
-sibling CWT generator runs when vendored rules or SDK generation policy change.
+sibling CWT generator runs when the pinned rules or SDK generation policy change.
 Keeping them separate prevents a game update from rewriting the field model and
 prevents a rules update from pretending to be a new vanilla id set.
 

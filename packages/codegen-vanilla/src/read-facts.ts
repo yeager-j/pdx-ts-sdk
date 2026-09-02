@@ -21,6 +21,7 @@ import path from "node:path";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { eventKinds, type EventKindSpec } from "@pdx-ts/codegen-cwt/lower/event-kinds";
 import { loadScopeFacts } from "@pdx-ts/codegen-cwt/lower/scope-facts";
+import { readCwtCommit } from "@pdx-ts/codegen-cwt/provenance";
 import { scanInstallPaths, type VanillaPathScan } from "@pdx-ts/sdk/installation";
 
 import { compareIdentifiers } from "./emit.ts";
@@ -33,7 +34,7 @@ import { readLocalizationKeys, type LocalizationKeys } from "./read-localization
 import { readScriptedDefinitions, type ScriptedRegistry } from "./read-scripted.ts";
 import { resolveRegistries, type RegistrySpec } from "./resolve.ts";
 
-/** Which install, and which vendored evidence to read it against. */
+/** Which install, and which CWT evidence to read it against. */
 export interface VanillaBuildFactsOptions {
   readonly installRoot: string;
   readonly gameVersion: string;
@@ -190,20 +191,10 @@ function evidenceHash(
   return hash.digest("hex");
 }
 
-function cwtVersion(configRoot: string): string {
-  const versionFile = path.join(path.dirname(configRoot), "VERSION.md");
-  const text = readFileSync(versionFile, "utf8");
-  const commit = /`([0-9a-f]{40})`/.exec(text)?.[1];
-  if (commit === undefined) {
-    throw new Error(`${versionFile} has no 40-character upstream commit`);
-  }
-  return commit;
-}
-
 /**
  * Reads an install and returns everything emission needs to know about it.
  *
- * @param options - Which install, which game version, and which vendored rule
+ * @param options - Which install, which game version, and which CWT rule
  * and documentation roots to read it against.
  * @throws Error If the install and the selected documentation evidence are not
  * on the same `major.minor` compatibility line, or if any reader refuses what
@@ -278,7 +269,7 @@ export function readVanillaFacts(options: VanillaBuildFactsOptions): VanillaBuil
         ]),
       },
       cwt: {
-        version: cwtVersion(options.configRoot),
+        version: readCwtCommit(path.dirname(options.configRoot)),
         sha256: evidenceHash(options.configRoot, [{ root: ".", extension: ".cwt", recurse: true }]),
       },
       docs: {

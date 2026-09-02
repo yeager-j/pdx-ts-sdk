@@ -373,8 +373,8 @@ TypeScript source
   -> write or launcher install
 ```
 
-Two generators supply the typed surface. `@pdx-ts/codegen-cwt` reads vendored
-cwtools rules and Stellaris documentation dumps to generate content fields,
+Two generators supply the typed surface. `@pdx-ts/codegen-cwt` reads the pinned
+cwtools config fork and its Stellaris documentation dumps to generate content fields,
 triggers, effects, scopes, events, and modifiers. `@pdx-ts/codegen-vanilla`
 reads an installed game to generate the versioned vanilla identifier package.
 The standalone `@pdx-ts/pdxscript` package supplies the order-preserving parser

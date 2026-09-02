@@ -1,7 +1,7 @@
 # @pdx-ts/codegen-cwt
 
 `@pdx-ts/codegen-cwt` is the private, rules-derived generator for
-`@pdx-ts/sdk`. It reads vendored cwtools rules and version-matched Stellaris
+`@pdx-ts/sdk`. It reads a pinned cwtools config fork and version-matched Stellaris
 documentation dumps, reconciles their claims, applies reviewed policy and
 overlays, and emits the committed TypeScript surface under
 `packages/sdk/src/generated/`.
@@ -10,12 +10,13 @@ The package is a workspace tool and is never published.
 
 ## Inputs and outputs
 
-The generator has two independent source families.
-`vendor/cwtools-stellaris-config/config/` contributes content declarations,
+The generator has two independent source families in the
+`vendor/cwtools-stellaris-config/` Git submodule.
+Its `config/` directory contributes content declarations,
 field shapes, cardinality, references, enum values, documentation, triggers,
 effects, scope links, and scope legality.
 
-`vendor/cwtools-stellaris-config/script-docs/` supplies a second opinion on
+Its `script-docs/` directory supplies a second opinion on
 trigger and effect names and legal scopes, plus modifier names and categories.
 
 Generated output includes:
@@ -33,6 +34,26 @@ Generated output includes:
 
 The output is committed because it is the SDK's public API, not a disposable
 build artifact.
+
+The submodule points to
+[`yeager-j/cwtools-stellaris-config`](https://github.com/yeager-j/cwtools-stellaris-config),
+our fork of the config used by Paradox Language Support. The fork is the source
+of truth for SDK rule fixes and retains versioned documentation dumps. Clone it
+with the rest of the repository:
+
+```bash
+git submodule update --init
+```
+
+To update it, run:
+
+```bash
+git submodule update --remote -- vendor/cwtools-stellaris-config
+```
+
+Review the fork's commit range, then run codegen and all verification gates.
+The superproject's gitlink is the version pin; do not copy files out of the
+fork or edit the detached submodule checkout.
 
 This package does not enumerate the ids defined by a game installation. That is
 the separate responsibility of
@@ -213,7 +234,7 @@ emitters are testable over in-memory data.
 ## Verification
 
 Package tests exercise the CWT parser, documentation parsers, reconciliation,
-overlay audits, lowerers, and emitters against vendored inputs. Artifact-level
+overlay audits, lowerers, and emitters against the pinned inputs. Artifact-level
 tests live with the SDK output under `packages/sdk/tests/codegen/`.
 
 The complete change gate is:

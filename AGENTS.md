@@ -31,7 +31,7 @@ Read `README.md` before making architectural changes.
   `packages/sdk/src/`; source interpretation and emitted TypeScript belong in
   `packages/codegen-cwt/src/`;
   deliberate exceptions belong in the audited overlay.
-- Keep changes focused. Do not update vendored game data, drift baselines, snapshots, or generated
+- Keep changes focused. Do not update the CWT submodule, drift baselines, snapshots, or generated
   output unless the task requires the corresponding source change.
 
 ## Code generation
@@ -47,7 +47,8 @@ gitignored rather than committed.
 
 The main inputs are:
 
-- `vendor/cwtools-stellaris-config/` for vendored CWT rules and Stellaris documentation dumps
+- `vendor/cwtools-stellaris-config/`, a pinned submodule of our CWT config fork, for rules and
+  Stellaris documentation dumps
 - `packages/codegen-cwt/src/policy/manifest.ts` for the content registries intentionally exposed by
   the SDK
 - `packages/codegen-cwt/src/overlay/` for reviewed departures from a mechanical reading of the rules
@@ -74,7 +75,7 @@ part of the comparison baseline (for example, staged or committed).
 
 Do not run `npm run codegen -- --rebaseline` reflexively. Rebaseline
 `packages/codegen-cwt/src/drift-baseline.json` only after reviewing and intentionally accepting drift between
-the vendored rule sources and documentation dumps.
+the pinned rule sources and documentation dumps.
 
 ## Vanilla identifier package
 

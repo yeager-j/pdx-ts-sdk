@@ -2,7 +2,7 @@
 
 Vanilla's identifiers come from an installed copy of the game
 (`@pdx-ts/codegen-vanilla` → `@pdx-ts/stellaris-ids`); the typed authoring
-surface comes from cwtools' vendored rules (`@pdx-ts/codegen-cwt` →
+surface comes from a pinned cwtools config fork (`@pdx-ts/codegen-cwt` →
 `packages/sdk/src/generated/`). Merging them into one generator would have been
 the obvious economy, and it is refused: the two have different sources,
 different regeneration triggers (a game patch versus a rules update), and

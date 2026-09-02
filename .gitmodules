@@ -1,0 +1,4 @@
+[submodule "vendor/cwtools-stellaris-config"]
+	path = vendor/cwtools-stellaris-config
+	url = https://github.com/yeager-j/cwtools-stellaris-config.git
+	branch = master
