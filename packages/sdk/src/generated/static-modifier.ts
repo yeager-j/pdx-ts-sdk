@@ -35,7 +35,7 @@ export type StaticModifierScope =
  * A static_modifier, as the game's rules describe it.
  * Generated from `type[static_modifier]` at `game/common/static_modifiers`.
  */
-export interface StaticModifierFields<S extends StaticModifierScope = StaticModifierScope> {
+export interface StaticModifierFieldsBase<S extends StaticModifierScope = StaticModifierScope> {
   /**
    * The one scope whose objects may hold this modifier.
    * Emits nothing. Propagated rows may affect objects below this host without
@@ -54,9 +54,6 @@ export interface StaticModifierFields<S extends StaticModifierScope = StaticModi
   desc?: LocalizedText;
   /** Modifiers written directly into the definition body, with no enclosing key. */
   modifiers?: ModifierClosure<NoInfer<S>>;
-  /** Only when static_modifier subtype `planet` applies. */
-  iconFrame?: number;
-  /** Only when static_modifier subtype `planet` applies. */
   icon?: string;
   important?: boolean;
   /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
@@ -67,14 +64,51 @@ export interface StaticModifierFields<S extends StaticModifierScope = StaticModi
   hideFromCountryList?: true;
 }
 
-/** A static_modifier with the id it is defined under. */
-export interface StaticModifierDef<
+/** A static_modifier the subtype `planet` (`subtype[planet]`, selected by a written `icon_frame`) covers. */
+export interface StaticModifierPlanetFields<
+  S extends StaticModifierScope = StaticModifierScope,
+> extends StaticModifierFieldsBase<S> {
+  /** Selects the `planet` subtype (CWT `subtype[planet]`). */
+  iconFrame: number;
+}
+
+/** A static_modifier none of the subtypes `planet` covers. */
+export interface StaticModifierPlainFields<
+  S extends StaticModifierScope = StaticModifierScope,
+> extends StaticModifierFieldsBase<S> {
+  iconFrame?: never;
+}
+
+/**
+ * A static_modifier, as the game's rules describe it:
+ * one arm per way its subtypes apply.
+ */
+export type StaticModifierFields<S extends StaticModifierScope = StaticModifierScope> =
+  StaticModifierPlanetFields<S> | StaticModifierPlainFields<S>;
+
+/** A StaticModifierPlanetFields definition with its id. */
+export interface StaticModifierPlanetDef<
   Id extends string = string,
   S extends StaticModifierScope = StaticModifierScope,
-> extends StaticModifierFields<S> {
+> extends StaticModifierPlanetFields<S> {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/** A StaticModifierPlainFields definition with its id. */
+export interface StaticModifierPlainDef<
+  Id extends string = string,
+  S extends StaticModifierScope = StaticModifierScope,
+> extends StaticModifierPlainFields<S> {
+  /** Full content id, including the mod prefix. */
+  id: Id;
+}
+
+/** A static_modifier with the id it is defined under. */
+export type StaticModifierDef<
+  Id extends string = string,
+  S extends StaticModifierScope = StaticModifierScope,
+> = StaticModifierPlanetDef<Id, S> | StaticModifierPlainDef<Id, S>;
 
 /**
  * The localization keys one `static_modifier` mints, as references.
@@ -94,7 +128,7 @@ export type DefinedStaticModifier<Id extends string = string> = DefinedContent<
   StaticModifierDef<Id>
 >;
 
-/** How the writer lowers each member of {@link StaticModifierFields} to PDXScript. */
+/** How the writer lowers each member of {@link StaticModifierFieldsBase} to PDXScript. */
 export const STATIC_MODIFIER_FIELDS: readonly ContentField[] = [
   { member: "modifiers", shape: "inlineModifiers" },
   {

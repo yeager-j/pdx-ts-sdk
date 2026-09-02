@@ -26,6 +26,16 @@ import type { TypedRef } from "../script/scalar.ts";
 import type { ScriptValue, Trigger } from "../script/trigger-core.ts";
 
 /**
+ * `Omit` applied to each member of a union separately.
+ *
+ * A definition whose fields are subtype arms is a union, and the built-in
+ * `Omit` collapses a union to the keys its members share, with each key's
+ * weakest optionality, so it would silently drop the arms. Use this to take
+ * `id` off such a definition type.
+ */
+export type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
+
+/**
  * A content definition as a value, branded for its registry's CWT reference
  * name so it flows into matching reference fields and nowhere else.
  */

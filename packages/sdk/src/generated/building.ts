@@ -72,7 +72,7 @@ export const BUILDING_TRIGGERED_DESC_FIELDS: readonly ContentField[] = [
  * A building, as the game's rules describe it.
  * Generated from `type[building]` at `game/common/buildings`.
  */
-export interface BuildingFields {
+export interface BuildingFieldsBase {
   /**
    * Display text emitted to localization under `<id>`.
    * A bare string is the English shorthand.
@@ -99,7 +99,6 @@ export interface BuildingFields {
   exemptFromAiPlanetSpecialization?: boolean;
   category?: BuildingCategory;
   icon?: string | BuildingRef;
-  capital?: boolean;
   canDemolish?: boolean;
   canBeRuined?: boolean;
   canBeDisabled?: boolean;
@@ -113,8 +112,6 @@ export interface BuildingFields {
   skipAutomationUpgrading?: boolean;
   /** trigger for allowing/graying out building construction */
   allow?: Trigger<"colony">;
-  /** Only when building subtype `capital` applies. */
-  capitalTier?: number;
   /** an action when queued */
   onQueued?: EffectBlock<"colony", {}>;
   /** an action when unqueued */
@@ -170,11 +167,40 @@ export interface BuildingFields {
   customTooltip?: LocalizationInput;
 }
 
-/** A building with the id it is defined under. */
-export interface BuildingDef<Id extends string = string> extends BuildingFields {
+/** A building the subtype `capital` (`subtype[capital]`, selected by `capital = yes`) covers. */
+export interface BuildingCapitalFields extends BuildingFieldsBase {
+  /** Selects the `capital` subtype (CWT `subtype[capital]`). */
+  capital: true;
+  /** Required when `capital: true`, and not allowed otherwise. */
+  capitalTier: number;
+}
+
+/** A building none of the subtypes `capital` covers. */
+export interface BuildingPlainFields extends BuildingFieldsBase {
+  capital?: false;
+  capitalTier?: never;
+}
+
+/**
+ * A building, as the game's rules describe it:
+ * one arm per way its subtypes apply.
+ */
+export type BuildingFields = BuildingCapitalFields | BuildingPlainFields;
+
+/** A BuildingCapitalFields definition with its id. */
+export interface BuildingCapitalDef<Id extends string = string> extends BuildingCapitalFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/** A BuildingPlainFields definition with its id. */
+export interface BuildingPlainDef<Id extends string = string> extends BuildingPlainFields {
+  /** Full content id, including the mod prefix. */
+  id: Id;
+}
+
+/** A building with the id it is defined under. */
+export type BuildingDef<Id extends string = string> = BuildingCapitalDef<Id> | BuildingPlainDef<Id>;
 
 /**
  * The localization keys one `building` mints, as references.
@@ -231,6 +257,7 @@ export interface BuildingPatch {
   readonly exemptFromAiPlanetSpecialization?: PatchInput<boolean>;
   readonly category?: PatchInput<BuildingCategory>;
   readonly icon?: PatchInput<string | BuildingRef>;
+  /** Selects the `capital` subtype (CWT `subtype[capital]`). */
   readonly capital?: PatchInput<boolean>;
   readonly canDemolish?: PatchInput<boolean>;
   readonly canBeRuined?: PatchInput<boolean>;
@@ -245,7 +272,7 @@ export interface BuildingPatch {
   readonly skipAutomationUpgrading?: PatchInput<boolean>;
   /** trigger for allowing/graying out building construction */
   readonly allow?: PatchInput<Trigger<"colony">>;
-  /** Only when building subtype `capital` applies. */
+  /** Required when `capital: true`, and not allowed otherwise. */
   readonly capitalTier?: PatchInput<number>;
   /** an action when queued */
   readonly onQueued?: PatchInput<EffectBlock<"colony", {}>>;
@@ -310,7 +337,7 @@ export type PatchedBuilding = PatchedContent<ParsedBuilding>;
 /** A patched vanilla building placed into a capability feature. */
 export type BuildingPatchItem = ContentPatchItem<ParsedBuilding>;
 
-/** How the writer lowers each member of {@link BuildingFields} to PDXScript. */
+/** How the writer lowers each member of {@link BuildingFieldsBase} to PDXScript. */
 export const BUILDING_FIELDS: readonly ContentField[] = [
   {
     key: "desc",

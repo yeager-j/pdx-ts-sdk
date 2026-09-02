@@ -58,6 +58,7 @@ const SYMBOL_MODULES: readonly ModuleSymbols[] = [
   {
     module: "../content/types.ts",
     types: [
+      "DistributiveOmit",
       "EconomicResourceBlock",
       "EconomicResourceBlockNoProduce",
       "EconomicResourceOperation",

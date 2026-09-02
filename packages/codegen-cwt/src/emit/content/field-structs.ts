@@ -65,7 +65,7 @@ interface StructShape {
   readonly code: string;
   /** Every name {@link StructShape.code} exports, for the public barrel's check. */
   readonly exportedNames: readonly string[];
-  readonly unsupported: readonly FieldOmissionRow[];
+  readonly omissions: readonly FieldOmissionRow[];
   /** Doc rows for the struct's own table and every table nested inside it. */
   readonly docTables: readonly DocTable[];
   /** Each member's admits at `${path}.${name}`, plus whatever they nest in turn. */
@@ -89,7 +89,7 @@ function rerootFields(
 /** The generated members and evidence for one enum-keyed block declaration. */
 interface EnumKeyedMembers extends Pick<
   StructShape,
-  "code" | "exportedNames" | "unsupported" | "nested" | "children" | "docTables"
+  "code" | "exportedNames" | "omissions" | "nested" | "children" | "docTables"
 > {
   /** One interface member per enum value, already indented and documented. */
   readonly members: readonly string[];
@@ -155,7 +155,7 @@ function enumKeyedMembers(
     memberDocs,
     code: entry.code,
     exportedNames: entry.exportedNames,
-    unsupported: entry.unsupported,
+    omissions: entry.omissions,
     nested,
     children,
     docTables: entry.docTables,
@@ -169,7 +169,7 @@ interface StructDraft {
   readonly extraCode: string[];
   /** Every name {@link StructDraft.extraCode} exports. */
   readonly exportedNames: string[];
-  readonly unsupported: FieldOmissionRow[];
+  readonly omissions: FieldOmissionRow[];
   readonly nested: EmittedField[];
   readonly children: DescentNode[];
   readonly memberDocs: Record<string, MemberDocRow>;
@@ -186,7 +186,7 @@ function projectNamedStructMembers(
   const fieldMetadata: string[] = [];
   const extraCode: string[] = [];
   const exportedNames: string[] = [];
-  const unsupported: FieldOmissionRow[] = [];
+  const omissions: FieldOmissionRow[] = [];
   const nested: EmittedField[] = [];
   const children: DescentNode[] = [];
   const memberDocs: Record<string, MemberDocRow> = {};
@@ -214,7 +214,7 @@ function projectNamedStructMembers(
       fieldPath
     );
     if (projected === null) {
-      unsupported.push({
+      omissions.push({
         path: fieldPath,
         kind: "unsupported",
         reason: "no declaration the emitter can lower",
@@ -244,8 +244,8 @@ function projectNamedStructMembers(
       extraCode.push(projected.code);
       exportedNames.push(...(projected.exportedNames ?? []));
     }
-    if (projected.unsupported !== undefined) {
-      unsupported.push(...projected.unsupported);
+    if (projected.omissions !== undefined) {
+      omissions.push(...projected.omissions);
     }
     nested.push(
       { field: fieldPath, authoredPath: [member], ...projected.admits },
@@ -262,7 +262,7 @@ function projectNamedStructMembers(
     fieldMetadata,
     extraCode,
     exportedNames,
-    unsupported,
+    omissions,
     nested,
     children,
     memberDocs,
@@ -363,7 +363,7 @@ function structShape(
     Object.assign(draft.memberDocs, expanded.memberDocs);
     draft.extraCode.push(expanded.code);
     draft.exportedNames.push(...expanded.exportedNames);
-    draft.unsupported.push(...expanded.unsupported);
+    draft.omissions.push(...expanded.omissions);
     draft.nested.push(...expanded.nested);
     draft.children.push(...expanded.children);
     draft.docTables.push(...expanded.docTables);
@@ -410,7 +410,7 @@ function structShape(
         draft.fieldMetadata.map((entry) => `  ${entry},\n`).join(""),
         [`How the writer lowers each member of {@link ${typeName}} to PDXScript.`]
       ),
-    unsupported: draft.unsupported,
+    omissions: draft.omissions,
   };
 }
 
@@ -458,7 +458,7 @@ export function projectStructMap(
     admits: { shape: "structMap", repeated: repeatsSiblings(field, "structMap") },
     code: shape.code,
     exportedNames: shape.exportedNames,
-    unsupported: shape.unsupported,
+    omissions: shape.omissions,
     docTables: shape.docTables,
     nested: shape.nested,
     // One field table serves every engine key, so the key itself never enters
@@ -514,7 +514,7 @@ export function projectStruct(
   if (shape === null) {
     return null;
   }
-  const { typeName, fieldsConstant, code, unsupported } = shape;
+  const { typeName, fieldsConstant, code, omissions } = shape;
   // `wrapped` nests the repetition inside one key, so the key itself only
   // repeats when CWT's own cardinality says so — matching `admits.repeated`
   // below, which the form calculation must agree with.
@@ -536,7 +536,7 @@ export function projectStruct(
     wrapped,
     code,
     exportedNames: shape.exportedNames,
-    unsupported,
+    omissions,
     docTables: shape.docTables,
     nested: shape.nested,
     // `wrapped` is exactly the reader's distinction too: the container holds
@@ -578,7 +578,7 @@ export function projectTriggerStruct(
     admits: { shape: "triggerStruct", repeated },
     code: shape.code,
     exportedNames: shape.exportedNames,
-    unsupported: shape.unsupported,
+    omissions: shape.omissions,
     docTables: shape.docTables,
     nested: shape.nested,
     descents: [

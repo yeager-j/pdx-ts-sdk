@@ -67,6 +67,9 @@ function contentDefinersModule(plans: readonly RegistryDefinerPlan[]): string {
   const patchPlans = plans.filter((plan) => plan.patchable);
   const refImports = plans.some((plan) => plan.contributes);
   const contentItemTypes = [...runtimeItemTypes].filter((name) => !name.endsWith("PatchItem"));
+  if (plans.some((plan) => plan.content.emission.subtypeUnions.length > 0)) {
+    contentItemTypes.push("DistributiveOmit");
+  }
   for (const intersectsWitness of intersectsWitnesses) {
     contentItemTypes.push(intersectsWitness.type, intersectsWitness.exactType);
   }

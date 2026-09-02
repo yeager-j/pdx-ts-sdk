@@ -316,9 +316,10 @@ export interface ContentMemberDoc {
 export interface ContentFieldOmission {
   /** The field's path, as the codegen report prints it. */
   readonly path: string;
-  /** Why it is absent: refused by the overlay ("declined"), blocked on
-   * emitter machinery ("unsupported"), or a localisation alias folded
-   * onto another member ("collapsed"). */
+  /** Why it is absent or not as declared: refused by the overlay ("declined"),
+   * blocked on emitter machinery ("unsupported"), or authored under another
+   * contract ("collapsed") — a localisation alias folded onto another member,
+   * or a member a subtype arm requires that the surface leaves optional. */
   readonly kind: "declined" | "unsupported" | "collapsed";
   readonly reason: string;
 }
@@ -350,25 +351,19 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       icon: { optional: true, docs: [], memberType: "string" },
       cost: {
         optional: true,
-        docs: [
-          "Only when technology subtype `start` applies.",
-          "Only when technology subtype not `start` applies.",
-        ],
+        docs: ["Required unless `startTech: true`."],
         memberType: "number | WeightBlock<never>",
       },
       weight: {
         optional: true,
-        docs: [
-          "Only when technology subtype `start` applies.",
-          "Only when technology subtype not `start` applies.",
-        ],
+        docs: ["Required unless `startTech: true`."],
         memberType: "number",
       },
       isCustomTech1: {
         optional: true,
         docs: [
           "NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use",
-          "Only when technology subtype not `start` applies.",
+          "Not allowed when `startTech: true`.",
         ],
         memberType: "boolean",
       },
@@ -376,7 +371,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [
           "NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use",
-          "Only when technology subtype not `start` applies.",
+          "Not allowed when `startTech: true`.",
         ],
         memberType: "boolean",
       },
@@ -384,13 +379,13 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [
           "NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use",
-          "Only when technology subtype not `start` applies.",
+          "Not allowed when `startTech: true`.",
         ],
         memberType: "boolean",
       },
       levels: {
         optional: true,
-        docs: ["Only when technology subtype not `start` applies."],
+        docs: ["Selects the `repeatable` subtype (CWT `subtype[repeatable]`)."],
         memberType: "number",
       },
       prerequisites: { optional: true, docs: [], memberType: "(TechnologyRef | string)[]" },
@@ -399,7 +394,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       gateway: { optional: true, docs: [], memberType: "string" },
       costPerLevel: {
         optional: true,
-        docs: ["Only when technology subtype `repeatable` applies."],
+        docs: ["Required when `levels` is set, and not allowed otherwise."],
         memberType: "number",
       },
       weightGroups: {
@@ -414,7 +409,11 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [],
         memberType: "Readonly<Record<string, number>>",
       },
-      startTech: { optional: true, docs: [], memberType: "boolean" },
+      startTech: {
+        optional: true,
+        docs: ["Selects the `start` subtype (CWT `subtype[start]`)."],
+        memberType: "boolean",
+      },
       isReverseEngineerable: { optional: true, docs: [], memberType: "boolean" },
       aiUpdateType: {
         optional: true,
@@ -432,7 +431,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       aiWeight: { optional: true, docs: [], memberType: 'WeightBlock<"country">' },
       startingPotential: {
         optional: true,
-        docs: ["Only when technology subtype `start` applies."],
+        docs: ["Only when `startTech: true`."],
         memberType: 'Trigger<"country">',
       },
     },
@@ -624,7 +623,11 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         ],
       },
       icon: { optional: true, docs: [], memberType: "string | BuildingRef" },
-      capital: { optional: true, docs: [], memberType: "boolean" },
+      capital: {
+        optional: true,
+        docs: ["Selects the `capital` subtype (CWT `subtype[capital]`)."],
+        memberType: "boolean",
+      },
       canDemolish: { optional: true, docs: [], memberType: "boolean" },
       canBeRuined: { optional: true, docs: [], memberType: "boolean" },
       canBeDisabled: { optional: true, docs: [], memberType: "boolean" },
@@ -646,7 +649,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       },
       capitalTier: {
         optional: true,
-        docs: ["Only when building subtype `capital` applies."],
+        docs: ["Required when `capital: true`, and not allowed otherwise."],
         memberType: "number",
       },
       onQueued: {
@@ -1002,7 +1005,10 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       tradable: {
         optional: true,
-        docs: ["Whether the resource participates in resource-trading behavior."],
+        docs: [
+          "Whether the resource participates in resource-trading behavior.",
+          "Selects the `tradable` subtype (CWT `subtype[tradable]`).",
+        ],
         memberType: "boolean",
       },
       category: {
@@ -1016,7 +1022,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [
           "default -1, if non-positive, resource cannot be traded in the Market",
-          "Only when resource subtype `tradable` applies.",
+          "Only when `tradable: true`.",
         ],
         memberType: "number",
       },
@@ -1024,13 +1030,13 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [
           "default -1, if non-positive, resource cannot be traded in the Market",
-          "Only when resource subtype `tradable` applies.",
+          "Only when `tradable: true`.",
         ],
         memberType: "number",
       },
       max: {
         optional: true,
-        docs: ["Only when resource subtype `tradable` applies."],
+        docs: ["Selects the `max` subtype (CWT `subtype[max]`)."],
         memberType: "number",
       },
       specialMaxAmount: { optional: true, docs: ["default: no"], memberType: "boolean" },
@@ -1100,11 +1106,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         ],
         memberType: 'WeightBlock<"country">',
       },
-      fixedMaxAmount: {
-        optional: true,
-        docs: ["Only when resource subtype `max` applies."],
-        memberType: "true",
-      },
+      fixedMaxAmount: { optional: true, docs: ["Only when `max` is set."], memberType: "true" },
       tradableInMarket: {
         optional: true,
         docs: ["Country condition that gates whether the resource can be traded on the market."],
@@ -2653,10 +2655,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       },
       shipCategory: {
         optional: true,
-        docs: [
-          "Used to filter ships sizes for graphical cultures",
-          "Only when ship_size subtype `space_fauna` applies.",
-        ],
+        docs: ["Used to filter ships sizes for graphical cultures"],
         memberType: "ShipCategoriesRef | string",
       },
       formationPriority: { optional: true, docs: [], memberType: "number" },
@@ -2720,10 +2719,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       numTargetLocators: { optional: true, docs: [], memberType: "number" },
       isSpaceStation: {
         optional: true,
-        docs: [
-          "Only when ship_size subtype not `arkship` applies.",
-          "Only when ship_size subtype `arkship` applies.",
-        ],
+        docs: ["Required when `carriesColony` is set."],
         memberType: "boolean",
       },
       isOrbitalRing: { optional: true, docs: [], memberType: "boolean" },
@@ -2775,17 +2771,21 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: "ResourceRef | string",
       },
       usesNamePrefix: { optional: true, docs: [], memberType: "boolean" },
-      isSpaceFaunaShip: { optional: true, docs: [], memberType: "boolean" },
+      isSpaceFaunaShip: {
+        optional: true,
+        docs: ["Selects the `space_fauna` subtype (CWT `subtype[space_fauna]`)."],
+        memberType: "boolean",
+      },
       isReanimated: { optional: true, docs: ["default: no?"], memberType: "boolean" },
       mutationComponentsSize: {
         optional: true,
-        docs: ["Only when ship_size subtype `space_fauna` applies."],
+        docs: ["Only when `isSpaceFaunaShip: true`."],
         memberType: "MutationComponentsSize",
         literals: ["extra_large", "large", "medium", "small"],
       },
       spaceFaunaValues: {
         optional: true,
-        docs: ["Only when ship_size subtype `space_fauna` applies."],
+        docs: ["Only when `isSpaceFaunaShip: true`."],
         memberType: "ShipSizeSpaceFaunaValues",
       },
       takesNameFromShipDesign: { optional: true, docs: [], memberType: "boolean" },
@@ -2847,7 +2847,11 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       },
       displayAttackNeutralFleetButton: { optional: true, docs: [], memberType: "boolean" },
       constructionOffsetMult: { optional: true, docs: [], memberType: "number" },
-      carriesColony: { optional: true, docs: [], memberType: "PlanetClassRef | string" },
+      carriesColony: {
+        optional: true,
+        docs: ["Selects the `arkship` subtype (CWT `subtype[arkship]`)."],
+        memberType: "PlanetClassRef | string",
+      },
       collectsStockpileFrom: { optional: true, docs: [], memberType: "ShipClass[]" },
       collectsStockpileToCountry: { optional: true, docs: [], memberType: "boolean" },
       shipStockpileCapacity: { optional: true, docs: [], memberType: "number" },
@@ -2878,32 +2882,32 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       },
       isStartingArkship: {
         optional: true,
-        docs: ["Only when ship_size subtype `arkship` applies."],
+        docs: ["Only when `carriesColony` is set."],
         memberType: "boolean",
       },
       baseShipSize: {
         optional: true,
-        docs: ["Only when ship_size subtype `arkship` applies."],
+        docs: ["Only when `carriesColony` is set."],
         memberType: "ShipSizeRef | string",
       },
       acceptsAllModifiers: {
         optional: true,
-        docs: ["Only when ship_size subtype `arkship` applies."],
+        docs: ["Only when `carriesColony` is set."],
         memberType: "boolean",
       },
       encampmentRequiredProgress: {
         optional: true,
-        docs: ["Only when ship_size subtype `arkship` applies."],
+        docs: ["Only when `carriesColony` is set."],
         memberType: "number",
       },
       arkshipPicture: {
         optional: true,
-        docs: ["Only when ship_size subtype `arkship` applies."],
+        docs: ["Required when `carriesColony` is set, and not allowed otherwise."],
         memberType: "string",
       },
       planetViewHeader: {
         optional: true,
-        docs: ["Only when ship_size subtype `arkship` applies."],
+        docs: ["Only when `carriesColony` is set."],
         memberType: "SpriteRef | string",
       },
       heroShip: { optional: true, docs: [], memberType: "ShipSizeHeroShip" },
@@ -3025,7 +3029,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [
           "For use with accumulative if the base is negative",
           "Only when opinion_modifier subtype not `triggered_opinion_modifier` applies.",
-          "Only when opinion_modifier subtype `block_triggered` applies.",
         ],
         memberType: "number",
       },
@@ -3034,7 +3037,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [
           "For use with accumulative if the base is positive",
           "Only when opinion_modifier subtype not `triggered_opinion_modifier` applies.",
-          "Only when opinion_modifier subtype `block_triggered` applies.",
         ],
         memberType: "number",
       },
@@ -3057,7 +3059,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [
           "stops modifier from automatically triggering when trigger evaluates to true",
-          "Only when opinion_modifier subtype `block_triggered` applies.",
+          "Selects the `block_triggered` subtype (CWT `subtype[block_triggered]`).",
         ],
         memberType: "true",
       },
@@ -3082,14 +3084,10 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       },
       iconFrame: {
         optional: true,
-        docs: ["Only when static_modifier subtype `planet` applies."],
+        docs: ["Selects the `planet` subtype (CWT `subtype[planet]`)."],
         memberType: "number",
       },
-      icon: {
-        optional: true,
-        docs: ["Only when static_modifier subtype `planet` applies."],
-        memberType: "string",
-      },
+      icon: { optional: true, docs: [], memberType: "string" },
       important: { optional: true, docs: [], memberType: "boolean" },
       customTooltip: {
         optional: true,
@@ -4774,11 +4772,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: ["modifier added to the country if the civic is selected and valid"],
         memberType: 'ModifierClosure<"country">',
       },
-      hideModifiers: {
-        optional: true,
-        docs: ["default: no", "Only when civic_or_origin subtype `origin` applies."],
-        memberType: "boolean",
-      },
+      hideModifiers: { optional: true, docs: ["default: no"], memberType: "boolean" },
       multiplyByHabitabilityEffectModifier: {
         optional: true,
         docs: [],
@@ -4802,34 +4796,32 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       swapType: { optional: true, docs: [], memberType: "CivicOrOriginSwapType[]" },
       cost: {
         optional: true,
-        docs: ["default: 1", "Only when civic_or_origin subtype `civic` applies."],
+        docs: ["default: 1", "Only when `isOrigin` is not `true`."],
         memberType: "number",
       },
       pickableAtStart: {
         optional: true,
-        docs: ["default: yes", "Only when civic_or_origin subtype `civic` applies."],
+        docs: ["default: yes", "Only when `isOrigin` is not `true`."],
         memberType: "boolean",
       },
       modification: {
         optional: true,
         docs: [
           "Can be a set of two triggers, add to check if can be added later under certain conditions, remove to check if can be removed later under certain conditions",
-          "Only when civic_or_origin subtype `civic` applies.",
+          "Only when `isOrigin` is not `true`.",
         ],
         memberType: "CivicOrOriginModification | boolean",
       },
       canBuildRulerShip: {
         optional: true,
-        docs: ["default: no", "Only when civic_or_origin subtype `civic` applies."],
+        docs: ["default: no", "Only when `isOrigin` is not `true`."],
         memberType: "boolean",
       },
       traits: {
         optional: true,
         docs: [
           "default: empty; trait set to enforce on the primary species",
-          "Only when civic_or_origin subtype `civic` applies.",
           "default: empty; trait set to enforce on the primary species. They cannot be removed, but more can be added if points/picks permit",
-          "Only when civic_or_origin subtype `origin` applies.",
         ],
         memberType: "CivicOrOriginTraits",
       },
@@ -4837,77 +4829,72 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [
           "default: none; if present, will enable secondary species customization in empire designer and will create secondary species & pops at galaxy generation time (see empire_init_create_capital_secondary_pops)",
-          "Only when civic_or_origin subtype `civic` applies.",
-          "Only when civic_or_origin subtype `origin` applies.",
         ],
         memberType: "CivicOrOriginHasSecondarySpecies",
       },
       alternateCivicVersion: {
         optional: true,
-        docs: ["Only when civic_or_origin subtype `civic` applies."],
+        docs: ["Only when `isOrigin` is not `true`."],
         memberType: "CivicOrOriginCivicRef | string",
       },
       isOrigin: {
         optional: true,
-        docs: ["Only when civic_or_origin subtype `origin` applies."],
+        docs: ["Selects the `civic` subtype (CWT `subtype[civic]`)."],
         memberType: "true",
       },
       picture: {
         optional: true,
-        docs: ["Only when civic_or_origin subtype `origin` applies."],
+        docs: ["Only when `isOrigin: true`."],
         memberType: "SpriteRef | string",
       },
       initializers: {
         optional: true,
-        docs: ["Only when civic_or_origin subtype `origin` applies."],
+        docs: ["Only when `isOrigin: true`."],
         memberType: "(SolarSystemInitializerRef | string)[]",
       },
       portrait: {
         optional: true,
-        docs: ["Only when civic_or_origin subtype `origin` applies."],
+        docs: ["Only when `isOrigin: true`."],
         memberType: "PortraitRef | string",
       },
       maxOnceGlobal: {
         optional: true,
-        docs: ["default: no", "Only when civic_or_origin subtype `origin` applies."],
+        docs: ["default: no", "Only when `isOrigin: true`."],
         memberType: "boolean",
       },
       advancedStart: {
         optional: true,
-        docs: ["Only when civic_or_origin subtype `origin` applies."],
+        docs: ["Only when `isOrigin: true`."],
         memberType: "boolean",
       },
       softTraits: {
         optional: true,
         docs: [
           "ORIGIN EXCLUSIVE; default: empty; same as above, except these can be removed without making the government invalid.",
-          "Only when civic_or_origin subtype `origin` applies.",
+          "Only when `isOrigin: true`.",
         ],
         memberType: "CivicOrOriginSoftTraits",
       },
       nonColonizablePlanetClassNeighbor: {
         optional: true,
-        docs: [
-          "Such a descriptive tag, this.",
-          "Only when civic_or_origin subtype `origin` applies.",
-        ],
+        docs: ["Such a descriptive tag, this.", "Only when `isOrigin: true`."],
         memberType: "true",
       },
       habitabilityPreference: {
         optional: true,
-        docs: ["Only when civic_or_origin subtype `origin` applies."],
+        docs: ["Only when `isOrigin: true`."],
         memberType: "PlanetClassRef | string",
       },
       preferredPlanetClassNeighbor: {
         optional: true,
-        docs: ["Only when civic_or_origin subtype `origin` applies."],
+        docs: ["Only when `isOrigin: true`."],
         memberType: "false",
       },
       blocksRandomMachineEmpireGeneration: {
         optional: true,
         docs: [
           "ORIGIN EXCLUSIVE: Makes sure that random empire creation does not create invalid combinations with individualistic machines. Defaults to yes. Required for all origins that should be blocked by individualist machines.",
-          "Only when civic_or_origin subtype `origin` applies.",
+          "Only when `isOrigin: true`.",
         ],
         memberType: "boolean",
       },
@@ -5019,7 +5006,11 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     COMPONENT_SET_FIELDS,
     {
-      requiredComponentSet: { optional: true, docs: [], memberType: "boolean" },
+      requiredComponentSet: {
+        optional: true,
+        docs: ["Selects the `required_component` subtype (CWT `subtype[required_component]`)."],
+        memberType: "boolean",
+      },
       isCoreComponentSet: { optional: true, docs: [], memberType: "boolean" },
       isSpaceFaunaComponentSet: { optional: true, docs: [], memberType: "boolean" },
       affectsTargetType: { optional: true, docs: ["default = yes"], memberType: "boolean" },
@@ -5027,20 +5018,10 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       isDefaultSpaceFaunaComponentSet: { optional: true, docs: [], memberType: "boolean" },
       icon: {
         optional: true,
-        docs: [
-          "Only when component_set subtype `required_component` applies.",
-          "Only when component_set subtype not `required_component` applies.",
-        ],
+        docs: ["Required unless `requiredComponentSet: true`."],
         memberType: "string | SpriteRef",
       },
-      iconFrame: {
-        optional: true,
-        docs: [
-          "Only when component_set subtype `required_component` applies.",
-          "Only when component_set subtype not `required_component` applies.",
-        ],
-        memberType: "string | number",
-      },
+      iconFrame: { optional: true, docs: [], memberType: "string | number" },
     },
   ],
   [
@@ -5800,17 +5781,21 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType:
           'WithFrom<Trigger<"system">, "system", { readonly root: "system"; readonly from: "country" }>',
       },
-      prerequisites: { optional: true, docs: [], memberType: "(TechnologyRef | string)[]" },
+      prerequisites: {
+        optional: true,
+        docs: ["Selects the `has_prereqs` subtype (CWT `subtype[has_prereqs]`)."],
+        memberType: "(TechnologyRef | string)[]",
+      },
       showPrereqs: {
         optional: true,
-        docs: ["Only when megastructure subtype `has_prereqs` applies."],
+        docs: ["Only when `prerequisites` is set."],
         memberType: "boolean",
       },
       prereqName: {
         optional: true,
         docs: [
-          "Only when megastructure subtype `has_prereqs` applies.",
           "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
+          "Only when `prerequisites` is set.",
         ],
         memberType: "LocalizationInput",
       },
@@ -7020,7 +7005,14 @@ export const CONTENT_FIELD_OMISSIONS: Readonly<
   utility_component_template: [],
   weapon_component_template: [],
   strike_craft_component_template: [],
-  ship_size: [],
+  ship_size: [
+    {
+      path: "ship_size.evaluation_resource",
+      kind: "collapsed",
+      reason:
+        "required under subtype[bio_ship], authored optional: Stellaris 4.4.6 ships 2 of 286 non-bio ship sizes carrying `bioship_growth_progress_required`, which `subtype[bio_ship]` reserves for bio ships.",
+    },
+  ],
   opinion_modifier: [],
   static_modifier: [],
   scripted_modifier: [],
@@ -7041,6 +7033,12 @@ export const CONTENT_FIELD_OMISSIONS: Readonly<
       path: "mission.localisation.desc",
       kind: "collapsed",
       reason: "(desc) has no `$` id placeholder — not a static <id>-keyed slot, excluded",
+    },
+    {
+      path: "mission.event_chain",
+      kind: "collapsed",
+      reason:
+        "required under subtype[contract], authored optional: the subtype's body is not one readable field",
     },
   ],
   mission_category: [],

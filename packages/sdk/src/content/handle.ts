@@ -17,7 +17,7 @@
 
 import type { ContentReferenceName, ContentTypeName } from "../generated/content-registry.ts";
 import type { TypedRef } from "../script/scalar.ts";
-import type { ContentItem } from "./types.ts";
+import type { ContentItem, DistributiveOmit } from "./types.ts";
 
 /**
  * The identity half of a handle: a minted id wearing its registry's reference
@@ -81,11 +81,13 @@ export function createContentHandle<
   type: K,
   id: Id,
   define: (def: D) => Item
-): ContentHandleBase<K, Id> & { define(def: Omit<D, "id">): Item } {
+): ContentHandleBase<K, Id> & { define(def: DistributiveOmit<D, "id">): Item } {
   return Object.freeze({
     handleKind: "content-handle",
     type,
     id,
-    define: (def: Omit<D, "id">) => define({ ...def, id } as D),
+    // Spreading a distributed `Omit` back together is not a conversion
+    // TypeScript can see through, so the join is asserted.
+    define: (def: DistributiveOmit<D, "id">) => define({ ...def, id } as unknown as D),
   });
 }

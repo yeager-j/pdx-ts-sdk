@@ -813,6 +813,33 @@ export interface ContentFieldOverride {
  */
 export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
   [
+    "ship_size.ship_category",
+    {
+      optional: true,
+      reason:
+        "`subtype[space_fauna]` declares it required, but 11 of Stellaris 4.4.6's 63 space-fauna " +
+        "ship sizes omit it. The arm's own members stay a union; only the requirement is dropped.",
+    },
+  ],
+  [
+    "ship_size.mutation_components_size",
+    {
+      optional: true,
+      reason:
+        "`subtype[space_fauna]` declares it required, but 46 of Stellaris 4.4.6's 63 space-fauna " +
+        "ship sizes omit it.",
+    },
+  ],
+  [
+    "ship_size.space_fauna_values",
+    {
+      optional: true,
+      reason:
+        "`subtype[space_fauna]` declares it required, but 25 of Stellaris 4.4.6's 63 space-fauna " +
+        "ship sizes omit it.",
+    },
+  ],
+  [
     "crisis_path.crisis_currency",
     {
       localizationFamily: "crisis_currency",

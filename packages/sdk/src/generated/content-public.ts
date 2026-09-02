@@ -89,11 +89,16 @@ export type {
   DefinedBombardmentStance,
 } from "./bombardment-stance.ts";
 export type {
+  BuildingCapitalDef,
+  BuildingCapitalFields,
   BuildingDef,
   BuildingFields,
+  BuildingFieldsBase,
   BuildingLoc,
   BuildingPatch,
   BuildingPatchItem,
+  BuildingPlainDef,
+  BuildingPlainFields,
   DefinedBuilding,
   PatchedBuilding,
 } from "./building.ts";
@@ -104,15 +109,25 @@ export type {
   DefinedCasusBelli,
 } from "./casus-belli.ts";
 export type {
+  CivicOrOriginCivicDef,
+  CivicOrOriginCivicFields,
   CivicOrOriginDef,
   CivicOrOriginFields,
+  CivicOrOriginFieldsBase,
   CivicOrOriginLoc,
+  CivicOrOriginOriginDef,
+  CivicOrOriginOriginFields,
   DefinedCivicOrOrigin,
 } from "./civic-or-origin.ts";
 export type {
   ComponentSetDef,
   ComponentSetFields,
+  ComponentSetFieldsBase,
   ComponentSetLoc,
+  ComponentSetPlainDef,
+  ComponentSetPlainFields,
+  ComponentSetRequiredComponentDef,
+  ComponentSetRequiredComponentFields,
   DefinedComponentSet,
 } from "./component-set.ts";
 export type {
@@ -179,9 +194,14 @@ export type {
   DefinedMegastructure,
   MegastructureDef,
   MegastructureFields,
+  MegastructureFieldsBase,
+  MegastructureHasPrereqsDef,
+  MegastructureHasPrereqsFields,
   MegastructureLoc,
   MegastructurePatch,
   MegastructurePatchItem,
+  MegastructurePlainDef,
+  MegastructurePlainFields,
   PatchedMegastructure,
 } from "./megastructure.ts";
 export type {
@@ -211,9 +231,14 @@ export type {
 export type { MoonInitializerFields } from "./moon-initializer.ts";
 export type {
   DefinedOpinionModifier,
+  OpinionModifierBlockTriggeredDef,
+  OpinionModifierBlockTriggeredFields,
   OpinionModifierDef,
   OpinionModifierFields,
+  OpinionModifierFieldsBase,
   OpinionModifierLoc,
+  OpinionModifierPlainDef,
+  OpinionModifierPlainFields,
 } from "./opinion-modifier.ts";
 export type {
   DefinedPdxmesh,
@@ -225,7 +250,19 @@ export type {
 export type { DefinedPdxparticle, PdxparticleDef, PdxparticleFields } from "./pdxparticle.ts";
 export type { PlanetInitializerFields } from "./planet-initializer.ts";
 export type { DefinedRelic, RelicDef, RelicFields, RelicLoc } from "./relic.ts";
-export type { DefinedResource, ResourceDef, ResourceFields, ResourceLoc } from "./resource.ts";
+export type {
+  DefinedResource,
+  ResourceDef,
+  ResourceFields,
+  ResourceFieldsBase,
+  ResourceLoc,
+  ResourceMaxDef,
+  ResourceMaxFields,
+  ResourcePlainDef,
+  ResourcePlainFields,
+  ResourceTradableMaxDef,
+  ResourceTradableMaxFields,
+} from "./resource.ts";
 export type { DefinedScriptedLoc, ScriptedLocDef, ScriptedLocFields } from "./scripted-loc.ts";
 export type {
   DefinedScriptedModifier,
@@ -241,10 +278,19 @@ export type {
 } from "./section-template.ts";
 export type {
   DefinedShipSize,
+  ShipSizeArkshipDef,
+  ShipSizeArkshipFields,
   ShipSizeDef,
   ShipSizeFields,
+  ShipSizeFieldsBase,
   ShipSizeLoc,
+  ShipSizePlainDef,
+  ShipSizePlainFields,
   ShipSizeSectionSlots,
+  ShipSizeSpaceFaunaArkshipDef,
+  ShipSizeSpaceFaunaArkshipFields,
+  ShipSizeSpaceFaunaDef,
+  ShipSizeSpaceFaunaFields,
 } from "./ship-size.ts";
 export type {
   DefinedSituationType,
@@ -290,7 +336,12 @@ export type {
   DefinedStaticModifier,
   StaticModifierDef,
   StaticModifierFields,
+  StaticModifierFieldsBase,
   StaticModifierLoc,
+  StaticModifierPlainDef,
+  StaticModifierPlainFields,
+  StaticModifierPlanetDef,
+  StaticModifierPlanetFields,
   StaticModifierScope,
 } from "./static-modifier.ts";
 export type {
@@ -304,9 +355,16 @@ export type {
   PatchedTechnology,
   TechnologyDef,
   TechnologyFields,
+  TechnologyFieldsBase,
   TechnologyLoc,
   TechnologyPatch,
   TechnologyPatchItem,
+  TechnologyPlainDef,
+  TechnologyPlainFields,
+  TechnologyRepeatableDef,
+  TechnologyRepeatableFields,
+  TechnologyStartDef,
+  TechnologyStartFields,
 } from "./technology.ts";
 export type {
   DefinedTraditionCategory,

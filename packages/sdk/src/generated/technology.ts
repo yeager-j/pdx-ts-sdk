@@ -291,7 +291,7 @@ export const TECHNOLOGY_PREREQFOR_DESC_FIELDS: readonly ContentField[] = [
  * A technology, as the game's rules describe it.
  * Generated from `type[technology]` at `game/common/technology`.
  */
-export interface TechnologyFields {
+export interface TechnologyFieldsBase {
   /**
    * Display text emitted to localization under `<id>`.
    * A bare string is the English shorthand.
@@ -306,43 +306,13 @@ export interface TechnologyFields {
   tier: TechnologyTierRef | string | number;
   category: (TechnologyCategoryRef | string)[] | TechnologyCategoryRef | string;
   icon?: string;
-  /**
-   * Only when technology subtype `start` applies.
-   * Only when technology subtype not `start` applies.
-   */
-  cost?: number | WeightBlock<never>;
-  /**
-   * Only when technology subtype `start` applies.
-   * Only when technology subtype not `start` applies.
-   */
-  weight?: number;
-  /**
-   * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
-   * Only when technology subtype not `start` applies.
-   */
-  isCustomTech1?: boolean;
-  /**
-   * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
-   * Only when technology subtype not `start` applies.
-   */
-  isCustomTech2?: boolean;
-  /**
-   * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
-   * Only when technology subtype not `start` applies.
-   */
-  isCustomTech3?: boolean;
-  /** Only when technology subtype not `start` applies. */
-  levels?: number;
   prerequisites?: (TechnologyRef | string)[];
   technologySwap?: TechnologyTechnologySwap[];
   potential?: Trigger<"country">;
   gateway?: string;
-  /** Only when technology subtype `repeatable` applies. */
-  costPerLevel?: number;
   /** a weight group increases the chances of a technology appearing - if another tech of a similar group is picked. */
   weightGroups?: TechWeightGroup[];
   modWeightIfGroupPicked?: Readonly<Record<string, number>>;
-  startTech?: boolean;
   isReverseEngineerable?: boolean;
   aiUpdateType?: TechAiType;
   isRare?: boolean;
@@ -353,15 +323,114 @@ export interface TechnologyFields {
   prereqforDesc?: TechnologyPrereqforDesc[];
   weightModifier?: WeightBlock<"country">;
   aiWeight?: WeightBlock<"country">;
-  /** Only when technology subtype `start` applies. */
+}
+
+/** A technology the subtype `start` (`subtype[start]`, selected by `start_tech = yes`) covers, and `repeatable` does not. */
+export interface TechnologyStartFields extends TechnologyFieldsBase {
+  /** Required unless `startTech: true`. */
+  cost?: number | WeightBlock<never>;
+  /** Required unless `startTech: true`. */
+  weight?: number;
+  /** NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use */
+  isCustomTech1?: never;
+  /** NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use */
+  isCustomTech2?: never;
+  /** NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use */
+  isCustomTech3?: never;
+  levels?: never;
+  costPerLevel?: never;
+  /** Selects the `start` subtype (CWT `subtype[start]`). */
+  startTech: true;
+  /** Only when `startTech: true`. */
   startingPotential?: Trigger<"country">;
 }
 
-/** A technology with the id it is defined under. */
-export interface TechnologyDef<Id extends string = string> extends TechnologyFields {
+/** A technology the subtype `repeatable` (`subtype[repeatable]`, selected by a written `levels`) covers, and `start` does not. */
+export interface TechnologyRepeatableFields extends TechnologyFieldsBase {
+  /** Required unless `startTech: true`. */
+  cost: number | WeightBlock<never>;
+  /** Required unless `startTech: true`. */
+  weight: number;
+  /**
+   * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
+   * Not allowed when `startTech: true`.
+   */
+  isCustomTech1?: boolean;
+  /**
+   * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
+   * Not allowed when `startTech: true`.
+   */
+  isCustomTech2?: boolean;
+  /**
+   * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
+   * Not allowed when `startTech: true`.
+   */
+  isCustomTech3?: boolean;
+  /** Selects the `repeatable` subtype (CWT `subtype[repeatable]`). */
+  levels: number;
+  /** Required when `levels` is set, and not allowed otherwise. */
+  costPerLevel: number;
+  startTech?: false;
+  startingPotential?: never;
+}
+
+/** A technology none of the subtypes `start`, `repeatable` covers. */
+export interface TechnologyPlainFields extends TechnologyFieldsBase {
+  /** Required unless `startTech: true`. */
+  cost: number | WeightBlock<never>;
+  /** Required unless `startTech: true`. */
+  weight: number;
+  /**
+   * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
+   * Not allowed when `startTech: true`.
+   */
+  isCustomTech1?: boolean;
+  /**
+   * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
+   * Not allowed when `startTech: true`.
+   */
+  isCustomTech2?: boolean;
+  /**
+   * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
+   * Not allowed when `startTech: true`.
+   */
+  isCustomTech3?: boolean;
+  levels?: never;
+  costPerLevel?: never;
+  startTech?: false;
+  startingPotential?: never;
+}
+
+/**
+ * A technology, as the game's rules describe it:
+ * one arm per way its subtypes apply.
+ */
+export type TechnologyFields =
+  TechnologyStartFields | TechnologyRepeatableFields | TechnologyPlainFields;
+
+/** A TechnologyStartFields definition with its id. */
+export interface TechnologyStartDef<Id extends string = string> extends TechnologyStartFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/** A TechnologyRepeatableFields definition with its id. */
+export interface TechnologyRepeatableDef<
+  Id extends string = string,
+> extends TechnologyRepeatableFields {
+  /** Full content id, including the mod prefix. */
+  id: Id;
+}
+
+/** A TechnologyPlainFields definition with its id. */
+export interface TechnologyPlainDef<Id extends string = string> extends TechnologyPlainFields {
+  /** Full content id, including the mod prefix. */
+  id: Id;
+}
+
+/** A technology with the id it is defined under. */
+export type TechnologyDef<Id extends string = string> =
+  TechnologyStartDef<Id> | TechnologyRepeatableDef<Id> | TechnologyPlainDef<Id>;
 
 /**
  * The localization keys one `technology` mints, as references.
@@ -408,42 +477,37 @@ export interface TechnologyPatch {
     (TechnologyCategoryRef | string)[] | TechnologyCategoryRef | string
   >;
   readonly icon?: PatchInput<string>;
-  /**
-   * Only when technology subtype `start` applies.
-   * Only when technology subtype not `start` applies.
-   */
+  /** Required unless `startTech: true`. */
   readonly cost?: PatchInput<number | WeightBlock<never>>;
-  /**
-   * Only when technology subtype `start` applies.
-   * Only when technology subtype not `start` applies.
-   */
+  /** Required unless `startTech: true`. */
   readonly weight?: PatchInput<number>;
   /**
    * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
-   * Only when technology subtype not `start` applies.
+   * Not allowed when `startTech: true`.
    */
   readonly isCustomTech1?: PatchInput<boolean>;
   /**
    * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
-   * Only when technology subtype not `start` applies.
+   * Not allowed when `startTech: true`.
    */
   readonly isCustomTech2?: PatchInput<boolean>;
   /**
    * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
-   * Only when technology subtype not `start` applies.
+   * Not allowed when `startTech: true`.
    */
   readonly isCustomTech3?: PatchInput<boolean>;
-  /** Only when technology subtype not `start` applies. */
+  /** Selects the `repeatable` subtype (CWT `subtype[repeatable]`). */
   readonly levels?: PatchInput<number>;
   readonly prerequisites?: PatchInput<(TechnologyRef | string)[], AnyOf<TechnologyRef>>;
   readonly technologySwap?: PatchInput<TechnologyTechnologySwap[]>;
   readonly potential?: PatchInput<Trigger<"country">>;
   readonly gateway?: PatchInput<string>;
-  /** Only when technology subtype `repeatable` applies. */
+  /** Required when `levels` is set, and not allowed otherwise. */
   readonly costPerLevel?: PatchInput<number>;
   /** a weight group increases the chances of a technology appearing - if another tech of a similar group is picked. */
   readonly weightGroups?: PatchInput<TechWeightGroup[]>;
   readonly modWeightIfGroupPicked?: PatchInput<Readonly<Record<string, number>>>;
+  /** Selects the `start` subtype (CWT `subtype[start]`). */
   readonly startTech?: PatchInput<boolean>;
   readonly isReverseEngineerable?: PatchInput<boolean>;
   readonly aiUpdateType?: PatchInput<TechAiType>;
@@ -455,7 +519,7 @@ export interface TechnologyPatch {
   readonly prereqforDesc?: PatchInput<TechnologyPrereqforDesc[]>;
   readonly weightModifier?: PatchInput<WeightBlock<"country">>;
   readonly aiWeight?: PatchInput<WeightBlock<"country">>;
-  /** Only when technology subtype `start` applies. */
+  /** Only when `startTech: true`. */
   readonly startingPotential?: PatchInput<Trigger<"country">>;
 }
 
@@ -465,7 +529,7 @@ export type PatchedTechnology = PatchedContent<ParsedTechnology>;
 /** A patched vanilla technology placed into a capability feature. */
 export type TechnologyPatchItem = ContentPatchItem<ParsedTechnology>;
 
-/** How the writer lowers each member of {@link TechnologyFields} to PDXScript. */
+/** How the writer lowers each member of {@link TechnologyFieldsBase} to PDXScript. */
 export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
   { key: "area", member: "area", shape: "value", form: "scalar", conversion: "identity" },
   {

@@ -249,3 +249,28 @@ export const FILE_STEM_OVERLAYS = new Map<string, string>([
   ["pdxmesh", "meshes"],
   ["pdxparticle", "particles"],
 ]);
+
+/**
+ * Subtype arms the generator reads flat although their selector is readable,
+ * because the installed game contradicts the arm: shipped definitions carry a
+ * field the arm reserves for the other side, or omit one it requires. A union
+ * there would refuse definitions the game itself ships. Keyed
+ * `<registry>.<subtype>`; the reason states the measurement, so a rule fix in
+ * the vendored config can retire the row.
+ *
+ * Every row must name a subtype some top-level declaration sits under, and is
+ * audited as applied like every other overlay row.
+ */
+export const FLAT_SUBTYPE_ARMS = new Map<string, string>([
+  [
+    "ship_size.bio_ship",
+    "Stellaris 4.4.6 ships 2 of 286 non-bio ship sizes carrying " +
+      "`bioship_growth_progress_required`, which `subtype[bio_ship]` reserves for bio ships.",
+  ],
+  [
+    "opinion_modifier.triggered_opinion_modifier",
+    "Stellaris 4.4.6 ships 3 of 114 triggered opinion modifiers carrying `min`, and one " +
+      "carrying `decay` and `accumulative`, which `subtype[!triggered_opinion_modifier]` " +
+      "reserves for untriggered ones.",
+  ],
+]);

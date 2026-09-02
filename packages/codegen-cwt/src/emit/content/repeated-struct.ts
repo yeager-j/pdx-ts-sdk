@@ -32,6 +32,7 @@ import {
   syntheticIdentityLocalisation,
   type LocalisationPlan,
 } from "./localisation.ts";
+import { collapsedConditionRows } from "./subtype-unions.ts";
 
 /**
  * Generated code and coverage evidence for one overlay-configured repeated struct.
@@ -52,8 +53,8 @@ export type RepeatedStructEmission = RepeatedStructKeying & {
   readonly metadata: FieldMetadata;
   /** Fields refused by `CONTENT_DECLINED_FIELDS`. */
   readonly declinedFields: readonly FieldOmissionRow[];
-  /** Declared fields that cannot be represented or collide with another member. */
-  readonly unsupported: readonly FieldOmissionRow[];
+  /** Unsupported and collapsed rows from the entry's members, their paths already prefixed. */
+  readonly omissions: readonly FieldOmissionRow[];
   /** Successfully projected fields, including nested field paths. */
   readonly emittedFields: readonly EmittedField[];
   /** Corpus-reader descents into the entry's block-valued fields. */
@@ -78,7 +79,7 @@ interface RepeatedStructMembers {
   readonly members: string[];
   readonly metadata: string[];
   readonly declinedFields: FieldOmissionRow[];
-  readonly unsupported: FieldOmissionRow[];
+  readonly omissions: FieldOmissionRow[];
   readonly emittedFields: EmittedField[];
   readonly children: DescentNode[];
   readonly extraCode: string[];
@@ -165,13 +166,16 @@ function projectRepeatedStructMembers(
   const members: string[] = [];
   const metadata: string[] = [];
   const declinedFields: FieldOmissionRow[] = [];
-  const unsupported: FieldOmissionRow[] = [];
+  const omissions: FieldOmissionRow[] = [];
   const emittedFields: EmittedField[] = [];
   const children: DescentNode[] = [];
   const extraCode: string[] = [];
   const exportedNames: string[] = [];
   const memberDocs: Record<string, MemberDocRow> = {};
   const docTables: DocTable[] = [];
+  omissions.push(
+    ...collapsedConditionRows(plan.groupedFields, ownerPath, "nested block members are read flat")
+  );
 
   for (const [name, group] of plan.groupedFields) {
     const fieldPath = `${ownerPath}.${name}`;
@@ -183,7 +187,7 @@ function projectRepeatedStructMembers(
     }
     const member = camelCase(name);
     if (localisationMemberNames.has(member)) {
-      unsupported.push({
+      omissions.push({
         path: fieldPath,
         kind: "unsupported",
         reason: `collides with the "${member}" localization slot`,
@@ -192,7 +196,7 @@ function projectRepeatedStructMembers(
     }
     const projection = pickOrdinary(emitter, group, name, ctx, undefined, undefined, fieldPath);
     if (projection === null) {
-      unsupported.push({
+      omissions.push({
         path: fieldPath,
         kind: "unsupported",
         reason: "no declaration the emitter can lower",
@@ -216,8 +220,8 @@ function projectRepeatedStructMembers(
       extraCode.push(projection.code);
       exportedNames.push(...(projection.exportedNames ?? []));
     }
-    if (projection.unsupported !== undefined) {
-      unsupported.push(...projection.unsupported);
+    if (projection.omissions !== undefined) {
+      omissions.push(...projection.omissions);
     }
     emittedFields.push(
       { field: fieldPath, authoredPath: [member], ...projection.admits },
@@ -233,7 +237,7 @@ function projectRepeatedStructMembers(
     members,
     metadata,
     declinedFields,
-    unsupported,
+    omissions,
     emittedFields,
     children,
     extraCode,
@@ -320,7 +324,7 @@ export function repeatedStructEmission(
   }
   const members = projectRepeatedStructMembers(emitter, plan, ownerPath, ctx);
   if (plan.localisation.kind === "missing") {
-    members.unsupported.push({
+    members.omissions.push({
       path: ownerPath,
       kind: "unsupported",
       reason: `missing type[${plan.localisation.typeName}] localization`,
@@ -343,7 +347,7 @@ export function repeatedStructEmission(
     memberType: `Readonly<Record<string, ${plan.typeName}Fields>>`,
     metadata: metadataValue,
     declinedFields: members.declinedFields,
-    unsupported: members.unsupported,
+    omissions: members.omissions,
     emittedFields: members.emittedFields,
     children: members.children,
     localisationAliases:

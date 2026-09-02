@@ -117,7 +117,7 @@ export interface FieldProjection {
   /** Every name {@link FieldProjection.code} exports, for the public barrel's check. */
   readonly exportedNames?: readonly string[];
   /** Rows bubbled up from a nested struct level, their paths already prefixed. */
-  readonly unsupported?: readonly FieldOmissionRow[];
+  readonly omissions?: readonly FieldOmissionRow[];
   /**
    * Documentation rows for every field table declared by {@link code}.
    * Each table identifies its generated field constant directly.
@@ -813,7 +813,7 @@ function projectDual(
     },
     code: arms.map((arm) => arm.code ?? "").join(""),
     exportedNames: arms.flatMap((arm) => arm.exportedNames ?? []),
-    unsupported: arms.flatMap((arm) => arm.unsupported ?? []),
+    omissions: arms.flatMap((arm) => arm.omissions ?? []),
     docTables: arms.flatMap((arm) => arm.docTables ?? []),
     // The block arm alone: a scalar arm has no interior, and both arms share
     // the one key the reader descends from.

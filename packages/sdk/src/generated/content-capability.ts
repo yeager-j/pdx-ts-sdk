@@ -53,6 +53,7 @@ import {
 } from "../content/mint-provenance.ts";
 import type {
   ContentItem,
+  DistributiveOmit,
   EconomicCategoryWitness,
   ExactEconomicCategoryWitness,
 } from "../content/types.ts";
@@ -74,10 +75,10 @@ import type {
 } from "./ascension-perk-category.ts";
 import type { AscensionPerkDef } from "./ascension-perk.ts";
 import type { BombardmentStanceDef } from "./bombardment-stance.ts";
-import type { BuildingDef, BuildingPatch, BuildingPatchItem } from "./building.ts";
+import type { BuildingDef, BuildingFields, BuildingPatch, BuildingPatchItem } from "./building.ts";
 import type { CasusBelliDef } from "./casus-belli.ts";
-import type { CivicOrOriginDef } from "./civic-or-origin.ts";
-import type { ComponentSetDef } from "./component-set.ts";
+import type { CivicOrOriginDef, CivicOrOriginFields } from "./civic-or-origin.ts";
+import type { ComponentSetDef, ComponentSetFields } from "./component-set.ts";
 import {
   addShipOfSizeLimits,
   defineAgenda,
@@ -147,13 +148,14 @@ import type { GraphicalCultureDef } from "./graphical-culture.ts";
 import type { JobDef } from "./job.ts";
 import type {
   MegastructureDef,
+  MegastructureFields,
   MegastructurePatch,
   MegastructurePatchItem,
 } from "./megastructure.ts";
 import type { MenacePerkDef } from "./menace-perk.ts";
 import type { MissionCategoryDef } from "./mission-category.ts";
 import type { MissionDef, MissionLocationScope, MissionScope } from "./mission.ts";
-import type { OpinionModifierDef } from "./opinion-modifier.ts";
+import type { OpinionModifierDef, OpinionModifierFields } from "./opinion-modifier.ts";
 import type { PdxmeshDef } from "./pdxmesh.ts";
 import type { PdxparticleDef } from "./pdxparticle.ts";
 import type {
@@ -162,11 +164,11 @@ import type {
   MissionCategoryContractRef,
 } from "./refs.ts";
 import type { RelicDef } from "./relic.ts";
-import type { ResourceDef } from "./resource.ts";
+import type { ResourceDef, ResourceFields } from "./resource.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
 import type { ScriptedModifierDef } from "./scripted-modifier.ts";
 import type { SectionTemplateDef } from "./section-template.ts";
-import type { ShipSizeDef } from "./ship-size.ts";
+import type { ShipSizeDef, ShipSizeFields } from "./ship-size.ts";
 import type { SituationTypeDef } from "./situation-type.ts";
 import type { SolarSystemInitializerDef } from "./solar-system-initializer.ts";
 import type {
@@ -178,9 +180,18 @@ import type {
 import type { SpeciesClassDef } from "./species-class.ts";
 import type { SpriteTypeDef } from "./sprite-type.ts";
 import type { StarbaseLevelDef } from "./starbase-level.ts";
-import type { StaticModifierDef, StaticModifierScope } from "./static-modifier.ts";
+import type {
+  StaticModifierDef,
+  StaticModifierFields,
+  StaticModifierScope,
+} from "./static-modifier.ts";
 import type { StrikeCraftComponentTemplateDef } from "./strike-craft-component-template.ts";
-import type { TechnologyDef, TechnologyPatch, TechnologyPatchItem } from "./technology.ts";
+import type {
+  TechnologyDef,
+  TechnologyFields,
+  TechnologyPatch,
+  TechnologyPatchItem,
+} from "./technology.ts";
 import type { TraditionCategoryDef } from "./tradition-category.ts";
 import type { TraditionDef } from "./tradition.ts";
 import type { UtilityComponentTemplateDef } from "./utility-component-template.ts";
@@ -650,7 +661,7 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   technology<const Name extends string>(
     name: Name,
-    def: Omit<TechnologyDef<MintedContentId<P, I, "technology", Name>>, "id">
+    def: TechnologyFields
   ): ContentItem<"technology", TechnologyDef<MintedContentId<P, I, "technology", Name>>>;
   /**
    * Mints a technology id without its definition.
@@ -660,7 +671,11 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   technologyHandle<const Name extends string>(
     name: Name
-  ): ContentHandle<"technology", TechnologyDef<MintedContentId<P, I, "technology", Name>>>;
+  ): ContentHandleBase<"technology", MintedContentId<P, I, "technology", Name>> & {
+    define(
+      def: TechnologyFields
+    ): ContentItem<"technology", TechnologyDef<MintedContentId<P, I, "technology", Name>>>;
+  };
   /**
    * Patches a vanilla technology as a whole-object override.
    * Unlike a capability definition method, it mints no id and owns no new content —
@@ -678,7 +693,7 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   building<const Name extends string>(
     name: Name,
-    def: Omit<BuildingDef<MintedContentId<P, I, "building", Name>>, "id">
+    def: BuildingFields
   ): ContentItem<"building", BuildingDef<MintedContentId<P, I, "building", Name>>>;
   /**
    * Mints a building id without its definition.
@@ -688,7 +703,11 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   buildingHandle<const Name extends string>(
     name: Name
-  ): ContentHandle<"building", BuildingDef<MintedContentId<P, I, "building", Name>>>;
+  ): ContentHandleBase<"building", MintedContentId<P, I, "building", Name>> & {
+    define(
+      def: BuildingFields
+    ): ContentItem<"building", BuildingDef<MintedContentId<P, I, "building", Name>>>;
+  };
   /**
    * Patches a vanilla building as a whole-object override.
    * Unlike a capability definition method, it mints no id and owns no new content —
@@ -828,7 +847,7 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   resource<const Name extends string>(
     name: Name,
-    def: Omit<ResourceDef<MintedContentId<P, I, "resource", Name>>, "id">
+    def: ResourceFields
   ): ContentItem<"resource", ResourceDef<MintedContentId<P, I, "resource", Name>>>;
   /**
    * Mints a resource id without its definition.
@@ -838,7 +857,11 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   resourceHandle<const Name extends string>(
     name: Name
-  ): ContentHandle<"resource", ResourceDef<MintedContentId<P, I, "resource", Name>>>;
+  ): ContentHandleBase<"resource", MintedContentId<P, I, "resource", Name>> & {
+    define(
+      def: ResourceFields
+    ): ContentItem<"resource", ResourceDef<MintedContentId<P, I, "resource", Name>>>;
+  };
   /**
    * Defines a crisis path from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -1105,7 +1128,7 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   shipSize<const Name extends string>(
     name: Name,
-    def: Omit<ShipSizeDef<MintedContentId<P, I, "shipSize", Name>>, "id">
+    def: ShipSizeFields
   ): ContentItem<"ship_size", ShipSizeDef<MintedContentId<P, I, "shipSize", Name>>>;
   /**
    * Mints a ship size id without its definition.
@@ -1115,7 +1138,11 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   shipSizeHandle<const Name extends string>(
     name: Name
-  ): ContentHandle<"ship_size", ShipSizeDef<MintedContentId<P, I, "shipSize", Name>>>;
+  ): ContentHandleBase<"ship_size", MintedContentId<P, I, "shipSize", Name>> & {
+    define(
+      def: ShipSizeFields
+    ): ContentItem<"ship_size", ShipSizeDef<MintedContentId<P, I, "shipSize", Name>>>;
+  };
   /**
    * Defines an opinion modifier from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -1123,7 +1150,7 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   opinionModifier<const Name extends string>(
     name: Name,
-    def: Omit<OpinionModifierDef<MintedContentId<P, I, "opinionModifier", Name>>, "id">
+    def: OpinionModifierFields
   ): ContentItem<
     "opinion_modifier",
     OpinionModifierDef<MintedContentId<P, I, "opinionModifier", Name>>
@@ -1136,10 +1163,14 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   opinionModifierHandle<const Name extends string>(
     name: Name
-  ): ContentHandle<
-    "opinion_modifier",
-    OpinionModifierDef<MintedContentId<P, I, "opinionModifier", Name>>
-  >;
+  ): ContentHandleBase<"opinion_modifier", MintedContentId<P, I, "opinionModifier", Name>> & {
+    define(
+      def: OpinionModifierFields
+    ): ContentItem<
+      "opinion_modifier",
+      OpinionModifierDef<MintedContentId<P, I, "opinionModifier", Name>>
+    >;
+  };
   /**
    * Defines a static modifier from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -1147,10 +1178,13 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   staticModifier<const Name extends string, S extends StaticModifierScope = StaticModifierScope>(
     name: Name,
-    def: Omit<StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>, S>, "id">
+    def: StaticModifierFields<S>
   ): ContentItem<
     "static_modifier",
-    Omit<StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>, never>, "hostScope">
+    DistributiveOmit<
+      StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>, never>,
+      "hostScope"
+    >
   > & { readonly hostScope: S };
   /**
    * Mints a static modifier id without its definition.
@@ -1162,10 +1196,13 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name
   ): ContentHandleBase<"static_modifier", MintedContentId<P, I, "staticModifier", Name>> & {
     define<S extends StaticModifierScope = StaticModifierScope>(
-      def: Omit<StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>, S>, "id">
+      def: StaticModifierFields<S>
     ): ContentItem<
       "static_modifier",
-      Omit<StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>, never>, "hostScope">
+      DistributiveOmit<
+        StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>, never>,
+        "hostScope"
+      >
     > & { readonly hostScope: S };
   };
   /**
@@ -1503,7 +1540,7 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   civicOrOrigin<const Name extends string>(
     name: Name,
-    def: Omit<CivicOrOriginDef<MintedContentId<P, I, "civicOrOrigin", Name>>, "id">
+    def: CivicOrOriginFields
   ): ContentItem<"civic_or_origin", CivicOrOriginDef<MintedContentId<P, I, "civicOrOrigin", Name>>>;
   /**
    * Mints a civic or origin id without its definition.
@@ -1513,10 +1550,14 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   civicOrOriginHandle<const Name extends string>(
     name: Name
-  ): ContentHandle<
-    "civic_or_origin",
-    CivicOrOriginDef<MintedContentId<P, I, "civicOrOrigin", Name>>
-  >;
+  ): ContentHandleBase<"civic_or_origin", MintedContentId<P, I, "civicOrOrigin", Name>> & {
+    define(
+      def: CivicOrOriginFields
+    ): ContentItem<
+      "civic_or_origin",
+      CivicOrOriginDef<MintedContentId<P, I, "civicOrOrigin", Name>>
+    >;
+  };
   /**
    * Defines a component set from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -1524,9 +1565,7 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   componentSet<const Name extends string>(
     name: Name,
-    def: Omit<ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>, "id"> & {
-      readonly requiredComponentSet: true;
-    }
+    def: ComponentSetFields & { readonly requiredComponentSet: true }
   ): ContentItem<
     "component_set",
     ComponentSetDef<MintedContentId<P, I, "componentSet", Name>> & {
@@ -1536,7 +1575,7 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     ComponentSetRequiredComponentRef;
   componentSet<const Name extends string>(
     name: Name,
-    def: Omit<ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>, "id">
+    def: ComponentSetFields
   ): ContentItem<"component_set", ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>>;
   /**
    * Mints a component set id without its definition.
@@ -1547,11 +1586,7 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
   componentSetHandle<const Name extends string>(
     name: Name
   ): ContentHandleBase<"component_set", MintedContentId<P, I, "componentSet", Name>> & {
-    define(
-      def: Omit<ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>, "id"> & {
-        readonly requiredComponentSet: true;
-      }
-    ): ContentItem<
+    define(def: ComponentSetFields & { readonly requiredComponentSet: true }): ContentItem<
       "component_set",
       ComponentSetDef<MintedContentId<P, I, "componentSet", Name>> & {
         readonly requiredComponentSet: true;
@@ -1559,7 +1594,7 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     > &
       ComponentSetRequiredComponentRef;
     define(
-      def: Omit<ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>, "id">
+      def: ComponentSetFields
     ): ContentItem<"component_set", ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>>;
   };
   /**
@@ -1774,7 +1809,7 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   megastructure<const Name extends string>(
     name: Name,
-    def: Omit<MegastructureDef<MintedContentId<P, I, "megastructure", Name>>, "id">
+    def: MegastructureFields
   ): ContentItem<"megastructure", MegastructureDef<MintedContentId<P, I, "megastructure", Name>>>;
   /**
    * Mints a megastructure id without its definition.
@@ -1784,7 +1819,11 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   megastructureHandle<const Name extends string>(
     name: Name
-  ): ContentHandle<"megastructure", MegastructureDef<MintedContentId<P, I, "megastructure", Name>>>;
+  ): ContentHandleBase<"megastructure", MintedContentId<P, I, "megastructure", Name>> & {
+    define(
+      def: MegastructureFields
+    ): ContentItem<"megastructure", MegastructureDef<MintedContentId<P, I, "megastructure", Name>>>;
+  };
   /**
    * Patches a vanilla megastructure as a whole-object override.
    * Unlike a capability definition method, it mints no id and owns no new content —
@@ -1979,19 +2018,14 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         }
       );
     },
-    technology: <const Name extends string>(
-      name: Name,
-      def: Omit<TechnologyDef<MintedContentId<P, I, "technology", Name>>, "id">
-    ) => {
+    technology: <const Name extends string>(name: Name, def: TechnologyFields) => {
       return createContentHandle(
         "technology",
         mint("technology", name),
         (def: TechnologyDef<MintedContentId<P, I, "technology", Name>>) => {
           return defineTechnology(def);
         }
-      ).define(
-        def as unknown as Omit<TechnologyDef<MintedContentId<P, I, "technology", Name>>, "id">
-      );
+      ).define(def as unknown as TechnologyFields);
     },
     patchTechnology: <Source extends ParsedTechnology>(
       technology: Source,
@@ -2006,17 +2040,14 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         }
       );
     },
-    building: <const Name extends string>(
-      name: Name,
-      def: Omit<BuildingDef<MintedContentId<P, I, "building", Name>>, "id">
-    ) => {
+    building: <const Name extends string>(name: Name, def: BuildingFields) => {
       return createContentHandle(
         "building",
         mint("building", name),
         (def: BuildingDef<MintedContentId<P, I, "building", Name>>) => {
           return defineBuilding(def);
         }
-      ).define(def as unknown as Omit<BuildingDef<MintedContentId<P, I, "building", Name>>, "id">);
+      ).define(def as unknown as BuildingFields);
     },
     patchBuilding: <Source extends ParsedBuilding>(
       building: Source,
@@ -2140,17 +2171,14 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         }
       );
     },
-    resource: <const Name extends string>(
-      name: Name,
-      def: Omit<ResourceDef<MintedContentId<P, I, "resource", Name>>, "id">
-    ) => {
+    resource: <const Name extends string>(name: Name, def: ResourceFields) => {
       return createContentHandle(
         "resource",
         mint("resource", name),
         (def: ResourceDef<MintedContentId<P, I, "resource", Name>>) => {
           return defineResource(def);
         }
-      ).define(def as unknown as Omit<ResourceDef<MintedContentId<P, I, "resource", Name>>, "id">);
+      ).define(def as unknown as ResourceFields);
     },
     crisisPathHandle: <const Name extends string>(name: Name) => {
       return createContentHandle(
@@ -2473,17 +2501,14 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         }
       );
     },
-    shipSize: <const Name extends string>(
-      name: Name,
-      def: Omit<ShipSizeDef<MintedContentId<P, I, "shipSize", Name>>, "id">
-    ) => {
+    shipSize: <const Name extends string>(name: Name, def: ShipSizeFields) => {
       return createContentHandle(
         "ship_size",
         mint("shipSize", name),
         (def: ShipSizeDef<MintedContentId<P, I, "shipSize", Name>>) => {
           return defineShipSize(def);
         }
-      ).define(def as unknown as Omit<ShipSizeDef<MintedContentId<P, I, "shipSize", Name>>, "id">);
+      ).define(def as unknown as ShipSizeFields);
     },
     opinionModifierHandle: <const Name extends string>(name: Name) => {
       return createContentHandle(
@@ -2494,22 +2519,14 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         }
       );
     },
-    opinionModifier: <const Name extends string>(
-      name: Name,
-      def: Omit<OpinionModifierDef<MintedContentId<P, I, "opinionModifier", Name>>, "id">
-    ) => {
+    opinionModifier: <const Name extends string>(name: Name, def: OpinionModifierFields) => {
       return createContentHandle(
         "opinion_modifier",
         mint("opinionModifier", name),
         (def: OpinionModifierDef<MintedContentId<P, I, "opinionModifier", Name>>) => {
           return defineOpinionModifier(def);
         }
-      ).define(
-        def as unknown as Omit<
-          OpinionModifierDef<MintedContentId<P, I, "opinionModifier", Name>>,
-          "id"
-        >
-      );
+      ).define(def as unknown as OpinionModifierFields);
     },
     staticModifierHandle: <const Name extends string>(name: Name) => {
       return createContentHandle(
@@ -2525,7 +2542,7 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       S extends StaticModifierScope = StaticModifierScope,
     >(
       name: Name,
-      def: Omit<StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>, S>, "id">
+      def: StaticModifierFields<S>
     ) => {
       return createContentHandle(
         "static_modifier",
@@ -2533,12 +2550,7 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         (def: StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>>) => {
           return defineStaticModifier(def);
         }
-      ).define(
-        def as unknown as Omit<
-          StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>>,
-          "id"
-        >
-      );
+      ).define(def as unknown as StaticModifierFields);
     },
     scriptedModifierHandle: <const Name extends string>(name: Name) => {
       return createContentHandle(
@@ -2835,19 +2847,14 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         }
       );
     },
-    civicOrOrigin: <const Name extends string>(
-      name: Name,
-      def: Omit<CivicOrOriginDef<MintedContentId<P, I, "civicOrOrigin", Name>>, "id">
-    ) => {
+    civicOrOrigin: <const Name extends string>(name: Name, def: CivicOrOriginFields) => {
       return createContentHandle(
         "civic_or_origin",
         mint("civicOrOrigin", name),
         (def: CivicOrOriginDef<MintedContentId<P, I, "civicOrOrigin", Name>>) => {
           return defineCivicOrOrigin(def);
         }
-      ).define(
-        def as unknown as Omit<CivicOrOriginDef<MintedContentId<P, I, "civicOrOrigin", Name>>, "id">
-      );
+      ).define(def as unknown as CivicOrOriginFields);
     },
     componentSetHandle: <const Name extends string>(name: Name) => {
       return createContentHandle(
@@ -2858,19 +2865,14 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         }
       );
     },
-    componentSet: <const Name extends string>(
-      name: Name,
-      def: Omit<ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>, "id">
-    ) => {
+    componentSet: <const Name extends string>(name: Name, def: ComponentSetFields) => {
       return createContentHandle(
         "component_set",
         mint("componentSet", name),
         (def: ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>) => {
           return defineComponentSet(def);
         }
-      ).define(
-        def as unknown as Omit<ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>, "id">
-      );
+      ).define(def as unknown as ComponentSetFields);
     },
     sectionTemplateHandle: <const Name extends string>(name: Name) => {
       return createContentHandle(
@@ -3091,19 +3093,14 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         }
       );
     },
-    megastructure: <const Name extends string>(
-      name: Name,
-      def: Omit<MegastructureDef<MintedContentId<P, I, "megastructure", Name>>, "id">
-    ) => {
+    megastructure: <const Name extends string>(name: Name, def: MegastructureFields) => {
       return createContentHandle(
         "megastructure",
         mint("megastructure", name),
         (def: MegastructureDef<MintedContentId<P, I, "megastructure", Name>>) => {
           return defineMegastructure(def);
         }
-      ).define(
-        def as unknown as Omit<MegastructureDef<MintedContentId<P, I, "megastructure", Name>>, "id">
-      );
+      ).define(def as unknown as MegastructureFields);
     },
     patchMegastructure: <Source extends ParsedMegastructure>(
       megastructure: Source,
