@@ -22,9 +22,10 @@ import {
   withScriptCtx,
 } from "../src/script/effects/recorder.ts";
 import type { StaticModifierHostContract } from "../src/script/effects/static-modifiers.ts";
-import type { IfChain, ScopeRef, ScriptCtx } from "../src/script/effects/types.ts";
+import type { IfChain, ScopeRef, ScopeValue, ScriptCtx } from "../src/script/effects/types.ts";
 import { isEffectBlockValue, mapEntries } from "../src/script/scalar.ts";
 import {
+  exists,
   hasCountryFlag,
   hasOwner,
   hasPlanetFlag,
@@ -933,6 +934,174 @@ tooltip = {
 	}
 }
 `);
+  });
+
+  it("uses callback scopes as lexical scalar targets without saved event targets", () => {
+    const sink = recordEffects<"system">([], (lair) => {
+      const lairRef = lair.ref;
+      lair.createCountry({
+        type: "guardian",
+        effect: (guardian) => {
+          const guardianRef = guardian.ref;
+          guardian.createFleet({
+            effect: (fleet) => {
+              fleet.setOwner(guardianRef);
+              fleet.setLocation(lairRef);
+            },
+          });
+        },
+      });
+    });
+
+    expect(serialize(sink)).toBe(`create_country = {
+	type = guardian
+	effect = {
+		create_fleet = {
+			effect = {
+				set_owner = prev
+				set_location = prevprev
+			}
+		}
+	}
+}
+`);
+  });
+
+  it("keeps lexical scalar targets on THIS through same-scope structure", () => {
+    const sink = recordEffects<"fleet">([], (fleet) => {
+      const fleetRef = fleet.ref;
+      fleet.hiddenEffect.effects(() => fleet.setOwner(fleetRef));
+    });
+
+    expect(serialize(sink)).toBe(`hidden_effect = {
+	set_owner = this
+}
+`);
+  });
+
+  it("resolves lexical scalar targets against a routed receiver", () => {
+    const sink = recordEffects<"fleet">([], (fleet) => {
+      fleet.owner.effects(() => {
+        fleet.setOwner(fleet.ref);
+      });
+    });
+
+    expect(serialize(sink)).toBe(`owner = {
+	prev = {
+		set_owner = this
+	}
+}
+`);
+  });
+
+  it("resolves lexical scalar targets when a deferred trigger is attached", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      const countryExists = exists(country.ref);
+      country.everyOwnedPlanet({ limit: countryExists }, () => undefined);
+    });
+
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	limit = {
+		exists = prev
+	}
+}
+`);
+  });
+
+  it("resolves composed lexical scope links where their value is consumed", () => {
+    const sink = recordEffects<"planet">([], (planet) => {
+      planet.owner.effects((country) => {
+        const planetOwner = owner(planet.ref);
+        country.createFleet({
+          effect: (fleet) => fleet.setOwner(planetOwner),
+        });
+      });
+    });
+
+    expect(serialize(sink)).toBe(`owner = {
+	create_fleet = {
+		effect = {
+			set_owner = prevprev.owner
+		}
+	}
+}
+`);
+  });
+
+  it("rejects a lexical scalar reference after its callback returns", () => {
+    let countryRef: ScopeValue<"country"> | undefined;
+    recordEffects<"country">([], (country) => {
+      countryRef = country.ref;
+    });
+
+    expect(() => countryRef!.path).toThrow(/already returned/);
+  });
+
+  it("rejects a lexical scalar reference in an unrelated live recording", () => {
+    expect(() =>
+      recordEffects<"country">([], (country) => {
+        const countryRef = country.ref;
+        recordEffects<"country">([], () => {
+          void countryRef.path;
+        });
+      })
+    ).toThrow(/cannot prove a relative path/);
+  });
+
+  it("rejects a lexical scalar reference across a replacement transition", () => {
+    expect(() =>
+      recordEffects<"megastructure">([], (megastructure) => {
+        const megastructureRef = megastructure.ref;
+        megastructure.createBypass({
+          owner: scopeValue("this"),
+          type: "effects_test_bypass",
+          effect: () => {
+            void megastructureRef.path;
+          },
+        });
+      })
+    ).toThrow(/replacement or unknown scope transition/);
+  });
+
+  it("rejects a lexical scalar reference across an unknown transition", () => {
+    const testMethod = "sdk313Unknown";
+    const meta = EFFECT_META as Record<string, unknown>;
+    try {
+      meta[testMethod] = {
+        key: "sdk313_unknown",
+        shape: { kind: "wrapper", transition: "unknown", fields: null },
+      };
+
+      expect(() =>
+        recordEffects<"country">([], (country) => {
+          const countryRef = country.ref;
+          (country as unknown as Record<string, (body: () => void) => void>)[testMethod]!(() => {
+            void countryRef.path;
+          });
+        })
+      ).toThrow(/replacement or unknown scope transition/);
+    } finally {
+      delete meta[testMethod];
+    }
+  });
+
+  it("rejects a lexical scalar reference more than four pushed scopes away", () => {
+    expect(() =>
+      recordEffects<"country">([], (country) => {
+        const countryRef = country.ref;
+        country.everyOwnedPlanet({}, (planet) => {
+          planet.owner.effects((owner) => {
+            owner.everyOwnedPlanet({}, (nestedPlanet) => {
+              nestedPlanet.owner.effects((nestedOwner) => {
+                nestedOwner.everyOwnedPlanet({}, () => {
+                  void countryRef.path;
+                });
+              });
+            });
+          });
+        });
+      })
+    ).toThrow(/only PREV through PREVPREVPREVPREV/);
   });
 
   it("routes both scalar-or-block forms through a captured ancestor", () => {

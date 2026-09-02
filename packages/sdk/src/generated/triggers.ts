@@ -25,6 +25,7 @@ import {
   localizationScalar,
   mapEntries,
   refId,
+  scopeValueScalar,
 } from "../script/scalar.ts";
 import {
   scriptValueScalar,
@@ -1545,7 +1546,7 @@ export function branchOfficeValue(
   args: BranchOfficeValueArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
@@ -1597,7 +1598,7 @@ export function calcTrueIf<S extends ScopeName = ScopeName>(args: CalcTrueIfArgs
  * ```
  */
 export function canAccessSystem(value: ScopeValue<"system">): Trigger<"fleet"> {
-  return trigger([kv("can_access_system", value.path)]);
+  return trigger([kv("can_access_system", scopeValueScalar(value))]);
 }
 
 /** The arguments `canAffordSpecialOffer` takes, as the rules declare them. */
@@ -1634,7 +1635,7 @@ export interface CanAffordSpecialOfferArgs {
  */
 export function canAffordSpecialOffer(args: CanAffordSpecialOfferArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("target", args.target.path));
+  entries.push(kv("target", scopeValueScalar(args.target)));
   return trigger([block("can_afford_special_offer", entries)]);
 }
 
@@ -1735,7 +1736,7 @@ export interface CanColonizeArgs {
  */
 export function canColonize(args: CanColonizeArgs): Trigger<"carrier" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(kv("status", args.status));
   return trigger([block("can_colonize", entries)]);
 }
@@ -1770,7 +1771,7 @@ export function canControlAccessFor(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("can_control_access_for", value.path)]);
+  return trigger([kv("can_control_access_for", scopeValueScalar(value))]);
 }
 
 /** The arguments `canCopyRandomTechFrom` takes, as the rules declare them. */
@@ -1814,7 +1815,7 @@ export interface CanCopyRandomTechFromArgs {
 export function canCopyRandomTechFrom(args: CanCopyRandomTechFromArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   if (args.category !== undefined) {
     const id1 = refId(args.category);
     entries.push(kv("category", id1));
@@ -1869,7 +1870,7 @@ export interface CanDeclareWarArgs {
 export function canDeclareWar(args: CanDeclareWarArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
-  entries.push(kv("target", args.target.path));
+  entries.push(kv("target", scopeValueScalar(args.target)));
   const id1 = refId(args.attackerWarGoal);
   entries.push(kv("attacker_war_goal", id1));
   refs.push({ targets: ["war_goal"], id: id1, field: "can_declare_war.attacker_war_goal" });
@@ -1930,7 +1931,7 @@ export function canHaveFirstContactSiteWith(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("can_have_first_contact_site_with", value.path)]);
+  return trigger([kv("can_have_first_contact_site_with", scopeValueScalar(value))]);
 }
 
 /** Checks if scoped pop_group can join a faction */
@@ -1957,7 +1958,7 @@ export function canLiveOnPlanet(
     | "ship"
   >
 ): Trigger<"pop_group" | "species"> {
-  return trigger([kv("can_live_on_planet", value.path)]);
+  return trigger([kv("can_live_on_planet", scopeValueScalar(value))]);
 }
 
 /**
@@ -2236,7 +2237,7 @@ export function checkPopFactionParameter(
 ): Trigger<"pop_faction"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("which", args.which));
-  entries.push(kv("value", args.value.path));
+  entries.push(kv("value", scopeValueScalar(args.value)));
   return trigger([block("check_pop_faction_parameter", entries)]);
 }
 
@@ -2657,8 +2658,8 @@ export function compareDistance(
   | "system"
 > {
   const entries: PdxEntry[] = [];
-  entries.push(kv("closer_object", args.closerObject.path));
-  entries.push(kv("further_object", args.furtherObject.path));
+  entries.push(kv("closer_object", scopeValueScalar(args.closerObject)));
+  entries.push(kv("further_object", scopeValueScalar(args.furtherObject)));
   return trigger([block("compare_distance", entries)]);
 }
 
@@ -5199,9 +5200,9 @@ export function countPotentialWarParticipants(
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
   }
-  entries.push(kv("attacker", args.attacker.path));
-  entries.push(kv("defender", args.defender.path));
-  entries.push(kv("side", args.side.path));
+  entries.push(kv("attacker", scopeValueScalar(args.attacker)));
+  entries.push(kv("defender", scopeValueScalar(args.defender)));
+  entries.push(kv("side", scopeValueScalar(args.side)));
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
@@ -6368,7 +6369,7 @@ export function countWarParticipants(args: CountWarParticipantsArgs): Trigger<"w
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
   }
-  entries.push(kv("side", args.side.path));
+  entries.push(kv("side", scopeValueScalar(args.side)));
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
@@ -6726,7 +6727,7 @@ export function distance(
     entries.push(kv("use_bypasses", args.useBypasses));
   }
   if (args.bypassEmpire !== undefined) {
-    entries.push(kv("bypass_empire", args.bypassEmpire.path));
+    entries.push(kv("bypass_empire", scopeValueScalar(args.bypassEmpire)));
   }
   if (args.minJumps !== undefined) {
     entries.push(
@@ -6815,7 +6816,7 @@ export function distanceToEmpire(
   args: DistanceToEmpireArgs
 ): Trigger<"carrier" | "colony" | "fleet" | "planet" | "ship" | "system"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(
     typeof args.distance === "object"
       ? cmp("distance", args.distance[0], scriptValueScalar(args.distance[1]))
@@ -6975,7 +6976,7 @@ export interface EnvoyOpinionChangeArgs {
  */
 export function envoyOpinionChange(args: EnvoyOpinionChangeArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
@@ -7004,7 +7005,7 @@ export function ethos(
  * ```
  */
 export function exists(value: ScopeValue): Trigger<ScopeName> {
-  return trigger([kv("exists", value.path)]);
+  return trigger([kv("exists", scopeValueScalar(value))]);
 }
 
 /**
@@ -7582,7 +7583,7 @@ export function habitability(
   args: HabitabilityArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
@@ -7644,7 +7645,7 @@ export function hasAccessFleet(
     | "system"
   >
 ): Trigger<"system"> {
-  return trigger([kv("has_access_fleet", value.path)]);
+  return trigger([kv("has_access_fleet", scopeValueScalar(value))]);
 }
 
 /**
@@ -7716,7 +7717,7 @@ export function hasActiveFirstContactWith(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_active_first_contact_with", value.path)]);
+  return trigger([kv("has_active_first_contact_with", scopeValueScalar(value))]);
 }
 
 /**
@@ -7977,7 +7978,7 @@ export function hasAssociationStatus(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_association_status", value.path)]);
+  return trigger([kv("has_association_status", scopeValueScalar(value))]);
 }
 
 /**
@@ -8048,7 +8049,7 @@ export interface HasAttitudeBehaviorArgs {
  */
 export function hasAttitudeBehavior(args: HasAttitudeBehaviorArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("target", args.target.path));
+  entries.push(kv("target", scopeValueScalar(args.target)));
   entries.push(kv("behavior", args.behavior));
   return trigger([block("has_attitude_behavior", entries)]);
 }
@@ -8241,7 +8242,7 @@ export interface HasCasusBelliArgs {
 export function hasCasusBelli(args: HasCasusBelliArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
-  entries.push(kv("target", args.target.path));
+  entries.push(kv("target", scopeValueScalar(args.target)));
   if (args.type !== undefined) {
     const id1 = refId(args.type);
     entries.push(kv("type", id1));
@@ -8301,7 +8302,7 @@ export function hasCitizenshipType(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.country !== undefined) {
-    entries.push(kv("country", args.country.path));
+    entries.push(kv("country", scopeValueScalar(args.country)));
   }
   const id1 = refId(args.type);
   entries.push(kv("type", id1));
@@ -8391,7 +8392,7 @@ export function hasClaim(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_claim", value.path)]);
+  return trigger([kv("has_claim", scopeValueScalar(value))]);
 }
 
 /**
@@ -8462,7 +8463,7 @@ export function hasClosedBorders(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_closed_borders", value.path)]);
+  return trigger([kv("has_closed_borders", scopeValueScalar(value))]);
 }
 
 /** The arguments `hasColonizationControl` takes, as the rules declare them. */
@@ -8504,7 +8505,7 @@ export function hasColonizationControl(
   const entries: PdxEntry[] = [];
   entries.push(kv("type", refId(args.type)));
   if (args.country !== undefined) {
-    entries.push(kv("country", args.country.path));
+    entries.push(kv("country", scopeValueScalar(args.country)));
   }
   return trigger([block("has_colonization_control", entries)]);
 }
@@ -8539,7 +8540,7 @@ export function hasCommercialPact(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_commercial_pact", value.path)]);
+  return trigger([kv("has_commercial_pact", scopeValueScalar(value))]);
 }
 
 /**
@@ -8572,7 +8573,7 @@ export function hasCommunications(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_communications", value.path)]);
+  return trigger([kv("has_communications", scopeValueScalar(value))]);
 }
 
 /**
@@ -8783,7 +8784,7 @@ export function hasDefensivePact(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_defensive_pact", value.path)]);
+  return trigger([kv("has_defensive_pact", scopeValueScalar(value))]);
 }
 
 /**
@@ -8906,7 +8907,7 @@ export function hasDiploMigrationTreaty(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_diplo_migration_treaty", value.path)]);
+  return trigger([kv("has_diplo_migration_treaty", scopeValueScalar(value))]);
 }
 
 /**
@@ -8997,7 +8998,7 @@ export function hasEmbassy(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_embassy", value.path)]);
+  return trigger([kv("has_embassy", scopeValueScalar(value))]);
 }
 
 /** Checks if a star system has any environmental effects */
@@ -9033,7 +9034,7 @@ export interface HasEnvoyTaskArgs {
 export function hasEnvoyTask(args: HasEnvoyTaskArgs): Trigger<"leader"> {
   const entries: PdxEntry[] = [];
   if (args.target !== undefined) {
-    entries.push(kv("target", args.target.path));
+    entries.push(kv("target", scopeValueScalar(args.target)));
   }
   entries.push(kv("task", args.task));
   return trigger([block("has_envoy_task", entries)]);
@@ -9139,7 +9140,7 @@ export function hasEstablishedContact(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_established_contact", value.path)]);
+  return trigger([kv("has_established_contact", scopeValueScalar(value))]);
 }
 
 /**
@@ -9453,7 +9454,7 @@ export function hasHolding(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("holding", refId(args.holding)));
-  entries.push(kv("owner", args.owner.path));
+  entries.push(kv("owner", scopeValueScalar(args.owner)));
   return trigger([block("has_holding", entries)]);
 }
 
@@ -9507,7 +9508,7 @@ export function hasHyperlaneTo(
     | "system"
   >
 ): Trigger<"system"> {
-  return trigger([kv("has_hyperlane_to", value.path)]);
+  return trigger([kv("has_hyperlane_to", scopeValueScalar(value))]);
 }
 
 /** The arguments `hasIntel` takes, as the rules declare them. */
@@ -9545,7 +9546,7 @@ export interface HasIntelArgs {
  */
 export function hasIntel(args: HasIntelArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(kv("intel", args.intel));
   return trigger([block("has_intel", entries)]);
 }
@@ -9587,7 +9588,7 @@ export interface HasIntelLevelArgs {
 export function hasIntelLevel(args: HasIntelLevelArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   const id1 = refId(args.category);
   entries.push(kv("category", id1));
   refs.push({ targets: ["intel_category"], id: id1, field: "has_intel_level.category" });
@@ -9636,7 +9637,7 @@ export interface HasIntelReportArgs {
 export function hasIntelReport(args: HasIntelReportArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   const id1 = refId(args.category);
   entries.push(kv("category", id1));
   refs.push({ targets: ["intel_category"], id: id1, field: "has_intel_report.category" });
@@ -9736,7 +9737,7 @@ export function hasLivingStandard(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.country !== undefined) {
-    entries.push(kv("country", args.country.path));
+    entries.push(kv("country", scopeValueScalar(args.country)));
   }
   const id1 = refId(args.type);
   entries.push(kv("type", id1));
@@ -9852,7 +9853,7 @@ export function hasMigrationAccess(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_migration_access", value.path)]);
+  return trigger([kv("has_migration_access", scopeValueScalar(value))]);
 }
 
 /** The arguments `hasMigrationControl` takes, as the rules declare them. */
@@ -9894,7 +9895,7 @@ export function hasMigrationControl(
   const entries: PdxEntry[] = [];
   entries.push(kv("type", refId(args.type)));
   if (args.country !== undefined) {
-    entries.push(kv("country", args.country.path));
+    entries.push(kv("country", scopeValueScalar(args.country)));
   }
   return trigger([block("has_migration_control", entries)]);
 }
@@ -9938,7 +9939,7 @@ export function hasMilitaryServiceType(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.country !== undefined) {
-    entries.push(kv("country", args.country.path));
+    entries.push(kv("country", scopeValueScalar(args.country)));
   }
   const id1 = refId(args.type);
   entries.push(kv("type", id1));
@@ -10102,7 +10103,7 @@ export function hasNonAggressionPact(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_non_aggression_pact", value.path)]);
+  return trigger([kv("has_non_aggression_pact", scopeValueScalar(value))]);
 }
 
 /**
@@ -10170,7 +10171,7 @@ export interface HasOpinionModifierArgs {
 export function hasOpinionModifier(args: HasOpinionModifierArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   const id1 = refId(args.modifier);
   entries.push(kv("modifier", id1));
   refs.push({ targets: ["opinion_modifier"], id: id1, field: "has_opinion_modifier.modifier" });
@@ -10264,7 +10265,7 @@ export function hasOverlord(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_overlord", value.path)]);
+  return trigger([kv("has_overlord", scopeValueScalar(value))]);
 }
 
 /**
@@ -10527,7 +10528,7 @@ export function hasPopulationControl(
   const entries: PdxEntry[] = [];
   entries.push(kv("type", refId(args.type)));
   if (args.country !== undefined) {
-    entries.push(kv("country", args.country.path));
+    entries.push(kv("country", scopeValueScalar(args.country)));
   }
   return trigger([block("has_population_control", entries)]);
 }
@@ -10563,7 +10564,7 @@ export function hasPreFtlAge(value: PreFtlAgeRef | string): Trigger<"country"> {
  * ```
  */
 export function hasPreFtlTrade(value: ScopeValue<"country">): Trigger<"country"> {
-  return trigger([kv("has_pre_ftl_trade", value.path)]);
+  return trigger([kv("has_pre_ftl_trade", scopeValueScalar(value))]);
 }
 
 /**
@@ -10623,7 +10624,7 @@ export function hasPurgeType(args: HasPurgeTypeArgs): Trigger<"leader" | "pop_gr
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.country !== undefined) {
-    entries.push(kv("country", args.country.path));
+    entries.push(kv("country", scopeValueScalar(args.country)));
   }
   const id1 = refId(args.type);
   entries.push(kv("type", id1));
@@ -10669,7 +10670,7 @@ export interface HasRelationFlagArgs {
  */
 export function hasRelationFlag(args: HasRelationFlagArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(kv("flag", args.flag));
   return trigger([block("has_relation_flag", entries)]);
 }
@@ -10715,7 +10716,7 @@ export function hasResearchAgreement(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_research_agreement", value.path)]);
+  return trigger([kv("has_research_agreement", scopeValueScalar(value))]);
 }
 
 /**
@@ -10808,7 +10809,7 @@ export function hasRival(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_rival", value.path)]);
+  return trigger([kv("has_rival", scopeValueScalar(value))]);
 }
 
 /**
@@ -10866,7 +10867,7 @@ export function hasSameEthos(
     | "system"
   >
 ): Trigger<"country" | "pop_group"> {
-  return trigger([kv("has_same_ethos", value.path)]);
+  return trigger([kv("has_same_ethos", scopeValueScalar(value))]);
 }
 
 /**
@@ -10899,7 +10900,7 @@ export function hasSecretFealtyFromSubjectOf(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_secret_fealty_from_subject_of", value.path)]);
+  return trigger([kv("has_secret_fealty_from_subject_of", scopeValueScalar(value))]);
 }
 
 /**
@@ -10932,7 +10933,7 @@ export function hasSecretFealtyWith(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_secret_fealty_with", value.path)]);
+  return trigger([kv("has_secret_fealty_with", scopeValueScalar(value))]);
 }
 
 /**
@@ -10980,7 +10981,7 @@ export function hasSeenAnyBypass(value: BypassRef | string): Trigger<"country"> 
  * ```
  */
 export function hasSeenSpecificBypass(value: ScopeValue<"bypass">): Trigger<"country"> {
-  return trigger([kv("has_seen_specific_bypass", value.path)]);
+  return trigger([kv("has_seen_specific_bypass", scopeValueScalar(value))]);
 }
 
 /**
@@ -10990,7 +10991,7 @@ export function hasSeenSpecificBypass(value: ScopeValue<"bypass">): Trigger<"cou
  * ```
  */
 export function hasSensorLinkFrom(value: ScopeValue<"country">): Trigger<"country"> {
-  return trigger([kv("has_sensor_link_from", value.path)]);
+  return trigger([kv("has_sensor_link_from", scopeValueScalar(value))]);
 }
 
 /**
@@ -11084,7 +11085,7 @@ export function hasSlaveryType(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.country !== undefined) {
-    entries.push(kv("country", args.country.path));
+    entries.push(kv("country", scopeValueScalar(args.country)));
   }
   const id1 = refId(args.type);
   entries.push(kv("type", id1));
@@ -11217,7 +11218,7 @@ export interface HasStaleIntelArgs {
  */
 export function hasStaleIntel(args: HasStaleIntelArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(kv("intel", args.intel));
   return trigger([block("has_stale_intel", entries)]);
 }
@@ -11348,7 +11349,7 @@ export function hasSubject(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_subject", value.path)]);
+  return trigger([kv("has_subject", scopeValueScalar(value))]);
 }
 
 /**
@@ -11494,7 +11495,7 @@ export function hasTruce(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("has_truce", value.path)]);
+  return trigger([kv("has_truce", scopeValueScalar(value))]);
 }
 
 /**
@@ -11578,7 +11579,7 @@ export function hasWarGoal(value: boolean = true): Trigger<ScopeName> {
  * ```
  */
 export function hasWaystationPact(value: ScopeValue<"country">): Trigger<"country"> {
-  return trigger([kv("has_waystation_pact", value.path)]);
+  return trigger([kv("has_waystation_pact", scopeValueScalar(value))]);
 }
 
 /**
@@ -11624,7 +11625,7 @@ export interface HostileMilitaryPowerArgs {
  */
 export function hostileMilitaryPower(args: HostileMilitaryPowerArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   if (args.safetyBuffer !== undefined) {
     entries.push(kv("safety_buffer", args.safetyBuffer));
   }
@@ -11773,7 +11774,7 @@ export interface IntelArgs {
  */
 export function intel(args: IntelArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
@@ -11802,7 +11803,7 @@ export function intelLevel(value: IntelLevel | IntelLevelArgs): Trigger<"country
     const args = value;
     const entries: PdxEntry[] = [];
     entries.push(kv("level", args.level));
-    entries.push(kv("system", args.system.path));
+    entries.push(kv("system", scopeValueScalar(args.system)));
     return trigger([block("intel_level", entries)]);
   }
   return trigger([kv("intel_level", value)]);
@@ -11982,7 +11983,7 @@ export function isAngryTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_angry_to", value.path)]);
+  return trigger([kv("is_angry_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -12006,7 +12007,7 @@ export function isArchetype(value: SpeciesArchetypeRef | string): Trigger<"speci
  * ```
  */
 export function isArmy(value: ScopeValue<"army">): Trigger<"army"> {
-  return trigger([kv("is_army", value.path)]);
+  return trigger([kv("is_army", scopeValueScalar(value))]);
 }
 
 /**
@@ -12039,7 +12040,7 @@ export function isArrogantTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_arrogant_to", value.path)]);
+  return trigger([kv("is_arrogant_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -12138,7 +12139,7 @@ export function isAtWarWith(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_at_war_with", value.path)]);
+  return trigger([kv("is_at_war_with", scopeValueScalar(value))]);
 }
 
 /**
@@ -12158,7 +12159,7 @@ export function isAuraIntensityLevel(op: PdxOp, value: ScriptValue): Trigger<"sy
  * ```
  */
 export function isBackgroundPlanet(value: ScopeValue<"planet">): Trigger<"leader"> {
-  return trigger([kv("is_background_planet", value.path)]);
+  return trigger([kv("is_background_planet", scopeValueScalar(value))]);
 }
 
 /**
@@ -12178,7 +12179,7 @@ export function isBeingAssimilated(value: boolean = true): Trigger<"pop_group"> 
  * ```
  */
 export function isBeingIntegratedBy(value: ScopeValue<"country">): Trigger<"species"> {
-  return trigger([kv("is_being_integrated_by", value.path)]);
+  return trigger([kv("is_being_integrated_by", scopeValueScalar(value))]);
 }
 
 /**
@@ -12207,7 +12208,7 @@ export function isBeingSurveyed(
   args: IsBeingSurveyedArgs
 ): Trigger<"astral_rift" | "carrier" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   return trigger([block("is_being_surveyed", entries)]);
 }
 
@@ -12241,7 +12242,7 @@ export function isBelligerentTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_belligerent_to", value.path)]);
+  return trigger([kv("is_belligerent_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -12274,7 +12275,7 @@ export function isBerserkerTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_berserker_to", value.path)]);
+  return trigger([kv("is_berserker_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -12373,7 +12374,7 @@ export function isCapitalsConnectedThroughRelayNetwork(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_capitals_connected_through_relay_network", value.path)]);
+  return trigger([kv("is_capitals_connected_through_relay_network", scopeValueScalar(value))]);
 }
 
 /**
@@ -12474,7 +12475,7 @@ export function isControlledBy(
     | "system"
   >
 ): Trigger<"astral_rift" | "carrier" | "colony" | "fleet" | "planet" | "ship" | "starbase"> {
-  return trigger([kv("is_controlled_by", value.path)]);
+  return trigger([kv("is_controlled_by", scopeValueScalar(value))]);
 }
 
 /**
@@ -12507,7 +12508,7 @@ export function isCordialTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_cordial_to", value.path)]);
+  return trigger([kv("is_cordial_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -12574,7 +12575,7 @@ export function isCountry(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_country", value.path)]);
+  return trigger([kv("is_country", scopeValueScalar(value))]);
 }
 
 /**
@@ -12620,7 +12621,7 @@ export function isCrisesAllowed(value: boolean = true): Trigger<ScopeName> {
 export function isCurrentExcavatorFleet(
   value: ScopeValue<"fleet">
 ): Trigger<"archaeological_site"> {
-  return trigger([kv("is_current_excavator_fleet", value.path)]);
+  return trigger([kv("is_current_excavator_fleet", scopeValueScalar(value))]);
 }
 
 /**
@@ -12695,7 +12696,7 @@ export function isCustodialTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_custodial_to", value.path)]);
+  return trigger([kv("is_custodial_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -12727,7 +12728,7 @@ export function isDamaged(value: boolean = true): Trigger<"ship"> {
  * ```
  */
 export function isDefaultSpecies(value: ScopeValue<"species">): Trigger<"country"> {
-  return trigger([kv("is_default_species", value.path)]);
+  return trigger([kv("is_default_species", scopeValueScalar(value))]);
 }
 
 /**
@@ -12816,7 +12817,7 @@ export function isDisloyalTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_disloyal_to", value.path)]);
+  return trigger([kv("is_disloyal_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -12849,7 +12850,7 @@ export function isDismissiveTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_dismissive_to", value.path)]);
+  return trigger([kv("is_dismissive_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -12882,7 +12883,7 @@ export function isDomineeringTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_domineering_to", value.path)]);
+  return trigger([kv("is_domineering_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -12915,7 +12916,7 @@ export function isEnigmaticTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_enigmatic_to", value.path)]);
+  return trigger([kv("is_enigmatic_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -13055,7 +13056,7 @@ export function isExactSameSpecies(
     | "species"
   >
 ): Trigger<"army" | "country" | "leader" | "pop_group" | "ship" | "species"> {
-  return trigger([kv("is_exact_same_species", value.path)]);
+  return trigger([kv("is_exact_same_species", scopeValueScalar(value))]);
 }
 
 /**
@@ -13128,7 +13129,7 @@ export function isForcedFriendly(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_forced_friendly", value.path)]);
+  return trigger([kv("is_forced_friendly", scopeValueScalar(value))]);
 }
 
 /**
@@ -13161,7 +13162,7 @@ export function isForcedNeutral(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_forced_neutral", value.path)]);
+  return trigger([kv("is_forced_neutral", scopeValueScalar(value))]);
 }
 
 /**
@@ -13194,7 +13195,7 @@ export function isFriendlyTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_friendly_to", value.path)]);
+  return trigger([kv("is_friendly_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -13307,7 +13308,7 @@ export function isGuaranteeing(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_guaranteeing", value.path)]);
+  return trigger([kv("is_guaranteeing", scopeValueScalar(value))]);
 }
 
 /**
@@ -13340,7 +13341,7 @@ export function isHarmingRelationsWith(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_harming_relations_with", value.path)]);
+  return trigger([kv("is_harming_relations_with", scopeValueScalar(value))]);
 }
 
 /**
@@ -13405,7 +13406,7 @@ export function isHostile(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_hostile", value.path)]);
+  return trigger([kv("is_hostile", scopeValueScalar(value))]);
 }
 
 /**
@@ -13438,7 +13439,7 @@ export function isHostileTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_hostile_to", value.path)]);
+  return trigger([kv("is_hostile_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -13478,7 +13479,7 @@ export function isIdealPlanetClass(
   args: IsIdealPlanetClassArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(kv("status", args.status));
   return trigger([block("is_ideal_planet_class", entries)]);
 }
@@ -13533,7 +13534,7 @@ export function isImperiousTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_imperious_to", value.path)]);
+  return trigger([kv("is_imperious_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -13566,7 +13567,7 @@ export function isImprovingRelationsWith(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_improving_relations_with", value.path)]);
+  return trigger([kv("is_improving_relations_with", scopeValueScalar(value))]);
 }
 
 /**
@@ -13643,7 +13644,7 @@ export function isInFederationWith(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_in_federation_with", value.path)]);
+  return trigger([kv("is_in_federation_with", scopeValueScalar(value))]);
 }
 
 /**
@@ -13677,7 +13678,7 @@ export function isInFrontline(value: boolean = true): Trigger<"army"> {
 export function isInSensorRange(
   value: ScopeValue<"fleet" | "planet" | "ship" | "system">
 ): Trigger<"country"> {
-  return trigger([kv("is_in_sensor_range", value.path)]);
+  return trigger([kv("is_in_sensor_range", scopeValueScalar(value))]);
 }
 
 /**
@@ -13710,7 +13711,7 @@ export function isInSensorRangeOfCountry(
     | "system"
   >
 ): Trigger<"carrier" | "fleet" | "planet" | "ship" | "system"> {
-  return trigger([kv("is_in_sensor_range_of_country", value.path)]);
+  return trigger([kv("is_in_sensor_range_of_country", scopeValueScalar(value))]);
 }
 
 /**
@@ -13763,7 +13764,7 @@ export function isInsideBorder(
     | "system"
   >
 ): Trigger<"carrier" | "fleet" | "planet" | "ship" | "system"> {
-  return trigger([kv("is_inside_border", value.path)]);
+  return trigger([kv("is_inside_border", scopeValueScalar(value))]);
 }
 
 /**
@@ -13986,7 +13987,7 @@ export function isLoyalTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_loyal_to", value.path)]);
+  return trigger([kv("is_loyal_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -14009,7 +14010,7 @@ export function isMajoritySpecies(
     | "species"
   >
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([kv("is_majority_species", value.path)]);
+  return trigger([kv("is_majority_species", scopeValueScalar(value))]);
 }
 
 /**
@@ -14110,7 +14111,7 @@ export function isNeighborOf(
     | "system"
   >
 ): Trigger<"carrier" | "colony" | "country" | "fleet" | "planet" | "ship" | "system"> {
-  return trigger([kv("is_neighbor_of", value.path)]);
+  return trigger([kv("is_neighbor_of", scopeValueScalar(value))]);
 }
 
 /**
@@ -14143,7 +14144,7 @@ export function isNeutralTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_neutral_to", value.path)]);
+  return trigger([kv("is_neutral_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -14203,7 +14204,7 @@ export interface IsOfferTermsActualArgs {
  */
 export function isOfferTermsActual(args: IsOfferTermsActualArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("target", args.target.path));
+  entries.push(kv("target", scopeValueScalar(args.target)));
   return trigger([block("is_offer_terms_actual", entries)]);
 }
 
@@ -14275,7 +14276,7 @@ export function isOriginalOwner(
     | "system"
   >
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([kv("is_original_owner", value.path)]);
+  return trigger([kv("is_original_owner", scopeValueScalar(value))]);
 }
 
 /**
@@ -14318,7 +14319,7 @@ export function isOverlordTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_overlord_to", value.path)]);
+  return trigger([kv("is_overlord_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -14372,7 +14373,7 @@ export function isOwnedBy(
   | "starbase"
   | "system"
 > {
-  return trigger([kv("is_owned_by", value.path)]);
+  return trigger([kv("is_owned_by", scopeValueScalar(value))]);
 }
 
 /**
@@ -14415,7 +14416,7 @@ export function isPatronizingTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_patronizing_to", value.path)]);
+  return trigger([kv("is_patronizing_to", scopeValueScalar(value))]);
 }
 
 /** Checks if the current player is currently paused. */
@@ -14464,7 +14465,7 @@ export function isPlanet(
     | "ship"
   >
 ): Trigger<"planet"> {
-  return trigger([kv("is_planet", value.path)]);
+  return trigger([kv("is_planet", scopeValueScalar(value))]);
 }
 
 /**
@@ -14535,7 +14536,7 @@ export function isPointOfInterest(
   const id1 = refId(args.eventChain);
   entries.push(kv("event_chain", id1));
   refs.push({ targets: ["event_chain"], id: id1, field: "is_point_of_interest.event_chain" });
-  entries.push(kv("owner", args.owner.path));
+  entries.push(kv("owner", scopeValueScalar(args.owner)));
   return trigger([block("is_point_of_interest", entries)], refs);
 }
 
@@ -14665,7 +14666,7 @@ export function isProtectiveTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_protective_to", value.path)]);
+  return trigger([kv("is_protective_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -14772,7 +14773,7 @@ export function isRival(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_rival", value.path)]);
+  return trigger([kv("is_rival", scopeValueScalar(value))]);
 }
 
 /**
@@ -14857,7 +14858,7 @@ export function isSameEmpire(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_same_empire", value.path)]);
+  return trigger([kv("is_same_empire", scopeValueScalar(value))]);
 }
 
 /**
@@ -14880,7 +14881,7 @@ export function isSameSpecies(
     | "species"
   >
 ): Trigger<"army" | "country" | "leader" | "pop_group" | "ship" | "species"> {
-  return trigger([kv("is_same_species", value.path)]);
+  return trigger([kv("is_same_species", scopeValueScalar(value))]);
 }
 
 /**
@@ -14903,7 +14904,7 @@ export function isSameSpeciesClass(
     | "species"
   >
 ): Trigger<"army" | "country" | "leader" | "pop_group" | "ship" | "species"> {
-  return trigger([kv("is_same_species_class", value.path)]);
+  return trigger([kv("is_same_species_class", scopeValueScalar(value))]);
 }
 
 /**
@@ -14913,7 +14914,7 @@ export function isSameSpeciesClass(
  * ```
  */
 export function isSameValue(value: ScopeValue): Trigger<ScopeName> {
-  return trigger([kv("is_same_value", value.path)]);
+  return trigger([kv("is_same_value", scopeValueScalar(value))]);
 }
 
 /**
@@ -14935,7 +14936,7 @@ export function isSapient(value: boolean = true): Trigger<"pop_group" | "species
 export function isScopeSet(
   value: ScopeValue
 ): Trigger<"carrier" | "country" | "fleet" | "planet" | "pop_group" | "ship"> {
-  return trigger([kv("is_scope_set", value.path)]);
+  return trigger([kv("is_scope_set", scopeValueScalar(value))]);
 }
 
 /**
@@ -14990,7 +14991,7 @@ export function isSectorCapital(
  * ```
  */
 export function isShip(value: ScopeValue<"ship">): Trigger<"ship"> {
-  return trigger([kv("is_ship", value.path)]);
+  return trigger([kv("is_ship", scopeValueScalar(value))]);
 }
 
 /**
@@ -15138,7 +15139,7 @@ export function isSiteLastExcavator(
     | "system"
   >
 ): Trigger<"archaeological_site"> {
-  return trigger([kv("is_site_last_excavator", value.path)]);
+  return trigger([kv("is_site_last_excavator", scopeValueScalar(value))]);
 }
 
 /**
@@ -15384,7 +15385,7 @@ export function isSubspecies(
     | "species"
   >
 ): Trigger<"country" | "leader" | "pop_group" | "species"> {
-  return trigger([kv("is_subspecies", value.path)]);
+  return trigger([kv("is_subspecies", scopeValueScalar(value))]);
 }
 
 /** The arguments `isSurveyed` takes, as the rules declare them. */
@@ -15424,7 +15425,7 @@ export function isSurveyed(
   args: IsSurveyedArgs
 ): Trigger<"astral_rift" | "carrier" | "colony" | "planet" | "ship" | "system"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(kv("status", args.status));
   return trigger([block("is_surveyed", entries)]);
 }
@@ -15503,7 +15504,7 @@ export function isThreatenedTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_threatened_to", value.path)]);
+  return trigger([kv("is_threatened_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -15547,7 +15548,7 @@ export function isUnderColonization(
 export function isUnderOpenTechnologicalEnlightenment(
   value: ScopeValue<"country">
 ): Trigger<"country"> {
-  return trigger([kv("is_under_open_technological_enlightenment", value.path)]);
+  return trigger([kv("is_under_open_technological_enlightenment", scopeValueScalar(value))]);
 }
 
 /**
@@ -15557,7 +15558,7 @@ export function isUnderOpenTechnologicalEnlightenment(
  * ```
  */
 export function isUnderSocietalEnlightenment(value: ScopeValue<"country">): Trigger<"country"> {
-  return trigger([kv("is_under_societal_enlightenment", value.path)]);
+  return trigger([kv("is_under_societal_enlightenment", scopeValueScalar(value))]);
 }
 
 /**
@@ -15569,7 +15570,7 @@ export function isUnderSocietalEnlightenment(value: ScopeValue<"country">): Trig
 export function isUnderStratifiedTechnologicalEnlightenment(
   value: ScopeValue<"country">
 ): Trigger<"country"> {
-  return trigger([kv("is_under_stratified_technological_enlightenment", value.path)]);
+  return trigger([kv("is_under_stratified_technological_enlightenment", scopeValueScalar(value))]);
 }
 
 /**
@@ -15612,7 +15613,7 @@ export function isUnfriendlyTo(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("is_unfriendly_to", value.path)]);
+  return trigger([kv("is_unfriendly_to", scopeValueScalar(value))]);
 }
 
 /**
@@ -15632,7 +15633,7 @@ export function isUpgrading(value: boolean = true): Trigger<"fleet" | "megastruc
  * ```
  */
 export function isValid(value: ScopeValue): Trigger<"army" | "country" | "planet"> {
-  return trigger([kv("is_valid", value.path)]);
+  return trigger([kv("is_valid", scopeValueScalar(value))]);
 }
 
 /**
@@ -15812,17 +15813,17 @@ export function isWarParticipant(
     const args = value;
     const entries: PdxEntry[] = [];
     if (args.who !== undefined) {
-      entries.push(kv("who", args.who.path));
+      entries.push(kv("who", scopeValueScalar(args.who)));
     }
     if (args.war !== undefined) {
-      entries.push(kv("war", args.war.path));
+      entries.push(kv("war", scopeValueScalar(args.war)));
     }
     if (args.side !== undefined) {
       entries.push(kv("side", refId(args.side)));
     }
     return trigger([block("is_war_participant", entries)]);
   }
-  return trigger([kv("is_war_participant", value.path)]);
+  return trigger([kv("is_war_participant", scopeValueScalar(value))]);
 }
 
 /**
@@ -15855,7 +15856,7 @@ export function isWithinBordersOf(
     | "system"
   >
 ): Trigger<"carrier" | "fleet" | "planet" | "ship" | "system"> {
-  return trigger([kv("is_within_borders_of", value.path)]);
+  return trigger([kv("is_within_borders_of", scopeValueScalar(value))]);
 }
 
 /**
@@ -16278,7 +16279,7 @@ export function nbPopExactSpecies(
   args: NbPopExactSpeciesArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("species", args.species.path));
+  entries.push(kv("species", scopeValueScalar(args.species)));
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
@@ -16455,7 +16456,7 @@ export interface NumClaimsOnSystemArgs {
  */
 export function numClaimsOnSystem(args: NumClaimsOnSystemArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("target", args.target.path));
+  entries.push(kv("target", scopeValueScalar(args.target)));
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
@@ -16806,7 +16807,7 @@ export interface NumFavorsArgs {
  */
 export function numFavors(args: NumFavorsArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("target", args.target.path));
+  entries.push(kv("target", scopeValueScalar(args.target)));
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
@@ -16938,7 +16939,7 @@ export interface NumKilledShipsArgs {
  */
 export function numKilledShips(args: NumKilledShipsArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("target", args.target.path));
+  entries.push(kv("target", scopeValueScalar(args.target)));
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
@@ -17228,7 +17229,7 @@ export interface NumPopsAssignedToJobArgs {
  */
 export function numPopsAssignedToJob(args: NumPopsAssignedToJobArgs): Trigger<"pop_job"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("pop_group", args.popGroup.path));
+  entries.push(kv("pop_group", scopeValueScalar(args.popGroup)));
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
@@ -17470,7 +17471,7 @@ export interface NumTakenPlanetsArgs {
  */
 export function numTakenPlanets(args: NumTakenPlanetsArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("target", args.target.path));
+  entries.push(kv("target", scopeValueScalar(args.target)));
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
@@ -17662,7 +17663,7 @@ export interface OpinionArgs {
  */
 export function opinion(args: OpinionArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
@@ -17706,7 +17707,7 @@ export interface OpinionLevelArgs {
  */
 export function opinionLevel(args: OpinionLevelArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(kv("level", args.level));
   return trigger([block("opinion_level", entries)]);
 }
@@ -17753,7 +17754,7 @@ export function opposingEthicsDivergence(
       ? cmp("steps", args.steps[0], scriptValueScalar(args.steps[1]))
       : kv("steps", scriptValueScalar(args.steps))
   );
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   return trigger([block("opposing_ethics_divergence", entries)]);
 }
 
@@ -18159,7 +18160,7 @@ export function relativeEncryptionDecryption(
 ): Trigger<"country" | "espionage_operation" | "spy_network"> {
   const entries: PdxEntry[] = [];
   if (args.target !== undefined) {
-    entries.push(kv("target", args.target.path));
+    entries.push(kv("target", scopeValueScalar(args.target)));
   }
   entries.push(
     typeof args.value === "object"
@@ -18201,7 +18202,7 @@ export interface RelativePowerArgs {
 /** Compares relative power between two countries. relative_power = { who = <target country> category = <fleet/economy/technology/all> value ><= <pathetic/inferior/equivalent/superior/overwhelming> */
 export function relativePower(args: RelativePowerArgs): Trigger<"country" | "federation"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   if (args.category !== undefined) {
     entries.push(kv("category", args.category));
   }
@@ -18475,7 +18476,7 @@ export interface ReverseHasRelationFlagArgs {
  */
 export function reverseHasRelationFlag(args: ReverseHasRelationFlagArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(kv("flag", args.flag));
   return trigger([block("reverse_has_relation_flag", entries)]);
 }
@@ -18623,7 +18624,7 @@ export function speciesHasHappinessWithOwner(
     | "system"
   >
 ): Trigger<"species"> {
-  return trigger([kv("species_has_happiness_with_owner", value.path)]);
+  return trigger([kv("species_has_happiness_with_owner", scopeValueScalar(value))]);
 }
 
 /**
@@ -18757,7 +18758,7 @@ export function subjectCanDiplomacy(
     | "system"
   >
 ): Trigger<"country"> {
-  return trigger([kv("subject_can_diplomacy", value.path)]);
+  return trigger([kv("subject_can_diplomacy", scopeValueScalar(value))]);
 }
 
 /**
@@ -18896,7 +18897,7 @@ export interface TechUnlockedRatioArgs {
  */
 export function techUnlockedRatio(args: TechUnlockedRatioArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(
     typeof args.ratio === "object"
       ? cmp("ratio", args.ratio[0], scriptValueScalar(args.ratio[1]))
@@ -18935,7 +18936,7 @@ export function terraformedBy(
     | "system"
   >
 ): Trigger<"carrier" | "planet" | "ship"> {
-  return trigger([kv("terraformed_by", value.path)]);
+  return trigger([kv("terraformed_by", scopeValueScalar(value))]);
 }
 
 /**
@@ -18986,7 +18987,7 @@ export interface TheirOpinionArgs {
  */
 export function theirOpinion(args: TheirOpinionArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
@@ -19246,7 +19247,7 @@ export interface TrustArgs {
  */
 export function trust(args: TrustArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
@@ -19419,7 +19420,7 @@ export function usingWarGoal(args: UsingWarGoalArgs): Trigger<"war"> {
   const id0 = refId(args.type);
   entries.push(kv("type", id0));
   refs.push({ targets: ["war_goal"], id: id0, field: "using_war_goal.type" });
-  entries.push(kv("owner", args.owner.path));
+  entries.push(kv("owner", scopeValueScalar(args.owner)));
   return trigger([block("using_war_goal", entries)], refs);
 }
 
@@ -19442,7 +19443,7 @@ export function validPlanetKillerTarget(
     | "ship"
   >
 ): Trigger<"fleet"> {
-  return trigger([kv("valid_planet_killer_target", value.path)]);
+  return trigger([kv("valid_planet_killer_target", scopeValueScalar(value))]);
 }
 
 /**
@@ -19495,7 +19496,7 @@ export interface WarBegunNumFleetsGoneMiaArgs {
  */
 export function warBegunNumFleetsGoneMia(args: WarBegunNumFleetsGoneMiaArgs): Trigger<"war"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("who", args.who.path));
+  entries.push(kv("who", scopeValueScalar(args.who)));
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
@@ -19622,9 +19623,9 @@ export interface WouldJoinWarArgs {
  */
 export function wouldJoinWar(args: WouldJoinWarArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("attacker", args.attacker.path));
-  entries.push(kv("defender", args.defender.path));
-  entries.push(kv("side", args.side.path));
+  entries.push(kv("attacker", scopeValueScalar(args.attacker)));
+  entries.push(kv("defender", scopeValueScalar(args.defender)));
+  entries.push(kv("side", scopeValueScalar(args.side)));
   return trigger([block("would_join_war", entries)]);
 }
 

@@ -248,6 +248,19 @@ immediate: (country) => {
 };
 ```
 
+The proxy records effects. Its `.ref` property names that same lexical scope
+as a scalar value for fields such as `setOwner` or `setLocation`:
+
+```ts
+country.createFleet({
+  effect: (fleet) => fleet.setOwner(country.ref), // set_owner = prev
+});
+```
+
+Unlike `ctx.root`, `ctx.from`, and saved targets, `.ref` is relative to where
+the value is consumed. It is a `ScopeValue`, so it can be passed to compatible
+fields and generated link builders, but it cannot be opened with `.effects()`.
+
 The recorder supports verified depths through `PREVPREVPREVPREV`. It rejects a
 captured ancestor across a replacement or unknown transition, and rejects a
 fifth push rather than guessing. Declared `ctx.prev*` references remain bound to

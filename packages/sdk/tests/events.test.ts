@@ -89,6 +89,38 @@ describe("event definitions in a namespace", () => {
     expect(rendered).toContain("from = root");
   });
 
+  it("writes a lexical current-scope witness explicitly at a split-root fire site", () => {
+    const runtimeMod = createMod({
+      name: "Split-root lexical witness",
+      prefix: "split_root_lexical",
+      supportedVersion: "4.4.*",
+    });
+    const events = runtimeMod.namespace();
+    const needsPlanetFrom = events.planet(3, {
+      scopes: { from: "planet" },
+      hideWindow: true,
+      isTriggeredOnly: true,
+    });
+    const initializer = runtimeMod.solarSystemInitializer("lexical_witness", {
+      class: "sc_g",
+      planet: [
+        {
+          initEffect: (planet) => {
+            planet.planetEvent({ id: needsPlanetFrom, scopes: { from: planet.ref } });
+          },
+        },
+      ],
+    });
+
+    const rendered = render(
+      runtimeMod.compile([runtimeMod.feature("lexical_witness", [initializer, needsPlanetFrom])])
+    ).get("common/solar_system_initializers/split_root_lexical_lexical_witness.txt")!;
+
+    expect(rendered).toContain("planet_event = {");
+    expect(rendered).toContain("scopes = {");
+    expect(rendered).toContain("from = this");
+  });
+
   it("rejects a relative THIS witness for a deeper FROM slot", () => {
     const runtimeMod = createMod({
       name: "Relative deep witness",

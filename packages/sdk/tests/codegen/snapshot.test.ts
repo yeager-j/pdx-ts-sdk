@@ -142,7 +142,7 @@ describe("emitted trigger signatures", () => {
   it("scope[X]: one branded scope value, and no raw-string arm", () => {
     expect(declaration("canAccessSystem")).toMatchInlineSnapshot(`
       "export function canAccessSystem(value: ScopeValue<"system">): Trigger<"fleet"> {
-        return trigger([kv("can_access_system", value.path)]);
+        return trigger([kv("can_access_system", scopeValueScalar(value))]);
       }"
     `);
   });
@@ -174,7 +174,7 @@ describe("emitted trigger signatures", () => {
           | "species"
         >
       ): Trigger<"army" | "country" | "leader" | "pop_group" | "ship" | "species"> {
-        return trigger([kv("is_same_species", value.path)]);
+        return trigger([kv("is_same_species", scopeValueScalar(value))]);
       }"
     `);
   });
@@ -206,7 +206,7 @@ describe("emitted trigger signatures", () => {
     expect(declaration("relativePower")).toMatchInlineSnapshot(`
       "export function relativePower(args: RelativePowerArgs): Trigger<"country" | "federation"> {
         const entries: PdxEntry[] = [];
-        entries.push(kv("who", args.who.path));
+        entries.push(kv("who", scopeValueScalar(args.who)));
         if (args.category !== undefined) {
           entries.push(kv("category", args.category));
         }
@@ -311,7 +311,7 @@ describe("scalar lowering ownership", () => {
     expect(source).toContain(
       "import {\n" +
         "  caseEntries,\n  isComparisonList,\n  isStructuredValue,\n  localizationScalar,\n" +
-        "  mapEntries,\n  refId,\n" +
+        "  mapEntries,\n  refId,\n  scopeValueScalar,\n" +
         '} from "../script/scalar.ts";'
     );
     expect(contentDefiners).toContain(

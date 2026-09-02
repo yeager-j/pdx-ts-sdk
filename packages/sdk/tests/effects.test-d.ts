@@ -18,7 +18,13 @@ import {
 } from "../src/generated/value-sets.ts";
 import { eventTarget, makeScope, scopeValue } from "../src/script/effects/recorder.ts";
 import { hasPlanetFlag, hasStarFlag, isAtWar } from "../src/script/triggers.ts";
-import { external, vanilla, type EffectPath, type EffectPathOf } from "../src/stellaris.ts";
+import {
+  external,
+  vanilla,
+  type EffectPath,
+  type EffectPathOf,
+  type ScopeValue,
+} from "../src/stellaris.ts";
 
 const sink: PdxEntry[] = [];
 const flags = planetFlags("effects_type_test_flag");
@@ -371,6 +377,25 @@ describe("generated effect scope safety", () => {
     const country = makeScope<"country">(sink);
     // @ts-expect-error — if preserves country scope; capture country instead
     country.if(hasCountryFlag("ready"), (same) => same.log("redundant"));
+  });
+
+  it("exposes each callback scope as a typed lexical scalar reference", () => {
+    const system = makeScope<"system">(sink);
+    expectTypeOf(system.ref).toEqualTypeOf<ScopeValue<"system">>();
+    system.createCountry({
+      type: "effects_type_test_country_type",
+      effect: (country) => {
+        expectTypeOf(country.ref).toEqualTypeOf<ScopeValue<"country">>();
+        country.createFleet({
+          effect: (fleet) => {
+            fleet.setOwner(country.ref);
+            fleet.setLocation(system.ref);
+            // @ts-expect-error — a country is not a legal fleet location
+            fleet.setLocation(country.ref);
+          },
+        });
+      },
+    });
   });
 
   it("types a scope path's terminal body to the final link's output scope", () => {

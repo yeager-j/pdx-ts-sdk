@@ -243,7 +243,9 @@ describe("trigger emission", () => {
     );
     expect(emission.code).toContain('  war?: ScopeValue<"war">;');
     expect(emission.code).toContain('if (isStructuredValue(value, ["scope-ref"])) {');
-    expect(emission.code).toContain('return trigger([kv("is_war_participant", value.path)]);');
+    expect(emission.code).toContain(
+      'return trigger([kv("is_war_participant", scopeValueScalar(value))]);'
+    );
   });
 
   it("documents every generated argument object, whichever form it takes", () => {

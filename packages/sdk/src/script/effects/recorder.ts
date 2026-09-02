@@ -30,6 +30,7 @@ import type { ScopeObjOf } from "../../generated/effects.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import { recordLocalization, type RecordedRefUse } from "../../references.ts";
 import {
+  deferredScopePath,
   isComparisonList,
   isEffectBlockValue,
   isStructuredValue,
@@ -38,6 +39,7 @@ import {
   refId,
   toScalar,
   type ComparisonArg,
+  type DeferredScopePathResolver,
 } from "../scalar.ts";
 import type { ScriptedEffectCall } from "../scripted.ts";
 import { trigger, type Trigger } from "../trigger-core.ts";
@@ -63,6 +65,7 @@ import {
 } from "./types.ts";
 
 const cannotWitnessNaturalFrom = Symbol("cannotWitnessNaturalFrom");
+const lexicalScope = Symbol("lexicalScope");
 const scopeLease = Symbol("scopeLease");
 const contextPrevDepth = Symbol("contextPrevDepth");
 const contextPrevEntry = Symbol("contextPrevEntry");
@@ -70,6 +73,8 @@ type ScopeTransition = "same" | "push" | "replace" | "unknown";
 type ScopeIdentity = symbol;
 interface RuntimeScopeValue {
   readonly [cannotWitnessNaturalFrom]?: true;
+  readonly [deferredScopePath]?: DeferredScopePathResolver;
+  readonly [lexicalScope]?: true;
   readonly [scopeLease]?: ScriptLease;
   readonly [contextPrevDepth]?: number;
 }
@@ -109,6 +114,21 @@ export function scopeValue<S extends ScopeName>(
     kind: "scope-ref",
     path,
     ...(canWitnessNaturalFrom ? {} : { [cannotWitnessNaturalFrom]: true as const }),
+  };
+}
+
+function lexicalScopeValue<S extends ScopeName>(
+  recording: Recording | undefined
+): ScopeValue<S> & RuntimeScopeValue {
+  return {
+    kind: "scope-ref",
+    get path() {
+      return lexicalScopePath(recording);
+    },
+    [deferredScopePath](consumer) {
+      return lexicalScopePath(recording, consumer as Recording | undefined);
+    },
+    [lexicalScope]: true,
   };
 }
 
@@ -165,16 +185,23 @@ export function scopeRef<S extends ScopeName>(
  * while `this.owner` does not and must not.
  */
 export function navigateScope<S extends ScopeName>(base: ScopeValue, key: string): ScopeValue<S> {
-  const path = base.path === "this" ? key : `${base.path}.${key}`;
-  return "effects" in base && base.path !== "this"
-    ? // Navigation carries the base's lease too: `owner(ctx.from)` opens a
-      // block of the same authoring call `ctx.from` came from.
-      scopeRef<S>(
-        path,
-        (base as RuntimeScopeValue)[scopeLease],
-        (base as RuntimeScopeValue)[contextPrevDepth]
-      )
-    : scopeValue<S>(path);
+  if ("effects" in base && base.path !== "this") {
+    const path = `${base.path}.${key}`;
+    // Navigation carries the base's lease too: `owner(ctx.from)` opens a
+    // block of the same authoring call `ctx.from` came from.
+    return scopeRef<S>(
+      path,
+      (base as RuntimeScopeValue)[scopeLease],
+      (base as RuntimeScopeValue)[contextPrevDepth]
+    );
+  }
+  return {
+    kind: "scope-ref",
+    get path() {
+      const path = base.path;
+      return path === "this" ? key : `${path}.${key}`;
+    },
+  };
 }
 
 function resolveContextPrevPath(
@@ -247,16 +274,16 @@ interface Recording extends RecordingState {
   };
 }
 
-function resolveContextPrevEntries(
+function resolveRecordingEntries(
   entries: readonly PdxEntry[],
   recording: Recording | undefined
 ): PdxEntry[] {
   return recording === undefined
     ? [...entries]
-    : entries.map((entry) => resolveContextPrevEntry(entry, recording));
+    : entries.map((entry) => resolveRecordingEntry(entry, recording));
 }
 
-function resolveContextPrevEntry(entry: PdxEntry, recording: Recording): PdxEntry {
+function resolveRecordingEntry(entry: PdxEntry, recording: Recording): PdxEntry {
   const context = (entry as PdxEntry & ContextPrevEntry)[contextPrevEntry];
   const key =
     context === undefined
@@ -266,32 +293,36 @@ function resolveContextPrevEntry(entry: PdxEntry, recording: Recording): PdxEntr
     kind: "entry",
     key,
     op: entry.op,
-    value: resolveContextPrevValue(entry.value, recording),
+    value: resolveRecordingValue(entry.value, recording),
     ...(entry.line === undefined ? {} : { line: entry.line }),
   };
 }
 
-function resolveContextPrevValue(value: PdxValue, recording: Recording): PdxValue {
-  return value.kind === "container" ? resolveContextPrevContainer(value, recording) : value;
+function resolveRecordingValue(value: PdxValue, recording: Recording): PdxValue {
+  if (value.kind === "container") {
+    return resolveRecordingContainer(value, recording);
+  }
+  const resolver = (value as PdxScalar & RuntimeScopeValue)[deferredScopePath];
+  return resolver === undefined ? value : pdxScalar(resolver(recording));
 }
 
-function resolveContextPrevContainer(value: PdxContainer, recording: Recording): PdxContainer {
+function resolveRecordingContainer(value: PdxContainer, recording: Recording): PdxContainer {
   return {
     kind: "container",
-    items: value.items.map((item) => resolveContextPrevItem(item, recording)),
+    items: value.items.map((item) => resolveRecordingItem(item, recording)),
     ...(value.header === undefined ? {} : { header: value.header }),
   };
 }
 
-function resolveContextPrevItem(item: PdxItem, recording: Recording): PdxItem {
+function resolveRecordingItem(item: PdxItem, recording: Recording): PdxItem {
   if (item.kind === "entry") {
-    return resolveContextPrevEntry(item, recording);
+    return resolveRecordingEntry(item, recording);
   }
   if (item.kind === "container") {
-    return resolveContextPrevContainer(item, recording);
+    return resolveRecordingContainer(item, recording);
   }
   if (item.kind === "param") {
-    return { ...item, items: item.items.map((child) => resolveContextPrevItem(child, recording)) };
+    return { ...item, items: item.items.map((child) => resolveRecordingItem(child, recording)) };
   }
   return item;
 }
@@ -310,6 +341,70 @@ interface EffectReceiver extends EffectDestination {
 
 function prevKey(depth: number): string {
   return depth === 1 ? "prev" : `prev${"prev".repeat(depth - 1)}`;
+}
+
+type LexicalRoute =
+  | { readonly kind: "same" }
+  | { readonly kind: "ancestor"; readonly depth: number }
+  | { readonly kind: "blocked" }
+  | { readonly kind: "unrelated" };
+
+function lexicalRoute(active: Recording, target: Recording): LexicalRoute {
+  if (active.scope === target.scope) {
+    return { kind: "same" };
+  }
+  const ancestorIndex = active.ancestors.indexOf(target.scope);
+  if (ancestorIndex !== -1) {
+    return { kind: "ancestor", depth: ancestorIndex + 1 };
+  }
+  return active.blockedAncestors.includes(target.scope)
+    ? { kind: "blocked" }
+    : { kind: "unrelated" };
+}
+
+function lexicalScopePath(
+  recording: Recording | undefined,
+  consumer: Recording | undefined = RECORDINGS.at(-1)
+): string {
+  // A recording resolves its own deferred values immediately after its body
+  // returns. It is already closed to author code at that point, but it is
+  // still the valid consumer of references authored inside that body.
+  if (recording !== consumer) {
+    assertLive(recording, "ref");
+  }
+  if (recording === undefined) {
+    return "this";
+  }
+  const active = consumer;
+  if (active === undefined) {
+    return "this";
+  }
+  const route = lexicalRoute(active, recording);
+  if (route.kind === "same") {
+    return "this";
+  }
+  if (route.kind === "blocked") {
+    throw new Error(
+      "A lexical scope reference crosses a replacement or unknown scope transition. " +
+        "The game does not provide a verified PREV path across that boundary; use ROOT, FROM, " +
+        "or a saved target reference instead."
+    );
+  }
+  if (route.kind === "unrelated") {
+    throw new Error(
+      "A lexical scope reference was consumed in a recording that is not its scope or a " +
+        "verified descendant. The recorder cannot prove a relative path between those blocks; " +
+        "use this callback's scope, ROOT, FROM, or a saved target reference instead."
+    );
+  }
+  if (route.depth > 4) {
+    throw new Error(
+      `A lexical scope reference is ${route.depth} pushed scopes away from the active block. ` +
+        "Stellaris exposes only PREV through PREVPREVPREVPREV; keep the value within four " +
+        "scope pushes or use an explicit saved scope reference."
+    );
+  }
+  return prevKey(route.depth);
 }
 
 function routedRecording(
@@ -349,21 +444,21 @@ function effectReceiver(
   if (active === undefined) {
     return direct(fallback);
   }
-  if (active.scope === recording.scope) {
+  const route = lexicalRoute(active, recording);
+  if (route.kind === "same") {
     return direct({ sink: active.sink, refs: active.refs, owner: active });
   }
-  const ancestorIndex = active.ancestors.indexOf(recording.scope);
-  if (ancestorIndex === -1) {
-    if (active.blockedAncestors.includes(recording.scope)) {
-      throw new Error(
-        "A captured scope proxy crosses a replacement or unknown scope transition. " +
-          "The game does not provide a verified PREV path across that boundary; use ROOT, FROM, " +
-          "or a saved target reference instead."
-      );
-    }
+  if (route.kind === "blocked") {
+    throw new Error(
+      "A captured scope proxy crosses a replacement or unknown scope transition. " +
+        "The game does not provide a verified PREV path across that boundary; use ROOT, FROM, " +
+        "or a saved target reference instead."
+    );
+  }
+  if (route.kind === "unrelated") {
     return direct(fallback);
   }
-  const depth = ancestorIndex + 1;
+  const depth = route.depth;
   if (depth > 4) {
     throw new Error(
       `A captured scope proxy is ${depth} pushed scopes away from the active block. ` +
@@ -374,18 +469,33 @@ function effectReceiver(
   const sink: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   const adjacencyWitness = { sink: active.sink, mark: active.sink.length + 1 };
+  const owner = routedRecording(active, recording, sink, refs, adjacencyWitness);
   return {
     sink,
     refs,
-    owner: routedRecording(active, recording, sink, refs, adjacencyWitness),
+    owner,
     commit: () => {
       if (sink.length === 0) {
         return;
       }
+      sink.splice(0, sink.length, ...resolveRecordingEntries(sink, owner));
       active.sink.push(block(prevKey(depth), sink));
       active.refs.push(...refs);
     },
   };
+}
+
+/** Runs one lowering operation with its routed receiver as the scalar consumer. */
+function withActiveRecording<T>(recording: Recording | undefined, body: () => T): T {
+  if (recording === undefined || RECORDINGS.at(-1) === recording) {
+    return body();
+  }
+  RECORDINGS.push(recording);
+  try {
+    return body();
+  } finally {
+    RECORDINGS.pop();
+  }
 }
 
 /**
@@ -1181,7 +1291,11 @@ function fireEffect(key: string) {
         );
       }
       const relativeDeeperFrom = Object.entries(args.scopes ?? {}).find(
-        ([slot, witness]) => slot !== "from" && slot.startsWith("from") && witness.path === "this"
+        ([slot, witness]) =>
+          slot !== "from" &&
+          slot.startsWith("from") &&
+          witness[lexicalScope] !== true &&
+          witness.path === "this"
       );
       if (relativeDeeperFrom !== undefined) {
         throw new Error(
@@ -1203,7 +1317,8 @@ function fireEffect(key: string) {
           return [];
         }
         const witness = args.scopes?.[slot];
-        return witness === undefined || (slot === "from" && witness.path === "this")
+        return witness === undefined ||
+          (slot === "from" && witness[lexicalScope] !== true && witness.path === "this")
           ? []
           : [kv(slot, witness.path)];
       });
@@ -1426,7 +1541,7 @@ function makeAnyScope(sink: PdxEntry[], refs: RecordedRefUse[], recording?: Reco
   const invoke = (prop: string, args: readonly unknown[]): unknown => {
     const receiver = effectReceiver(recording, { sink, refs, owner: recording });
     const method = dispatch(prop, receiver) as (...parameters: unknown[]) => unknown;
-    const result = method(...args);
+    const result = withActiveRecording(receiver.owner, () => method(...args));
     receiver.commit();
     return result;
   };
@@ -1439,6 +1554,9 @@ function makeAnyScope(sink: PdxEntry[], refs: RecordedRefUse[], recording?: Reco
       // Access-time as well as call-time (see `guarded`): a dead scope object
       // fails on the property read, before the dispatcher builds anything.
       assertLive(recording, prop);
+      if (prop === "ref") {
+        return lexicalScopeValue(recording);
+      }
       if (prop === "hiddenEffect") {
         return makeEffectPath(sink, refs, recording, ["hidden_effect"], ["same"]);
       }
@@ -1601,7 +1719,7 @@ function recordBlock<S extends ScopeName>(
   assertSynchronousClosure(result, "An effect closure");
   // Trigger arguments are evaluated before a pushed callback opens. Resolve
   // declared PREV paths only now, against the block that will contain them.
-  into.splice(0, into.length, ...resolveContextPrevEntries(into, recording));
+  into.splice(0, into.length, ...resolveRecordingEntries(into, recording));
   return into;
 }
 

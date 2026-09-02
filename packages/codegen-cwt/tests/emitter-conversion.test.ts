@@ -85,7 +85,7 @@ const CONVERSION_EXPRESSIONS: Record<LoweredValue["conversion"], string> = {
   identity: "x",
   refId: "refId(x)",
   stringRefId: "String(refId(x))",
-  scopePath: "x.path",
+  scopePath: "scopeValueScalar(x)",
   literalText: "x.text",
 };
 
