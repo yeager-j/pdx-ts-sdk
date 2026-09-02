@@ -186,6 +186,7 @@ describe("content ids", () => {
   const techDef = {
     name: "X",
     cost: 100,
+    weight: 100,
     area: "physics",
     tier: 1,
     category: "particles",

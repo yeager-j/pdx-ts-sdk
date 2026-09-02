@@ -56,6 +56,7 @@ describe("SDK-38: nested definition ids never entered builtIds", () => {
 
   it("control: a dangling top-level tradition reference still throws", () => {
     const dangling = mod.technology("tradition_check", {
+      weight: 100,
       name: "Tradition check",
       area: "physics",
       category: ["computing"],
@@ -77,6 +78,7 @@ describe("SDK-38: nested definition ids never entered builtIds", () => {
       },
     });
     const checksSwap = mod.technology("swap_check", {
+      weight: 100,
       name: "Swap check",
       area: "physics",
       category: ["computing"],
@@ -121,6 +123,7 @@ describe("SDK-38: nested definition ids never entered builtIds", () => {
 
   it("does not throw referencing its own technology_swap id, defined in the same collection", () => {
     const withSwap = mod.technology("with_swap", {
+      weight: 100,
       name: "With Swap",
       area: "physics",
       category: ["computing"],
@@ -129,6 +132,7 @@ describe("SDK-38: nested definition ids never entered builtIds", () => {
       technologySwap: [{ name: "referenceguard_tech_with_swap_advanced" }],
     });
     const checksSwap = mod.technology("checks_swap", {
+      weight: 100,
       name: "Checks Swap",
       area: "physics",
       category: ["computing"],
@@ -169,6 +173,7 @@ describe("SDK-38: nested definition ids never entered builtIds", () => {
     // unresolvable through a `<job>`-typed field even though both registries
     // are covered by the fold.
     const withSwap = mod.technology("cross_swap_owner", {
+      weight: 100,
       name: "Cross Swap Owner",
       area: "physics",
       category: ["computing"],

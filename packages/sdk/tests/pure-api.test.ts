@@ -215,6 +215,8 @@ function capabilityFeatures() {
   const events = capability.namespace();
 
   const grafts = capability.technology("chimeric_grafts", {
+    cost: 100,
+    weight: 100,
     name: "Chimeric Grafts",
     area: "society",
     tier: 3,
@@ -318,7 +320,15 @@ function techsWith(stem: string | undefined, ...ids: string[]): Feature {
   return createFeatureInternal(
     stem,
     ids.map((id) =>
-      defineTechnologyInternal({ id, name: id, area: "physics", tier: 1, category: "particles" })
+      defineTechnologyInternal({
+        cost: 100,
+        weight: 100,
+        id,
+        name: id,
+        area: "physics",
+        tier: 1,
+        category: "particles",
+      })
     )
   );
 }
@@ -410,6 +420,8 @@ describe("assembly-time validation", () => {
   it("rejects duplicate localization keys across definitions", () => {
     const techs = createFeatureInternal(undefined, [
       defineTechnologyInternal({
+        cost: 100,
+        weight: 100,
         id: "pp_mod_a",
         name: "A",
         desc: "first",
@@ -419,6 +431,8 @@ describe("assembly-time validation", () => {
       }),
       // Its name key is "pp_mod_a_desc" — exactly the first tech's desc key.
       defineTechnologyInternal({
+        cost: 100,
+        weight: 100,
         id: "pp_mod_a_desc",
         name: "B",
         area: "physics",
@@ -434,6 +448,8 @@ describe("assembly-time validation", () => {
   it("reports quote replacement as a warning datum, not console output", () => {
     const techs = createFeatureInternal(undefined, [
       defineTechnologyInternal({
+        cost: 100,
+        weight: 100,
         id: "pp_mod_quoted",
         name: 'The "Hum"',
         area: "physics",
@@ -910,6 +926,8 @@ describe("content reference integrity", () => {
     const base = techsWith("base_techs", "pp_mod_tech_base");
     const derived = createFeatureInternal("derived_techs", [
       defineTechnologyInternal({
+        cost: 100,
+        weight: 100,
         id: "pp_mod_tech_derived",
         name: "Derived",
         area: "physics",
@@ -930,6 +948,8 @@ describe("content reference integrity", () => {
   // own-prefixed id with no definition behind it never builds clean.
   it("fails loudly on a reference an effect closure wrote", () => {
     const orphan = defineTechnologyInternal({
+      cost: 100,
+      weight: 100,
       id: "pp_mod_tech_closure_orphan",
       name: "Closure orphan",
       area: "physics",
@@ -954,6 +974,8 @@ describe("content reference integrity", () => {
 
   it("fails loudly on a reference a trigger inside a closure wrote", () => {
     const orphan = defineTechnologyInternal({
+      cost: 100,
+      weight: 100,
       id: "pp_mod_tech_gated_orphan",
       name: "Gated orphan",
       area: "physics",
@@ -980,6 +1002,8 @@ describe("content reference integrity", () => {
 
   it("resolves a closure reference when its collection is passed", () => {
     const tech = defineTechnologyInternal({
+      cost: 100,
+      weight: 100,
       id: "pp_mod_tech_granted",
       name: "Granted",
       area: "physics",
@@ -1002,6 +1026,8 @@ describe("content reference integrity", () => {
 
   it("fails loudly on a reference whose collection was not passed", () => {
     const orphan = defineTechnologyInternal({
+      cost: 100,
+      weight: 100,
       id: "pp_mod_tech_orphan",
       name: "Orphan",
       area: "physics",
@@ -1010,6 +1036,8 @@ describe("content reference integrity", () => {
     });
     const included = createFeatureInternal(undefined, [
       defineTechnologyInternal({
+        cost: 100,
+        weight: 100,
         id: "pp_mod_tech_dependent",
         name: "Dependent",
         area: "physics",
@@ -1036,6 +1064,8 @@ describe("content reference integrity", () => {
     ]);
     const techs = createFeatureInternal(undefined, [
       defineTechnologyInternal({
+        cost: 100,
+        weight: 100,
         id: "pp_mod_tech_haunted",
         name: "Haunted",
         area: "physics",
@@ -1109,6 +1139,8 @@ describe("content reference integrity", () => {
     // this mod's content however it was written — which is what catches typos.
     const techs = createFeatureInternal(undefined, [
       defineTechnologyInternal({
+        cost: 100,
+        weight: 100,
         id: "pp_mod_tech_base",
         name: "Base",
         area: "physics",
@@ -1116,6 +1148,8 @@ describe("content reference integrity", () => {
         category: "particles",
       }),
       defineTechnologyInternal({
+        cost: 100,
+        weight: 100,
         id: "pp_mod_tech_typo",
         name: "Typo",
         area: "physics",
@@ -1132,6 +1166,8 @@ describe("content reference integrity", () => {
   it("exempts vanilla and third-party ids, and fields no registry backs", () => {
     const techs = createFeatureInternal(undefined, [
       defineTechnologyInternal({
+        cost: 100,
+        weight: 100,
         id: "pp_mod_tech_open",
         name: "Open",
         area: "physics",
@@ -1235,6 +1271,8 @@ describe("content reference integrity", () => {
     // authored. A definition names one; the patch that adds it is what makes
     // it exist, exactly as a `define` would.
     const dependent = defineTechnologyInternal({
+      cost: 100,
+      weight: 100,
       id: "pp_mod_tech_dependent",
       name: "Dependent",
       area: "society",
@@ -1294,6 +1332,8 @@ describe("collections", () => {
     // still writes one module per feature.
     const amplifiers = createFeatureInternal("amplifiers", [
       defineTechnologyInternal({
+        cost: 100,
+        weight: 100,
         id: "pp_mod_tech_amplifier",
         name: "Amplifier",
         area: "physics",
@@ -1428,6 +1468,8 @@ describe("collections", () => {
     const mod = buildInternal(config, [
       createFeatureInternal(undefined, [
         defineTechnologyInternal({
+          cost: 100,
+          weight: 100,
           id: "pp_mod_tech_frozen",
           name: "Frozen",
           area: "physics",
@@ -1457,6 +1499,8 @@ describe("collections", () => {
       buildInternal(CONFIG, [
         createFeatureInternal(undefined, [
           defineTechnologyInternal({
+            cost: 100,
+            weight: 100,
             id: "pp_mod_tech_injected",
             name: 'Fine"\n pp_mod_tech_other:0 "Forged',
             area: "physics",
@@ -1643,6 +1687,8 @@ tech_probe_zeta = {
         // Two ids in one file, out of sorted order among themselves.
         betaItems.push(
           orderMod.technology("beta_two", {
+            cost: 100,
+            weight: 100,
             name: "Beta Two",
             area: "physics",
             tier: 1,
@@ -1653,6 +1699,8 @@ tech_probe_zeta = {
       () => {
         betaItems.push(
           orderMod.technology("beta_one", {
+            cost: 100,
+            weight: 100,
             name: "Beta One",
             area: "physics",
             tier: 1,
@@ -1663,6 +1711,8 @@ tech_probe_zeta = {
       () => {
         alphaItems.push(
           orderMod.technology("alpha_one", {
+            cost: 100,
+            weight: 100,
             name: "Alpha One",
             area: "physics",
             tier: 1,

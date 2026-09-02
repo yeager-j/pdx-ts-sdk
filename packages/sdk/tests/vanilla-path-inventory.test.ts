@@ -197,6 +197,8 @@ describe("vanilla evidence unions every accepted origin, not just one (SDK-119)"
   // either test's `mod`. Callers place the items with their own `mod`.
   function patchFrom(origin: VanillaView, mod: ReturnType<typeof createMod>, techId: string) {
     const myNewTech = mod.technology(techId, {
+      cost: 100,
+      weight: 100,
       name: "Marker Tech",
       area: "society",
       tier: 3,

@@ -55,6 +55,14 @@ export const VANILLA_CURATED_VALUES = {
   cost: 2000,
 } as const;
 
+/**
+ * The draw weight the starter writes. Vanilla spells its weights as
+ * `@tierNweightM` variables, so no scalar tuple evidences this one; 100 is the
+ * conventional starting weight, and the rules require one on every technology
+ * that is not a starting technology.
+ */
+export const CONVENTIONAL_WEIGHT = 100;
+
 export const technologyRecipe = defineRecipe({
   summary: {
     id: "technology",
@@ -120,8 +128,9 @@ function fields(names: DerivedNames): readonly string[] {
     `// prerequisites: [${quoteTs(PREREQUISITE_EXAMPLE)}],`,
     "",
     "// How likely the game is to offer this as a research option next to the",
-    "// others in its category. 100 is the conventional starting weight.",
-    "// weight: 100,",
+    "// others in its category. 100 is the conventional starting weight, and the",
+    "// rules require one on every technology that is not a starting technology.",
+    `weight: ${CONVENTIONAL_WEIGHT},`,
   ];
 }
 

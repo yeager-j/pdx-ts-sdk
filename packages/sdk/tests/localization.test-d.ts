@@ -126,6 +126,8 @@ describe("definition-attached text types", () => {
     expectTypeOf<TechnologyPatch["name"]>().toEqualTypeOf<LocalizedText | undefined>();
 
     mod.technology("theory", {
+      cost: 100,
+      weight: 100,
       name: { english: "Theory", french: "Théorie" },
       desc: "English shorthand.",
       area: "physics",
@@ -232,6 +234,8 @@ describe("localization references", () => {
 
   it("takes a reference in modifier description positions", () => {
     mod.technology("modifier_reference", {
+      cost: 100,
+      weight: 100,
       name: "Modifier reference",
       area: "physics",
       tier: 1,

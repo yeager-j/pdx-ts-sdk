@@ -34,6 +34,7 @@ const base = {
   id: "mymod_tech_x",
   name: "X",
   cost: 100,
+  weight: 100,
   tier: 1,
   category: "particles",
 } as const;

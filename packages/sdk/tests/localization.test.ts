@@ -68,6 +68,8 @@ describe("standalone localization authoring", () => {
       french: "Ascension française",
     });
     const technology = mod.technology("theory", {
+      cost: 100,
+      weight: 100,
       name: "Theory",
       area: "physics",
       tier: 1,
@@ -136,12 +138,16 @@ describe("standalone localization authoring", () => {
   it("keeps localization feature ownership when content paths merge", () => {
     const mod = capability();
     const first = mod.technology("first", {
+      cost: 100,
+      weight: 100,
       name: "First",
       area: "physics",
       tier: 1,
       category: "particles",
     });
     const second = mod.technology("second", {
+      cost: 100,
+      weight: 100,
       name: "Second",
       area: "physics",
       tier: 1,
@@ -276,6 +282,8 @@ describe("standalone localization authoring", () => {
   it("fans a content slot's language record out to one file per language", async () => {
     const mod = capability();
     const technology = mod.technology("lattice", {
+      cost: 100,
+      weight: 100,
       name: { english: "Lattice Theory", french: "Théorie du treillis" },
       desc: "Only the English half of this one is written.",
       area: "physics",
@@ -297,6 +305,8 @@ describe("standalone localization authoring", () => {
   it("refuses a key pin on a slot whose key the definition id fixes", () => {
     const mod = capability();
     const technology = mod.technology("pinned", {
+      cost: 100,
+      weight: 100,
       name: { english: "Pinned", key: "pinned_name" },
       area: "physics",
       tier: 1,

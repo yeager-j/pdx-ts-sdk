@@ -34,6 +34,7 @@ describe("SDK-37: subtype-qualified reference targets", () => {
 
   it("control: a dangling technology prerequisite still throws", () => {
     const dangling = mod.technology("dangling", {
+      weight: 100,
       name: "Dangling",
       area: "physics",
       category: ["computing"],

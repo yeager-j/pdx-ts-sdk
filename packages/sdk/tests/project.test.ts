@@ -140,6 +140,8 @@ describe("createModProject", () => {
     };
     const extra = imported.project.mod.feature("extra", [
       imported.project.mod.technology("extra", {
+        cost: 100,
+        weight: 100,
         name: "Extra",
         area: "physics",
         tier: 1,

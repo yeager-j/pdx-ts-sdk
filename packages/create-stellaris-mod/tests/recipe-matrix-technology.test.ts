@@ -88,7 +88,7 @@ describe("technology, in a real project", () => {
   it(
     "the commented examples compile as written, once their `// ` is removed",
     () => {
-      compileUncommented(project, generate(), ["prerequisites", "weight"]);
+      compileUncommented(project, generate(), ["prerequisites"]);
     },
     COMPILER_TIMEOUT
   );

@@ -2499,6 +2499,8 @@ describe("generated content registries", () => {
   it("writes technology weight-group maps as one flat scalar block (SDK-66)", () => {
     const cap = capabilityFor(configFor("Technology weight map test", "tw_test"));
     const technology = cap.technology("weight_groups", {
+      cost: 100,
+      weight: 100,
       name: "Weight Groups",
       area: "physics",
       tier: 1,
@@ -3801,6 +3803,8 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     // value still carries the path, so two struct positions stay distinct.
     const cap = capabilityFor(DESC_KEY_CONFIG);
     const technology = cap.technology("nested_desc", {
+      cost: 100,
+      weight: 100,
       name: "Nested Desc Test",
       area: "society",
       tier: 1,
@@ -3831,6 +3835,8 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     const cap = capabilityFor(DESC_KEY_CONFIG);
     const sharedRow = { factor: 2, desc: { english: "Cheaper.", key: "frugal" } } as const;
     const technology = cap.technology("shared_nested_row", {
+      cost: 100,
+      weight: 100,
       name: "Shared Nested Row Test",
       area: "society",
       tier: 1,

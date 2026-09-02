@@ -114,6 +114,8 @@ describe.skipIf(installPath === undefined)("real install (non-gating)", () => {
     };
     const mod = createMod(config);
     const myNewTech = mod.technology("marker", {
+      cost: 100,
+      weight: 100,
       name: "Probe Marker",
       area: "society",
       tier: 1,

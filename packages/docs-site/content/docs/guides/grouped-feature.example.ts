@@ -9,6 +9,7 @@ const mod = createMod({
 const resonanceTheory = mod.technology("resonance_theory", {
   name: "Crystal Resonance Theory",
   cost: 2000,
+  weight: 100,
   area: "physics",
   tier: 2,
   category: "particles",

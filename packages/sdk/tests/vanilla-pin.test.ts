@@ -268,6 +268,8 @@ describe("the mod capability's version-pin hook", () => {
   function technologyFeature(config: ModConfig = makeConfig()) {
     const mod = createMod(config);
     const technology = mod.technology("new", {
+      cost: 100,
+      weight: 100,
       name: "New",
       area: "physics",
       tier: 1,

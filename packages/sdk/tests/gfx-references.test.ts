@@ -184,6 +184,7 @@ describe("the head-less registries", () => {
       mod.compile([
         mod.feature(undefined, [
           mod.technology("dependent", {
+            weight: 100,
             name: "Dependent",
             cost: 1000,
             area: "physics",

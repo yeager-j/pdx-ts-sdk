@@ -118,6 +118,7 @@ import {
   type UtilityComponentTemplateFields,
   type WarGoalRef,
   type WeaponComponentTemplateFields,
+  type WeightBlock,
   type WithFrom,
 } from "../src/stellaris.ts";
 
@@ -642,8 +643,16 @@ describe("generated content authoring types", () => {
     });
   });
 
-  it("keeps subtype fields optional rather than introducing a union", () => {
+  it("types a subtype arm as a union on its selector", () => {
+    // `capital_tier` is declared under `subtype[capital]`, selected by
+    // `capital = yes`: the arm is a union member, so the tier alone is refused.
     contentMod.building("capital_tier", {
+      name: "X",
+      capital: true,
+      capitalTier: 2,
+    });
+    // @ts-expect-error — capitalTier exists only when `capital: true` selects the subtype
+    contentMod.building("capital_tier_alone", {
       name: "X",
       capitalTier: 2,
     });
@@ -654,6 +663,47 @@ describe("generated content authoring types", () => {
       // @ts-expect-error — the wartime subtype marker can only be enabled
       isWartimeEdict: false,
     });
+  });
+
+  it("requires a technology's cost and weight unless it is a start technology (SDK-360)", () => {
+    const plain = { name: "X", area: "physics", tier: 1, category: "particles" } as const;
+    contentMod.technology("costed", { ...plain, cost: 100, weight: 100 });
+    contentMod.technology("start", { ...plain, startTech: true });
+    contentMod.technology("start_with_cost", { ...plain, startTech: true, cost: 100 });
+    // @ts-expect-error — `subtype[!start]` requires cost and weight
+    contentMod.technology("uncosted", plain);
+    // @ts-expect-error — weight is required too
+    contentMod.technology("weightless", { ...plain, cost: 100 });
+    // @ts-expect-error — starting_potential exists only for start technologies
+    contentMod.technology("gated", { ...plain, cost: 100, weight: 100, startingPotential: always });
+    // A repeatable technology is selected by `levels` and then needs its per-level cost.
+    contentMod.technology("repeatable", {
+      ...plain,
+      cost: 100,
+      weight: 100,
+      levels: -1,
+      costPerLevel: 500,
+    });
+    // @ts-expect-error — levels selects the repeatable arm, which requires costPerLevel
+    contentMod.technology("levels_only", { ...plain, cost: 100, weight: 100, levels: 3 });
+    // @ts-expect-error — a start technology cannot be repeatable
+    contentMod.technology("start_repeatable", {
+      ...plain,
+      startTech: true,
+      levels: 3,
+      costPerLevel: 5,
+    });
+    // The handle's define takes the same union.
+    contentMod.technologyHandle("deferred").define({ ...plain, cost: 100, weight: 100 });
+    // @ts-expect-error — the handle refuses an uncosted body too
+    contentMod.technologyHandle("deferred_uncosted").define(plain);
+    // The item carries the whole union: reading it back narrows on `startTech`.
+    const item = contentMod.technology("narrowed", { ...plain, startTech: true });
+    expectTypeOf(item.def.startTech).toEqualTypeOf<boolean | undefined>();
+    expectTypeOf(item.def.cost).toEqualTypeOf<number | WeightBlock<never> | undefined>();
+    if (item.def.startTech !== true) {
+      expectTypeOf(item.def.cost).toEqualTypeOf<number | WeightBlock<never>>();
+    }
   });
 
   it("rejects only what the emitter cannot express", () => {
@@ -1945,6 +1995,8 @@ describe("generated content authoring types", () => {
     >();
 
     contentMod.technology("mod_weight_if_group_picked", {
+      cost: 100,
+      weight: 100,
       name: "Weight Group Test",
       area: "physics",
       tier: 1,
@@ -2027,6 +2079,8 @@ describe("generated content authoring types", () => {
     >();
 
     contentMod.technology("modifier_scopes", {
+      cost: 100,
+      weight: 100,
       name: "X",
       area: "physics",
       tier: 1,
@@ -2041,6 +2095,8 @@ describe("generated content authoring types", () => {
     });
 
     contentMod.technology("modifier_wrong_scope", {
+      cost: 100,
+      weight: 100,
       name: "X",
       area: "physics",
       tier: 1,
@@ -2097,6 +2153,8 @@ describe("generated content authoring types", () => {
     >();
 
     contentMod.technology("prereqfor_desc_keys", {
+      cost: 100,
+      weight: 100,
       name: "X",
       area: "physics",
       tier: 1,
@@ -2731,6 +2789,7 @@ describe("generated content authoring types", () => {
     // `<solar_system_initializer>`.
     originMod.civicOrOrigin("with_system", {
       name: "X",
+      isOrigin: true,
       initializers: [outpost],
     });
   });

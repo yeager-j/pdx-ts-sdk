@@ -29,8 +29,9 @@ export const resonanceTheory = mod.technology("resonance_theory", {
   // prerequisites: ["tech_basic_science_lab_1"],
 
   // How likely the game is to offer this as a research option next to the
-  // others in its category. 100 is the conventional starting weight.
-  // weight: 100,
+  // others in its category. 100 is the conventional starting weight, and the
+  // rules require one on every technology that is not a starting technology.
+  weight: 100,
 });
 
 export const feature = mod.feature("resonance_theory", [resonanceTheory]);
