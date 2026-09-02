@@ -11,6 +11,7 @@ import type { RuleType } from "../../cwt/model.ts";
 import type { AliasDecl } from "../../cwt/rules.ts";
 import type { DocEntry } from "../../logs/trigger-docs.ts";
 import { loweredRuleConflictSkips, type LoweredRule } from "../../lower/lowered-rule.ts";
+import { canonicalThisScope, scopeUnionType } from "../../lower/scope-context.ts";
 import {
   bareBlockValue,
   cardinalityArrayType,
@@ -99,7 +100,7 @@ type Shape =
    * rule pushes; `null` means the nested trigger stays in the enclosing scope,
    * which only an `ENCLOSING_SCOPE_TRIGGER_WRAPPERS` row permits.
    */
-  | { readonly kind: "wrapper"; readonly scope: string | null }
+  | { readonly kind: "wrapper"; readonly scope: readonly string[] | null }
   | { readonly kind: "fields"; readonly fields: readonly ArgField[] };
 
 function shapeOf(emitter: Emitter, key: string, rule: LoweredRule): Shape | SkipReason {
@@ -166,10 +167,10 @@ function shapeOf(emitter: Emitter, key: string, rule: LoweredRule): Shape | Skip
           ? { kind: "wrapper", scope: null }
           : skipReason("missing-push-scope", "scope change with no push_scope annotation");
       }
-      const scope = emitter.canonicalScope(pushedRaw);
-      return scope === null
-        ? skipReason("unknown-push-scope", `push_scope names no known scope (${pushedRaw})`)
-        : { kind: "wrapper", scope };
+      return {
+        kind: "wrapper",
+        scope: canonicalThisScope(emitter, pushedRaw, `${key}: trigger wrapper`),
+      };
     }
   }
 
@@ -414,13 +415,13 @@ function emitWrapper(
   key: string,
   scope: string,
   docs: string[],
-  inner: string | null
+  inner: readonly string[] | null
 ): EmittedTriggerBuilder {
   const type = emitter.use("Trigger");
   const signature =
     inner === null
       ? `${fn}<S extends ${scope}>(condition: ${type}<S>): ${type}<S>`
-      : `${fn}(condition: ${type}<${JSON.stringify(inner)}>): ${type}<${scope}>`;
+      : `${fn}(condition: ${type}<${scopeUnionType(inner)}>): ${type}<${scope}>`;
   return {
     signature,
     code:
@@ -432,8 +433,8 @@ function emitWrapper(
 }
 
 /** The `Trigger` type text a nested clause takes in a builder's arguments. */
-function clauseType(emitter: Emitter, scope: string | null, outerScope: string): string {
-  return `${emitter.use("Trigger")}<${scope === null ? outerScope : JSON.stringify(scope)}>`;
+function clauseType(emitter: Emitter, scope: readonly string[] | null, outerScope: string): string {
+  return `${emitter.use("Trigger")}<${scope === null ? outerScope : scopeUnionType(scope)}>`;
 }
 
 /** The type text one lowered argument contributes before repetition applies. */

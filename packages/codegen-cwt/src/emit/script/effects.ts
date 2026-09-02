@@ -25,6 +25,7 @@ import {
   type LoweredRule,
   type LoweredRuleBlock,
 } from "../../lower/lowered-rule.ts";
+import { canonicalThisScope, scopeUnionType } from "../../lower/scope-context.ts";
 import {
   aliasListMembers,
   canonicalScopeSet,
@@ -172,8 +173,8 @@ type BlockEffectShape =
   | {
       /** Identifies an effect-splice closure, optionally preceded by named arguments. */
       readonly kind: "wrapper";
-      /** Canonical closure scope, or `null` when it preserves the receiving scope. */
-      readonly scope: string | null;
+      /** Canonical closure scopes, or `null` when it preserves the receiving scope. */
+      readonly scope: readonly string[] | null;
       /** Runtime identity transition for the callback body. */
       readonly transition: "same" | "push" | "replace" | "unknown";
       /** Named arguments before the closure, or `null` when the closure is the only argument. */
@@ -190,8 +191,8 @@ type BlockEffectShape =
       readonly kind: "aliasList";
       /** The spliced CWT alias category. */
       readonly category: string;
-      /** Canonical scope the members run in, or `null` for the receiving scope. */
-      readonly scope: string | null;
+      /** Canonical scopes the members run in, or `null` for the receiving scope. */
+      readonly scope: readonly string[] | null;
     }
   | {
       /** Identifies one object argument whose keys the script itself supplies. */
@@ -462,10 +463,9 @@ function blockShapeOf(emitter: Emitter, block: LoweredRuleBlock): BlockEffectSha
   }
   if (spliced !== null && EXTRA_ALIAS_CATEGORIES.get(spliced)?.scriptList !== undefined) {
     const pushed = inherited.scope;
-    const scope = pushed === null ? null : emitter.canonicalScope(pushed);
-    return scope === null && pushed !== null
-      ? skipReason("unknown-push-scope", `push_scope names no known scope (${pushed})`)
-      : { kind: "aliasList", category: spliced, scope };
+    const scope =
+      pushed === null ? null : canonicalThisScope(emitter, pushed, `Alias list "${spliced}"`);
+    return { kind: "aliasList", category: spliced, scope };
   }
   const categories = new Set(
     block.splices.flatMap((field) => (field.key.kind === "aliasName" ? [field.key.category] : []))
@@ -505,12 +505,9 @@ function blockShapeOf(emitter: Emitter, block: LoweredRuleBlock): BlockEffectSha
         "effect wrapper whose named arguments are an open-keyed block"
       );
     }
-    let scope: string | null = null;
+    let scope: readonly string[] | null = null;
     if (pushedRaw !== null) {
-      scope = emitter.canonicalScope(pushedRaw);
-      if (scope === null) {
-        return skipReason("unknown-push-scope", `push_scope names no known scope (${pushedRaw})`);
-      }
+      scope = canonicalThisScope(emitter, pushedRaw, "Effect wrapper");
     }
     return {
       kind: "wrapper",
@@ -630,9 +627,13 @@ function scriptListOf(category: string): AliasCategoryScriptList {
  * scope fixes the type argument; without one the members run in the scope
  * enclosing the list, which is the scope text the caller is emitting under.
  */
-function aliasListType(category: string, scope: string | null, outerScope: string): string {
+function aliasListType(
+  category: string,
+  scope: readonly string[] | null,
+  outerScope: string
+): string {
   const item = scriptListOf(category).typeName;
-  return `readonly ${item}<${scope === null ? outerScope : JSON.stringify(scope)}>[]`;
+  return `readonly ${item}<${scope === null ? outerScope : scopeUnionType(scope)}>[]`;
 }
 
 /** The type text a lowered value contributes before field-level wrapping or overrides. */
@@ -662,7 +663,7 @@ function baseMemberType(
       return cardinalityArrayType(arms.join(" | "), value.cardinality);
     }
     case "clause": {
-      const scope = value.scope === null ? outerScope : JSON.stringify(value.scope);
+      const scope = value.scope === null ? outerScope : scopeUnionType(value.scope);
       if (value.category === "trigger") {
         return `${emitter.use("Trigger")}<${scope}>`;
       }
@@ -772,8 +773,8 @@ function clusterParameters(cluster: EffectCluster): string {
     : "";
 }
 
-function scopeInterfaceName(scope: string | null): string {
-  return scope === null ? "this" : `${pascalCase(scope)}Scope`;
+function scopeInterfaceName(scope: readonly string[] | null): string {
+  return scope === null ? "this" : scope.map((member) => `${pascalCase(member)}Scope`).join(" | ");
 }
 
 /**

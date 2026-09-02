@@ -66,14 +66,14 @@ export interface RuleFact {
    * `null` inside the value means the splice runs in the enclosing rule scope.
    */
   readonly splice: {
-    /** The canonical pushed scope, or `null` for the enclosing rule scope. */
-    readonly scope: string | null;
+    /** The canonical pushed scopes, or `null` for the enclosing scope. */
+    readonly scope: readonly string[] | null;
   } | null;
   /**
    * Named nested-clause fields and their canonical pushed scopes.
    * A `null` value means the clause runs in the enclosing rule scope.
    */
-  readonly clauses: ReadonlyMap<string, string | null>;
+  readonly clauses: ReadonlyMap<string, readonly string[] | null>;
   /**
    * Lowercase names of the rule's non-clause arguments.
    * Use this set to distinguish arguments from unkeyed clause entries.

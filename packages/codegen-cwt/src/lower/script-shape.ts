@@ -32,6 +32,7 @@ import {
   UNIVERSAL_SCOPES,
 } from "../overlay/index.ts";
 import { referenceTargetsOf, type Emitter, type TsValue } from "../render/emitter.ts";
+import { canonicalThisScope } from "./scope-context.ts";
 
 /** Stable reasons the shared trigger/effect generator can reject a CWT rule. */
 export type ScriptGenerationSkipCategory =
@@ -234,8 +235,8 @@ export type ArgValue =
       readonly kind: "clause";
       /** The kind of script rules accepted inside the clause. */
       readonly category: ClauseCategory;
-      /** The canonical pushed scope, or `null` for the enclosing scope. */
-      readonly scope: string | null;
+      /** The canonical pushed scopes, or `null` for the enclosing scope. */
+      readonly scope: readonly string[] | null;
       /** How entering this clause changes the live game scope identity. */
       readonly transition: ScopeTransition;
       /** Whether clause entries are emitted without a named wrapper. */
@@ -252,8 +253,8 @@ export type ArgValue =
       readonly kind: "keyedClauses";
       /** The kind of script rules accepted inside one case. */
       readonly category: ClauseCategory;
-      /** The canonical pushed scope, or `null` for the enclosing scope. */
-      readonly scope: string | null;
+      /** The canonical pushed scopes, or `null` for the enclosing scope. */
+      readonly scope: readonly string[] | null;
       /** The case count the declarations admit together. */
       readonly cardinality: Cardinality;
       /** The block's own keys, which a case key may not repeat. */
@@ -269,8 +270,8 @@ export type ArgValue =
       readonly kind: "aliasList";
       /** The spliced CWT alias category. */
       readonly category: string;
-      /** The canonical pushed scope, or `null` for the enclosing scope. */
-      readonly scope: string | null;
+      /** The canonical pushed scopes, or `null` for the enclosing scope. */
+      readonly scope: readonly string[] | null;
       /** Whether the items are emitted without a named wrapper. */
       readonly splice: boolean;
     }
@@ -415,6 +416,11 @@ export interface ClauseScope {
   readonly transition: ScopeTransition;
 }
 
+interface ResolvedClauseScope {
+  readonly scope: readonly string[] | null;
+  readonly transition: ScopeTransition;
+}
+
 /**
  * Classifies a CWT scope context by runtime identity behavior.
  *
@@ -461,39 +467,36 @@ function clauseScope(
   name: string,
   fields: readonly RuleField[],
   inherited: ClauseScope
-): ClauseScope | SkipReason {
+): ResolvedClauseScope | SkipReason {
   const candidates = fields.map((field) =>
     field.scope === null
       ? inherited
       : { scope: field.scope.this, transition: scopeTransition(field.scope) }
   );
-  const [first] = candidates;
-  if (first === undefined) {
-    return inherited;
-  }
+  const candidate = candidates[0] ?? inherited;
   if (!clauseScopesAgree(candidates)) {
     return skipReason(
       "conflicting-clause-scope",
       `field "${name}" has incompatible scope transitions across its declarations`
     );
   }
-  if (first.transition === "unknown") {
+  if (candidate.transition === "unknown") {
     return skipReason("unknown-push-scope", `field "${name}" does not state a THIS scope`);
   }
-  if (first.scope === null) {
-    return first;
+  if (candidate.scope === null) {
+    return { ...candidate, scope: null };
   }
-  const canonical = emitter.canonicalScope(first.scope);
-  return canonical === null
-    ? skipReason("unknown-push-scope", `field "${name}" pushes an unknown scope (${first.scope})`)
-    : { ...first, scope: canonical };
+  return {
+    ...candidate,
+    scope: canonicalThisScope(emitter, candidate.scope, `Clause field "${name}"`),
+  };
 }
 
 function bareClauseScope(
   emitter: Emitter,
   value: RuleBareValue,
   inherited: ClauseScope
-): ClauseScope | SkipReason {
+): ResolvedClauseScope | SkipReason {
   const candidate =
     value.scope === null
       ? inherited
@@ -502,12 +505,12 @@ function bareClauseScope(
     return skipReason("unknown-push-scope", "bare clause does not state a THIS scope");
   }
   if (candidate.scope === null) {
-    return candidate;
+    return { ...candidate, scope: null };
   }
-  const canonical = emitter.canonicalScope(candidate.scope);
-  return canonical === null
-    ? skipReason("unknown-push-scope", `bare clause pushes an unknown scope (${candidate.scope})`)
-    : { ...candidate, scope: canonical };
+  return {
+    ...candidate,
+    scope: canonicalThisScope(emitter, candidate.scope, "Bare clause"),
+  };
 }
 
 /** The authored operand type for a CWT comparison, or its skip reason. */
@@ -901,8 +904,8 @@ function mergedClause(
   | {
       /** The kind of script rules the clause accepts. */
       readonly category: ClauseCategory;
-      /** The canonical pushed scope, or `null` for the enclosing scope. */
-      readonly scope: string | null;
+      /** The canonical pushed scopes, or `null` for the enclosing scope. */
+      readonly scope: readonly string[] | null;
       /** How entering the clause changes the live game scope identity. */
       readonly transition: ScopeTransition;
     }

@@ -35,7 +35,7 @@
   "duplicateModifierEntries": [],
   "duplicateScopeLinkEntries": [],
   "unknownScopes": ["pop — effects.log:52, triggers.log:73"],
-  "scopeGroupAmbientSlots": ["scope_group[spatial_object] — common/missions.cwt:11"],
+  "scopeGroupAmbientSlots": [],
   "scopeResolutions": [
     {
       "id": "stale-v4-scope-names",

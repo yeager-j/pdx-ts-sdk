@@ -2,6 +2,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { format, resolveConfig } from "prettier";
 
 import {
   diff,
@@ -309,19 +310,23 @@ export function loadBaseline(): DriftBaseline {
 /**
  * Enforces the committed drift baseline for code generation.
  * Rebaseline mode writes accepted non-scope drift; check mode exits the process on differences.
+ *
+ * @param baselinePath The baseline destination and anchor for resolving Prettier configuration.
  */
-export function checkDrift(
+export async function checkDrift(
   report: DriftReport,
   baseline: DriftBaseline,
-  rebaseline: boolean
-): void {
+  rebaseline: boolean,
+  baselinePath = BASELINE_PATH
+): Promise<void> {
   if (rebaseline) {
-    writeFileSync(
-      BASELINE_PATH,
-      `${JSON.stringify(updatedBaseline(report, baseline), null, 2)}\n`,
-      "utf8"
-    );
-    console.log(`Rebaselined drift: ${BASELINE_PATH}`);
+    const options = await resolveConfig(baselinePath);
+    const contents = await format(JSON.stringify(updatedBaseline(report, baseline)), {
+      ...options,
+      filepath: baselinePath,
+    });
+    writeFileSync(baselinePath, contents, "utf8");
+    console.log(`Rebaselined drift: ${baselinePath}`);
     return;
   }
   const differences = compareToBaseline(report, baseline);
