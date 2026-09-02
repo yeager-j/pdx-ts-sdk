@@ -70,7 +70,22 @@ describe("readComplexEnumMembers", () => {
     );
 
     expect(read.members).toEqual(["first", "second"]);
-    expect(read).toMatchObject({ files: 1, diagnostics: 0, missing: false, gaps: [] });
+    expect(read).toMatchObject({
+      files: 1,
+      selectorFiles: 1,
+      diagnostics: 0,
+      missing: false,
+      gaps: [],
+    });
+  });
+
+  it("does not count a parsed extension match that never reaches the selector", () => {
+    const read = readComplexEnumMembers(
+      installWith({ "credits.txt": 'credits = { name = "unrelated" }\n' }),
+      NESTED_SPEC
+    );
+
+    expect(read).toMatchObject({ members: [], files: 1, selectorFiles: 0, missing: false });
   });
 
   it("records a file it cannot parse as a gap, naming the file and the reason", () => {
@@ -115,6 +130,7 @@ describe("readComplexEnumMembers", () => {
 
     expect(read.gaps).toEqual([]);
     expect(read.members).toEqual(["kept"]);
+    expect(read.selectorFiles).toBe(1);
   });
 
   it("records a gap when the unparseable file does name the selector's block", () => {

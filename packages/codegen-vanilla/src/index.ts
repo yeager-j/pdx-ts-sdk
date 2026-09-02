@@ -141,6 +141,7 @@ function printReport(report: VanillaReport, removed: readonly string[]): void {
     report.complexEnums.map(
       (one) =>
         `${one.name}: ${one.members} members from ${one.files} files` +
+        (one.selectorFiles === one.files ? "" : ` (${one.selectorFiles} selector-bearing)`) +
         (one.missing
           ? " — DIRECTORY MISSING"
           : one.diagnostics === 0

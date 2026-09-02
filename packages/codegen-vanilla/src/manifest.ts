@@ -171,3 +171,13 @@ export const RUNTIME_ID_SET_REGISTRIES: readonly string[] = CONTENT_ROWS.filter(
 
 /** Complex enums whose exact vanilla membership the SDK checks at build time. */
 export const RUNTIME_ENUM_SET_NAMES = ["component_tag"] as const;
+
+/**
+ * Complex enums proven empty in the verified Stellaris build.
+ *
+ * The six matching map-setup files contain no active `system` definitions;
+ * the only examples are comments. Keeping the exception here makes that empty
+ * union a reviewed fact instead of treating unrelated extension matches as
+ * evidence for every enum.
+ */
+export const PROVEN_EMPTY_COMPLEX_ENUMS = ["map_setup_scenario_system_id"] as const;

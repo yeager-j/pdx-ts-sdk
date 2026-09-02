@@ -32,6 +32,8 @@ export interface ComplexEnumMembers {
   readonly name: string;
   readonly members: readonly string[];
   readonly files: number;
+  /** Parsed files whose structure reached this enum's selector path. */
+  readonly selectorFiles: number;
   /** Parser repairs across the files that were read. Reported, never fatal. */
   readonly diagnostics: number;
   /** The enum's directory holds no matching file in this install. */
@@ -60,7 +62,10 @@ function walk(dir: string, extension: string): string[] {
   });
 }
 
-function entriesAt(items: readonly PdxItem[], pathToItems: readonly string[]): readonly PdxItem[] {
+function entriesAt(
+  items: readonly PdxItem[],
+  pathToItems: readonly string[]
+): { readonly items: readonly PdxItem[]; readonly reached: boolean } {
   let current: readonly (readonly PdxItem[])[] = [items];
   for (const key of pathToItems) {
     current = current.flatMap((siblings) =>
@@ -71,13 +76,17 @@ function entriesAt(items: readonly PdxItem[], pathToItems: readonly string[]): r
       )
     );
     if (current.length === 0) {
-      return [];
+      return { items: [], reached: false };
     }
   }
-  return current.flat();
+  return { items: current.flat(), reached: true };
 }
 
-function collect(items: readonly PdxItem[], spec: ComplexEnum, add: (name: string) => void): void {
+function collect(
+  items: readonly PdxItem[],
+  spec: ComplexEnum,
+  add: (name: string) => void
+): boolean {
   const roots = spec.startFromRoot
     ? [items]
     : items
@@ -85,10 +94,12 @@ function collect(items: readonly PdxItem[], spec: ComplexEnum, add: (name: strin
           (item): item is ContainerEntry => item.kind === "entry" && item.value.kind === "container"
         )
         .map((item) => item.value.items);
+  let reached = false;
   for (const root of roots) {
     const selected = entriesAt(root, spec.selector.path);
+    reached ||= selected.reached;
     if (spec.selector.kind === "key") {
-      for (const item of selected) {
+      for (const item of selected.items) {
         if (item.kind === "entry") {
           add(item.key);
         }
@@ -101,7 +112,7 @@ function collect(items: readonly PdxItem[], spec: ComplexEnum, add: (name: strin
       }
       continue;
     }
-    for (const item of selected) {
+    for (const item of selected.items) {
       if (item.kind === "entry" && item.key === spec.selector.key && item.value.kind === "str") {
         add(item.value.value);
       }
@@ -110,6 +121,7 @@ function collect(items: readonly PdxItem[], spec: ComplexEnum, add: (name: strin
       }
     }
   }
+  return reached;
 }
 
 /**
@@ -182,6 +194,7 @@ export function readComplexEnumMembers(root: string, spec: ComplexEnum): Complex
   const members = new Set<string>();
   const gaps: ExtractionGap[] = [];
   let diagnostics = 0;
+  let selectorFiles = 0;
   for (const file of files) {
     const source = path.relative(root, file).split(path.sep).join("/");
     const gap = (error: unknown): void => {
@@ -215,12 +228,15 @@ export function readComplexEnumMembers(root: string, spec: ComplexEnum): Complex
       continue;
     }
     diagnostics += parsed.diagnostics.length;
-    collect(parsed.items, spec, (member) => members.add(member));
+    if (collect(parsed.items, spec, (member) => members.add(member))) {
+      selectorFiles += 1;
+    }
   }
   return {
     name: spec.name,
     members: [...members].sort(compareIdentifiers),
     files: files.length,
+    selectorFiles,
     diagnostics,
     missing: files.length === 0,
     gaps,
