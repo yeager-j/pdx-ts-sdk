@@ -10,7 +10,7 @@
  * a prompt, so this recipe asks nothing.
  *
  * The curated values are the conventional ones in the committed corpus
- * (`packages/sdk/tests/fixtures/corpus/building.json`): `research` as both the
+ * (`packages/corpus/fixtures/building.json`): `research` as both the
  * category and the building set, `baseBuildtime: 240`, and a `resources` block
  * with the `category`/`cost`/`upkeep` shape that 458 shipped buildings write.
  * `desc` is the only required author text with nothing to derive it from, so it

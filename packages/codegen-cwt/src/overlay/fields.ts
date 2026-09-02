@@ -713,7 +713,7 @@ export interface ContentFieldOverride {
    * these on its own: `corpus/` reports an `arity` mismatch only when the
    * SDK lowered a list the corpus never repeats, never the reverse, so the
    * evidence for a `"repeated"` row is the fixture's own `repeated` count
-   * (`packages/sdk/tests/fixtures/corpus/<registry>.json`) read directly.
+   * (`packages/corpus/fixtures/<registry>.json`) read directly.
    */
   readonly arity?: "single" | "repeated";
   /**
@@ -1241,7 +1241,7 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       reason:
         "megastructures.cwt:221-223 declares the key `## cardinality = 0..1`, and the shipped " +
         "data says otherwise: the corpus fixture records `repeated: 1` of the 1 definition that " +
-        "writes it (packages/sdk/tests/fixtures/corpus/megastructure.json), which is " +
+        "writes it (packages/corpus/fixtures/megastructure.json), which is " +
         "22_shroud_seal.txt's `shroud_seal` writing two blocks — one gating " +
         "country_naval_cap_add on a relic, the second gating shroud_storm_repelling on a " +
         "technology. Two potentials cannot merge into one block, so the singular member the " +

@@ -4,7 +4,7 @@
  * Run with `npm run corpus:extract`. Install-gated and maintainer-local, like
  * `codegen:vanilla`: CI never runs this — it runs the hermetic conformance
  * test against what this commits. Re-extract when the game patches (the
- * version canary in `corpus-conformance.test.ts` will say so) or when the
+ * version canary in `conformance.test.ts` will say so) or when the
  * observation logic itself changes, then review the fixture diff the way a
  * `src/generated/` diff is reviewed and commit it with the change that
  * produced it.
@@ -16,8 +16,8 @@
  */
 
 import { conformance } from "@pdx-ts/codegen-cwt/corpus";
+import { locateInstall } from "@pdx-ts/sdk/installation";
 
-import { locateInstall } from "../../src/installation/installation/locate.ts";
 import {
   corpusOfFixture,
   extractCorpus,
@@ -28,7 +28,7 @@ import {
   PRESENCE_FLOOR,
   writeFixtures,
   type ExtractedCorpus,
-} from "./corpus-fixture.ts";
+} from "./fixture.ts";
 
 function reportSection(title: string, lines: readonly string[]): void {
   if (lines.length === 0) {

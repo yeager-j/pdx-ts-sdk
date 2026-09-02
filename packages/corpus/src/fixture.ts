@@ -3,11 +3,11 @@
  * how the install-derived observations serialize into the committed fixture.
  *
  * Split out of the conformance test so one measurement drives both sides of
- * the loop. The ASSERTER (`corpus-conformance.test.ts`) is hermetic: it loads
- * the fixture committed under `tests/fixtures/corpus/` and never needs the
+ * the loop. The ASSERTER (`tests/conformance.test.ts`) is hermetic: it loads
+ * the fixture committed under `fixtures/` and never needs the
  * game, so it runs in plain `npm test` and therefore CI. The EXTRACTOR
- * (`corpus-extract.ts`, `npm run corpus:extract`) and the drift gate
- * (`corpus-check.ts`, `npm run corpus:check`) are the install-gated,
+ * (`extract.ts`, `npm run corpus:extract`) and the drift gate
+ * (`check.ts`, `npm run corpus:check`) are the install-gated,
  * maintainer-local half, mirroring `codegen:vanilla` / `codegen:vanilla:check`:
  * an install is a machine-local artifact, so the loop that reads one never
  * runs in CI, and its output is committed and reviewed instead.
@@ -19,8 +19,8 @@
  * closest call and stays inside it: a capped sample of bare scalar tokens
  * (`yes`, `large`, a referenced id), kept to check closed unions.
  *
- * Test/tooling-side machinery on purpose: nothing here is exported from the
- * SDK's `src/`, and nothing here belongs in the published runtime surface.
+ * Tooling-side machinery on purpose: this package is private, the SDK never
+ * imports it, and nothing here belongs in the published runtime surface.
  * Everything in this module reads the repo (vendored rules, committed
  * fixture); only {@link extractCorpus} and {@link versionCanary}'s default
  * seams touch the machine outside it.
@@ -64,11 +64,9 @@ import {
 } from "@pdx-ts/codegen-cwt/reconcile/scope-authority";
 import { SPECIAL_SCOPE_PATHS } from "@pdx-ts/codegen-cwt/special-scope-paths";
 import { parse, scalarText, type PdxValue } from "@pdx-ts/pdxscript";
-
-import { InstallNotFoundError } from "../../src/errors.ts";
-import { locateInstall } from "../../src/installation/installation/locate.ts";
-import { readGameVersion } from "../../src/installation/installation/version.ts";
-import { compareUtf8 } from "../../src/ordering.ts";
+import { InstallNotFoundError } from "@pdx-ts/sdk";
+import { locateInstall, readGameVersion } from "@pdx-ts/sdk/installation";
+import { compareUtf8 } from "@pdx-ts/sdk/internals";
 
 /**
  * Anchored to the module rather than the process, the same way
@@ -76,12 +74,12 @@ import { compareUtf8 } from "../../src/ordering.ts";
  * is the one in the repo this file lives in, whatever directory npm or vitest
  * was invoked from.
  */
-const ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
+const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const CONFIG = path.join(ROOT, "vendor/cwtools-stellaris-config/config");
 const SCRIPT_DOCS = path.join(ROOT, "vendor/cwtools-stellaris-config/script-docs/v4.4.1");
 
 /** Repo-relative, for messages; {@link FIXTURE_DIR} is what the reads use. */
-export const FIXTURE_PATH = "packages/sdk/tests/fixtures/corpus";
+export const FIXTURE_PATH = "packages/corpus/fixtures";
 export const FIXTURE_DIR = path.join(ROOT, FIXTURE_PATH);
 export const META_FILE = "meta.json";
 
@@ -638,7 +636,7 @@ export function extractCorpus(installPath: string): ExtractedCorpus {
     throw new Error(
       `${installPath} states no readable version in launcher-settings.json, so the fixture ` +
         "cannot record which build its observations describe — and the version canary in " +
-        "corpus-conformance.test.ts would have nothing to compare. Fix the install before " +
+        "conformance.test.ts would have nothing to compare. Fix the install before " +
         "extracting."
     );
   }

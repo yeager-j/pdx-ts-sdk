@@ -1,6 +1,6 @@
 /**
  * The emitted interfaces, measured against the committed vanilla-only fixture
- * under `tests/fixtures/corpus/`. This is an observed lower bound, not proof of
+ * under `fixtures/`. This is an observed lower bound, not proof of
  * complete authorability.
  *
  * The install-gated version of this gate skipped entirely without a local
@@ -9,14 +9,14 @@
  * the game writes heavily (`building.triggered_planet_modifier`, 672 shipped
  * occurrences) were silently unauthorable with every gate green. Now the
  * install-facing half lives in `npm run corpus:extract` / `corpus:check`
- * (see `corpus-fixture.ts`), and this file loads what those commit — no
+ * (see `fixture.ts`), and this file loads what those commit — no
  * skip, no install, every assertion in plain `npm test` and CI.
  *
  * Three kinds of assertion:
  *
  * - **Presence floor.** A field the vanilla fixture observes in
  *   `PRESENCE_FLOOR`+ definitions must be authorable, unless
- *   `CONTENT_DECLINED_FIELDS` declines it or `corpus-gaps.ts` acknowledges it.
+ *   `CONTENT_DECLINED_FIELDS` declines it or `gaps.ts` acknowledges it.
  *   Near-floor fields are reported, not failed, so the green gate makes no
  *   completeness claim below the ratchet or behind an explicit waiver.
  * - **Shape conformance.** Every lowered type measured against the values
@@ -24,7 +24,7 @@
  *   `ACKNOWLEDGED_MISMATCHES`, because they name a field the SDK emits and no
  *   author can fill. `arity` and `literal` are legal — a list the game never
  *   repeats and an oddly spelled scalar are both things CWT permits — so they
- *   are held against the classified baseline in `corpus-observations.ts`
+ *   are held against the classified baseline in `observations.ts`
  *   instead: not a legality failure, but a *new or changed* one fails until
  *   somebody says which kind of legal it is.
  * - **Fixture integrity.** Every manifested registry has a fixture with a
@@ -49,10 +49,10 @@ import {
 } from "@pdx-ts/codegen-cwt/corpus";
 import { OBSERVED_CASINGS } from "@pdx-ts/codegen-cwt/corpus/casing";
 import type { EmittedField } from "@pdx-ts/codegen-cwt/lower/content-model";
+import { InstallNotFoundError } from "@pdx-ts/sdk";
+import { isEffectKey } from "@pdx-ts/sdk/internals";
 import { describe, expect, it } from "vitest";
 
-import { InstallNotFoundError } from "../../src/errors.ts";
-import { isEffectKey } from "../../src/script/effects/recorder.ts";
 import {
   corpusOfFixture,
   FIXTURE_PATH,
@@ -65,8 +65,8 @@ import {
   PRESENCE_FLOOR,
   ruleScopesOf,
   versionCanary,
-} from "./corpus-fixture.ts";
-import { ACKNOWLEDGED_GAPS } from "./corpus-gaps.ts";
+} from "../src/fixture.ts";
+import { ACKNOWLEDGED_GAPS } from "../src/gaps.ts";
 import {
   ACKNOWLEDGED_MISMATCHES,
   compareObservations,
@@ -75,7 +75,7 @@ import {
   type ClassifiedObservation,
   type ObservationKind,
   type ObservedShape,
-} from "./corpus-observations.ts";
+} from "../src/observations.ts";
 
 /** The `form`/`scope` acknowledgements, by the key {@link mismatchesOfKind} builds. */
 const ACKNOWLEDGED = new Map(ACKNOWLEDGED_MISMATCHES.map((row) => [shapeKey(row), row.rationale]));
@@ -385,7 +385,7 @@ describe("corpus conformance", () => {
         .map(
           (entry) =>
             `${report.registry}.${entry.field}: ${entry.count} shipped definitions write it and ` +
-            `no author can — fix the lowering, or acknowledge it with a reason in corpus-gaps.ts`
+            `no author can — fix the lowering, or acknowledge it with a reason in gaps.ts`
         )
     );
     expect(failures).toEqual([]);
@@ -522,14 +522,14 @@ describe("corpus conformance", () => {
     // is what this replaced — meant a new observation scrolled past beside the
     // forty already there, and the next game patch's scrolled past beside
     // those. So each one carries a classification and the reason for it in
-    // `corpus-observations.ts`, and an observation that is new, gone, or
+    // `observations.ts`, and an observation that is new, gone, or
     // holding different values than its row records fails until somebody looks.
     const differences = compareObservations(observedShapes());
     const stubs = observedShapes()
       .filter((one) => differences.some((line) => line.startsWith(`  + ${shapeKey(one)}:`)))
       .map((one) => observationStub(one));
     if (stubs.length > 0) {
-      console.log("\nrows to classify in corpus-observations.ts:\n" + stubs.join("\n"));
+      console.log("\nrows to classify in observations.ts:\n" + stubs.join("\n"));
     }
     expect(differences).toEqual([]);
   });
@@ -1386,7 +1386,7 @@ describe("corpus observation baseline", () => {
 
   it("fails an observation with no row", () => {
     expect(compareObservations([observed("resources", "arity")], [])).toEqual([
-      "  + building.resources arity: new observation — classify it in corpus-observations.ts",
+      "  + building.resources arity: new observation — classify it in observations.ts",
     ]);
   });
 

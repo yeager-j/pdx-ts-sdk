@@ -1,3 +1,4 @@
+| [@pdx-ts/corpus](packages/corpus/README.md) | Private install-derived corpus fixture, its commands, ledgers, and conformance gate. |
 # pdx-ts
 
 Write Stellaris mods in TypeScript. Your program runs once at build time and

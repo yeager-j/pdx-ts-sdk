@@ -1,6 +1,6 @@
 ---
 name: close-corpus-gap
-description: Lower a field the game writes and no author can produce, retiring its corpus-gaps.ts row. Use when working a "Corpus Gap" Linear issue, when the presence-floor gate fails with "fix the lowering, or acknowledge it", or when acknowledging a field the emitter cannot yet lower.
+description: Lower a field the game writes and no author can produce, retiring its packages/corpus/src/gaps.ts row. Use when working a "Corpus Gap" Linear issue, when the presence-floor gate fails with "fix the lowering, or acknowledge it", or when acknowledging a field the emitter cannot yet lower.
 ---
 
 # Closing a corpus gap
@@ -30,8 +30,9 @@ generated diff as public API, commit generated output with its source change).
 2. **Count the shape in the install.** The fixture records the block's key
    _set_ and nothing inside it: interior paths come from a descent, an unlowered
    field has no descent, so the interior is absent by construction and cannot
-   be read from `packages/sdk/tests/fixtures/corpus/`. Read
-   `common/<registry>/*.txt` in the install `corpus-fixture.ts` locates, and
+   be read from `packages/corpus/fixtures/`. Read
+   `common/<registry>/*.txt` in the install `packages/corpus/src/fixture.ts`
+   locates, and
    count what the rules leave open — which keys vanilla actually writes,
    whether a key repeats _inside_ one block, whether the block itself repeats
    in one definition. Done when every claim you are about to encode is backed
@@ -86,7 +87,7 @@ generated diff as public API, commit generated output with its source change).
    one the rules genuinely declare? `arity` and `literal` are not failures
    either — a list the game never repeats is legal breadth — but they are no
    longer free: each one needs a row in
-   `packages/sdk/tests/codegen/corpus-observations.ts` naming its
+   `packages/corpus/src/observations.ts` naming its
    classification, the CWT declaration it is wider than, and why. The gate
    prints a paste-ready stub whose `classification` deliberately fails
    `typecheck` until you choose one. `form` and `scope` fail outright — fix the
@@ -108,7 +109,7 @@ generated diff as public API, commit generated output with its source change).
 ## Acknowledging instead
 
 Stopping is a real outcome: a field whose lowering needs machinery this change
-should not carry belongs in `corpus-gaps.ts` with its count, the reason it is
+should not carry belongs in `packages/corpus/src/gaps.ts` with its count, the reason it is
 deferred, and a Linear issue labelled "Corpus Gap" — filed first, since a row
 without one is a hole nobody is sequenced to close. `CONTENT_DECLINED_FIELDS`
 is a different instrument for a different claim: deliberately withholding a
@@ -127,7 +128,7 @@ rather than a reading of the declaration:
   block the game writes is not awkward to author, it is unwritable.
 - `arity: "single"` — the reverse, for a `0..inf` on a field whose only
   sensible authoring is one value. This is what the `narrowing-deferred`
-  classification in `corpus-observations.ts` promises: a row classified that
+  classification in `packages/corpus/src/observations.ts` promises: a row classified that
   way names the issue that will add this override, rather than accepting the
   list as legal breadth.
 - `scope` — CWT annotates no scope and the mechanical fallback is wrong.
@@ -141,7 +142,8 @@ rather than a reading of the declaration:
   at every path the reader records it under — a member that exists only on the
   interface leaves the nested path unexpressed and does not retire the row.
 - **Corpus coverage**: the presence-floor and shape-conformance assertions in
-  `corpus-conformance.test.ts`, against the fixture step 4 regenerated.
+  `packages/corpus/tests/conformance.test.ts`, against the fixture step 4
+  regenerated.
 - **Compile-time safety** in `packages/sdk/tests/content.test-d.ts`: the member
   type, the closed set where the rules close one, a `@ts-expect-error` on the
   form the lowering rules out, and the patch member for a patch registry.

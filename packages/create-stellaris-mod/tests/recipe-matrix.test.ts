@@ -178,7 +178,7 @@ describe("the vanilla ids the examples cite", () => {
 describe("the vanilla scalar combinations the examples cite", () => {
   const TECHNOLOGY_CORPUS = path.resolve(
     import.meta.dirname,
-    "../../sdk/tests/fixtures/corpus/technology.json"
+    "../../corpus/fixtures/technology.json"
   );
 
   it("keeps the technology recipe's tier and cost paired in real definitions", () => {
