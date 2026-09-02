@@ -30,9 +30,14 @@ export const RELEASE_PACKAGES = [
   },
 ];
 
-const RELEASE_LITERAL_FILES = [
+// Files that spell this release's version out rather than deriving it. Golden
+// transcripts are the honest case: they are compared as text, so the version
+// has to be in them. A test that can derive the coordinate should derive it
+// instead of being listed here.
+export const RELEASE_LITERAL_FILES = [
   "packages/create-stellaris-mod/tests/transcripts.test.ts",
   "packages/create-stellaris-mod/tests/goldens/transcripts/generate-sdk-range-not-subset.txt",
+  "packages/create-stellaris-mod/tests/goldens/transcripts/generate-allow-unsupported-sdk.txt",
 ];
 
 const PACKAGE_MANIFEST = "package.json";
@@ -103,7 +108,7 @@ export function currentReleaseVersion(root) {
 function releaseVersionsIn(contents) {
   return (
     contents.match(
-      /(?<![\w.-])\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?(?![\w.-])/g
+      /(?<![\w.-])\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?(?![\w-])(?!\.\d)/g
     ) ?? []
   );
 }
@@ -252,16 +257,27 @@ function identifierRevisionBaseline(root, version) {
     .filter(Boolean);
   for (const commit of commits) {
     const current = readJsonFromGit(root, `${commit}:${packageJson}`);
-    const parent = readJsonFromGit(root, `${commit}^:${packageJson}`);
-    if (current.version === version && parent.version !== version) {
+    // The commit that first added the file has no parent copy of it, which
+    // makes it the introduction of whatever version it carries.
+    const parent = readJsonFromGitIfPresent(root, `${commit}^:${packageJson}`);
+    if (current.version === version && parent?.version !== version) {
       return commit;
     }
   }
-  throw new Error(`Could not find the release baseline for ${IDENTIFIERS_PACKAGE}@${version}.`);
+  throw new Error(
+    `Could not find the release baseline for ${IDENTIFIERS_PACKAGE}@${version}. ` +
+      "A revision that has been bumped but not yet committed has no baseline to compare against; " +
+      "commit it, then re-run this check."
+  );
 }
 
 function readJsonFromGit(root, object) {
   return JSON.parse(execFileSync("git", ["show", object], { cwd: root, encoding: "utf8" }));
+}
+
+function readJsonFromGitIfPresent(root, object) {
+  const result = spawnSync("git", ["show", object], { cwd: root, encoding: "utf8" });
+  return result.status === 0 ? JSON.parse(result.stdout) : undefined;
 }
 
 function identifierOutputChangedSince(root, baseline) {
@@ -359,10 +375,20 @@ export function checkRelease(root, execute = run, installPath = DETECT_INSTALL) 
   const publishedVersion = readJson(
     join(root, "packages", "stellaris-ids", PACKAGE_MANIFEST)
   ).version;
-  const baseline = identifierRevisionBaseline(root, publishedVersion);
+  let baseline;
+  let baselineError;
+  try {
+    baseline = identifierRevisionBaseline(root, publishedVersion);
+  } catch (error) {
+    baselineError = error instanceof Error ? error.message : String(error);
+  }
   runCheckStep(results, "vanilla codegen drift", () =>
     execute(root, "npm", ["run", "codegen:vanilla:check"])
   );
+  if (baseline === undefined) {
+    results.push({ name: "stellaris-ids revision", passed: false, error: baselineError });
+    return results;
+  }
   const generatedVersion = readJson(
     join(root, "packages", "stellaris-ids", PACKAGE_MANIFEST)
   ).version;

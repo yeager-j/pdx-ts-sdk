@@ -90,11 +90,11 @@ export type SdkCompatibility =
  * Pure: the two facts it needs are read by the command, so this is a function
  * of what a project *says* rather than of what any machine happens to have.
  *
- * The subset rule is the interesting one. A declared `>=0.6.0` overlaps the
- * verified range but is not inside it, and a project asking for it can resolve
- * an SDK nobody proved these recipes against on any future install — including
- * the one the author runs five minutes after generating. Overlap is not
- * evidence, so it is refused.
+ * The subset rule is the interesting one. A `>=` range on the verified version
+ * overlaps the verified range but is not inside it, and a project asking for it
+ * can resolve an SDK nobody proved these recipes against on any future install
+ * — including the one the author runs five minutes after generating. Overlap is
+ * not evidence, so it is refused.
  */
 export function checkSdkCompatibility(
   input: SdkCompatibilityInput,

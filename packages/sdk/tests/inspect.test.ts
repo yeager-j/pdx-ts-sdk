@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { Writable } from "node:stream";
@@ -10,6 +10,26 @@ import { viewFromFiles } from "../src/installation/vanilla/view.ts";
 import { TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
 
 const temporaryDirectories: string[] = [];
+
+/**
+ * The SDK version `runInspect` will report as resolved. Read from the package
+ * rather than written down, so a release moves it without touching this test.
+ */
+const SDK_VERSION = packageVersion("../package.json");
+
+/**
+ * The identifier package version `runInspect` will report as resolved. It moves
+ * on the game build's cadence, independently of the SDK release.
+ */
+const STELLARIS_IDS_VERSION = packageVersion("../../stellaris-ids/package.json");
+
+function packageVersion(relative: string): string {
+  return (
+    JSON.parse(readFileSync(path.resolve(import.meta.dirname, relative), "utf8")) as {
+      version: string;
+    }
+  ).version;
+}
 
 afterEach(() => {
   process.exitCode = undefined;
@@ -73,10 +93,10 @@ describe("runInspect", () => {
           name: "inspection-project",
           version: "0.1.0",
           dependencies: {
-            sdk: { requested: "^0.6.0", resolved: "0.6.0" },
+            sdk: { requested: `^${SDK_VERSION}`, resolved: SDK_VERSION },
             stellarisIds: {
               requested: ">=4.4.6-0 <4.4.6",
-              resolved: "4.4.6-r.4",
+              resolved: STELLARIS_IDS_VERSION,
               gameVersion: "4.4.6",
             },
           },
@@ -261,7 +281,7 @@ describe("runInspect", () => {
 function temporaryProject(
   packageDependencies: Record<string, Record<string, string>> = {
     dependencies: {
-      "@pdx-ts/sdk": "^0.6.0",
+      "@pdx-ts/sdk": `^${SDK_VERSION}`,
       "@pdx-ts/stellaris-ids": ">=4.4.6-0 <4.4.6",
     },
   }

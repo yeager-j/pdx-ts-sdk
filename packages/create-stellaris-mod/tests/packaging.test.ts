@@ -63,7 +63,7 @@ describe("the published package", () => {
   });
 
   it("uses the SDK's configuration validator at runtime", () => {
-    expect(manifest.dependencies["@pdx-ts/sdk"]).toBe("^0.6.0");
+    expect(manifest.dependencies["@pdx-ts/sdk"]).toBe(`^${workspaceVersion("sdk")}`);
     expect(manifest.devDependencies["@pdx-ts/sdk"]).toBeUndefined();
   });
 

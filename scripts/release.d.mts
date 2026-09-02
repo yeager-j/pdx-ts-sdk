@@ -39,6 +39,9 @@ export interface StellarisIdsRevisionDecision {
 /** The sole inventory of public packages that share the SDK release coordinate. */
 export const RELEASE_PACKAGES: readonly ReleasePackage[];
 
+/** Repository-relative files that spell the release coordinate out rather than deriving it. */
+export const RELEASE_LITERAL_FILES: readonly string[];
+
 /** Validates and returns an exact semantic release version. */
 export function validateReleaseVersion(version: string): string;
 /** Returns the version all release packages currently share. */

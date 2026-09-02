@@ -1,8 +1,8 @@
 /**
  * The compatibility preflight, as algebra.
  *
- * The rule that needs the most evidence is subset-not-overlap. `>=0.6.0`
- * overlaps the exact verified version and is refused, because a project asking
+ * The rule that needs the most evidence is subset-not-overlap. A `>=` range on
+ * the verified version overlaps it and is refused, because a project asking
  * for it can resolve an SDK nobody proved these recipes against on any later
  * install — including the one the author runs a minute after generating. Every
  * case below is written against `VERIFIED_SDK_RANGE` rather than a literal, so
@@ -14,6 +14,11 @@ import { describe, expect, it } from "vitest";
 
 import type { ReleaseCompatibilityPolicy } from "../src/release-manifest.ts";
 import { checkSdkCompatibility, VERIFIED_SDK_RANGE, type InstalledSdk } from "../src/sdk-range.ts";
+import {
+  NEXT_SDK_MINOR,
+  STALE_SDK_VERSION,
+  VERIFIED_SDK_VERSION,
+} from "./helpers/release-coordinate.ts";
 
 function check(declaredSpecifier: string | undefined, installedVersion?: string) {
   const installed: InstalledSdk =
@@ -24,6 +29,8 @@ function check(declaredSpecifier: string | undefined, installedVersion?: string)
 }
 
 describe("checkSdkCompatibility", () => {
+  // Both policies below are fixtures for the caller-supplied-policy argument.
+  // Their versions are arbitrary and deliberately not this release's coordinate.
   const compatiblePolicy: ReleaseCompatibilityPolicy = {
     packageName: "@pdx-ts/sdk",
     verifiedRange: "^0.2.0",
@@ -56,11 +63,17 @@ describe("checkSdkCompatibility", () => {
     // range that is provably inside the verified one is evidence on its own.
     // Authors generate before installing all the time.
     expect(check(VERIFIED_SDK_RANGE).supported).toBe(true);
-    expect(check("0.6.0").supported).toBe(true);
+    expect(check(VERIFIED_SDK_VERSION).supported).toBe(true);
   });
 
   it("refuses a range that merely overlaps the verified one", () => {
-    for (const declared of ["^0.6.0", ">=0.6.0", "*", "^0.2.0 || ^0.6.0", ">=0.2.0 <0.7.0"]) {
+    for (const declared of [
+      `^${VERIFIED_SDK_VERSION}`,
+      `>=${VERIFIED_SDK_VERSION}`,
+      "*",
+      `^0.2.0 || ^${VERIFIED_SDK_VERSION}`,
+      `>=0.2.0 <${NEXT_SDK_MINOR}`,
+    ]) {
       const result = check(declared);
       expect(result.supported, declared).toBe(false);
       expect(result.supported === false && result.reason).toBe("range-not-subset");
@@ -77,7 +90,7 @@ describe("checkSdkCompatibility", () => {
       "workspace:*",
       "git+https://github.com/yeager-j/pdx-ts-sdk.git",
       "latest",
-      "npm:@pdx-ts/sdk@0.6.0",
+      `npm:@pdx-ts/sdk@${VERIFIED_SDK_VERSION}`,
     ]) {
       const result = check(declared);
       expect(result.supported, declared).toBe(false);
@@ -94,17 +107,17 @@ describe("checkSdkCompatibility", () => {
   });
 
   it("checks an installed version against both ranges", () => {
-    expect(check("0.6.0", "0.6.0").supported).toBe(true);
+    expect(check(VERIFIED_SDK_RANGE, VERIFIED_SDK_VERSION).supported).toBe(true);
 
     // Installed, but not what the project declares.
-    const stale = check("0.6.0", "0.6.1");
+    const stale = check(VERIFIED_SDK_RANGE, STALE_SDK_VERSION);
     expect(stale.supported).toBe(false);
     expect(stale.supported === false && stale.reason).toBe("installed-version-unsupported");
-    expect(stale.detail).toContain("0.6.1");
+    expect(stale.detail).toContain(STALE_SDK_VERSION);
   });
 
   it("refuses an installed version that is not a version", () => {
-    const result = check("0.6.0", "not-a-version");
+    const result = check(VERIFIED_SDK_RANGE, "not-a-version");
     expect(result.supported).toBe(false);
     expect(result.supported === false && result.reason).toBe("installed-version-unsupported");
   });
@@ -150,7 +163,7 @@ describe("checkSdkCompatibility", () => {
     // Every failure names the package and the verified range, because the
     // author reading it is deciding whether to change their dependency or pass
     // --allow-unsupported-sdk.
-    for (const declared of [undefined, "file:../sdk", ">=0.6.0"]) {
+    for (const declared of [undefined, "file:../sdk", `>=${VERIFIED_SDK_VERSION}`]) {
       const { detail } = check(declared);
       expect(detail, String(declared)).toContain("@pdx-ts/sdk");
       expect(detail, String(declared)).toContain(VERIFIED_SDK_RANGE);

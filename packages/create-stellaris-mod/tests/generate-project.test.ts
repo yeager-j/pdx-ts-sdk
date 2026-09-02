@@ -32,6 +32,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { main } from "../src/cli.ts";
 import { findInstalledSdk } from "../src/commands/generate.ts";
 import { capture } from "./helpers/capture.ts";
+import { VERIFIED_SDK_VERSION } from "./helpers/release-coordinate.ts";
 
 const MANIFEST = {
   mod: { golden_mod: { name: "Golden Fixture", supportedVersion: "v4.4.*" } },
@@ -78,7 +79,7 @@ function writeProject(dir: string, shape: ProjectShape = {}): string {
           private: true,
           type: "module",
           imports: { "#mod": "./src/mod.ts" },
-          devDependencies: { "@pdx-ts/sdk": shape.sdkSpecifier ?? "0.6.0" },
+          devDependencies: { "@pdx-ts/sdk": shape.sdkSpecifier ?? VERIFIED_SDK_VERSION },
         };
   writeFileSync(path.join(dir, "package.json"), `${JSON.stringify(packageJson, null, 2)}\n`);
   return dir;
@@ -182,8 +183,10 @@ describe("finding the installed SDK", () => {
   it("refuses to generate against an installation it cannot read", async () => {
     // End to end. The declared range says what an install *should* be; it
     // cannot stand in as evidence about the one that is actually there.
-    const project = writeProject(path.join(makeRoot(), "project"), { sdkSpecifier: "0.6.0" });
-    installSdk(project, "0.6.0");
+    const project = writeProject(path.join(makeRoot(), "project"), {
+      sdkSpecifier: VERIFIED_SDK_VERSION,
+    });
+    installSdk(project, VERIFIED_SDK_VERSION);
     writeFileSync(path.join(project, "node_modules/@pdx-ts/sdk/package.json"), "{ nope\n");
 
     const { code, err } = await generate(project);
@@ -205,13 +208,15 @@ describe("finding the installed SDK", () => {
     // declares a range it is entitled to, and the SDK that would actually be
     // imported is older than that.
     const root = makeRoot();
-    const project = writeProject(path.join(root, "packages/mod"), { sdkSpecifier: "0.6.0" });
+    const project = writeProject(path.join(root, "packages/mod"), {
+      sdkSpecifier: VERIFIED_SDK_VERSION,
+    });
     installSdk(root, "0.3.4");
 
     const { code, err, out } = await generate(project);
     expect(code).toBe(1);
     expect(err).toContain("0.3.4");
-    expect(err).toContain("0.6.0");
+    expect(err).toContain(VERIFIED_SDK_VERSION);
     expect(out).toBe("");
   });
 });
@@ -265,8 +270,8 @@ describe("a package.json that is not the shape it claims", () => {
     const project = writeProject(path.join(makeRoot(), "project"), {
       packageJson: {
         imports: { "#mod": "./src/mod.ts" },
-        dependencies: { "@pdx-ts/sdk": "0.6.0" },
-        devDependencies: { "@pdx-ts/sdk": "0.6.0" },
+        dependencies: { "@pdx-ts/sdk": VERIFIED_SDK_VERSION },
+        devDependencies: { "@pdx-ts/sdk": VERIFIED_SDK_VERSION },
       },
     });
     const { code, err } = await generate(project);
