@@ -18,6 +18,7 @@ import {
   MODIFIER_OPERATIONS,
   recordEffects,
   scopeLinkOutput,
+  type ModifierOperationMember,
 } from "@pdx-ts/sdk/internals";
 import type {
   ComplexTriggerModifier,
@@ -692,15 +693,10 @@ export function handleFor(
  * one, rather than admitting only `Modifier<S>[]` and pushing that
  * narrowing burden onto every call site.
  */
-export interface WeightBlockLike<S extends SimScopeName> {
+export type WeightBlockLike<S extends SimScopeName> = Pick<Modifier<S>, ModifierOperationMember> & {
   readonly base?: number;
   readonly modifiers?: readonly WeightBlockRow<S, Modifier<S>>[];
-}
-
-const WEIGHT_OPERATION_MEMBERS = [
-  ...MODIFIER_OPERATIONS.map((operation) => operation.member),
-  "round",
-] as const;
+};
 
 function isComplexTriggerModifierRow<S extends SimScopeName>(
   row: WeightBlockRow<S, Modifier<S>>
@@ -734,6 +730,12 @@ export function evaluateWeightBlock<S extends SimScopeName>(
   scope: SimScope<S>
 ): number {
   let value = block.base ?? 0;
+  const hasTopLevelOperation = MODIFIER_OPERATIONS.some(
+    ({ member }) => block[member] !== undefined
+  );
+  if (hasTopLevelOperation) {
+    value = applyModifierOperations(block, value);
+  }
   for (const row of block.modifiers ?? []) {
     if (isComplexTriggerModifierRow(row)) {
       throw new InterpreterError(
@@ -748,13 +750,18 @@ export function evaluateWeightBlock<S extends SimScopeName>(
     if (row.when !== undefined && !evaluate(row.when, scope)) {
       continue;
     }
-    value = applyModifierRow(row, value);
+    value = applyModifierOperations(row, value);
   }
   return value;
 }
 
-function applyModifierRow<S extends SimScopeName>(modifier: Modifier<S>, value: number): number {
-  const present = WEIGHT_OPERATION_MEMBERS.filter((member) => modifier[member] !== undefined);
+function applyModifierOperations<S extends SimScopeName>(
+  modifier: Pick<Modifier<S>, ModifierOperationMember | "desc">,
+  value: number
+): number {
+  const present = MODIFIER_OPERATIONS.map((operation) => operation.member).filter(
+    (member) => modifier[member] !== undefined
+  );
   if (present.length !== 1) {
     throw new InterpreterError(
       `A monthly-progress row${modifier.desc !== undefined ? ` ("${modifier.desc}")` : ""} sets ` +

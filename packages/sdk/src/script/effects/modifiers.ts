@@ -162,7 +162,7 @@ export function modifierDescKey(
 }
 
 /**
- * A weight-shaped row's `complex_maths_enum` arms, without the members that
+ * A weight-shaped row's supported maths-enum arms, without the members that
  * are the row's own rather than the operation's — the gate and its tooltip.
  * `content/types.ts`'s `WeightBlockOperations` is the same set, spelled from the
  * same place ({@link Modifier}).
@@ -174,8 +174,8 @@ export type WeightOperations = Omit<Modifier<ScopeName>, "desc" | "when">;
  *
  * Two lowerings read this: {@link modifierEntry} below, for a `modifier` row,
  * and `content/blocks.ts`'s `weightBlock`, for the operations written directly as
- * siblings of `base`. They are the same `complex_maths_enum` arms in the same
- * order, and a second hand-spelled sequence is a divergence nothing would
+ * siblings of `base`. They are the same supported maths operations in the
+ * same order, and a second hand-spelled sequence is a divergence nothing would
  * report — the emitted bytes stay well-formed either way, so a member added
  * to one list and not the other simply stops being emitted from the other
  * position. Order is load-bearing: it is what keeps emission a function of
@@ -186,13 +186,17 @@ export type WeightOperations = Omit<Modifier<ScopeName>, "desc" | "when">;
  * MODIFIER_OPERATIONS order. */
 export function weightOperationEntries(value: WeightOperations): PdxEntry[] {
   const entries: PdxEntry[] = [];
-  for (const { member, scriptKey } of MODIFIER_OPERATIONS) {
-    if (member === "roundTo" && value.round !== undefined) {
-      entries.push(kv("round", value.round));
+  for (const operation of MODIFIER_OPERATIONS) {
+    if (operation.operandKind === "boolean") {
+      const operand = value[operation.member];
+      if (operand !== undefined) {
+        entries.push(kv(operation.scriptKey, operand));
+      }
+      continue;
     }
-    const operand = value[member];
+    const operand = value[operation.member];
     if (operand !== undefined) {
-      entries.push(kv(scriptKey, scriptValueScalar(operand)));
+      entries.push(kv(operation.scriptKey, scriptValueScalar(operand)));
     }
   }
   return entries;

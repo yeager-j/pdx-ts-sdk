@@ -1716,6 +1716,19 @@ describe("generated content authoring types", () => {
         modifiers: [hybridRow],
       },
     });
+    const roundedComplexTriggerRow = {
+      trigger: "x",
+      mode: "factor" as const,
+      round: true,
+      roundTo: 5,
+    };
+    contentMod.tradition("rounded_complex_trigger_row", {
+      name: "X",
+      aiWeight: {
+        // @ts-expect-error — complex_trigger_modifier declares no rounding fields
+        modifiers: [roundedComplexTriggerRow],
+      },
+    });
   });
 
   it("keeps WeightBlockWithLoc as restrictive as modifier_rule_with_loc, not as wide as plain WeightBlock (bug bash #16 finding 1)", () => {

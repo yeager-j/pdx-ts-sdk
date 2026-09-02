@@ -1305,7 +1305,7 @@ describe("the effect ownership policy", () => {
 });
 
 describe("generator-owned SDK protocols", () => {
-  it("owns every complex modifier operation with a disposition and rationale", () => {
+  it("owns every modifier maths operation with a disposition and rationale", () => {
     const policy = createModifierOperationPolicy(rules);
     expect(policy.find((entry) => entry.scriptKey === "multiply")).toMatchObject({
       member: "multiplier",
@@ -1314,8 +1314,15 @@ describe("generator-owned SDK protocols", () => {
     expect(policy.find((entry) => entry.scriptKey === "round_to")).toEqual({
       scriptKey: "round_to",
       member: "roundTo",
+      operandKind: "value",
+      memberDocs: "Rounds the current value to the nearest multiple of this operand.",
       disposition: "supported",
       reason: "measured in 24 of 37 crisis-objective reward blocks",
+    });
+    expect(policy.find((entry) => entry.scriptKey === "round")).toMatchObject({
+      member: "round",
+      operandKind: "boolean",
+      disposition: "supported",
     });
     expect(policy.find((entry) => entry.scriptKey === "pow")).toMatchObject({
       member: null,
@@ -1328,9 +1335,12 @@ describe("generator-owned SDK protocols", () => {
     const protocol = emitModifierOperationProtocol(createModifierOperationPolicy(rules));
 
     expect(protocol).toContain(
-      "/** Applies the `round_to` modifier operation. */\n  readonly roundTo?: Value;"
+      "/** Rounds the current value to the nearest multiple of this operand. */\n" +
+        "  readonly roundTo?: Value;"
     );
-    expect(protocol).toContain('{ member: "roundTo", scriptKey: "round_to" }');
+    expect(protocol).toContain(
+      '{ member: "roundTo", scriptKey: "round_to", operandKind: "value" }'
+    );
   });
 
   it("rejects an unowned modifier enum member", () => {

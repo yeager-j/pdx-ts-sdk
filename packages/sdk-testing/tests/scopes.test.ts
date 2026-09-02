@@ -268,6 +268,9 @@ describe("situation scope", () => {
         situation
       )
     ).toThrow(/roundTo: recognized but not evaluated/);
+    expect(() => evaluateWeightBlock({ base: 12, roundTo: 5 }, situation)).toThrow(
+      /roundTo: recognized but not evaluated/
+    );
   });
 
   it("refuses to guess a semantic for `weight` used on its own — the vendored rules give it no documented meaning distinct from `set`", () => {

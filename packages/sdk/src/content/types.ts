@@ -248,10 +248,10 @@ export type EconomicResourceBlockNoProduce<S extends ScopeName> = Omit<
 >;
 
 /**
- * The `complex_maths_enum` operations `modifier_rule.cwt:1-3` allows directly
- * alongside `base`, sibling to the `modifier`/`complex_trigger_modifier` rows
- * rather than inside one of them — the same measured member set {@link
- * Modifier} carries at row level, minus `desc`/`when` which only
+ * The maths-enum operations `modifier_rule.cwt:1-3` allows directly alongside
+ * `base`, sibling to the `modifier`/`complex_trigger_modifier` rows rather
+ * than inside one of them — the same measured member set {@link Modifier}
+ * carries at row level, minus `desc`/`when` which only
  * make sense on a gated row. `Omit` rather than a hand-kept duplicate, so a
  * future change to `Modifier`'s numeric arms flows through here automatically,
  * the same reasoning as {@link EconomicResourceBlockNoProduce}.
@@ -311,6 +311,8 @@ type ExclusiveComplexTriggerModifierRow<
   C extends ComplexTriggerModifier<S>,
 > = C & {
   readonly when?: never;
+  readonly round?: never;
+  readonly roundTo?: never;
 };
 
 /**
@@ -376,9 +378,9 @@ export type WeightBlockWithLocOperations<S extends ScopeName> = Pick<
  * rows via {@link ComplexTriggerModifierWithLoc}), and the top-level
  * operations are the narrower {@link WeightBlockWithLocOperations}. A
  * `Modifier`/`ModifierWithLoc` row's own members are unrestricted either way
- * (`modifier_rule_with_loc.cwt:59-66` still splices the full
- * `complex_maths_enum`, one member at a time) — only the top-level block and
- * the `complex_trigger_modifier` row narrow.
+ * (`modifier_rule_with_loc.cwt:59-66` still splices the full complex and
+ * simple maths enums, one member at a time) — only the top-level block and the
+ * `complex_trigger_modifier` row narrow.
  */
 export interface WeightBlockWithLoc<S extends ScopeName> extends WeightBlockWithLocOperations<S> {
   readonly base?: number;

@@ -3,29 +3,31 @@
 // From: modifier_rule.cwt
 
 /**
- * The authored fields admitted by modifier_rule's supported complex-maths operations.
- * The value remains generic so SDK authoring can supply ScriptValue without a cycle.
+ * The authored fields admitted by modifier_rule's supported maths operations.
+ * Value-field operands remain generic so SDK authoring can supply ScriptValue without a cycle.
  */
 export interface ModifierOperationFields<Value> {
-  /** Applies the `factor` modifier operation. */
+  /** Multiplies the current value by this operand. */
   readonly factor?: Value;
-  /** Applies the `add` modifier operation. */
+  /** Adds this operand to the current value. */
   readonly add?: Value;
-  /** Applies the `weight` modifier operation. */
+  /** Applies the distinct `weight` operation with this operand. */
   readonly weight?: Value;
-  /** Applies the `subtract` modifier operation. */
+  /** Subtracts this operand from the current value. */
   readonly subtract?: Value;
-  /** Applies the `mult` modifier operation. */
+  /** Multiplies the current value by this operand with `mult`. */
   readonly mult?: Value;
-  /** Applies the `multiply` modifier operation. */
+  /** Multiplies the current value by this operand with `multiply`. */
   readonly multiplier?: Value;
-  /** Applies the `divide` modifier operation. */
+  /** Divides the current value by this operand. */
   readonly divide?: Value;
-  /** Applies the `round_to` modifier operation. */
+  /** Set to true to round the current value to the nearest integer. */
+  readonly round?: boolean;
+  /** Rounds the current value to the nearest multiple of this operand. */
   readonly roundTo?: Value;
-  /** Applies the `min` modifier operation. */
+  /** Clamps the current value to at least this operand. */
   readonly minValue?: Value;
-  /** Applies the `max` modifier operation. */
+  /** Clamps the current value to at most this operand. */
   readonly maxValue?: Value;
 }
 
@@ -34,99 +36,174 @@ export interface ModifierOperationFields<Value> {
  * SDK lowering and sdk-testing operation detection consume this projection.
  */
 export const MODIFIER_OPERATIONS = [
-  { member: "factor", scriptKey: "factor" },
-  { member: "add", scriptKey: "add" },
-  { member: "weight", scriptKey: "weight" },
-  { member: "subtract", scriptKey: "subtract" },
-  { member: "mult", scriptKey: "mult" },
-  { member: "multiplier", scriptKey: "multiply" },
-  { member: "divide", scriptKey: "divide" },
-  { member: "roundTo", scriptKey: "round_to" },
-  { member: "minValue", scriptKey: "min" },
-  { member: "maxValue", scriptKey: "max" },
+  { member: "factor", scriptKey: "factor", operandKind: "value" },
+  { member: "add", scriptKey: "add", operandKind: "value" },
+  { member: "weight", scriptKey: "weight", operandKind: "value" },
+  { member: "subtract", scriptKey: "subtract", operandKind: "value" },
+  { member: "mult", scriptKey: "mult", operandKind: "value" },
+  { member: "multiplier", scriptKey: "multiply", operandKind: "value" },
+  { member: "divide", scriptKey: "divide", operandKind: "value" },
+  { member: "round", scriptKey: "round", operandKind: "boolean" },
+  { member: "roundTo", scriptKey: "round_to", operandKind: "value" },
+  { member: "minValue", scriptKey: "min", operandKind: "value" },
+  { member: "maxValue", scriptKey: "max", operandKind: "value" },
 ] as const;
 
 /** The authoring name of one modifier arithmetic operation. */
 export type ModifierOperationMember = (typeof MODIFIER_OPERATIONS)[number]["member"];
 
-/** Every complex_maths_enum member and the SDK's reviewed disposition. */
+/** Every modifier maths-enum member and the SDK's reviewed disposition. */
 export const MODIFIER_OPERATION_POLICY = [
   {
     scriptKey: "factor",
     member: "factor",
+    operandKind: "value",
+    memberDocs: "Multiplies the current value by this operand.",
     disposition: "supported",
     reason: "measured across weight-block consumers",
   },
   {
     scriptKey: "add",
     member: "add",
+    operandKind: "value",
+    memberDocs: "Adds this operand to the current value.",
     disposition: "supported",
     reason: "measured across weight-block consumers",
   },
   {
     scriptKey: "weight",
     member: "weight",
+    operandKind: "value",
+    memberDocs: "Applies the distinct `weight` operation with this operand.",
     disposition: "supported",
     reason: "authored and emitted by existing weight-block consumers",
   },
   {
     scriptKey: "subtract",
     member: "subtract",
+    operandKind: "value",
+    memberDocs: "Subtracts this operand from the current value.",
     disposition: "supported",
     reason: "measured across weight-block consumers",
   },
   {
     scriptKey: "mult",
     member: "mult",
+    operandKind: "value",
+    memberDocs: "Multiplies the current value by this operand with `mult`.",
     disposition: "supported",
     reason: "measured across weight-block consumers",
   },
   {
     scriptKey: "multiply",
     member: "multiplier",
+    operandKind: "value",
+    memberDocs: "Multiplies the current value by this operand with `multiply`.",
     disposition: "supported",
     reason: "measured; the authored alias distinguishes it from mult",
   },
   {
     scriptKey: "divide",
     member: "divide",
+    operandKind: "value",
+    memberDocs: "Divides the current value by this operand.",
     disposition: "supported",
     reason: "measured across weight-block consumers",
   },
   {
+    scriptKey: "round",
+    member: "round",
+    operandKind: "boolean",
+    memberDocs: "Set to true to round the current value to the nearest integer.",
+    disposition: "supported",
+    reason: "measured in 7 of 37 crisis-objective reward blocks",
+  },
+  {
     scriptKey: "round_to",
     member: "roundTo",
+    operandKind: "value",
+    memberDocs: "Rounds the current value to the nearest multiple of this operand.",
     disposition: "supported",
     reason: "measured in 24 of 37 crisis-objective reward blocks",
   },
   {
     scriptKey: "min",
     member: "minValue",
+    operandKind: "value",
+    memberDocs: "Clamps the current value to at least this operand.",
     disposition: "supported",
     reason: "measured; the authored alias reads as an assignment",
   },
   {
     scriptKey: "max",
     member: "maxValue",
+    operandKind: "value",
+    memberDocs: "Clamps the current value to at most this operand.",
     disposition: "supported",
     reason: "measured; the authored alias reads as an assignment",
   },
   {
     scriptKey: "set",
     member: null,
+    operandKind: "value",
+    memberDocs: null,
     disposition: "unsupported",
     reason: "declared by complex_maths_enum but unmeasured in the supported corpus",
   },
   {
     scriptKey: "modulo",
     member: null,
+    operandKind: "value",
+    memberDocs: null,
     disposition: "unsupported",
     reason: "declared by complex_maths_enum but unmeasured in the supported corpus",
   },
   {
     scriptKey: "pow",
     member: null,
+    operandKind: "value",
+    memberDocs: null,
     disposition: "unsupported",
     reason: "declared by complex_maths_enum but unmeasured in the supported corpus",
+  },
+  {
+    scriptKey: "ceiling",
+    member: null,
+    operandKind: "boolean",
+    memberDocs: null,
+    disposition: "unsupported",
+    reason: "declared by simple_maths_enum but unmeasured in the supported corpus",
+  },
+  {
+    scriptKey: "floor",
+    member: null,
+    operandKind: "boolean",
+    memberDocs: null,
+    disposition: "unsupported",
+    reason: "declared by simple_maths_enum but unmeasured in the supported corpus",
+  },
+  {
+    scriptKey: "abs",
+    member: null,
+    operandKind: "boolean",
+    memberDocs: null,
+    disposition: "unsupported",
+    reason: "declared by simple_maths_enum but unmeasured in the supported corpus",
+  },
+  {
+    scriptKey: "square_root",
+    member: null,
+    operandKind: "boolean",
+    memberDocs: null,
+    disposition: "unsupported",
+    reason: "declared by simple_maths_enum but unmeasured in the supported corpus",
+  },
+  {
+    scriptKey: "square",
+    member: null,
+    operandKind: "boolean",
+    memberDocs: null,
+    disposition: "unsupported",
+    reason: "declared by simple_maths_enum but unmeasured in the supported corpus",
   },
 ] as const;

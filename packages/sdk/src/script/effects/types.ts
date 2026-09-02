@@ -279,10 +279,10 @@ type SelfNaturalFromConstraint<Self extends ScopeName, Root extends ScopeName | 
 /**
  * One `modifier = { ... }` rule: a numeric change gated by a trigger.
  *
- * The operations mirror `complex_maths_enum` in `modifier_rule.cwt`
- * (`set weight add subtract factor mult multiply divide modulo round_to max
- * min pow`) restricted to the members the corpus actually exercises across
- * every weight-block consumer, not just `situation_type.monthly_progress` —
+ * The operations mirror the value-field `complex_maths_enum` and boolean
+ * `simple_maths_enum` in `modifier_rule.cwt`, restricted to the members the
+ * corpus actually exercises across every weight-block consumer, not just
+ * `situation_type.monthly_progress` —
  * measured there alone: add 255, mult 176, subtract 37, factor 34, min 2,
  * max 2, divide 2. Crisis-objective rewards add 24 `round_to` uses and seven
  * `round` uses. `multiply` is spelled `multiplier` here to stay distinct
@@ -291,15 +291,15 @@ type SelfNaturalFromConstraint<Self extends ScopeName, Root extends ScopeName | 
  * spelled `roundTo`; `set`, `modulo`, and `pow` are declared but unmeasured
  * anywhere in the corpus and stay out until a real consumer needs them.
  *
- * Every operation here is `modifier_rule.cwt`'s `value_field`, not `float`:
- * a literal, a scripted variable, a `scope.variable` path, or
+ * Every numeric operand here is `modifier_rule.cwt`'s `value_field`, not
+ * `float`: a literal, a scripted variable, a `scope.variable` path, or
  * `value:<script_value>`. Across every modifier operand in vanilla's
  * `common/`, 12% are one of those non-literal forms, so `ScriptValue` (which
- * a plain number already widens into) rather than `number` alone.
+ * a plain number already widens into) rather than `number` alone. `round` is
+ * the one supported `simple_maths_enum` arm and takes the boolean form the
+ * rules declare.
  */
 export interface Modifier<S extends ScopeName> extends ModifierOperationFields<ScriptValue> {
-  /** Rounds the current value to the nearest integer. */
-  readonly round?: boolean;
   /**
    * Text for this modifier row's tooltip (`desc = localisation` in
    * `modifier_rule.cwt`). Inline display text is keyed and registered
