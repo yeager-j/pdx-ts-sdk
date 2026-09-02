@@ -1264,10 +1264,10 @@ function eventChainCounterEffect(key: string, needsAmount: boolean) {
     (args: EventChainCounterCallArgs): void => {
       const id = String(refId(args.eventChain));
       const entries = [kv("event_chain", id), kv("counter", args.counter)];
-      refs.push({ targets: ["event_chain"], id, field: `${key}.event_chain` });
       if (needsAmount) {
         entries.push(kv("amount", toScalar(args.amount!)));
       }
+      refs.push({ targets: ["event_chain"], id, field: `${key}.event_chain` });
       sink.push(block(key, entries));
     };
 }

@@ -194,6 +194,39 @@ describe("event definitions in a namespace", () => {
     expect(rendered).not.toContain("caught_fire.5");
   });
 
+  it("records no event-chain reference for a counter call its own value check refused", () => {
+    const runtimeMod = createMod({
+      name: "Caught counter refusal",
+      prefix: "caught_counter",
+      supportedVersion: "4.4.*",
+    });
+    const events = runtimeMod.namespace();
+    const never = runtimeMod.eventChain("never", { counter: { insights: { max: 1 } } });
+    const source = events.country(7, {
+      hideWindow: true,
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        try {
+          country.addEventChainCounter({
+            eventChain: never,
+            counter: "insights",
+            amount: {} as never,
+          });
+        } catch {
+          // An author may handle the refusal and write something else.
+        }
+      },
+    });
+
+    const rendered = render(runtimeMod.compile([runtimeMod.feature("caught", [source])])).get(
+      "events/caught_counter_caught.txt"
+    )!;
+
+    expect(rendered).toContain("id = caught_counter.7");
+    expect(rendered).not.toContain("add_event_chain_counter");
+    expect(rendered).not.toContain("caught_counter_never");
+  });
+
   it("rejects duplicate event ids within the namespace", () => {
     const events = makeEvents();
     const country = events.country(1, { hideWindow: true, isTriggeredOnly: true });
