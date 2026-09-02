@@ -284,11 +284,12 @@ type SelfNaturalFromConstraint<Self extends ScopeName, Root extends ScopeName | 
  * min pow`) restricted to the members the corpus actually exercises across
  * every weight-block consumer, not just `situation_type.monthly_progress` —
  * measured there alone: add 255, mult 176, subtract 37, factor 34, min 2,
- * max 2, divide 2. `multiply` is spelled `multiplier` here to stay distinct
+ * max 2, divide 2. Crisis-objective rewards add 24 `round_to` uses and seven
+ * `round` uses. `multiply` is spelled `multiplier` here to stay distinct
  * from `mult`, and `min`/`max` are spelled `minValue`/`maxValue` since bare
- * `min`/`max` read as comparisons rather than assignments. `set`, `modulo`,
- * `round_to`, and `pow` are declared but unmeasured anywhere in the corpus
- * and stay out until a real consumer needs them.
+ * `min`/`max` read as comparisons rather than assignments. `round_to` is
+ * spelled `roundTo`; `set`, `modulo`, and `pow` are declared but unmeasured
+ * anywhere in the corpus and stay out until a real consumer needs them.
  *
  * Every operation here is `modifier_rule.cwt`'s `value_field`, not `float`:
  * a literal, a scripted variable, a `scope.variable` path, or
@@ -297,6 +298,8 @@ type SelfNaturalFromConstraint<Self extends ScopeName, Root extends ScopeName | 
  * a plain number already widens into) rather than `number` alone.
  */
 export interface Modifier<S extends ScopeName> extends ModifierOperationFields<ScriptValue> {
+  /** Rounds the current value to the nearest integer. */
+  readonly round?: boolean;
   /**
    * Text for this modifier row's tooltip (`desc = localisation` in
    * `modifier_rule.cwt`). Inline display text is keyed and registered

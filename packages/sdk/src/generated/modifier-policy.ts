@@ -7,14 +7,25 @@
  * The value remains generic so SDK authoring can supply ScriptValue without a cycle.
  */
 export interface ModifierOperationFields<Value> {
+  /** Applies the `factor` modifier operation. */
   readonly factor?: Value;
+  /** Applies the `add` modifier operation. */
   readonly add?: Value;
+  /** Applies the `weight` modifier operation. */
   readonly weight?: Value;
+  /** Applies the `subtract` modifier operation. */
   readonly subtract?: Value;
+  /** Applies the `mult` modifier operation. */
   readonly mult?: Value;
+  /** Applies the `multiply` modifier operation. */
   readonly multiplier?: Value;
+  /** Applies the `divide` modifier operation. */
   readonly divide?: Value;
+  /** Applies the `round_to` modifier operation. */
+  readonly roundTo?: Value;
+  /** Applies the `min` modifier operation. */
   readonly minValue?: Value;
+  /** Applies the `max` modifier operation. */
   readonly maxValue?: Value;
 }
 
@@ -30,6 +41,7 @@ export const MODIFIER_OPERATIONS = [
   { member: "mult", scriptKey: "mult" },
   { member: "multiplier", scriptKey: "multiply" },
   { member: "divide", scriptKey: "divide" },
+  { member: "roundTo", scriptKey: "round_to" },
   { member: "minValue", scriptKey: "min" },
   { member: "maxValue", scriptKey: "max" },
 ] as const;
@@ -82,6 +94,12 @@ export const MODIFIER_OPERATION_POLICY = [
     reason: "measured across weight-block consumers",
   },
   {
+    scriptKey: "round_to",
+    member: "roundTo",
+    disposition: "supported",
+    reason: "measured in 24 of 37 crisis-objective reward blocks",
+  },
+  {
     scriptKey: "min",
     member: "minValue",
     disposition: "supported",
@@ -101,12 +119,6 @@ export const MODIFIER_OPERATION_POLICY = [
   },
   {
     scriptKey: "modulo",
-    member: null,
-    disposition: "unsupported",
-    reason: "declared by complex_maths_enum but unmeasured in the supported corpus",
-  },
-  {
-    scriptKey: "round_to",
     member: null,
     disposition: "unsupported",
     reason: "declared by complex_maths_enum but unmeasured in the supported corpus",

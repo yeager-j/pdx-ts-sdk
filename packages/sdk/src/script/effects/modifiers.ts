@@ -187,6 +187,9 @@ export type WeightOperations = Omit<Modifier<ScopeName>, "desc" | "when">;
 export function weightOperationEntries(value: WeightOperations): PdxEntry[] {
   const entries: PdxEntry[] = [];
   for (const { member, scriptKey } of MODIFIER_OPERATIONS) {
+    if (member === "roundTo" && value.round !== undefined) {
+      entries.push(kv("round", value.round));
+    }
     const operand = value[member];
     if (operand !== undefined) {
       entries.push(kv(scriptKey, scriptValueScalar(operand)));

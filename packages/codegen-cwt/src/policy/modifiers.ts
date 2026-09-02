@@ -57,6 +57,12 @@ const MODIFIER_OPERATION_POLICY: readonly ModifierOperationPolicyEntry[] = [
     reason: "measured across weight-block consumers",
   },
   {
+    scriptKey: "round_to",
+    member: "roundTo",
+    disposition: "supported",
+    reason: "measured in 24 of 37 crisis-objective reward blocks",
+  },
+  {
     scriptKey: "min",
     member: "minValue",
     disposition: "supported",
@@ -68,7 +74,7 @@ const MODIFIER_OPERATION_POLICY: readonly ModifierOperationPolicyEntry[] = [
     disposition: "supported",
     reason: "measured; the authored alias reads as an assignment",
   },
-  ...["set", "modulo", "round_to", "pow"].map((scriptKey): ModifierOperationPolicyEntry => ({
+  ...["set", "modulo", "pow"].map((scriptKey): ModifierOperationPolicyEntry => ({
     scriptKey,
     member: null,
     disposition: "unsupported",
@@ -114,7 +120,13 @@ export function emitModifierOperationProtocol(
       "The value remains generic so SDK authoring can supply ScriptValue without a cycle.",
     ]) +
     "export interface ModifierOperationFields<Value> {\n" +
-    supported.map((entry) => `  readonly ${entry.member}?: Value;\n`).join("") +
+    supported
+      .map(
+        (entry) =>
+          docComment([`Applies the \`${entry.scriptKey}\` modifier operation.`], "  ") +
+          `  readonly ${entry.member}?: Value;\n`
+      )
+      .join("") +
     "}\n\n" +
     docComment([
       "Supported modifier operations in deterministic emission order.",

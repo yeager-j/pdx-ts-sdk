@@ -697,6 +697,11 @@ export interface WeightBlockLike<S extends SimScopeName> {
   readonly modifiers?: readonly WeightBlockRow<S, Modifier<S>>[];
 }
 
+const WEIGHT_OPERATION_MEMBERS = [
+  ...MODIFIER_OPERATIONS.map((operation) => operation.member),
+  "round",
+] as const;
+
 function isComplexTriggerModifierRow<S extends SimScopeName>(
   row: WeightBlockRow<S, Modifier<S>>
 ): row is ComplexTriggerModifier<S> {
@@ -707,11 +712,10 @@ function isComplexTriggerModifierRow<S extends SimScopeName>(
  * Computes a `modifier_rule` block's value: a starting `base`, then each
  * `modifier` row whose `when` trigger holds applies its one operation in
  * order. The operation set and spellings mirror `Modifier` itself
- * (`packages/sdk/src/script/effects/types.ts`, kept in sync by the `SameKeys` guard
- * above) — `add`/`subtract`/`mult`/`multiplier`/`factor`/`divide` change the
- * running value, `minValue`/`maxValue` clamp it, and `weight` is detected but
- * refused (see `applyModifierRow`'s `weight` case) because nothing has
- * verified its semantic against the game.
+ * (`packages/sdk/src/script/effects/types.ts`) — `add`/`subtract`/`mult`/
+ * `multiplier`/`factor`/`divide` change the running value, `minValue`/
+ * `maxValue` clamp it, and `weight`/`round`/`roundTo` are detected but refused
+ * because nothing has verified their exact semantics against the game.
  *
  * A row combining more than one operation is refused rather than guessed:
  * nothing in the corpus measures a cross-operation order within one row, so
@@ -750,9 +754,7 @@ export function evaluateWeightBlock<S extends SimScopeName>(
 }
 
 function applyModifierRow<S extends SimScopeName>(modifier: Modifier<S>, value: number): number {
-  const present = MODIFIER_OPERATIONS.map((operation) => operation.member).filter(
-    (member) => modifier[member] !== undefined
-  );
+  const present = WEIGHT_OPERATION_MEMBERS.filter((member) => modifier[member] !== undefined);
   if (present.length !== 1) {
     throw new InterpreterError(
       `A monthly-progress row${modifier.desc !== undefined ? ` ("${modifier.desc}")` : ""} sets ` +
@@ -765,6 +767,12 @@ function applyModifierRow<S extends SimScopeName>(modifier: Modifier<S>, value: 
   const [op] = present;
   if (op === undefined) {
     throw new InterpreterError("unreachable: present.length === 1 was just checked");
+  }
+  if (op === "round" || op === "roundTo") {
+    throw new InterpreterError(
+      `${op}: recognized but not evaluated — rounding order and tie behavior have not been ` +
+        `verified against the game. ${coverageSummary()}`
+    );
   }
   const amount = modifier[op];
   if (typeof amount !== "number") {

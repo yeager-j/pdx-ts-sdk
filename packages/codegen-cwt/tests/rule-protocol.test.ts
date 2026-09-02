@@ -34,7 +34,10 @@ import {
 } from "@pdx-ts/codegen-cwt/policy/content-swaps";
 import { createEffectPolicy } from "@pdx-ts/codegen-cwt/policy/effects";
 import { createEventFieldPolicy } from "@pdx-ts/codegen-cwt/policy/event-fields";
-import { createModifierOperationPolicy } from "@pdx-ts/codegen-cwt/policy/modifiers";
+import {
+  createModifierOperationPolicy,
+  emitModifierOperationProtocol,
+} from "@pdx-ts/codegen-cwt/policy/modifiers";
 import { RESERVED_TRIGGER_EXPORT_NAMES } from "@pdx-ts/codegen-cwt/policy/triggers";
 import { loadBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
 import { scopeAuthorityOf } from "@pdx-ts/codegen-cwt/reconcile/scope-authority";
@@ -1308,11 +1311,26 @@ describe("generator-owned SDK protocols", () => {
       member: "multiplier",
       disposition: "supported",
     });
+    expect(policy.find((entry) => entry.scriptKey === "round_to")).toEqual({
+      scriptKey: "round_to",
+      member: "roundTo",
+      disposition: "supported",
+      reason: "measured in 24 of 37 crisis-objective reward blocks",
+    });
     expect(policy.find((entry) => entry.scriptKey === "pow")).toMatchObject({
       member: null,
       disposition: "unsupported",
     });
     expect(policy.every((entry) => entry.reason.length > 0)).toBe(true);
+  });
+
+  it("documents and emits the supported round_to member", () => {
+    const protocol = emitModifierOperationProtocol(createModifierOperationPolicy(rules));
+
+    expect(protocol).toContain(
+      "/** Applies the `round_to` modifier operation. */\n  readonly roundTo?: Value;"
+    );
+    expect(protocol).toContain('{ member: "roundTo", scriptKey: "round_to" }');
   });
 
   it("rejects an unowned modifier enum member", () => {
