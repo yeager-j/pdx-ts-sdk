@@ -55,6 +55,7 @@ import {
   admitsBlock,
   admitsScalars,
   arrayType,
+  fieldDocs,
   metadata,
   scalarMetadata,
   withMetadataEntry,
@@ -70,6 +71,7 @@ import {
 
 export {
   authoredLiterals,
+  fieldDocs,
   memberOptional,
   metadata,
   repeatsSiblings,
@@ -115,7 +117,7 @@ export interface FieldProjection {
   /** Every name {@link FieldProjection.code} exports, for the public barrel's check. */
   readonly exportedNames?: readonly string[];
   /** Rows bubbled up from a nested struct level, their paths already prefixed. */
-  readonly unsupported?: readonly FieldOmissionRow[];
+  readonly omissions?: readonly FieldOmissionRow[];
   /**
    * Documentation rows for every field table declared by {@link code}.
    * Each table identifies its generated field constant directly.
@@ -153,7 +155,9 @@ export function useWideningSymbols(emitter: Emitter, widening: FieldWidening | u
 
 /**
  * Inlines subtype arms into an ordinary field list while preserving declaration order.
- * Inlined fields become optional because the subtype predicate may not apply.
+ * An inlined field keeps its declared cardinality and records the arm it came
+ * from in {@link RuleField.conditions}; whether that makes the member optional
+ * is decided where the member is emitted.
  */
 export function flatten(fields: readonly RuleField[], typeName: string): RuleField[] {
   return fields.flatMap((field) => {
@@ -163,11 +167,10 @@ export function flatten(fields: readonly RuleField[], typeName: string): RuleFie
     if (field.type.kind !== "block") {
       return [];
     }
-    const predicate = `${field.key.negated ? "not " : ""}\`${field.key.name}\``;
+    const condition = { subtype: field.key.name, negated: field.key.negated, owner: typeName };
     return flatten(field.type.fields, typeName).map((inner) => ({
       ...inner,
-      cardinality: { min: 0, max: inner.cardinality.max },
-      docs: [...inner.docs, `Only when ${typeName} subtype ${predicate} applies.`],
+      conditions: [...(inner.conditions ?? []), condition],
     }));
   });
 }
@@ -261,7 +264,7 @@ export function projectTopLevelSplice(
   ctx: FieldContext
 ): ProjectedSplice | null {
   if (field.key.category !== "modifier") {
-    return projectStructuralSplice(emitter, field.key.category, field.docs);
+    return projectStructuralSplice(emitter, field.key.category, fieldDocs(field));
   }
   const scope = scopeType(emitter, field, ctx);
   return {
@@ -270,7 +273,7 @@ export function projectTopLevelSplice(
     metadata: `{ member: "modifiers", shape: "inlineModifiers" }`,
     docs: [
       "Modifiers written directly into the definition body, with no enclosing key.",
-      ...field.docs,
+      ...fieldDocs(field),
     ],
   };
 }
@@ -810,7 +813,7 @@ function projectDual(
     },
     code: arms.map((arm) => arm.code ?? "").join(""),
     exportedNames: arms.flatMap((arm) => arm.exportedNames ?? []),
-    unsupported: arms.flatMap((arm) => arm.unsupported ?? []),
+    omissions: arms.flatMap((arm) => arm.omissions ?? []),
     docTables: arms.flatMap((arm) => arm.docTables ?? []),
     // The block arm alone: a scalar arm has no interior, and both arms share
     // the one key the reader descends from.

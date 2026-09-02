@@ -81,6 +81,8 @@ describe("authored values snapshot their caller's input (SDK-325)", () => {
   it("keeps the category a technology was defined with when the array is appended to", () => {
     const category = ["particles"];
     const technology = mod.technology("probe", {
+      cost: 100,
+      weight: 100,
       name: "Probe Tech",
       area: "physics",
       tier: 1,
@@ -95,12 +97,16 @@ describe("authored values snapshot their caller's input (SDK-325)", () => {
 
   it("keeps the items a feature was placed with when the array is appended to", () => {
     const first = mod.technology("placed_first", {
+      cost: 100,
+      weight: 100,
       name: "First",
       area: "physics",
       tier: 1,
       category: ["particles"],
     });
     const second = mod.technology("placed_second", {
+      cost: 100,
+      weight: 100,
       name: "Second",
       area: "physics",
       tier: 1,
@@ -205,12 +211,16 @@ describe("authored values snapshot their caller's input (SDK-325)", () => {
 
   it("keeps an Item a definition names as the object it was minted as", () => {
     const base = mod.technology("prereq_base", {
+      cost: 100,
+      weight: 100,
       name: "Prerequisite Base",
       area: "physics",
       tier: 1,
       category: ["particles"],
     });
     const dependent = mod.technology("prereq_dependent", {
+      cost: 100,
+      weight: 100,
       name: "Prerequisite Dependent",
       area: "physics",
       tier: 2,
@@ -235,6 +245,8 @@ describe("triggers are immutable once built (SDK-327)", () => {
 describe("definedGroups is immutable throughout (SDK-327)", () => {
   it("freezes every group, list, definition, and definition body", () => {
     const technology = mod.technology("immutable", {
+      cost: 100,
+      weight: 100,
       name: "Immutable Tech",
       area: "physics",
       tier: 1,
@@ -264,6 +276,8 @@ describe("definedGroups is immutable throughout (SDK-327)", () => {
 
   it("still lowers a frozen definition to the entries it always reported", () => {
     const technology = mod.technology("lowerable", {
+      cost: 100,
+      weight: 100,
       name: "Lowerable Tech",
       area: "physics",
       tier: 1,

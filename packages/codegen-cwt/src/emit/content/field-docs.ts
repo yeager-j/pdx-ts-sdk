@@ -127,9 +127,10 @@ export function emitContentFieldDocs(
     "export interface ContentFieldOmission {\n" +
     "  /** The field's path, as the codegen report prints it. */\n" +
     "  readonly path: string;\n" +
-    '  /** Why it is absent: refused by the overlay ("declined"), blocked on\n' +
-    '   * emitter machinery ("unsupported"), or a localisation alias folded\n' +
-    '   * onto another member ("collapsed"). */\n' +
+    '  /** Why it is absent or not as declared: refused by the overlay ("declined"),\n' +
+    '   * blocked on emitter machinery ("unsupported"), or authored under another\n' +
+    '   * contract ("collapsed") — a localisation alias folded onto another member,\n' +
+    "   * or a member a subtype arm requires that the surface leaves optional. */\n" +
     '  readonly kind: "declined" | "unsupported" | "collapsed";\n' +
     "  readonly reason: string;\n" +
     "}\n\n";

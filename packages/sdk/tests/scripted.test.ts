@@ -181,6 +181,8 @@ describe("in a built mod", () => {
     const isFallenEmpire = scriptedTrigger("is_fallen_empire", "country");
     const technologies = mod.feature("scripted", [
       mod.technology("probe", {
+        cost: 100,
+        weight: 100,
         name: "Probe",
         area: "physics",
         tier: 1,
@@ -193,6 +195,8 @@ describe("in a built mod", () => {
         "\tarea = physics\n" +
         "\ttier = 1\n" +
         "\tcategory = { computing }\n" +
+        "\tcost = 100\n" +
+        "\tweight = 100\n" +
         "\tpotential = {\n" +
         "\t\tis_fallen_empire = yes\n" +
         "\t\tis_regular_empire = yes\n" +

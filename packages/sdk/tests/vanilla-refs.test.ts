@@ -35,6 +35,8 @@ describe("checked helpers in ref fields", () => {
   it("serializes a vanilla technology reference as its bare id", () => {
     const technologies = mod.feature(undefined, [
       mod.technology("probe", {
+        cost: 100,
+        weight: 100,
         name: "Probe",
         area: "physics",
         tier: 2,
@@ -47,6 +49,8 @@ describe("checked helpers in ref fields", () => {
         "\tarea = physics\n" +
         "\ttier = 2\n" +
         "\tcategory = { computing }\n" +
+        "\tcost = 100\n" +
+        "\tweight = 100\n" +
         '\tprerequisites = { "tech_lasers_1" }\n' +
         "}\n"
     );

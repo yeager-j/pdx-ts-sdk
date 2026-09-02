@@ -37,6 +37,8 @@ describe("capability authoring", () => {
   it("mints the literal id with no feature in the way", () => {
     const mod = createMod({ name: "Probe", prefix: "probe_neg", supportedVersion: "4.4.*" });
     const tech = mod.technology("free", {
+      cost: 100,
+      weight: 100,
       name: "T",
       area: "physics",
       tier: 1,
@@ -60,6 +62,8 @@ describe("capability authoring", () => {
     expectTypeOf(situation.targetScope).toEqualTypeOf<"planet">();
     expectTypeOf(situation.itemKind).toEqualTypeOf<"content">();
     const ownRegistry: TechnologyRef = mod.technology("free_brand", {
+      cost: 100,
+      weight: 100,
       name: "T",
       area: "physics",
       tier: 1,
@@ -75,6 +79,8 @@ describe("capability authoring", () => {
     const mod = createMod({ name: "Probe", prefix: "probe_neg", supportedVersion: "4.4.*" });
     const techs = mod.feature("free_techs", [
       mod.technology("collected", {
+        cost: 100,
+        weight: 100,
         name: "T",
         area: "physics",
         tier: 1,
@@ -96,6 +102,8 @@ describe("capability authoring", () => {
     const mixed = mod.feature("free_mixed", [
       mod.tradition("mixed_trad", { name: "T", effects: "None." }),
       mod.technology("mixed_tech", {
+        cost: 100,
+        weight: 100,
         name: "T",
         area: "physics",
         tier: 1,
@@ -149,6 +157,8 @@ describe("the capability on() contract", () => {
 describe("buildMod's input", () => {
   it("takes features, never loose items", () => {
     const tech = defineTechnologyInternal({
+      cost: 100,
+      weight: 100,
       id: "probe_neg_loose",
       name: "L",
       area: "physics",

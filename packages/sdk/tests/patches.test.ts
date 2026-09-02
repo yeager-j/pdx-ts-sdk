@@ -41,6 +41,8 @@ const vanilla = viewFromFiles(FILES, { gameVersion: "4.4.6" });
 
 function patchedTechnologies(mod: ReturnType<typeof createMod>): TechnologyItem[] {
   const myNewTech = mod.technology("chimeric_grafts", {
+    cost: 100,
+    weight: 100,
     name: "Chimeric Grafts",
     area: "society",
     tier: 3,
@@ -146,6 +148,8 @@ describe("patching end to end", () => {
     expect(emitted).not.toContain("pp_mod_swap_mutated");
 
     const referencesMutated = mod.technology("dependent", {
+      cost: 100,
+      weight: 100,
       name: "Dependent",
       area: "society",
       tier: 3,
@@ -216,6 +220,8 @@ describe("patching end to end", () => {
     });
     const technologies = mod.feature(undefined, [
       mod.technology("new", {
+        cost: 100,
+        weight: 100,
         name: "New",
         area: "physics",
         tier: 1,
@@ -378,6 +384,8 @@ describe("the vanilla path guard without any patch", () => {
   function techs(mod: ReturnType<typeof createMod>) {
     return mod.feature(undefined, [
       mod.technology("new", {
+        cost: 100,
+        weight: 100,
         name: "New",
         area: "physics",
         tier: 1,
@@ -719,6 +727,8 @@ describe("patched localization end to end", () => {
     return mod.compile([
       mod.feature("localized", [
         mod.technology("chimeric_grafts", {
+          cost: 100,
+          weight: 100,
           name: "Chimeric Grafts",
           area: "society",
           tier: 3,
@@ -825,6 +835,8 @@ describe("patched localization end to end", () => {
         },
       })),
       mod.technology("gene_forging_weight_modifier_x", {
+        cost: 100,
+        weight: 100,
         name: "Something else entirely",
         area: "society",
         tier: 1,

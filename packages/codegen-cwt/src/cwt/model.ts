@@ -113,6 +113,16 @@ export type ScopeContext = Readonly<
   } & Record<AmbientScopeKey, string | null>
 >;
 
+/** One `subtype[...]` arm a field was declared under. */
+export interface SubtypeCondition {
+  /** The subtype named in the brackets. */
+  readonly subtype: string;
+  /** `subtype[!x]`: the field exists only where the subtype does not apply. */
+  readonly negated: boolean;
+  /** The type whose body declares the arm, as the report names it. */
+  readonly owner: string;
+}
+
 /** A classified keyed CWT field. */
 export interface RuleField {
   /** The field's literal or computed key. */
@@ -129,6 +139,11 @@ export interface RuleField {
   readonly line: number;
   /** `==` marks a comparison field, written in script as `count > 4`. */
   readonly comparison: boolean;
+  /**
+   * The subtype arms the field sits under once its type body is inlined,
+   * innermost first. Absent for a field declared unconditionally.
+   */
+  readonly conditions?: readonly SubtypeCondition[];
 }
 
 /** A classified anonymous value within a CWT block. */

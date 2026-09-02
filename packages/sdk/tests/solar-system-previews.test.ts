@@ -32,6 +32,8 @@ function compiledMod() {
     ],
   });
   const technology = mod.technology("filler", {
+    cost: 100,
+    weight: 100,
     name: "Filler",
     area: "physics",
     tier: 1,

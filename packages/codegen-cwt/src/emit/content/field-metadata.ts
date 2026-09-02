@@ -55,12 +55,41 @@ export function repeatsSiblings(field: RuleField, shape: string): boolean {
   return isRepeated(field.cardinality) && shape !== "valueList";
 }
 
-/** One evidence-backed optionality decision, shared by every generated member. */
+/** Whether the declaration sits under a subtype arm. */
+export function isConditional(field: RuleField): boolean {
+  return field.conditions !== undefined && field.conditions.length > 0;
+}
+
+/**
+ * One evidence-backed optionality decision, shared by every generated member
+ * read flat: a member may be absent when every declaration is either optional
+ * or belongs to a subtype arm that may not apply.
+ */
 export function memberOptional(
   group: readonly RuleField[],
   override: ContentFieldOverride | undefined
 ): boolean {
-  return override?.optional === true || group.every((field) => isOptional(field.cardinality));
+  return (
+    override?.optional === true ||
+    group.every((field) => isOptional(field.cardinality) || isConditional(field))
+  );
+}
+
+/**
+ * The doc lines the flat reading writes for each subtype arm a declaration
+ * sits under, innermost arm first.
+ */
+export function conditionDocs(field: RuleField): string[] {
+  return (field.conditions ?? []).map(
+    (condition) =>
+      `Only when ${condition.owner} subtype ${condition.negated ? "not " : ""}` +
+      `\`${condition.subtype}\` applies.`
+  );
+}
+
+/** A declaration's own docs followed by its subtype-arm lines, as the flat reading documents it. */
+export function fieldDocs(field: RuleField): string[] {
+  return [...field.docs, ...conditionDocs(field)];
 }
 
 /**

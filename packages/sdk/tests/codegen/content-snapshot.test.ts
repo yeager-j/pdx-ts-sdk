@@ -35,7 +35,9 @@ function dualMembers(code: string, key: string): string[] {
 
 /** The member names one emitted interface declares, in declaration order. */
 function interfaceMembers(code: string, name: string): string[] {
-  const start = code.indexOf(`export interface ${name} {`);
+  // Generic parameters and an `extends` clause may sit between the name and
+  // the body: a subtype arm extends the registry's base interface.
+  const start = code.search(new RegExp(`^export interface ${name}\\b[^{]*\\{`, "m"));
   if (start === -1) {
     return [];
   }
@@ -192,7 +194,7 @@ describe("content-type codegen", () => {
     const objective = emissions.get("crisis_objective");
     const perk = emissions.get("menace_perk");
 
-    expect(resource?.code).toContain("export interface ResourceFields {");
+    expect(resource?.code).toContain("export interface ResourceFieldsBase {");
     expect(path?.code).toContain("crisisCurrency: CrisisCurrencyRole;");
     expect(path?.code).toContain('localizationFamily: "crisis_currency"');
     expect(path?.code).toContain("levels: (CrisisLevelRef | string)[];");
@@ -817,6 +819,84 @@ describe("content-type codegen", () => {
     expect(situation?.code).toContain('sectionWeight?: ScriptValue | WeightBlock<"situation">;');
   });
 
+  it("emits a readable subtype arm as named union members (SDK-360)", () => {
+    // `subtype[!start]` requires `cost` and `weight`; `subtype[start]` leaves
+    // them optional. Read flat both were optional, and a non-start technology
+    // without a cost typechecked.
+    const technology = emissions.get("technology");
+    expect(technology?.subtypeUnions).toEqual([
+      "start (`start_tech = yes`)",
+      "repeatable (a written `levels`)",
+    ]);
+    expect(technology?.code).toContain(
+      "export interface TechnologyStartFields extends TechnologyFieldsBase {"
+    );
+    expect(technology?.code).toContain(
+      "export interface TechnologyPlainFields extends TechnologyFieldsBase {"
+    );
+    const armOf = (name: string) => interfaceMembers(technology?.code ?? "", name);
+    expect(armOf("TechnologyStartFields")).toContain("startTech");
+    expect(technology?.code).toMatch(/TechnologyStartFields[^]*?startTech: true;/);
+    expect(technology?.code).toMatch(
+      /TechnologyPlainFields[^]*?cost: number \| WeightBlock<never>;/
+    );
+    expect(technology?.code).toMatch(/TechnologyPlainFields[^]*?weight: number;/);
+    expect(technology?.code).toMatch(/TechnologyPlainFields[^]*?startTech\?: false;/);
+    // start × repeatable is contradictory (`levels` selects repeatable and a
+    // start technology may not carry it), so only three arms exist.
+    expect(technology?.code).toContain(
+      "export type TechnologyFields =\n  | TechnologyStartFields\n  | TechnologyRepeatableFields\n  | TechnologyPlainFields;"
+    );
+    expect(technology?.code).toContain("export type TechnologyDef<Id extends string = string> =");
+    expect(technology?.code).toContain(
+      "export interface TechnologyPlainDef<Id extends string = string> extends TechnologyPlainFields {"
+    );
+    // The base keeps no claimed member and no flat "Only when" line.
+    expect(interfaceMembers(technology?.code ?? "", "TechnologyFieldsBase")).not.toContain("cost");
+    expect(technology?.code).not.toContain("Only when technology subtype");
+    // The ledger records a claimed member as optional, with the arm's condition.
+    const docs = technology?.docTables[0]?.members;
+    expect(docs?.cost).toMatchObject({
+      optional: true,
+      docs: ["Required unless `startTech: true`."],
+    });
+    expect(technology?.publicTypes).toEqual(
+      expect.arrayContaining([
+        "TechnologyFieldsBase",
+        "TechnologyStartFields",
+        "TechnologyPlainDef",
+      ])
+    );
+  });
+
+  it("collapses a required arm the type cannot state into a visible row (SDK-360)", () => {
+    const mission = emissions.get("mission");
+    expect(mission?.subtypeUnions).toEqual([]);
+    expect(mission?.subtypeCollapses).toEqual([
+      "mission.event_chain required under subtype[contract], authored optional: the subtype's " +
+        "body is not one readable field",
+    ]);
+    expect(mission?.omissions).toContainEqual({
+      path: "mission.event_chain",
+      kind: "collapsed",
+      reason:
+        "required under subtype[contract], authored optional: the subtype's body is not one " +
+        "readable field",
+    });
+    // A flat registry keeps its interfaces exactly as before.
+    expect(mission?.code).toContain("export interface MissionDef<");
+    expect(mission?.code).toContain("Only when mission subtype `contract` applies.");
+    // An overlay row keeps a contradicted arm flat, naming the measurement.
+    const shipSize = emissions.get("ship_size");
+    expect(shipSize?.subtypeUnions).toEqual([
+      "space_fauna (`is_space_fauna_ship = yes`)",
+      "arkship (a written `carries_colony`)",
+    ]);
+    expect(shipSize?.subtypeCollapses).toEqual([
+      expect.stringContaining("ship_size.evaluation_resource required under subtype[bio_ship]"),
+    ]);
+  });
+
   it("merges a field declared as different literals across subtypes into the union", () => {
     // progress_direction is `monodirectional` in one subtype declaration and
     // `bidirectional` in the other; first-wins picking had made the second —
@@ -1170,7 +1250,7 @@ describe("content-type codegen", () => {
     // limit members use, so the overlay points both at the shared
     // GovernmentTriggerBlock rather than a Trigger.
     const civicOrOrigin = emissions.get("civic_or_origin");
-    expect(civicOrOrigin?.code).toContain("export interface CivicOrOriginDef");
+    expect(civicOrOrigin?.code).toContain("export type CivicOrOriginDef<");
     expect(civicOrOrigin?.code).toContain("potential?: GovernmentTriggerBlock;");
     expect(civicOrOrigin?.code).toContain("possible?: GovernmentTriggerBlock;");
     expect(civicOrOrigin?.code).toContain(
@@ -1221,8 +1301,18 @@ describe("content-type codegen", () => {
 
   it("generates component_set as a name_field registry without registry-specific code", () => {
     const componentSet = emissions.get("component_set");
-    expect(componentSet?.code).toContain("export interface ComponentSetDef");
-    expect(componentSet?.code).toContain("requiredComponentSet?: boolean;");
+    expect(componentSet?.code).toContain("export type ComponentSetDef<");
+    // `required_component_set = yes` selects `subtype[required_component]`,
+    // so the flag is the discriminant of the two arms (SDK-360).
+    expect(
+      interfaceMembers(componentSet?.code ?? "", "ComponentSetRequiredComponentFields")
+    ).toContain("requiredComponentSet");
+    expect(componentSet?.code).toMatch(
+      /ComponentSetRequiredComponentFields[^]*?requiredComponentSet: true;/
+    );
+    expect(componentSet?.code).toMatch(
+      /ComponentSetPlainFields[^]*?requiredComponentSet\?: false;/
+    );
     expect(componentSet?.code).toContain("affectsTargetFocus?: boolean;");
     expect(componentSet?.unsupported).toEqual([]);
   });
@@ -1585,7 +1675,7 @@ describe("content-type codegen", () => {
 
   it("lowers megastructure's economic, modifier, and mixed trigger-struct fields", () => {
     const megastructure = emissions.get("megastructure");
-    expect(megastructure?.code).toContain("export interface MegastructureDef");
+    expect(megastructure?.code).toContain("export type MegastructureDef<");
     // `resources` and `dismantle_cost` are the same declaration — a `category`
     // sibling beside the economic_template splice — that job.resources and
     // decision.resources already lower; only `resources` carries
@@ -1718,8 +1808,19 @@ describe("content-type codegen", () => {
       ].map((match) => [match[1]!, match[2]!] as const);
       // The slots lead, then the body fields, and the two together are exactly
       // the definition's own members: nothing is dropped from the patch type.
-      expect(interfaceMembers(emission?.code ?? "", `${name}Patch`), registry).toEqual(
-        interfaceMembers(emission?.code ?? "", `${name}Fields`)
+      // A registry whose fields are subtype arms spreads those members over
+      // the arm interfaces, so the comparison is by membership, not order.
+      const fieldsMembers = new Set([
+        ...interfaceMembers(emission?.code ?? "", `${name}Fields`),
+        ...interfaceMembers(emission?.code ?? "", `${name}FieldsBase`),
+        ...[
+          ...(emission?.code.matchAll(
+            /^export interface (\w+Fields)(?:<[^{]*>)? extends \w+FieldsBase/gm
+          ) ?? []),
+        ].flatMap((match) => interfaceMembers(emission?.code ?? "", match[1]!)),
+      ]);
+      expect(new Set(interfaceMembers(emission?.code ?? "", `${name}Patch`)), registry).toEqual(
+        fieldsMembers
       );
       // Nothing is excluded any more — the slots that used to be are members,
       // each reported with the vanilla key its text replaces.

@@ -11,7 +11,7 @@ import type { SpriteRef } from "./refs.ts";
  * A component_set, as the game's rules describe it.
  * Generated from `type[component_set]` at `game/common/component_sets`.
  */
-export interface ComponentSetFields {
+export interface ComponentSetFieldsBase {
   /**
    * Display text emitted to localization under `<id>`.
    * A bare string is the English shorthand.
@@ -32,7 +32,6 @@ export interface ComponentSetFields {
    * A bare string is the English shorthand.
    */
   stationDesc?: LocalizedText;
-  requiredComponentSet?: boolean;
   isCoreComponentSet?: boolean;
   isSpaceFaunaComponentSet?: boolean;
   /** default = yes */
@@ -40,23 +39,47 @@ export interface ComponentSetFields {
   /** default = yes */
   affectsTargetFocus?: boolean;
   isDefaultSpaceFaunaComponentSet?: boolean;
-  /**
-   * Only when component_set subtype `required_component` applies.
-   * Only when component_set subtype not `required_component` applies.
-   */
-  icon?: string | SpriteRef;
-  /**
-   * Only when component_set subtype `required_component` applies.
-   * Only when component_set subtype not `required_component` applies.
-   */
   iconFrame?: string | number;
 }
 
-/** A component_set with the id it is defined under. */
-export interface ComponentSetDef<Id extends string = string> extends ComponentSetFields {
+/** A component_set the subtype `required_component` (`subtype[required_component]`, selected by `required_component_set = yes`) covers. */
+export interface ComponentSetRequiredComponentFields extends ComponentSetFieldsBase {
+  /** Selects the `required_component` subtype (CWT `subtype[required_component]`). */
+  requiredComponentSet: true;
+  /** Required unless `requiredComponentSet: true`. */
+  icon?: string | SpriteRef;
+}
+
+/** A component_set none of the subtypes `required_component` covers. */
+export interface ComponentSetPlainFields extends ComponentSetFieldsBase {
+  requiredComponentSet?: false;
+  /** Required unless `requiredComponentSet: true`. */
+  icon: string | SpriteRef;
+}
+
+/**
+ * A component_set, as the game's rules describe it:
+ * one arm per way its subtypes apply.
+ */
+export type ComponentSetFields = ComponentSetRequiredComponentFields | ComponentSetPlainFields;
+
+/** A ComponentSetRequiredComponentFields definition with its id. */
+export interface ComponentSetRequiredComponentDef<
+  Id extends string = string,
+> extends ComponentSetRequiredComponentFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/** A ComponentSetPlainFields definition with its id. */
+export interface ComponentSetPlainDef<Id extends string = string> extends ComponentSetPlainFields {
+  /** Full content id, including the mod prefix. */
+  id: Id;
+}
+
+/** A component_set with the id it is defined under. */
+export type ComponentSetDef<Id extends string = string> =
+  ComponentSetRequiredComponentDef<Id> | ComponentSetPlainDef<Id>;
 
 /**
  * The localization keys one `component_set` mints, as references.
@@ -80,7 +103,7 @@ export type DefinedComponentSet<Id extends string = string> = DefinedContent<
   ComponentSetDef<Id>
 >;
 
-/** How the writer lowers each member of {@link ComponentSetFields} to PDXScript. */
+/** How the writer lowers each member of {@link ComponentSetFieldsBase} to PDXScript. */
 export const COMPONENT_SET_FIELDS: readonly ContentField[] = [
   {
     key: "required_component_set",

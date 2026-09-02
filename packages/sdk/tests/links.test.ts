@@ -103,6 +103,7 @@ from.owner = {
     const definedTechnology = technology.define({
       name: "Defined",
       cost: 100,
+      weight: 100,
       area: "physics",
       tier: 1,
       category: "particles",

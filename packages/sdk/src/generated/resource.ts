@@ -14,7 +14,7 @@ import type { SituationTypeRef, StaticModifierRef, TechnologyRef } from "./refs.
  * A resource, as the game's rules describe it.
  * Generated from `type[resource]` at `game/common/strategic_resources`.
  */
-export interface ResourceFields {
+export interface ResourceFieldsBase {
   /**
    * Display text emitted to localization under `<id>`.
    * A bare string is the English shorthand.
@@ -25,24 +25,10 @@ export interface ResourceFields {
    * A bare string is the English shorthand.
    */
   desc?: LocalizedText;
-  /** Whether the resource participates in resource-trading behavior. */
-  tradable?: boolean;
   /** Built-in resource group the game uses for this definition. */
   category?: ResourceCategory;
   /** default: no? */
   hideGain?: boolean;
-  /**
-   * default -1, if non-positive, resource cannot be traded in the Market
-   * Only when resource subtype `tradable` applies.
-   */
-  marketAmount?: number;
-  /**
-   * default -1, if non-positive, resource cannot be traded in the Market
-   * Only when resource subtype `tradable` applies.
-   */
-  marketPrice?: number;
-  /** Only when resource subtype `tradable` applies. */
-  max?: number;
   /** default: no */
   specialMaxAmount?: boolean;
   /** Country-scoped weight block that calculates a dynamic storage capacity. */
@@ -75,17 +61,88 @@ export interface ResourceFields {
    * Stellaris does not document how it differs from `aiWeight`.
    */
   aiWants?: WeightBlock<"country">;
-  /** Only when resource subtype `max` applies. */
-  fixedMaxAmount?: true;
   /** Country condition that gates whether the resource can be traded on the market. */
   tradableInMarket?: Trigger<"country">;
 }
 
-/** A resource with the id it is defined under. */
-export interface ResourceDef<Id extends string = string> extends ResourceFields {
+/** A resource the subtype `max` (`subtype[max]`, selected by a written `max`) covers, and `tradable` does not. */
+export interface ResourceMaxFields extends ResourceFieldsBase {
+  /** Whether the resource participates in resource-trading behavior. */
+  tradable?: false;
+  /** default -1, if non-positive, resource cannot be traded in the Market */
+  marketAmount?: never;
+  /** default -1, if non-positive, resource cannot be traded in the Market */
+  marketPrice?: never;
+  /** Selects the `max` subtype (CWT `subtype[max]`). */
+  max: number;
+  /** Only when `max` is set. */
+  fixedMaxAmount?: true;
+}
+
+/** A resource the subtypes `tradable` (`subtype[tradable]`, selected by `tradable = yes`) and `max` (`subtype[max]`, selected by a written `max`) covers. */
+export interface ResourceTradableMaxFields extends ResourceFieldsBase {
+  /**
+   * Whether the resource participates in resource-trading behavior.
+   * Selects the `tradable` subtype (CWT `subtype[tradable]`).
+   */
+  tradable: true;
+  /**
+   * default -1, if non-positive, resource cannot be traded in the Market
+   * Only when `tradable: true`.
+   */
+  marketAmount?: number;
+  /**
+   * default -1, if non-positive, resource cannot be traded in the Market
+   * Only when `tradable: true`.
+   */
+  marketPrice?: number;
+  /** Selects the `max` subtype (CWT `subtype[max]`). */
+  max: number;
+  /** Only when `max` is set. */
+  fixedMaxAmount?: true;
+}
+
+/** A resource none of the subtypes `tradable`, `max` covers. */
+export interface ResourcePlainFields extends ResourceFieldsBase {
+  /** Whether the resource participates in resource-trading behavior. */
+  tradable?: false;
+  /** default -1, if non-positive, resource cannot be traded in the Market */
+  marketAmount?: never;
+  /** default -1, if non-positive, resource cannot be traded in the Market */
+  marketPrice?: never;
+  max?: never;
+  fixedMaxAmount?: never;
+}
+
+/**
+ * A resource, as the game's rules describe it:
+ * one arm per way its subtypes apply.
+ */
+export type ResourceFields = ResourceMaxFields | ResourceTradableMaxFields | ResourcePlainFields;
+
+/** A ResourceMaxFields definition with its id. */
+export interface ResourceMaxDef<Id extends string = string> extends ResourceMaxFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/** A ResourceTradableMaxFields definition with its id. */
+export interface ResourceTradableMaxDef<
+  Id extends string = string,
+> extends ResourceTradableMaxFields {
+  /** Full content id, including the mod prefix. */
+  id: Id;
+}
+
+/** A ResourcePlainFields definition with its id. */
+export interface ResourcePlainDef<Id extends string = string> extends ResourcePlainFields {
+  /** Full content id, including the mod prefix. */
+  id: Id;
+}
+
+/** A resource with the id it is defined under. */
+export type ResourceDef<Id extends string = string> =
+  ResourceMaxDef<Id> | ResourceTradableMaxDef<Id> | ResourcePlainDef<Id>;
 
 /**
  * The localization keys one `resource` mints, as references.
@@ -105,7 +162,7 @@ export type DefinedResource<Id extends string = string> = DefinedContent<
   ResourceDef<Id>
 >;
 
-/** How the writer lowers each member of {@link ResourceFields} to PDXScript. */
+/** How the writer lowers each member of {@link ResourceFieldsBase} to PDXScript. */
 export const RESOURCE_FIELDS: readonly ContentField[] = [
   { key: "tradable", member: "tradable", shape: "value", form: "scalar", conversion: "identity" },
   { key: "category", member: "category", shape: "value", form: "scalar", conversion: "identity" },

@@ -12,7 +12,7 @@ import type { Trigger } from "../script/trigger-core.ts";
  * An opinion_modifier, as the game's rules describe it.
  * Generated from `type[opinion_modifier]` at `game/common/opinion_modifiers`.
  */
-export interface OpinionModifierFields {
+export interface OpinionModifierFieldsBase {
   /**
    * Display text emitted to localization under `<id>`.
    * A bare string is the English shorthand.
@@ -49,13 +49,11 @@ export interface OpinionModifierFields {
   /**
    * For use with accumulative if the base is negative
    * Only when opinion_modifier subtype not `triggered_opinion_modifier` applies.
-   * Only when opinion_modifier subtype `block_triggered` applies.
    */
   min?: number;
   /**
    * For use with accumulative if the base is positive
    * Only when opinion_modifier subtype not `triggered_opinion_modifier` applies.
-   * Only when opinion_modifier subtype `block_triggered` applies.
    */
   max?: number;
   /** Only when opinion_modifier subtype not `triggered_opinion_modifier` applies. */
@@ -64,11 +62,6 @@ export interface OpinionModifierFields {
   monthly?: true;
   /** Only when opinion_modifier subtype not `triggered_opinion_modifier` applies. */
   months?: number;
-  /**
-   * stops modifier from automatically triggering when trigger evaluates to true
-   * Only when opinion_modifier subtype `block_triggered` applies.
-   */
-  blockTriggered?: true;
   /**
    * root = country with the opinion, from = country it has the opinion of
    * Only when opinion_modifier subtype `triggered_opinion_modifier` applies.
@@ -80,11 +73,47 @@ export interface OpinionModifierFields {
   >;
 }
 
-/** An opinion_modifier with the id it is defined under. */
-export interface OpinionModifierDef<Id extends string = string> extends OpinionModifierFields {
+/** An opinion_modifier the subtype `block_triggered` (`subtype[block_triggered]`, selected by `block_triggered = yes`) covers. */
+export interface OpinionModifierBlockTriggeredFields extends OpinionModifierFieldsBase {
+  /**
+   * stops modifier from automatically triggering when trigger evaluates to true
+   * Selects the `block_triggered` subtype (CWT `subtype[block_triggered]`).
+   */
+  blockTriggered: true;
+}
+
+/** An opinion_modifier none of the subtypes `block_triggered` covers. */
+export interface OpinionModifierPlainFields extends OpinionModifierFieldsBase {
+  /** stops modifier from automatically triggering when trigger evaluates to true */
+  blockTriggered?: never;
+}
+
+/**
+ * An opinion_modifier, as the game's rules describe it:
+ * one arm per way its subtypes apply.
+ */
+export type OpinionModifierFields =
+  OpinionModifierBlockTriggeredFields | OpinionModifierPlainFields;
+
+/** An OpinionModifierBlockTriggeredFields definition with its id. */
+export interface OpinionModifierBlockTriggeredDef<
+  Id extends string = string,
+> extends OpinionModifierBlockTriggeredFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/** An OpinionModifierPlainFields definition with its id. */
+export interface OpinionModifierPlainDef<
+  Id extends string = string,
+> extends OpinionModifierPlainFields {
+  /** Full content id, including the mod prefix. */
+  id: Id;
+}
+
+/** An opinion_modifier with the id it is defined under. */
+export type OpinionModifierDef<Id extends string = string> =
+  OpinionModifierBlockTriggeredDef<Id> | OpinionModifierPlainDef<Id>;
 
 /**
  * The localization keys one `opinion_modifier` mints, as references.
@@ -102,7 +131,7 @@ export type DefinedOpinionModifier<Id extends string = string> = DefinedContent<
   OpinionModifierDef<Id>
 >;
 
-/** How the writer lowers each member of {@link OpinionModifierFields} to PDXScript. */
+/** How the writer lowers each member of {@link OpinionModifierFieldsBase} to PDXScript. */
 export const OPINION_MODIFIER_FIELDS: readonly ContentField[] = [
   {
     key: "opinion",

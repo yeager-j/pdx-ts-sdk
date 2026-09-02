@@ -30,6 +30,8 @@ describe("content loc references", () => {
     expectTypeOf<ContentLoc<"technology">>().toEqualTypeOf<TechnologyLoc>();
 
     const tech = mod.technology("theory", {
+      cost: 100,
+      weight: 100,
       name: "Resonance Theory",
       area: "physics",
       tier: 1,

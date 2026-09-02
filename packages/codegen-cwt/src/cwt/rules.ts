@@ -8,6 +8,7 @@
  */
 
 import {
+  cardinalityOf,
   classify,
   classifyBlock,
   findOption,
@@ -78,9 +79,26 @@ export interface ContentSubtype {
   readonly pushScope: string | null;
   /** The subtype display name from `## display_name`, when declared. */
   readonly displayName: string | null;
-  /** The field whose absence selects the supported zero-cardinality subtype shape. */
-  readonly absentUnless: string | null;
+  /**
+   * How a definition selects this subtype, when the body states it as one
+   * readable field. `null` when the body is empty, names several fields, or
+   * asserts something the model cannot state.
+   */
+  readonly selector: SubtypeSelector | null;
 }
+
+/**
+ * The one-field predicate a `subtype[...]` body declares.
+ *
+ * `flag` is `X = yes` (`set`), or `X = no` under `0..1` / `X = yes` under
+ * `0..0` (not set). `present` is `X = <type>` or `X = { }`: the subtype applies
+ * when the field is written at all. `literal` is `X = token`: the field holds
+ * that exact value.
+ */
+export type SubtypeSelector =
+  | { readonly kind: "flag"; readonly field: string; readonly set: boolean }
+  | { readonly kind: "present"; readonly field: string }
+  | { readonly kind: "literal"; readonly field: string; readonly token: string };
 
 /** A CWT `type[...]` declaration and its file-layout metadata. */
 export interface ContentType {
@@ -640,26 +658,52 @@ function readLocalisation(
 }
 
 /**
- * Reads {@link ContentSubtype.absentUnless} out of a `subtype[...]` body.
+ * Reads {@link ContentSubtype.selector} out of a `subtype[...]` body.
  *
- * Deliberately narrow: exactly one field, asserting `X = yes`, under
- * `## cardinality = 0..0`. Anything else returns `null` — the body may still be
- * a real discriminator, but stating it would take a predicate model, and an
- * approximation here would silently mis-declare requiredness downstream.
+ * Deliberately narrow: exactly one field, in one of the shapes
+ * {@link SubtypeSelector} names. Anything else returns `null` — the body may
+ * still be a real discriminator, but an approximation here would silently
+ * mis-declare requiredness downstream. A `yes` under `0..1` is vacuous, and a
+ * subtype-qualified reference (`<mission_category.contract>`) selects by what
+ * the value names rather than by its presence, so both stay unread.
  */
-function absentUnlessOf(subtype: CwtAssignment): string | null {
+function subtypeSelectorOf(subtype: CwtAssignment): SubtypeSelector | null {
   if (subtype.value.kind !== "block" || subtype.value.nodes.length !== 1) {
     return null;
   }
   const only = subtype.value.nodes[0]!;
-  if (only.kind !== "assignment" || only.value.kind !== "scalar" || only.value.text !== "yes") {
+  if (only.kind !== "assignment") {
     return null;
   }
-  const cardinality = findOption(only.options, "cardinality");
-  if (cardinality?.value?.kind !== "scalar" || cardinality.value.text !== "0..0") {
+  const field = only.key.text;
+  const type = classify(only.value);
+  const { min, max } = cardinalityOf(only.options);
+  if (type.kind === "block") {
+    // `## cardinality = 0..0` on a block selects by its absence, which the
+    // model does not state; anything else is the block being written.
+    return min >= 1 ? { kind: "present", field } : null;
+  }
+  if (type.kind === "literal" && (type.text === "yes" || type.text === "no")) {
+    const set = type.text === "yes";
+    if (min >= 1) {
+      return set ? { kind: "flag", field, set: true } : null;
+    }
+    const absentAtMost = max === 0;
+    if (absentAtMost !== set) {
+      return null;
+    }
+    return { kind: "flag", field, set: false };
+  }
+  if (min !== 1) {
     return null;
   }
-  return only.key.text;
+  if (type.kind === "literal") {
+    return { kind: "literal", field, token: type.text };
+  }
+  if (type.kind === "typeRef" && type.name.includes(".")) {
+    return null;
+  }
+  return { kind: "present", field };
 }
 
 /**
@@ -709,7 +753,7 @@ function readSubtypes(block: CwtBlock): ContentSubtype[] {
       keyFilter: keyFilterOf(entry.options),
       pushScope: scopeOf(entry.options)?.this ?? null,
       displayName: scalarOption(entry.options, "display_name"),
-      absentUnless: absentUnlessOf(entry),
+      selector: subtypeSelectorOf(entry),
     });
   }
   return subtypes;

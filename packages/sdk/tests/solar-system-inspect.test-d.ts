@@ -21,6 +21,8 @@ describe("inspectSolarSystem types", () => {
 
   it("rejects other content items and plain definitions", () => {
     const technology = mod.technology("typed_tech", {
+      cost: 100,
+      weight: 100,
       name: "Typed tech",
       area: "physics",
       tier: 1,

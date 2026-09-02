@@ -36,6 +36,8 @@ describe("runInspect", () => {
       supportedVersion: "4.4.*",
     });
     const technology = mod.technology("theory", {
+      cost: 100,
+      weight: 100,
       name: "Theory",
       desc: "A theory",
       area: "physics",
@@ -121,12 +123,16 @@ describe("runInspect", () => {
       supportedVersion: "4.4.*",
     });
     const firstTechnology = mod.technology("first", {
+      cost: 100,
+      weight: 100,
       name: "First",
       area: "physics",
       tier: 1,
       category: "particles",
     });
     const secondTechnology = mod.technology("second", {
+      cost: 100,
+      weight: 100,
       name: "Second",
       area: "physics",
       tier: 1,

@@ -453,6 +453,7 @@ describe("the fold", () => {
     const compiled = capability.compile([
       capability.feature("probe", [
         capability.technology("marker", {
+          weight: 100,
           name: "Marker",
           cost: 1,
           area: "physics",

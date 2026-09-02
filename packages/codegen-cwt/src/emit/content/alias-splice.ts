@@ -28,7 +28,7 @@
  */
 
 import type { DescentNode } from "../../corpus/observations.ts";
-import { isOptional, type RuleField, type ScopeContext } from "../../cwt/model.ts";
+import type { RuleField, ScopeContext } from "../../cwt/model.ts";
 import type { Emitter } from "../../emit/typescript.ts";
 import type { EmittedField } from "../../lower/content-model.ts";
 import { structuralSpliceOf } from "../../lower/rule-shapes.ts";
@@ -43,6 +43,8 @@ import type { FieldContext } from "../scope-context.ts";
 import {
   authoredLiterals,
   emittedMemberType,
+  fieldDocs,
+  memberOptional,
   mergeByName,
   pickOrdinary,
   projectStructuralSplice,
@@ -56,6 +58,7 @@ import {
   type FieldOmissionRow,
   type MemberDocRow,
 } from "./field-rows.ts";
+import { collapsedConditionRows } from "./subtype-unions.ts";
 
 /** Generated authoring code and coverage evidence for one structural alias splice. */
 export interface AliasSpliceEmission {
@@ -93,7 +96,9 @@ export interface AliasSpliceEmission {
   readonly declinedFields: readonly string[];
   /** Declared in the category but not expressible, each with its reason. */
   readonly unsupported: readonly string[];
-  /** The declined and unsupported rows the two prose lists are printed from. */
+  /** Members a subtype arm requires that the block authors optional, each with the reason. */
+  readonly subtypeCollapses: readonly string[];
+  /** The declined, unsupported, and collapsed rows the prose lists are printed from. */
   readonly omissions: readonly FieldOmissionRow[];
   /** Doc rows for the category's own table and every table nested inside it. */
   readonly docTables: readonly DocTable[];
@@ -112,7 +117,7 @@ interface AliasSpliceDraft {
   readonly members: string[];
   readonly fieldMetadata: string[];
   readonly declinedFields: FieldOmissionRow[];
-  readonly unsupported: FieldOmissionRow[];
+  readonly omissions: FieldOmissionRow[];
   readonly emittedFields: EmittedField[];
   readonly corpusDescents: DescentNode[];
   readonly extraCode: string[];
@@ -153,7 +158,7 @@ function emptyAliasSpliceDraft(): AliasSpliceDraft {
     members: [],
     fieldMetadata: [],
     declinedFields: [],
-    unsupported: [],
+    omissions: [],
     emittedFields: [],
     corpusDescents: [],
     extraCode: [],
@@ -170,7 +175,7 @@ function combineAliasSpliceDrafts(...drafts: readonly AliasSpliceDraft[]): Alias
     members: drafts.flatMap((draft) => draft.members),
     fieldMetadata: drafts.flatMap((draft) => draft.fieldMetadata),
     declinedFields: drafts.flatMap((draft) => draft.declinedFields),
-    unsupported: drafts.flatMap((draft) => draft.unsupported),
+    omissions: drafts.flatMap((draft) => draft.omissions),
     emittedFields: drafts.flatMap((draft) => draft.emittedFields),
     corpusDescents: drafts.flatMap((draft) => draft.corpusDescents),
     extraCode: drafts.flatMap((draft) => draft.extraCode),
@@ -188,7 +193,11 @@ function rootAtMemberKey(context: AliasSpliceContext, field: string): string {
 /** Projects the category's ordinary named fields and records their emitter effects. */
 function projectNamedMembers(emitter: Emitter, context: AliasSpliceContext): AliasSpliceDraft {
   const draft = emptyAliasSpliceDraft();
-  for (const [name, group] of mergeByName(context.fields, context.typeName)) {
+  const grouped = mergeByName(context.fields, context.typeName);
+  draft.omissions.push(
+    ...collapsedConditionRows(grouped, context.category, "alias-category members are read flat")
+  );
+  for (const [name, group] of grouped) {
     const fieldPath = `${context.category}.${name}`;
     const declined = CONTENT_DECLINED_FIELDS.get(fieldPath);
     if (declined !== undefined) {
@@ -215,15 +224,15 @@ function projectNamedMembers(emitter: Emitter, context: AliasSpliceContext): Ali
       fieldPath
     );
     if (projection === null) {
-      draft.unsupported.push({
+      draft.omissions.push({
         path: fieldPath,
         kind: "unsupported",
         reason: "no declaration the emitter can lower",
       });
       continue;
     }
-    const optional = group.every((field) => isOptional(field.cardinality));
-    const docs = [...new Set(group.flatMap((field) => field.docs))];
+    const optional = memberOptional(group, override);
+    const docs = [...new Set(group.flatMap(fieldDocs))];
     const member = camelCase(name);
     draft.members.push(
       renderMember({ name: member, type: emittedMemberType(projection), optional, docs })
@@ -240,8 +249,8 @@ function projectNamedMembers(emitter: Emitter, context: AliasSpliceContext): Ali
       draft.extraCode.push(projection.code);
       draft.exportedNames.push(...(projection.exportedNames ?? []));
     }
-    if (projection.unsupported !== undefined) {
-      draft.unsupported.push(...projection.unsupported);
+    if (projection.omissions !== undefined) {
+      draft.omissions.push(...projection.omissions);
     }
     draft.emittedFields.push(
       { field: `${context.memberKey}.${name}`, ...projection.admits },
@@ -263,9 +272,9 @@ function projectNestedSplices(emitter: Emitter, context: AliasSpliceContext): Al
     if (draft.spliceCategories.includes(nestedCategory)) {
       continue;
     }
-    const projected = projectStructuralSplice(emitter, nestedCategory, nested.docs);
+    const projected = projectStructuralSplice(emitter, nestedCategory, fieldDocs(nested));
     if (projected === null) {
-      draft.unsupported.push({
+      draft.omissions.push({
         path: `${context.category}.alias_name[${nestedCategory}]`,
         kind: "unsupported",
         reason: "spliced unkeyed; that category has no authoring member",
@@ -334,8 +343,9 @@ function aliasSpliceEmission(
     emittedFields: draft.emittedFields,
     corpusDescents: draft.corpusDescents,
     declinedFields: draft.declinedFields.map(omissionLine),
-    unsupported: draft.unsupported.map(omissionLine),
-    omissions: [...draft.declinedFields, ...draft.unsupported],
+    unsupported: draft.omissions.filter((row) => row.kind === "unsupported").map(omissionLine),
+    subtypeCollapses: draft.omissions.filter((row) => row.kind === "collapsed").map(omissionLine),
+    omissions: [...draft.declinedFields, ...draft.omissions],
     docTables: [
       { constant: context.fieldsConstant, members: draft.memberDocs },
       ...draft.docTables,

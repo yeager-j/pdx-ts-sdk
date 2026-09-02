@@ -92,6 +92,8 @@ describe("mod capability purity and ids", () => {
     const config = { name: "Snapshot", prefix: "snapshot_mod", supportedVersion: "4.4.*", tags };
     const capability = createMod(config);
     const omitted = capability.technology("omitted", {
+      cost: 100,
+      weight: 100,
       name: "Omitted",
       area: "physics",
       tier: 1,
@@ -124,6 +126,8 @@ describe("mod capability purity and ids", () => {
     expect(Object.isFrozen(custom.ids)).toBe(true);
     expect(
       custom.technology("theory", {
+        cost: 100,
+        weight: 100,
         name: "Theory",
         area: "physics",
         tier: 1,
@@ -157,6 +161,8 @@ describe("mod capability purity and ids", () => {
     );
     expect(() =>
       capability.technology("Not a name", {
+        cost: 100,
+        weight: 100,
         name: "Invalid",
         area: "physics",
         tier: 1,
@@ -169,12 +175,16 @@ describe("mod capability purity and ids", () => {
 
 function reusablePack<P extends string, I extends IdProfile>(capability: ModCapability<P, I>) {
   const theory = capability.technology("pack_theory", {
+    cost: 100,
+    weight: 100,
     name: "Pack Theory",
     area: "physics",
     tier: 1,
     category: "particles",
   });
   const application = capability.technology("pack_application", {
+    cost: 100,
+    weight: 100,
     name: "Pack Application",
     area: "physics",
     tier: 2,
@@ -365,6 +375,8 @@ describe("mod capability composition", () => {
       supportedVersion: "4.4.*",
     });
     const technology = capability.technology("stable", {
+      cost: 100,
+      weight: 100,
       name: "Stable",
       area: "physics",
       tier: 1,
@@ -393,6 +405,8 @@ describe("mod capability composition", () => {
     const alpha = createMod({ name: "Alpha", prefix: "alpha_mod", supportedVersion: "4.4.*" });
     const beta = createMod({ name: "Beta", prefix: "beta_mod", supportedVersion: "4.4.*" });
     const betaTechnology = beta.technology("theory", {
+      cost: 100,
+      weight: 100,
       name: "Theory",
       area: "physics",
       tier: 1,

@@ -179,7 +179,7 @@ export const CIVIC_OR_ORIGIN_SOFT_TRAITS_FIELDS: readonly ContentField[] = [
  * A civic_or_origin, as the game's rules describe it.
  * Generated from `type[civic_or_origin]` at `game/common/governments/civics`.
  */
-export interface CivicOrOriginFields {
+export interface CivicOrOriginFieldsBase {
   /**
    * Display text emitted to localization under `<id>`.
    * A bare string is the English shorthand.
@@ -212,10 +212,7 @@ export interface CivicOrOriginFields {
   possible?: GovernmentTriggerBlock;
   /** modifier added to the country if the civic is selected and valid */
   modifier?: ModifierClosure<"country">;
-  /**
-   * default: no
-   * Only when civic_or_origin subtype `origin` applies.
-   */
+  /** default: no */
   hideModifiers?: boolean;
   multiplyByHabitabilityEffectModifier?: ModifierClosure<"country">;
   startingColony?: PlanetClassRef | string;
@@ -225,74 +222,12 @@ export interface CivicOrOriginFields {
   customTooltipWithModifiers?: LocalizationInput[];
   swapType?: CivicOrOriginSwapType[];
   /**
-   * default: 1
-   * Only when civic_or_origin subtype `civic` applies.
-   */
-  cost?: number;
-  /**
-   * default: yes
-   * Only when civic_or_origin subtype `civic` applies.
-   */
-  pickableAtStart?: boolean;
-  /**
-   * Can be a set of two triggers, add to check if can be added later under certain conditions, remove to check if can be removed later under certain conditions
-   * Only when civic_or_origin subtype `civic` applies.
-   */
-  modification?: CivicOrOriginModification | boolean;
-  /**
-   * default: no
-   * Only when civic_or_origin subtype `civic` applies.
-   */
-  canBuildRulerShip?: boolean;
-  /**
    * default: empty; trait set to enforce on the primary species
-   * Only when civic_or_origin subtype `civic` applies.
    * default: empty; trait set to enforce on the primary species. They cannot be removed, but more can be added if points/picks permit
-   * Only when civic_or_origin subtype `origin` applies.
    */
   traits?: CivicOrOriginTraits;
-  /**
-   * default: none; if present, will enable secondary species customization in empire designer and will create secondary species & pops at galaxy generation time (see empire_init_create_capital_secondary_pops)
-   * Only when civic_or_origin subtype `civic` applies.
-   * Only when civic_or_origin subtype `origin` applies.
-   */
+  /** default: none; if present, will enable secondary species customization in empire designer and will create secondary species & pops at galaxy generation time (see empire_init_create_capital_secondary_pops) */
   hasSecondarySpecies?: CivicOrOriginHasSecondarySpecies;
-  /** Only when civic_or_origin subtype `civic` applies. */
-  alternateCivicVersion?: CivicOrOriginCivicRef | string;
-  /** Only when civic_or_origin subtype `origin` applies. */
-  isOrigin?: true;
-  /** Only when civic_or_origin subtype `origin` applies. */
-  picture?: SpriteRef | string;
-  /** Only when civic_or_origin subtype `origin` applies. */
-  initializers?: (SolarSystemInitializerRef | string)[];
-  /** Only when civic_or_origin subtype `origin` applies. */
-  portrait?: PortraitRef | string;
-  /**
-   * default: no
-   * Only when civic_or_origin subtype `origin` applies.
-   */
-  maxOnceGlobal?: boolean;
-  /** Only when civic_or_origin subtype `origin` applies. */
-  advancedStart?: boolean;
-  /**
-   * ORIGIN EXCLUSIVE; default: empty; same as above, except these can be removed without making the government invalid.
-   * Only when civic_or_origin subtype `origin` applies.
-   */
-  softTraits?: CivicOrOriginSoftTraits;
-  /**
-   * Such a descriptive tag, this.
-   * Only when civic_or_origin subtype `origin` applies.
-   */
-  nonColonizablePlanetClassNeighbor?: true;
-  /** Only when civic_or_origin subtype `origin` applies. */
-  habitabilityPreference?: PlanetClassRef | string;
-  /** Only when civic_or_origin subtype `origin` applies. */
-  preferredPlanetClassNeighbor?: false;
-  /**
-   * ORIGIN EXCLUSIVE: Makes sure that random empire creation does not create invalid combinations with individualistic machines. Defaults to yes. Required for all origins that should be blocked by individualist machines.
-   * Only when civic_or_origin subtype `origin` applies.
-   */
-  blocksRandomMachineEmpireGeneration?: boolean;
   room?: string | AssetSelectorRoomRef;
   cityGraphicalCulture?: GraphicalCultureRef | string;
   leaderBackgroundJobWeight?: Readonly<Record<string, number>>;
@@ -304,11 +239,119 @@ export interface CivicOrOriginFields {
   removedPlanetTypes?: (PlanetClassRef | string)[];
 }
 
-/** A civic_or_origin with the id it is defined under. */
-export interface CivicOrOriginDef<Id extends string = string> extends CivicOrOriginFields {
+/** A civic_or_origin the subtype `civic` (`subtype[civic]`, selected by no `is_origin = yes`) covers, and `origin` does not. */
+export interface CivicOrOriginCivicFields extends CivicOrOriginFieldsBase {
+  /**
+   * default: 1
+   * Only when `isOrigin` is not `true`.
+   */
+  cost?: number;
+  /**
+   * default: yes
+   * Only when `isOrigin` is not `true`.
+   */
+  pickableAtStart?: boolean;
+  /**
+   * Can be a set of two triggers, add to check if can be added later under certain conditions, remove to check if can be removed later under certain conditions
+   * Only when `isOrigin` is not `true`.
+   */
+  modification?: CivicOrOriginModification | boolean;
+  /**
+   * default: no
+   * Only when `isOrigin` is not `true`.
+   */
+  canBuildRulerShip?: boolean;
+  /** Only when `isOrigin` is not `true`. */
+  alternateCivicVersion?: CivicOrOriginCivicRef | string;
+  isOrigin?: never;
+  picture?: never;
+  initializers?: never;
+  portrait?: never;
+  /** default: no */
+  maxOnceGlobal?: never;
+  advancedStart?: never;
+  /** ORIGIN EXCLUSIVE; default: empty; same as above, except these can be removed without making the government invalid. */
+  softTraits?: never;
+  /** Such a descriptive tag, this. */
+  nonColonizablePlanetClassNeighbor?: never;
+  habitabilityPreference?: never;
+  preferredPlanetClassNeighbor?: never;
+  /** ORIGIN EXCLUSIVE: Makes sure that random empire creation does not create invalid combinations with individualistic machines. Defaults to yes. Required for all origins that should be blocked by individualist machines. */
+  blocksRandomMachineEmpireGeneration?: never;
+}
+
+/** A civic_or_origin the subtype `origin` (`subtype[origin]`, selected by `is_origin = yes`) covers, and `civic` does not. */
+export interface CivicOrOriginOriginFields extends CivicOrOriginFieldsBase {
+  /** default: 1 */
+  cost?: never;
+  /** default: yes */
+  pickableAtStart?: never;
+  /** Can be a set of two triggers, add to check if can be added later under certain conditions, remove to check if can be removed later under certain conditions */
+  modification?: never;
+  /** default: no */
+  canBuildRulerShip?: never;
+  alternateCivicVersion?: never;
+  /** Selects the `origin` subtype (CWT `subtype[origin]`). */
+  isOrigin: true;
+  /** Only when `isOrigin: true`. */
+  picture?: SpriteRef | string;
+  /** Only when `isOrigin: true`. */
+  initializers?: (SolarSystemInitializerRef | string)[];
+  /** Only when `isOrigin: true`. */
+  portrait?: PortraitRef | string;
+  /**
+   * default: no
+   * Only when `isOrigin: true`.
+   */
+  maxOnceGlobal?: boolean;
+  /** Only when `isOrigin: true`. */
+  advancedStart?: boolean;
+  /**
+   * ORIGIN EXCLUSIVE; default: empty; same as above, except these can be removed without making the government invalid.
+   * Only when `isOrigin: true`.
+   */
+  softTraits?: CivicOrOriginSoftTraits;
+  /**
+   * Such a descriptive tag, this.
+   * Only when `isOrigin: true`.
+   */
+  nonColonizablePlanetClassNeighbor?: true;
+  /** Only when `isOrigin: true`. */
+  habitabilityPreference?: PlanetClassRef | string;
+  /** Only when `isOrigin: true`. */
+  preferredPlanetClassNeighbor?: false;
+  /**
+   * ORIGIN EXCLUSIVE: Makes sure that random empire creation does not create invalid combinations with individualistic machines. Defaults to yes. Required for all origins that should be blocked by individualist machines.
+   * Only when `isOrigin: true`.
+   */
+  blocksRandomMachineEmpireGeneration?: boolean;
+}
+
+/**
+ * A civic_or_origin, as the game's rules describe it:
+ * one arm per way its subtypes apply.
+ */
+export type CivicOrOriginFields = CivicOrOriginCivicFields | CivicOrOriginOriginFields;
+
+/** A CivicOrOriginCivicFields definition with its id. */
+export interface CivicOrOriginCivicDef<
+  Id extends string = string,
+> extends CivicOrOriginCivicFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/** A CivicOrOriginOriginFields definition with its id. */
+export interface CivicOrOriginOriginDef<
+  Id extends string = string,
+> extends CivicOrOriginOriginFields {
+  /** Full content id, including the mod prefix. */
+  id: Id;
+}
+
+/** A civic_or_origin with the id it is defined under. */
+export type CivicOrOriginDef<Id extends string = string> =
+  CivicOrOriginCivicDef<Id> | CivicOrOriginOriginDef<Id>;
 
 /**
  * The localization keys one `civic_or_origin` mints, as references.
@@ -328,7 +371,7 @@ export type DefinedCivicOrOrigin<Id extends string = string> = DefinedContent<
   CivicOrOriginDef<Id>
 >;
 
-/** How the writer lowers each member of {@link CivicOrOriginFields} to PDXScript. */
+/** How the writer lowers each member of {@link CivicOrOriginFieldsBase} to PDXScript. */
 export const CIVIC_OR_ORIGIN_FIELDS: readonly ContentField[] = [
   { key: "icon", member: "icon", shape: "value", form: "scalar", conversion: "identity" },
   {

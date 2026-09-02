@@ -59,6 +59,7 @@ const capability = createMod(config);
 const mod = capability.compile([
   capability.feature(undefined, [
     capability.technology("marker", {
+      weight: 100,
       name: "Marker",
       cost: 1000,
       area: "physics",
@@ -71,6 +72,7 @@ const renderedMod = render(mod);
 
 function renderedWithOldFeature() {
   const old = capability.technology("old_marker", {
+    weight: 100,
     name: "Old Marker",
     cost: 1000,
     area: "physics",
@@ -81,6 +83,7 @@ function renderedWithOldFeature() {
     capability.compile([
       capability.feature(undefined, [
         capability.technology("marker", {
+          weight: 100,
           name: "Marker",
           cost: 1000,
           area: "physics",
@@ -99,6 +102,7 @@ function renderedVariant(name: string) {
     variant.compile([
       variant.feature(undefined, [
         variant.technology("marker", {
+          weight: 100,
           name: "Marker",
           cost: 1000,
           area: "physics",
@@ -392,6 +396,7 @@ describe("install is atomic in the ways that matter", () => {
       [
         capability.feature(undefined, [
           capability.technology("marker", {
+            weight: 100,
             name: "Marker",
             cost: 1000,
             area: "physics",

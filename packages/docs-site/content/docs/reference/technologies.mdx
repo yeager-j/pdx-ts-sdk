@@ -36,6 +36,12 @@ These fields answer different questions about progression:
 | `gateway`       | Labels the technology as a gateway for a broader progression family. |
 | `startTech`     | Marks a technology for the starting-technology flow.                 |
 
+`cost` and `weight` are required on every technology that is not a starting
+technology: the rules declare them under the non-start subtype, and the SDK
+types that subtype as one arm of `TechnologyFields`. A definition with
+`startTech: true` takes the other arm, where both are optional and
+`startingPotential` becomes available.
+
 `area` and `category` are not interchangeable. A Physics technology may use
 the `particles` or `computing` category, for example. Write exactly one
 category: multiple categories are not supported. Every `category` block
@@ -84,7 +90,9 @@ existing key through `localisation/replace/`. See
 
 ### Starting technologies have a separate eligibility check
 
-`startTech: true` enters the starting-technology flow. `startingPotential`
+`startTech: true` enters the starting-technology flow and selects the start
+arm of the definition type: `cost` and `weight` become optional, and
+`startingPotential` becomes available. `startingPotential`
 controls whether a country starts with that technology, while `potential`
 controls whether the technology is available to that country more generally.
 Vanilla uses both on starting ship technologies so special origins and ship
@@ -139,7 +147,9 @@ use one stable spelling across every participating technology.
 
 ## Repeatable technologies
 
-`levels` makes one technology researchable more than once. Vanilla uses
+`levels` makes one technology researchable more than once, and selects the
+repeatable arm of the definition type, where `costPerLevel` is required. A
+starting technology cannot be repeatable. Vanilla uses
 `levels: -1` for an unlimited repeatable and a positive value for a bounded
 number of levels. `costPerLevel` supplies the additional per-level cost. The
 advanced example's `orbitalForecasting` is an unlimited repeatable built from

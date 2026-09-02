@@ -19,6 +19,35 @@ import { referencesIdentifier } from "../naming.ts";
 import { assertRecordedImportsAreUsed, importList, renderImports } from "./symbols.ts";
 import type { Usage } from "./usage.ts";
 
+/**
+ * Formats until Prettier returns its input unchanged.
+ *
+ * Prettier is not idempotent on every shape — a method signature inside an
+ * intersection type can wrap on the first pass and unwrap on the second. The
+ * pre-commit hook formats the committed generated files again, so the staged
+ * text has to be Prettier's own fixpoint or `codegen:check` disagrees with the
+ * commit. Three passes is well past any shape seen; more means Prettier
+ * oscillates, which is an error to surface rather than paper over.
+ */
+export async function formatToFixpoint(
+  contents: string,
+  options: Parameters<typeof format>[1]
+): Promise<string> {
+  let current = contents;
+  for (let pass = 0; pass < 3; pass += 1) {
+    const next = await format(current, options);
+    if (next === current) {
+      return current;
+    }
+    current = next;
+  }
+  const settled = await format(current, options);
+  if (settled !== current) {
+    throw new Error(`Prettier did not settle after three passes for ${options?.filepath}`);
+  }
+  return current;
+}
+
 interface GeneratedNameResolver {
   enumTypeName(name: string): string;
   refTypeName(name: string): string;
@@ -180,7 +209,10 @@ export class GeneratedOutput {
 
     const destinationPath = path.join(this.outputDirectory, outputFile);
     const options = await resolveConfig(destinationPath);
-    const formattedContents = await format(contents, { ...options, filepath: destinationPath });
+    const formattedContents = await formatToFixpoint(contents, {
+      ...options,
+      filepath: destinationPath,
+    });
 
     writeFileSync(path.join(this.stagingDirectory, outputFile), formattedContents, "utf8");
     this.writtenFiles.add(outputFile);

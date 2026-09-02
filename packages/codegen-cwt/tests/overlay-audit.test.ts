@@ -31,6 +31,7 @@ import {
   EXACT_NAME_MINTS,
   FIELD_WIDENINGS,
   FILE_STEM_OVERLAYS,
+  FLAT_SUBTYPE_ARMS,
   HAND_WRITTEN_CONTENT_DEFINERS,
   MINT_SHAPE_OVERLAYS,
   PATCH_WIDENINGS,
@@ -720,6 +721,9 @@ describe("the real pipeline's overlay tables", () => {
     ).not.toThrow();
     expect(() =>
       emitter.overlayAudit.assertAllApplied("FIELD_WIDENINGS", FIELD_WIDENINGS.keys())
+    ).not.toThrow();
+    expect(() =>
+      emitter.overlayAudit.assertAllApplied("FLAT_SUBTYPE_ARMS", FLAT_SUBTYPE_ARMS.keys())
     ).not.toThrow();
     expect(() =>
       emitter.overlayAudit.assertAllApplied("CONTENT_FIELD_DOCS", CONTENT_FIELD_DOCS.keys())

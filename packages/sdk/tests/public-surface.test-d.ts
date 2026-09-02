@@ -24,6 +24,8 @@ describe("the pipeline entry point", () => {
       supportedVersion: "4.4.*",
     });
     const technology: TechnologyItem = mod.technology("theory", {
+      cost: 100,
+      weight: 100,
       name: "Theory",
       area: "physics",
       tier: 1,

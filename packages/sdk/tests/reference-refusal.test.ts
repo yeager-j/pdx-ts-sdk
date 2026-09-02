@@ -71,6 +71,8 @@ describe("generic content lowering", () => {
   it("refuses a non-reference in a reference list and names the member", () => {
     const feature = mod.feature(undefined, [
       mod.technology("resonance", {
+        cost: 100,
+        weight: 100,
         name: "Resonance",
         area: "physics",
         tier: 1,
@@ -86,12 +88,16 @@ describe("generic content lowering", () => {
 
   it("still lowers the reference forms the member accepts", () => {
     const base = mod.technology("base", {
+      cost: 100,
+      weight: 100,
       name: "Base",
       area: "physics",
       tier: 1,
       category: "particles",
     });
     const derived = mod.technology("derived", {
+      cost: 100,
+      weight: 100,
       name: "Derived",
       area: "physics",
       tier: 2,

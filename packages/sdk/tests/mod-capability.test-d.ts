@@ -79,7 +79,8 @@ describe("mod capability types", () => {
       supportedVersion: "4.4.*",
     });
     const required = mod.componentSet("reactor", { requiredComponentSet: true });
-    const ordinary = mod.componentSet("weapon", {});
+    // An ordinary set is the unselected arm, where the rules require `icon`.
+    const ordinary = mod.componentSet("weapon", { icon: "GFX_weapon" });
     const acceptsRequired = (_set: ComponentSetRequiredComponentRef): void => {};
 
     acceptsRequired(required);
@@ -91,7 +92,7 @@ describe("mod capability types", () => {
     // definition does not cost the subtype refinement.
     acceptsRequired(mod.componentSetHandle("deferred").define({ requiredComponentSet: true }));
     // @ts-expect-error — and the unrefined arm still does not qualify.
-    acceptsRequired(mod.componentSetHandle("plain").define({}));
+    acceptsRequired(mod.componentSetHandle("plain").define({ icon: "GFX_plain" }));
   });
 
   it("mints exact default and custom ids without accepting caller ids", () => {
@@ -101,6 +102,8 @@ describe("mod capability types", () => {
       supportedVersion: "4.4.*",
     });
     const defaultTechnology = defaults.technology("theory", {
+      cost: 100,
+      weight: 100,
       name: "Theory",
       area: "physics",
       tier: 1,
@@ -124,6 +127,8 @@ describe("mod capability types", () => {
       { ids: profile }
     );
     const customTechnology = custom.technology("theory", {
+      cost: 100,
+      weight: 100,
       name: "Theory",
       area: "physics",
       tier: 1,
@@ -135,12 +140,16 @@ describe("mod capability types", () => {
   it("preserves registry references, namespaces, and FROM witnesses", () => {
     const mod = createMod({ name: "Events", prefix: "event_types", supportedVersion: "4.4.*" });
     const theory = mod.technology("theory", {
+      cost: 100,
+      weight: 100,
       name: "Theory",
       area: "physics",
       tier: 1,
       category: "particles",
     });
     mod.technology("application", {
+      cost: 100,
+      weight: 100,
       name: "Application",
       area: "physics",
       tier: 2,
@@ -232,6 +241,8 @@ describe("mod capability types", () => {
   it("keeps generic packs, content scope, and handwritten situations coherent", () => {
     function pack<P extends string, I extends IdProfile>(mod: ModCapability<P, I>) {
       const first = mod.technology("first", {
+        cost: 100,
+        weight: 100,
         name: "First",
         area: "physics",
         tier: 1,

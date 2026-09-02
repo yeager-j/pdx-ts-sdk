@@ -66,7 +66,7 @@ export const MEGASTRUCTURE_PLACEMENT_RULES_FIELDS: readonly ContentField[] = [
  * A megastructure, as the game's rules describe it.
  * Generated from `type[megastructure]` at `game/common/megastructures`.
  */
-export interface MegastructureFields {
+export interface MegastructureFieldsBase {
   /**
    * Display text emitted to localization under `<id>`.
    * A bare string is the English shorthand.
@@ -141,14 +141,6 @@ export interface MegastructureFields {
     "system",
     { readonly root: "system"; readonly from: "country" }
   >;
-  prerequisites?: (TechnologyRef | string)[];
-  /** Only when megastructure subtype `has_prereqs` applies. */
-  showPrereqs?: boolean;
-  /**
-   * Only when megastructure subtype `has_prereqs` applies.
-   * Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.
-   */
-  prereqName?: LocalizationInput;
   potential?: Trigger<"country">;
   possible?: WithFrom<
     Trigger<"system">,
@@ -255,11 +247,52 @@ export interface MegastructureFields {
   scriptedAction?: (ScriptedActionRef | string)[];
 }
 
-/** A megastructure with the id it is defined under. */
-export interface MegastructureDef<Id extends string = string> extends MegastructureFields {
+/** A megastructure the subtype `has_prereqs` (`subtype[has_prereqs]`, selected by a written `prerequisites`) covers. */
+export interface MegastructureHasPrereqsFields extends MegastructureFieldsBase {
+  /** Selects the `has_prereqs` subtype (CWT `subtype[has_prereqs]`). */
+  prerequisites: (TechnologyRef | string)[];
+  /** Only when `prerequisites` is set. */
+  showPrereqs?: boolean;
+  /**
+   * Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.
+   * Only when `prerequisites` is set.
+   */
+  prereqName?: LocalizationInput;
+}
+
+/** A megastructure none of the subtypes `has_prereqs` covers. */
+export interface MegastructurePlainFields extends MegastructureFieldsBase {
+  prerequisites?: never;
+  showPrereqs?: never;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  prereqName?: never;
+}
+
+/**
+ * A megastructure, as the game's rules describe it:
+ * one arm per way its subtypes apply.
+ */
+export type MegastructureFields = MegastructureHasPrereqsFields | MegastructurePlainFields;
+
+/** A MegastructureHasPrereqsFields definition with its id. */
+export interface MegastructureHasPrereqsDef<
+  Id extends string = string,
+> extends MegastructureHasPrereqsFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/** A MegastructurePlainFields definition with its id. */
+export interface MegastructurePlainDef<
+  Id extends string = string,
+> extends MegastructurePlainFields {
+  /** Full content id, including the mod prefix. */
+  id: Id;
+}
+
+/** A megastructure with the id it is defined under. */
+export type MegastructureDef<Id extends string = string> =
+  MegastructureHasPrereqsDef<Id> | MegastructurePlainDef<Id>;
 
 /**
  * The localization keys one `megastructure` mints, as references.
@@ -370,12 +403,13 @@ export interface MegastructurePatch {
   readonly tooltipSystemFilter?: PatchInput<
     WithFrom<Trigger<"system">, "system", { readonly root: "system"; readonly from: "country" }>
   >;
+  /** Selects the `has_prereqs` subtype (CWT `subtype[has_prereqs]`). */
   readonly prerequisites?: PatchInput<(TechnologyRef | string)[]>;
-  /** Only when megastructure subtype `has_prereqs` applies. */
+  /** Only when `prerequisites` is set. */
   readonly showPrereqs?: PatchInput<boolean>;
   /**
-   * Only when megastructure subtype `has_prereqs` applies.
    * Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.
+   * Only when `prerequisites` is set.
    */
   readonly prereqName?: PatchInput<LocalizationInput>;
   readonly potential?: PatchInput<Trigger<"country">>;
@@ -507,7 +541,7 @@ export type PatchedMegastructure = PatchedContent<ParsedMegastructure>;
 /** A patched vanilla megastructure placed into a capability feature. */
 export type MegastructurePatchItem = ContentPatchItem<ParsedMegastructure>;
 
-/** How the writer lowers each member of {@link MegastructureFields} to PDXScript. */
+/** How the writer lowers each member of {@link MegastructureFieldsBase} to PDXScript. */
 export const MEGASTRUCTURE_FIELDS: readonly ContentField[] = [
   { key: "entity", member: "entity", shape: "value", form: "scalar", conversion: "ref" },
   {

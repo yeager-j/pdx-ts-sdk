@@ -294,7 +294,7 @@ export const SHIP_SIZE_HERO_SHIP_FIELDS: readonly ContentField[] = [
  * A ship_size, as the game's rules describe it.
  * Generated from `type[ship_size]` at `game/common/ship_sizes`.
  */
-export interface ShipSizeFields {
+export interface ShipSizeFieldsBase {
   /**
    * Display text emitted to localization under `<id>`.
    * A bare string is the English shorthand.
@@ -316,10 +316,7 @@ export interface ShipSizeFields {
   preCommunicationsName?: LocalizationInput;
   /** reference to other ship_sizes + _entity, handled by manual validator */
   entity?: ModelEntityRef | string;
-  /**
-   * Used to filter ships sizes for graphical cultures
-   * Only when ship_size subtype `space_fauna` applies.
-   */
+  /** Used to filter ships sizes for graphical cultures */
   shipCategory?: ShipCategoriesRef | string;
   formationPriority?: number;
   maxSpeed?: number;
@@ -359,11 +356,6 @@ export interface ShipSizeFields {
   useShipnamesFrom?: ShipSizeRef | string;
   combatSizeMultiplier?: number;
   numTargetLocators?: number;
-  /**
-   * Only when ship_size subtype not `arkship` applies.
-   * Only when ship_size subtype `arkship` applies.
-   */
-  isSpaceStation?: boolean;
   isOrbitalRing?: boolean;
   iconFrame?: number;
   baseBuildtime?: number;
@@ -396,13 +388,8 @@ export interface ShipSizeFields {
    */
   evaluationResource?: ResourceRef | string;
   usesNamePrefix?: boolean;
-  isSpaceFaunaShip?: boolean;
   /** default: no? */
   isReanimated?: boolean;
-  /** Only when ship_size subtype `space_fauna` applies. */
-  mutationComponentsSize?: MutationComponentsSize;
-  /** Only when ship_size subtype `space_fauna` applies. */
-  spaceFaunaValues?: ShipSizeSpaceFaunaValues;
   takesNameFromShipDesign?: boolean;
   flipControlOnDisable?: boolean;
   combatDisengageChance?: number;
@@ -440,7 +427,6 @@ export interface ShipSizeFields {
   upgradesTo?: ShipSizeRef | string;
   displayAttackNeutralFleetButton?: boolean;
   constructionOffsetMult?: number;
-  carriesColony?: PlanetClassRef | string;
   collectsStockpileFrom?: ShipClass[];
   collectsStockpileToCountry?: boolean;
   shipStockpileCapacity?: number;
@@ -460,26 +446,137 @@ export interface ShipSizeFields {
    * Default: no.
    */
   preserveMovementAnimationProgress?: boolean;
-  /** Only when ship_size subtype `arkship` applies. */
-  isStartingArkship?: boolean;
-  /** Only when ship_size subtype `arkship` applies. */
-  baseShipSize?: ShipSizeRef | string;
-  /** Only when ship_size subtype `arkship` applies. */
-  acceptsAllModifiers?: boolean;
-  /** Only when ship_size subtype `arkship` applies. */
-  encampmentRequiredProgress?: number;
-  /** Only when ship_size subtype `arkship` applies. */
-  arkshipPicture?: string;
-  /** Only when ship_size subtype `arkship` applies. */
-  planetViewHeader?: SpriteRef | string;
   heroShip?: ShipSizeHeroShip;
 }
 
-/** A ship_size with the id it is defined under. */
-export interface ShipSizeDef<Id extends string = string> extends ShipSizeFields {
+/** A ship_size the subtype `space_fauna` (`subtype[space_fauna]`, selected by `is_space_fauna_ship = yes`) covers, and `arkship` does not. */
+export interface ShipSizeSpaceFaunaFields extends ShipSizeFieldsBase {
+  /** Required when `carriesColony` is set. */
+  isSpaceStation?: boolean;
+  /** Selects the `space_fauna` subtype (CWT `subtype[space_fauna]`). */
+  isSpaceFaunaShip: true;
+  /** Only when `isSpaceFaunaShip: true`. */
+  mutationComponentsSize?: MutationComponentsSize;
+  /** Only when `isSpaceFaunaShip: true`. */
+  spaceFaunaValues?: ShipSizeSpaceFaunaValues;
+  carriesColony?: never;
+  isStartingArkship?: never;
+  baseShipSize?: never;
+  acceptsAllModifiers?: never;
+  encampmentRequiredProgress?: never;
+  arkshipPicture?: never;
+  planetViewHeader?: never;
+}
+
+/** A ship_size the subtype `arkship` (`subtype[arkship]`, selected by a written `carries_colony`) covers, and `space_fauna` does not. */
+export interface ShipSizeArkshipFields extends ShipSizeFieldsBase {
+  /** Required when `carriesColony` is set. */
+  isSpaceStation: boolean;
+  isSpaceFaunaShip?: false;
+  mutationComponentsSize?: never;
+  spaceFaunaValues?: never;
+  /** Selects the `arkship` subtype (CWT `subtype[arkship]`). */
+  carriesColony: PlanetClassRef | string;
+  /** Only when `carriesColony` is set. */
+  isStartingArkship?: boolean;
+  /** Only when `carriesColony` is set. */
+  baseShipSize?: ShipSizeRef | string;
+  /** Only when `carriesColony` is set. */
+  acceptsAllModifiers?: boolean;
+  /** Only when `carriesColony` is set. */
+  encampmentRequiredProgress?: number;
+  /** Required when `carriesColony` is set, and not allowed otherwise. */
+  arkshipPicture: string;
+  /** Only when `carriesColony` is set. */
+  planetViewHeader?: SpriteRef | string;
+}
+
+/** A ship_size the subtypes `space_fauna` (`subtype[space_fauna]`, selected by `is_space_fauna_ship = yes`) and `arkship` (`subtype[arkship]`, selected by a written `carries_colony`) covers. */
+export interface ShipSizeSpaceFaunaArkshipFields extends ShipSizeFieldsBase {
+  /** Required when `carriesColony` is set. */
+  isSpaceStation: boolean;
+  /** Selects the `space_fauna` subtype (CWT `subtype[space_fauna]`). */
+  isSpaceFaunaShip: true;
+  /** Only when `isSpaceFaunaShip: true`. */
+  mutationComponentsSize?: MutationComponentsSize;
+  /** Only when `isSpaceFaunaShip: true`. */
+  spaceFaunaValues?: ShipSizeSpaceFaunaValues;
+  /** Selects the `arkship` subtype (CWT `subtype[arkship]`). */
+  carriesColony: PlanetClassRef | string;
+  /** Only when `carriesColony` is set. */
+  isStartingArkship?: boolean;
+  /** Only when `carriesColony` is set. */
+  baseShipSize?: ShipSizeRef | string;
+  /** Only when `carriesColony` is set. */
+  acceptsAllModifiers?: boolean;
+  /** Only when `carriesColony` is set. */
+  encampmentRequiredProgress?: number;
+  /** Required when `carriesColony` is set, and not allowed otherwise. */
+  arkshipPicture: string;
+  /** Only when `carriesColony` is set. */
+  planetViewHeader?: SpriteRef | string;
+}
+
+/** A ship_size none of the subtypes `space_fauna`, `arkship` covers. */
+export interface ShipSizePlainFields extends ShipSizeFieldsBase {
+  /** Required when `carriesColony` is set. */
+  isSpaceStation?: boolean;
+  isSpaceFaunaShip?: false;
+  mutationComponentsSize?: never;
+  spaceFaunaValues?: never;
+  carriesColony?: never;
+  isStartingArkship?: never;
+  baseShipSize?: never;
+  acceptsAllModifiers?: never;
+  encampmentRequiredProgress?: never;
+  arkshipPicture?: never;
+  planetViewHeader?: never;
+}
+
+/**
+ * A ship_size, as the game's rules describe it:
+ * one arm per way its subtypes apply.
+ */
+export type ShipSizeFields =
+  | ShipSizeSpaceFaunaFields
+  | ShipSizeArkshipFields
+  | ShipSizeSpaceFaunaArkshipFields
+  | ShipSizePlainFields;
+
+/** A ShipSizeSpaceFaunaFields definition with its id. */
+export interface ShipSizeSpaceFaunaDef<
+  Id extends string = string,
+> extends ShipSizeSpaceFaunaFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/** A ShipSizeArkshipFields definition with its id. */
+export interface ShipSizeArkshipDef<Id extends string = string> extends ShipSizeArkshipFields {
+  /** Full content id, including the mod prefix. */
+  id: Id;
+}
+
+/** A ShipSizeSpaceFaunaArkshipFields definition with its id. */
+export interface ShipSizeSpaceFaunaArkshipDef<
+  Id extends string = string,
+> extends ShipSizeSpaceFaunaArkshipFields {
+  /** Full content id, including the mod prefix. */
+  id: Id;
+}
+
+/** A ShipSizePlainFields definition with its id. */
+export interface ShipSizePlainDef<Id extends string = string> extends ShipSizePlainFields {
+  /** Full content id, including the mod prefix. */
+  id: Id;
+}
+
+/** A ship_size with the id it is defined under. */
+export type ShipSizeDef<Id extends string = string> =
+  | ShipSizeSpaceFaunaDef<Id>
+  | ShipSizeArkshipDef<Id>
+  | ShipSizeSpaceFaunaArkshipDef<Id>
+  | ShipSizePlainDef<Id>;
 
 /**
  * The localization keys one `ship_size` mints, as references.
@@ -499,7 +596,7 @@ export type DefinedShipSize<Id extends string = string> = DefinedContent<
   ShipSizeDef<Id>
 >;
 
-/** How the writer lowers each member of {@link ShipSizeFields} to PDXScript. */
+/** How the writer lowers each member of {@link ShipSizeFieldsBase} to PDXScript. */
 export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
   {
     key: "graphical_culture",

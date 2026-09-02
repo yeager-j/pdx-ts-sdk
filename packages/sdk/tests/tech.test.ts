@@ -15,6 +15,7 @@ const mod = createMod(CONFIG);
 describe("Technology", () => {
   it("emits vanilla-convention PDXScript", () => {
     const base = mod.technology("base", {
+      weight: 100,
       name: "Base Tech",
       cost: 1000,
       area: "physics",
@@ -59,13 +60,15 @@ describe("Technology", () => {
       mod.technology("minimal", {
         name: "Minimal",
         cost: 100,
+        weight: 100,
         area: "society",
         tier: 1,
         category: "statecraft",
       }),
     ]);
     expect(render(mod.compile([technologies])).get("common/technology/mymod_technology.txt")).toBe(
-      "mymod_tech_minimal = {\n\tarea = society\n\ttier = 1\n\tcategory = { statecraft }\n\tcost = 100\n}\n"
+      "mymod_tech_minimal = {\n\tarea = society\n\ttier = 1\n\tcategory = { statecraft }\n" +
+        "\tcost = 100\n\tweight = 100\n}\n"
     );
   });
 
@@ -77,6 +80,7 @@ describe("Technology", () => {
     // outer one: a swap declares the modifiers that replace the parent's when
     // the swap's own trigger holds, so both have to survive one definition.
     const gained = mod.technology("gene_banks", {
+      weight: 100,
       name: "Gene Banks",
       cost: 2000,
       area: "society",
@@ -102,6 +106,7 @@ describe("Technology", () => {
       	tier = 2
       	category = { biology }
       	cost = 2000
+      	weight = 100
       	technology_swap = {
       		name = gene_seed_purification
       		trigger = {
@@ -129,6 +134,7 @@ describe("Technology", () => {
     // inside one `prereqfor_desc`, and the whole block repeats because
     // tech_gene_expressions writes two of them.
     const unlock = mod.technology("ion_cannon", {
+      weight: 100,
       name: "Ion Cannon",
       cost: 3000,
       area: "physics",
@@ -166,6 +172,7 @@ describe("Technology", () => {
       	tier = 3
       	category = { particles }
       	cost = 3000
+      	weight = 100
       	technology_swap = {
       		name = bio_ion_cannon
       		trigger = {

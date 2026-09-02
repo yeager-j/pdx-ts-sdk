@@ -182,6 +182,7 @@ The report covers generated-output counts and selected losses. Review at least:
 - skipped declarations and their reasons
 - unrepresentable rule shapes
 - collapsed localization aliases
+- subtype arms emitted as unions, and subtype requiredness collapsed
 - generated registry and script counts
 
 Source drift fails before the normal report is built, so review that diagnostic

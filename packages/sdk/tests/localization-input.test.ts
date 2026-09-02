@@ -29,6 +29,8 @@ type Mod = ReturnType<typeof capability>;
 /** A technology whose `potential` carries whatever condition the case needs. */
 function tech(mod: Mod, name: string, potential: ReturnType<typeof always>) {
   return mod.technology(name, {
+    cost: 100,
+    weight: 100,
     name: "Resonance Theory",
     area: "physics",
     tier: 1,
@@ -205,6 +207,8 @@ describe("references in recorded script", () => {
     const mod = capability();
     const owned = mod.localization("weighted_desc", "Owned modifier text.");
     const item = mod.technology("weighted", {
+      cost: 100,
+      weight: 100,
       name: "Weighted",
       area: "physics",
       tier: 1,
@@ -503,6 +507,8 @@ describe("every generated shape a localization key reaches", () => {
   it("keys text inside a weight block's nested condition", () => {
     const mod = capability();
     const item = mod.technology("weighted", {
+      cost: 100,
+      weight: 100,
       name: "Weighted",
       area: "physics",
       tier: 1,

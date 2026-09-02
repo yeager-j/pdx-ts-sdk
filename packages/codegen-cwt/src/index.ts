@@ -505,6 +505,11 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
   for (const [category, emission] of aliasCategories) {
     report.push(describeAliasCategory(category, emission, aliasSplices.get(category), rules));
     reportSection(report, `${category} members declined`, emission.declinedMembers);
+    reportSection(
+      report,
+      `${category} subtype requiredness collapsed`,
+      aliasSplices.get(category)?.subtypeCollapses ?? []
+    );
   }
 
   reportSection(report, "Policy-owned script rules", scriptGapLines.policyOwned);
@@ -582,6 +587,16 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
       report,
       `${content.registry} localization aliases collapsed`,
       content.emission.localisationAliases
+    );
+    reportSection(
+      report,
+      `${content.registry} subtype arms emitted as unions`,
+      content.emission.subtypeUnions
+    );
+    reportSection(
+      report,
+      `${content.registry} subtype requiredness collapsed`,
+      content.emission.subtypeCollapses
     );
     reportSection(
       report,

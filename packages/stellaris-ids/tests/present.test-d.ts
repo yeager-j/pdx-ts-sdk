@@ -117,6 +117,8 @@ describe("checked registry helpers", () => {
     // so a reference to content this install has never heard of stays legal.
     const mod = createMod({ name: "Probe", prefix: "probe", supportedVersion: "4.4.*" });
     mod.technology("probe", {
+      cost: 100,
+      weight: 100,
       name: "Probe",
       area: "physics",
       tier: 1,

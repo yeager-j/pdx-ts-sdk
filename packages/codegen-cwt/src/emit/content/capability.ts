@@ -109,7 +109,14 @@ function contentCapabilityImports(
     capabilityPatchTypes,
   } = facts;
   return (
-    'import type { ContentItem, EconomicCategoryWitness, ExactEconomicCategoryWitness } from "../content/types.ts";\n' +
+    "import type {\n" +
+    "  ContentItem,\n" +
+    (plans.some((plan) => plan.content.emission.subtypeUnions.length > 0)
+      ? "  DistributiveOmit,\n"
+      : "") +
+    "  EconomicCategoryWitness,\n" +
+    "  ExactEconomicCategoryWitness,\n" +
+    '} from "../content/types.ts";\n' +
     // Every registry's handle wears the base; only those whose `define` takes
     // no generic of its own also name the shared `ContentHandle`.
     'import { createContentHandle, type ContentHandle, type ContentHandleBase } from "../content/handle.ts";\n' +
@@ -154,7 +161,10 @@ function contentCapabilityImports(
       .map(({ content, patchable }) =>
         importList(`./${kebabCase(content.registry)}.ts`, [
           `${content.emission.typeName}Def`,
-          ...(content.emission.scopeParameter?.selector === undefined
+          // The fields type is the authored input where a scope selector or
+          // the subtype arms make it more than the def without its id.
+          ...(content.emission.scopeParameter?.selector === undefined &&
+          content.emission.subtypeUnions.length === 0
             ? []
             : [`${content.emission.typeName}Fields`]),
           ...(content.emission.scopeParameter === null

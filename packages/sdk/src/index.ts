@@ -79,7 +79,12 @@ export type {
   CrisisCurrencyLocalization,
   CrisisCurrencyRole,
 } from "./content/localization-families.ts";
-export type { ContentItem, ContributionItem, MintProvenance } from "./content/types.ts";
+export type {
+  ContentItem,
+  ContributionItem,
+  DistributiveOmit,
+  MintProvenance,
+} from "./content/types.ts";
 export type { ModWarning } from "./diagnostics.ts";
 export { render } from "./output/render.ts";
 export type { RenderedFile, RenderedMod } from "./output/rendered.ts";

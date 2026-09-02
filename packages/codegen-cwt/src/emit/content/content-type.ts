@@ -26,7 +26,9 @@ import {
   CONTENT_FIELD_DOCS,
   CONTENT_FIELD_OVERRIDES,
   CONTENT_PATCH_REGISTRIES,
+  CONTENT_WITNESSES,
   FIELD_WIDENINGS,
+  FLAT_SUBTYPE_ARMS,
   PATCH_WIDENINGS,
   REPEATED_STRUCT_DEFINITIONS,
   SYNTHETIC_LOCALISATION,
@@ -37,6 +39,7 @@ import type { FieldContext } from "../scope-context.ts";
 import {
   authoredLiterals,
   emittedMemberType,
+  fieldDocs,
   flatten,
   memberOptional,
   mergeByName,
@@ -66,6 +69,12 @@ import {
   underParameter,
   type ScopeParameter,
 } from "./scope-parameters.ts";
+import {
+  planSubtypeUnions,
+  renderSubtypeArm,
+  type ClaimableMember,
+  type SubtypeUnionsPlan,
+} from "./subtype-unions.ts";
 
 /**
  * Where the parsed view of a shipped definition lives. Not a `KNOWN_SYMBOLS`
@@ -147,6 +156,13 @@ export interface ContentEmission {
   readonly unsupported: readonly string[];
   /** Localisation slots collapsed onto an earlier canonical slot. */
   readonly localisationAliases: readonly string[];
+  /** Subtypes emitted as union arms, each with the selector that picks it. */
+  readonly subtypeUnions: readonly string[];
+  /**
+   * Members a subtype arm requires that the authoring surface leaves optional,
+   * each with why the arm could not become a union.
+   */
+  readonly subtypeCollapses: readonly string[];
   /**
    * Body fields whose mechanical member name was already a localization slot,
    * each with the `conditional<Name>` spelling it authors under instead.
@@ -311,7 +327,10 @@ function registryFields(
  * the loop has run.
  */
 interface ContentTypeDraft {
-  readonly members: string[];
+  /** The base interface's members in declaration order, rendered by the code assembler. */
+  readonly members: DraftMember[];
+  /** The ordinary body fields, for the subtype-union planner to claim. */
+  readonly fieldMembers: ClaimableMember[];
   readonly fieldMetadata: string[];
   readonly memberDocs: Record<string, MemberDocRow>;
   readonly docTables: DocTable[];
@@ -324,6 +343,8 @@ interface ContentTypeDraft {
   readonly declinedFields: FieldOmissionRow[];
   readonly inlineSplices: string[];
   readonly unsupported: FieldOmissionRow[];
+  /** Required arm declarations authored optional, from this level and every nested one. */
+  readonly collapsed: FieldOmissionRow[];
   readonly localisationAliases: FieldOmissionRow[];
   readonly localisationRenames: string[];
   readonly localisationPointers: Map<string, string>;
@@ -334,9 +355,25 @@ interface ContentTypeDraft {
   readonly repeatedStructTypes: string[];
 }
 
+/** One member of the base interface, kept structured so a union can claim it. */
+interface DraftMember {
+  readonly member: string;
+  readonly type: string;
+  readonly optional: boolean;
+  readonly docs: readonly string[];
+}
+
+/** Files bubbled rows under the draft list their kind names. */
+function absorbOmissions(draft: ContentTypeDraft, rows: readonly FieldOmissionRow[]): void {
+  for (const row of rows) {
+    (row.kind === "collapsed" ? draft.collapsed : draft.unsupported).push(row);
+  }
+}
+
 function contentTypeDraft(): ContentTypeDraft {
   return {
     members: [],
+    fieldMembers: [],
     fieldMetadata: [],
     memberDocs: {},
     docTables: [],
@@ -348,6 +385,7 @@ function contentTypeDraft(): ContentTypeDraft {
     declinedFields: [],
     inlineSplices: [],
     unsupported: [],
+    collapsed: [],
     localisationAliases: [],
     localisationRenames: [],
     localisationPointers: new Map(),
@@ -442,14 +480,12 @@ function declareSplice(
     });
     return;
   }
-  draft.members.push(
-    renderMember({
-      name: projected.member,
-      type: projected.memberType,
-      optional: true,
-      docs: projected.docs,
-    })
-  );
+  draft.members.push({
+    member: projected.member,
+    type: projected.memberType,
+    optional: true,
+    docs: projected.docs,
+  });
   draft.memberDocs[projected.member] = {
     optional: true,
     docs: projected.docs,
@@ -512,10 +548,8 @@ function declareRepeatedStruct(
     return;
   }
   const optional = memberOptional(group, override);
-  const docLines = [...new Set(group.flatMap((field) => field.docs))];
-  draft.members.push(
-    renderMember({ name: member, type: nested.memberType, optional, docs: docLines })
-  );
+  const docLines = [...new Set(group.flatMap(fieldDocs))];
+  draft.members.push({ member, type: nested.memberType, optional, docs: docLines });
   draft.memberDocs[member] = { optional, docs: docLines, memberType: nested.memberType };
   draft.docTables.push(...nested.docTables);
   draft.patchMembers.push({ member, docs: docLines, memberType: nested.memberType });
@@ -524,7 +558,7 @@ function declareRepeatedStruct(
   draft.repeatedStructTypes.push(`${config.typeName}Fields`);
   draft.fieldMetadata.push(nested.metadata(member));
   draft.declinedFields.push(...nested.declinedFields);
-  draft.unsupported.push(...nested.unsupported);
+  absorbOmissions(draft, nested.omissions);
   draft.nestedEmittedFields.push(
     ...nested.emittedFields
       .map((emitted) => parameterised(emitted, parameter))
@@ -610,23 +644,14 @@ function declareOrdinaryField(
     emitter.overlayAudit.applied("CONTENT_FIELD_DOCS", path);
   }
   const docLines = [
-    ...new Set([
-      ...(overlayDocs ?? []),
-      ...group.flatMap((field) => field.docs),
-      ...(projected.docs ?? []),
-    ]),
+    ...new Set([...(overlayDocs ?? []), ...group.flatMap(fieldDocs), ...(projected.docs ?? [])]),
   ];
   // The selector member is the scope parameter itself rather than a projected type.
   const selectorType = parameter?.selector?.member === member ? parameter.parameterName : undefined;
   const memberType = selectorType ?? projected.memberType;
-  draft.members.push(
-    renderMember({
-      name: member,
-      type: selectorType ?? emittedMemberType(projected),
-      optional,
-      docs: docLines,
-    })
-  );
+  const type = selectorType ?? emittedMemberType(projected);
+  draft.members.push({ member, type, optional, docs: docLines });
+  draft.fieldMembers.push({ name, member, group, type, memberType, docs: docLines, override });
   draft.memberDocs[member] = {
     optional,
     docs: docLines,
@@ -640,8 +665,8 @@ function declareOrdinaryField(
     draft.extraCode.push(projected.code);
     draft.exportedNames.push(...(projected.exportedNames ?? []));
   }
-  if (projected.unsupported !== undefined) {
-    draft.unsupported.push(...projected.unsupported);
+  if (projected.omissions !== undefined) {
+    absorbOmissions(draft, projected.omissions);
   }
   draft.emittedMembers.add(member);
   draft.emittedFields.push({
@@ -784,16 +809,24 @@ function projectDeclarations(
 /** The emitted names one registry's code and report share. */
 interface ContentTypeNames {
   readonly typeName: string;
-  /** The fields interface: `XFields`, or `XFieldsBase` under a selector. */
+  /** The fields interface: `XFields`, or `XFieldsBase` under a selector or subtype unions. */
   readonly fieldsName: string;
   readonly fieldsConstant: string;
   readonly localisationConstant: string;
 }
 
-function contentTypeNames(type: ContentType, parameter: ScopeParameter | null): ContentTypeNames {
+function contentTypeNames(
+  type: ContentType,
+  parameter: ScopeParameter | null,
+  hasSubtypeUnions: boolean
+): ContentTypeNames {
   const typeName = pascalCase(type.name);
+  // `XFieldsBase` whenever `XFields` is composed from it: by the scope
+  // selector's conditional, or by intersecting the subtype unions.
   const fieldsName =
-    parameter?.selector === undefined ? `${typeName}Fields` : `${typeName}FieldsBase`;
+    parameter?.selector === undefined && !hasSubtypeUnions
+      ? `${typeName}Fields`
+      : `${typeName}FieldsBase`;
   // Off the emitted type name rather than the registry, so a camelCase registry
   // name splits at its humps the way every nested constant in the same file
   // already does — `SPRITE_TYPE_FIELDS` beside `SPRITE_TYPE_ANIMATION_FIELDS`,
@@ -812,11 +845,13 @@ function contentPublicTypes(
   parameter: ScopeParameter | null,
   patchable: boolean,
   repeatedStructTypes: readonly string[],
-  locTypeName: string | null
+  locTypeName: string | null,
+  subtypeUnionTypes: readonly string[]
 ): string[] {
   return [
     `${typeName}Def`,
     `${typeName}Fields`,
+    ...subtypeUnionTypes,
     `Defined${typeName}`,
     ...(locTypeName === null ? [] : [locTypeName]),
     ...(parameter === null ? [] : [parameter.typeName]),
@@ -830,6 +865,8 @@ function contentPublicTypes(
 interface ScopeParameterSurface {
   /** The interfaces' type-parameter list, empty for an unparameterised registry. */
   readonly generic: string;
+  /** The same parameters as arguments, `<S, L>`, for one declaration to name another. */
+  readonly genericArguments: string;
   /** The declared-FROM `L` parameter, appended wherever the generic rides. */
   readonly declaredFromParameter: string;
   /** The synthetic scope authoring member, where the registry declares one. */
@@ -865,6 +902,10 @@ function scopeParameterDeclarations(
       ? ""
       : `<${parameter.parameterName} extends ${parameter.parameterType} = ` +
         `${parameter.parameterDefault}${declaredFromParameter}>`;
+  const genericArguments =
+    parameter === null
+      ? ""
+      : `<${parameter.parameterName}${declaredFrom === undefined ? "" : ", L"}>`;
   const scopeMember =
     parameter?.authoringMember === null || parameter?.authoringMember === undefined
       ? ""
@@ -932,12 +973,72 @@ function scopeParameterDeclarations(
             `${declaredFrom.scopes.map((scope) => JSON.stringify(scope)).join(" | ")};\n\n`);
   return {
     generic,
+    genericArguments,
     declaredFromParameter,
     scopeMember,
     declaredFromMember,
     scopeTypes,
     scopeTypeNames,
   };
+}
+
+/**
+ * The `XDef` declaration: the fields interface plus the id. A registry whose
+ * fields are a union of subtype arms gets one `Def` interface per arm and
+ * `XDef` as their union, so a definition's type stays a name wherever it is
+ * inferred.
+ */
+function definitionType(
+  type: ContentType,
+  typeName: string,
+  fieldsName: string,
+  parameter: ScopeParameter | null,
+  unions: SubtypeUnionsPlan
+): string {
+  const declaredFrom = parameter?.declaredFrom;
+  const generic =
+    parameter === null
+      ? "<Id extends string = string>"
+      : `<\n  Id extends string = string,\n` +
+        `  ${parameter.parameterName} extends ${parameter.parameterType} = ` +
+        `${parameter.parameterDefault},\n` +
+        (declaredFrom === undefined
+          ? ""
+          : `  L extends ${declaredFrom.typeName} | undefined = undefined,\n`) +
+        ">";
+  const fieldsArguments =
+    parameter === null
+      ? ""
+      : `<${parameter.parameterName}${declaredFrom === undefined ? "" : ", L"}>`;
+  const idMember = "  /** Full content id, including the mod prefix. */\n" + "  id: Id;\n";
+  const withId = docComment([
+    `${capitalizedArticle(type.name)} ${type.name} with the id it is defined under.`,
+  ]);
+  if (unions.arms.length === 0) {
+    const base = parameter === null ? `${typeName}Fields` : `${fieldsName}${fieldsArguments}`;
+    return (
+      withId + `export interface ${typeName}Def${generic} extends ${base} {\n` + idMember + "}\n\n"
+    );
+  }
+  const defArguments =
+    parameter === null
+      ? "<Id>"
+      : `<Id, ${parameter.parameterName}${declaredFrom === undefined ? "" : ", L"}>`;
+  return (
+    unions.arms
+      .map(
+        (arm) =>
+          docComment([`${capitalizedArticle(type.name)} ${arm.typeName} definition with its id.`]) +
+          `export interface ${arm.defTypeName}${generic} extends ${arm.typeName}${fieldsArguments} {\n` +
+          idMember +
+          "}\n\n"
+      )
+      .join("") +
+    withId +
+    `export type ${typeName}Def${generic} =\n` +
+    unions.arms.map((arm) => `  | ${arm.defTypeName}${defArguments}`).join("\n") +
+    ";\n\n"
+  );
 }
 
 /**
@@ -958,15 +1059,18 @@ function contentTypeCode(
   localisationPlan: LocalisationPlan,
   locTypeName: string | null,
   draft: ContentTypeDraft,
+  unions: SubtypeUnionsPlan,
   patch: { readonly code: string; readonly exportedNames: readonly string[] }
 ): { readonly code: string; readonly exportedNames: readonly string[] } {
   const { typeName, fieldsName, fieldsConstant, localisationConstant } = names;
   const declaredFrom = parameter?.declaredFrom;
+  const claimed = new Set(unions.arms.flatMap((arm) => arm.members.map((entry) => entry.member)));
   const exportedNames = [
     ...draft.exportedNames,
     ...surface.scopeTypeNames,
     fieldsName,
-    ...(parameter?.selector === undefined ? [] : [`${typeName}Fields`]),
+    ...unions.arms.flatMap((arm) => [arm.typeName, arm.defTypeName]),
+    ...(fieldsName === `${typeName}Fields` ? [] : [`${typeName}Fields`]),
     `${typeName}Def`,
     ...(locTypeName === null ? [] : [locTypeName]),
     `Defined${typeName}`,
@@ -986,8 +1090,22 @@ function contentTypeCode(
     surface.scopeMember +
     surface.declaredFromMember +
     localisationMembers(emitter, type, localisationPlan) +
-    draft.members.join("") +
+    draft.members
+      .filter((entry) => !claimed.has(entry.member))
+      .map((entry) => renderMember({ name: entry.member, ...entry }))
+      .join("") +
     "}\n\n" +
+    unions.arms
+      .map((arm) =>
+        renderSubtypeArm(
+          arm,
+          `${indefiniteArticle(type.name)} ${type.name}`,
+          fieldsName,
+          surface.generic,
+          surface.genericArguments
+        )
+      )
+      .join("") +
     (parameter?.selector === undefined
       ? ""
       : docComment([
@@ -998,20 +1116,16 @@ function contentTypeCode(
         `${parameter.parameterType}${surface.declaredFromParameter}> = ` +
         `E extends ${parameter.parameterType} ? ` +
         `${fieldsName}<E${declaredFrom === undefined ? "" : ", L"}> : never;\n\n`) +
-    docComment([`${capitalizedArticle(type.name)} ${type.name} with the id it is defined under.`]) +
-    (parameter === null
-      ? `export interface ${typeName}Def<Id extends string = string> extends ${typeName}Fields {\n`
-      : `export interface ${typeName}Def<\n  Id extends string = string,\n` +
-        `  ${parameter.parameterName} extends ${parameter.parameterType} = ` +
-        `${parameter.parameterDefault},\n` +
-        (declaredFrom === undefined
-          ? ""
-          : `  L extends ${declaredFrom.typeName} | undefined = undefined,\n`) +
-        `> extends ${fieldsName}<${parameter.parameterName}` +
-        `${declaredFrom === undefined ? "" : ", L"}> {\n`) +
-    "  /** Full content id, including the mod prefix. */\n" +
-    "  id: Id;\n" +
-    "}\n\n" +
+    (unions.arms.length === 0
+      ? ""
+      : docComment([
+          `${capitalizedArticle(type.name)} ${type.name}, as the game's rules describe it:`,
+          "one arm per way its subtypes apply.",
+        ]) +
+        `export type ${typeName}Fields${surface.generic} =\n` +
+        unions.arms.map((arm) => `  | ${arm.typeName}${surface.genericArguments}`).join("\n") +
+        ";\n\n") +
+    definitionType(type, typeName, fieldsName, parameter, unions) +
     // A registry with no declared slots emits no type: its items carry the
     // shared empty surface, so there is nothing per-registry to name.
     (locTypeName === null ? "" : localisationRefType(emitter, type, typeName, localisationPlan)) +
@@ -1038,6 +1152,66 @@ function contentTypeCode(
     `export const ${localisationConstant}: readonly ${emitter.use("ContentLocalisation")}[] = ` +
     `${localisationMetadata(emitter, type, localisationPlan, draft.localisationPointers)};\n`;
   return { code, exportedNames };
+}
+
+/**
+ * Why every subtype arm of the registry stays flat, or `null` when the arms
+ * may become unions. A scope selector already parameterises the fields by a
+ * discriminant of its own, and an `intersects` witness definer infers its
+ * witness from the definition, which a union input defeats.
+ */
+function flatRegistryReason(type: ContentType, parameter: ScopeParameter | null): string | null {
+  if (parameter?.selector !== undefined) {
+    return "the registry's scope selector already parameterises its fields";
+  }
+  if (CONTENT_WITNESSES.get(type.name)?.mode === "intersects") {
+    return "the registry's definer infers a witness from the definition, which a union defeats";
+  }
+  return null;
+}
+
+/**
+ * The registry's `FLAT_SUBTYPE_ARMS` rows keyed by subtype. The planner
+ * reports which of them it consulted; only those count as applied, so a row
+ * left behind by a rule change fails the overlay audit.
+ */
+function flatSubtypeArms(type: ContentType): ReadonlyMap<string, string> {
+  const rows = new Map<string, string>();
+  for (const subtype of type.subtypes) {
+    const reason = FLAT_SUBTYPE_ARMS.get(`${type.name}.${subtype.name}`);
+    if (reason !== undefined) {
+      rows.set(subtype.name, reason);
+    }
+  }
+  return rows;
+}
+
+/**
+ * Rewrites the draft's members, ledger rows, and patch docs to what the union
+ * plan decided: a claimed member leaves the base interface for its arms, and an
+ * unclaimed one takes the optionality and docs the arms agree on.
+ */
+function applySubtypeUnions(draft: ContentTypeDraft, unions: SubtypeUnionsPlan): void {
+  draft.collapsed.push(...unions.collapsed);
+  if (unions.arms.length === 0) {
+    return;
+  }
+  for (const [index, entry] of draft.members.entries()) {
+    const base = unions.base.get(entry.member);
+    if (base !== undefined) {
+      draft.members[index] = { ...entry, ...base };
+    }
+  }
+  for (const [member, resolved] of [...unions.base, ...unions.claimedDocs]) {
+    const row = draft.memberDocs[member];
+    if (row !== undefined) {
+      draft.memberDocs[member] = { ...row, ...resolved };
+    }
+    const patchIndex = draft.patchMembers.findIndex((entry) => entry.member === member);
+    if (patchIndex !== -1) {
+      draft.patchMembers[patchIndex] = { ...draft.patchMembers[patchIndex]!, docs: resolved.docs };
+    }
+  }
 }
 
 /**
@@ -1092,7 +1266,17 @@ export function emitContentType(
     draft
   );
 
-  const names = contentTypeNames(type, parameter);
+  const unions = planSubtypeUnions(
+    type,
+    draft.fieldMembers,
+    flatRegistryReason(type, parameter),
+    flatSubtypeArms(type)
+  );
+  for (const subtype of unions.flatSubtypesApplied) {
+    emitter.overlayAudit.applied("FLAT_SUBTYPE_ARMS", `${type.name}.${subtype}`);
+  }
+  applySubtypeUnions(draft, unions);
+  const names = contentTypeNames(type, parameter, unions.arms.length > 0);
   const surface = scopeParameterDeclarations(type, parameter);
   const patchWidenings: string[] = [];
   const patchLocMembers: string[] = [];
@@ -1120,6 +1304,7 @@ export function emitContentType(
     localisationPlan,
     locTypeName,
     draft,
+    unions,
     patch
   );
 
@@ -1131,7 +1316,7 @@ export function emitContentType(
     const lineB = omissionLine(b);
     return lineA < lineB ? -1 : lineA > lineB ? 1 : 0;
   });
-  const collapsedRows = [...localisationPlan.aliases, ...draft.localisationAliases];
+  const localisationRows = [...localisationPlan.aliases, ...draft.localisationAliases];
   return {
     code: module.code,
     exportedNames: module.exportedNames,
@@ -1141,7 +1326,12 @@ export function emitContentType(
       parameter,
       patchable,
       draft.repeatedStructTypes,
-      locTypeName
+      locTypeName,
+      // The base interface is nameable only through the barrel once `XFields`
+      // is composed from it: an exported definition's inferred type spells it.
+      unions.arms.length === 0
+        ? []
+        : [names.fieldsName, ...unions.arms.flatMap((arm) => [arm.typeName, arm.defTypeName])]
     ),
     fieldsConstant: names.fieldsConstant,
     localisationConstant: names.localisationConstant,
@@ -1149,13 +1339,15 @@ export function emitContentType(
     emittedFields: draft.emittedFields,
     nestedEmittedFields: draft.nestedEmittedFields,
     corpusDescents: draft.corpusDescents,
-    omissions: [...declinedRows, ...draft.unsupported, ...collapsedRows],
+    omissions: [...declinedRows, ...draft.unsupported, ...localisationRows, ...draft.collapsed],
     docTables: [{ constant: names.fieldsConstant, members: draft.memberDocs }, ...draft.docTables],
     declinedFields: declinedRows.map(omissionLine),
     inlineSplices: draft.inlineSplices,
     unsupported: draft.unsupported.map(omissionLine),
     scopeParameter: parameter,
-    localisationAliases: collapsedRows.map(omissionLine),
+    localisationAliases: localisationRows.map(omissionLine),
+    subtypeUnions: unions.modelled,
+    subtypeCollapses: draft.collapsed.map(omissionLine),
     localisationRenames: draft.localisationRenames,
     patchExclusions: patchable ? draft.patchExclusions : [],
     patchWidenings: patchable ? patchWidenings : [],

@@ -45,6 +45,7 @@ import { contentLocalizationRefs } from "../content/authoring.ts";
 import type {
   ContentItem,
   ContributionItem,
+  DistributiveOmit,
   EconomicCategoryWitness,
   ExactEconomicCategoryWitness,
 } from "../content/types.ts";
@@ -692,7 +693,7 @@ export function defineOpinionModifier<const Id extends string>(
  */
 export type StaticModifierItem<W extends StaticModifierScope = StaticModifierScope> = ContentItem<
   "static_modifier",
-  Omit<StaticModifierDef<string, never>, "hostScope">
+  DistributiveOmit<StaticModifierDef<string, never>, "hostScope">
 > & { readonly hostScope: W };
 
 /**
@@ -707,7 +708,7 @@ export function defineStaticModifier<
   S extends StaticModifierScope = StaticModifierScope,
 >(
   def: StaticModifierDef<Id, S>
-): ContentItem<"static_modifier", Omit<StaticModifierDef<Id, never>, "hostScope">> & {
+): ContentItem<"static_modifier", DistributiveOmit<StaticModifierDef<Id, never>, "hostScope">> & {
   readonly hostScope: S;
 } {
   const { hostScope, ...rest } = def;
@@ -715,7 +716,10 @@ export function defineStaticModifier<
     itemKind: "content",
     type: "static_modifier",
     id: def.id,
-    def: snapshotAuthoredValue(rest) as unknown as Omit<StaticModifierDef<Id, never>, "hostScope">,
+    def: snapshotAuthoredValue(rest) as unknown as DistributiveOmit<
+      StaticModifierDef<Id, never>,
+      "hostScope"
+    >,
     hostScope: hostScope as S,
     loc: contentLocalizationRefs(def.id, STATIC_MODIFIER_LOCALISATION),
   };

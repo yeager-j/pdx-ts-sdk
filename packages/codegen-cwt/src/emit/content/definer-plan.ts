@@ -266,7 +266,7 @@ function itemUnionType(facts: RegistryDefinerFacts): string {
         (witness === null ? "" : ` & { readonly ${witness.member}: W }`)
       : contentWitness.mode === "wraps"
         ? `ContentItem<${key}, ${name}Def${erased}> & { readonly def: ${name}Def${erased} & { readonly ${contentWitness.member}: W } }`
-        : `ContentItem<${key}, Omit<${name}Def${erased}, ${economicWitnessOmit}> & W>`,
+        : `ContentItem<${key}, ${definitionOmit(emission, `${name}Def${erased}`, economicWitnessOmit)} & W>`,
   ];
   if (patchable !== undefined) {
     itemArms.push(`${name}PatchItem`);
@@ -363,20 +363,23 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
   // default. A handle mints before any def exists, so its closure cannot name
   // a parameter only the definition introduces.
   const erasedDefineDef = `${name}Def<${minted}>`;
+  const fieldsArguments =
+    scoped === null ? "" : `<${scoped.parameterName}${declaredFrom === undefined ? "" : ", L"}>`;
+  const definitionInput = authoredDefinitionType(emission, name, def, fieldsArguments);
   const economicInputBase =
     contentWitness?.mode === "intersects"
-      ? `Omit<${def}, "id" | ${economicWitnessOmit}>`
-      : `Omit<${def}, "id">`;
+      ? definitionOmit(emission, def, `"id" | ${economicWitnessOmit}`)
+      : definitionInput;
   const economicResultBase =
     contentWitness?.mode === "intersects"
-      ? `Omit<${name}Def<${minted}>, ${economicWitnessOmit}>`
+      ? definitionOmit(emission, `${name}Def<${minted}>`, economicWitnessOmit)
       : `${name}Def<${minted}>`;
   const input =
     scoped?.selector === undefined
       ? contentWitness === undefined
-        ? `Omit<${def}, "id">`
+        ? definitionInput
         : contentWitness.mode === "wraps"
-          ? `Omit<${def}, "id"> & { readonly ${contentWitness.member}: W }`
+          ? `${definitionInput} & { readonly ${contentWitness.member}: W }`
           : `${economicInputBase} & W & ${contentWitness.exactType}<W>`
       : `${name}Fields<${scoped.parameterName}${declaredFrom === undefined ? "" : ", L"}>`;
   const result =
@@ -404,7 +407,7 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
           ? ""
           : `  ${method}<const Name extends string>(\n` +
             `    name: Name,\n` +
-            `    def: Omit<${def}, "id"> & { readonly ${referenceRefinement.member}: true }\n` +
+            `    def: ${definitionInput} & { readonly ${referenceRefinement.member}: true }\n` +
             `  ): ContentItem<${key}, ${refinedResult} & { readonly ${referenceRefinement.member}: true }> & ` +
             `${pascalCase(referenceRefinement.reference)}Ref;\n`) +
         `  ${method}${parameters}(\n` +
@@ -427,13 +430,18 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
   // `define` their own type parameters force. The distinction is decided here,
   // from the same strings the eager member is built out of, so the two cannot
   // describe different definitions.
-  const plainHandle = defineTypeParameters === "" && referenceRefinement === undefined;
+  // A union-of-arms registry spells its `define` explicitly too: the shared
+  // `ContentHandle` takes `Omit<D, "id">`, which flattens the arms.
+  const plainHandle =
+    defineTypeParameters === "" &&
+    referenceRefinement === undefined &&
+    emission.subtypeUnions.length === 0;
   const handleReturn = plainHandle
     ? `ContentHandle<${key}, ${result}>`
     : `ContentHandleBase<${key}, ${minted}> & {\n` +
       (referenceRefinement === undefined
         ? ""
-        : `    define(\n      def: Omit<${def}, "id"> & ` +
+        : `    define(\n      def: ${definitionInput} & ` +
           `{ readonly ${referenceRefinement.member}: true }\n` +
           `    ): ContentItem<${key}, ${refinedResult} & ` +
           `{ readonly ${referenceRefinement.member}: true }> & ` +
@@ -478,6 +486,7 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
           definitionArgument: input,
           definer: `define${name}`,
           definitionType: erasedDefineDef,
+          definitionInput: authoredDefinitionType(emission, name, erasedDefineDef, ""),
           id: `mint(${JSON.stringify(method)}, name)`,
           mintParameters: "",
           premintStatements: "",
@@ -541,7 +550,7 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
         ) +
         `  ${method}<const Name extends ExactMintName<P>>(\n` +
         `    name: Name,\n` +
-        `    def: Omit<${name}Def<Name>, "id">,\n` +
+        `    def: ${authoredDefinitionType(emission, name, `${name}Def<Name>`, "")},\n` +
         `    options: { readonly prefix: false }\n` +
         `  ): ContentItem<${key}, ${name}Def<Name>>;`,
     },
@@ -553,6 +562,7 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
         definitionArgument: input,
         definer: `define${name}`,
         definitionType: erasedDefineDef,
+        definitionInput: authoredDefinitionType(emission, name, erasedDefineDef, ""),
         id: `mint(${JSON.stringify(method)}, name, options)`,
         mintParameters: ", options?: MintNameOptions",
         // Read once, beside the mint it belongs to. `options` is the caller's
@@ -645,12 +655,12 @@ function definerFunctions(facts: RegistryDefinerFacts): {
         : parameters;
     const definerInput =
       contentWitness?.mode === "intersects"
-        ? `Omit<${name}Def<Id>, ${economicWitnessOmit}> & W & ${contentWitness.exactType}<W>`
+        ? `${definitionOmit(emission, `${name}Def<Id>`, economicWitnessOmit)} & W & ${contentWitness.exactType}<W>`
         : `${name}Def<Id${scoped === null ? "" : `, ${scoped.parameterName}`}` +
           `${declaredFrom === undefined ? "" : ", L"}>`;
     const definerResult =
       contentWitness?.mode === "intersects"
-        ? `ContentItem<${key}, Omit<${name}Def<Id>, ${economicWitnessOmit}> & W>`
+        ? `ContentItem<${key}, ${definitionOmit(emission, `${name}Def<Id>`, economicWitnessOmit)} & W>`
         : `ContentItem<${key}, ${storedDefType(
             `${name}Def<Id${scoped === null ? "" : ", never"}>`,
             emission
@@ -1040,6 +1050,7 @@ function shapeMintMethod(
       "    },",
     eager:
       `    ${shape.method}: ${shapeParameters}(\n      ${argument},\n` +
+      // The shape-mint registry composes no subtype unions, so a plain `Omit` holds.
       `      def: Omit<${def}, "id">` +
       `${optionsParameter.replace("\n    ", "\n      ")}\n    ) => {\n` +
       (named ? `      assertName(name);\n` : "") +
@@ -1135,11 +1146,40 @@ function declaredWitness(
     : { member: declaredFrom.member, type: `${declaredFrom.typeName} | undefined`, parameter: "L" };
 }
 
+/**
+ * `Omit<def, keys>` spelled for the registry. A definition that is a union of
+ * subtype arms takes the SDK's `DistributiveOmit`: the built-in `Omit` over a
+ * union keeps only the keys every arm shares, at each key's weakest
+ * optionality, and would hand the capability a definition type that no longer
+ * states the arms.
+ */
+function definitionOmit(emission: ContentEmission, def: string, keys: string): string {
+  const omit = emission.subtypeUnions.length === 0 ? "Omit" : "DistributiveOmit";
+  return `${omit}<${def}, ${keys}>`;
+}
+
+/**
+ * The definition an author hands the capability: `Omit<XDef, "id">`, or the
+ * `XFields` union itself where the fields are subtype arms. The two are the
+ * same type, but the named union stays a name wherever a consumer's inferred
+ * type spells it, while a distributed `Omit` resolves to anonymous objects.
+ */
+function authoredDefinitionType(
+  emission: ContentEmission,
+  name: string,
+  def: string,
+  fieldsArguments: string
+): string {
+  return emission.subtypeUnions.length === 0
+    ? `Omit<${def}, "id">`
+    : `${name}Fields${fieldsArguments}`;
+}
+
 /** Removes a carried synthetic scope declaration from the stored definition type. */
 function storedDefType(def: string, emission: ContentEmission): string {
   const scopeMember = emission.scopeParameter?.authoringMember;
   return scopeMember?.carriesWitness === true
-    ? `Omit<${def}, ${JSON.stringify(scopeMember.member)}>`
+    ? definitionOmit(emission, def, JSON.stringify(scopeMember.member))
     : def;
 }
 
@@ -1184,7 +1224,10 @@ function capabilityBindings(spec: {
   readonly parameters: string;
   readonly definitionArgument: string;
   readonly definer: string;
+  /** The definition type with every define-time generic erased. */
   readonly definitionType: string;
+  /** The `Omit<Def, "id">` spelling the handle's `define` takes. */
+  readonly definitionInput: string;
   /** The minted id expression, which the eager and handle bindings share. */
   readonly id: string;
   /** Extra runtime parameters the mint itself reads, such as `options`. */
@@ -1226,7 +1269,7 @@ function capabilityBindings(spec: {
       `      def: ${spec.definitionArgument}${spec.mintParameters}\n    ) => {\n` +
       spec.premintStatements +
       `      return ${expression}.define(\n` +
-      `        def as unknown as Omit<${spec.definitionType}, "id">\n      );\n` +
+      `        def as unknown as ${spec.definitionInput}\n      );\n` +
       "    },",
   };
 }

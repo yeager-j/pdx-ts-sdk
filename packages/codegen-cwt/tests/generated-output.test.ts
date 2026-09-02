@@ -21,6 +21,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { GeneratedOutput } from "@pdx-ts/codegen-cwt/render/generated-file";
+import { format, resolveConfig } from "prettier";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 let root: string;
@@ -121,6 +122,35 @@ describe("GeneratedOutput", () => {
     output.commit();
 
     expect(readOutput("formatted.ts")).toBe('export const label = "quoted";\n');
+  });
+
+  it("formats a shape Prettier wraps and then unwraps to its fixpoint", async () => {
+    // A method signature inside an intersection type: Prettier wraps the
+    // parameter on the first pass and unwraps it on the second. The committed
+    // file is formatted again by the pre-commit hook, so the staged text must
+    // already be the fixpoint or `codegen:check` disagrees with the commit.
+    const unstable =
+      "export interface Methods<P extends string> {\n" +
+      "  componentSetHandle<const Name extends string>(\n" +
+      "    name: Name\n" +
+      '  ): ContentHandleBase<"component_set", MintedContentId<P, "componentSet", Name>> & {\n' +
+      "    define(\n" +
+      "      def: ComponentSetFields & { readonly requiredComponentSet: true }\n" +
+      "    ): ContentItem<\n" +
+      '      "component_set",\n' +
+      '      ComponentSetDef<MintedContentId<P, "componentSet", Name>> & {\n' +
+      "        readonly requiredComponentSet: true;\n" +
+      "      }\n" +
+      "    > & ComponentSetRequiredComponentRef;\n" +
+      "  };\n" +
+      "}\n";
+    const output = openSession();
+    await output.write("fixpoint.ts", unstable);
+    output.commit();
+
+    const staged = readOutput("fixpoint.ts");
+    const options = await resolveConfig(path.join(outputDirectory, "fixpoint.ts"));
+    expect(await format(staged, { ...options, filepath: "fixpoint.ts" })).toBe(staged);
   });
 
   it("rejects a file name claimed twice", async () => {

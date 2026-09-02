@@ -356,6 +356,8 @@ describe("event definitions in a namespace", () => {
   it("guards content references written by conditional description triggers", () => {
     const events = makeEvents();
     const orphan = mod.technology("conditional_orphan", {
+      cost: 100,
+      weight: 100,
       name: "Conditional orphan",
       area: "physics",
       tier: 1,

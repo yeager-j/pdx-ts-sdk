@@ -30,8 +30,9 @@ out|   // binding another feature file exports, imported as usual.
 out|   // prerequisites: ["tech_basic_science_lab_1"],
 out|
 out|   // How likely the game is to offer this as a research option next to the
-out|   // others in its category. 100 is the conventional starting weight.
-out|   // weight: 100,
+out|   // others in its category. 100 is the conventional starting weight, and the
+out|   // rules require one on every technology that is not a starting technology.
+out|   weight: 100,
 out| });
 out|
 out| export const feature = mod.feature("resonance_theory", [resonanceTheory]);

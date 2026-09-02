@@ -17,7 +17,7 @@
 
 import type { ContentReferenceName, ContentTypeName } from "../generated/content-registry.ts";
 import type { TypedRef } from "../script/scalar.ts";
-import type { ContentItem } from "./types.ts";
+import type { ContentItem, DistributiveOmit } from "./types.ts";
 
 /**
  * The identity half of a handle: a minted id wearing its registry's reference
@@ -59,8 +59,12 @@ export interface ContentHandle<
    * Attaches the body to the already-minted id, returning the item to place in
    * a Feature. Pure and stateless: calling it twice builds two definitions of
    * one id, which the Fold refuses exactly as it refuses two eager calls.
+   *
+   * The omit distributes over a definition whose fields are subtype arms, so
+   * a handle abstracted as this interface holds the same contract the
+   * generated one spells.
    */
-  define(def: Omit<D, "id">): ContentItem<K, D>;
+  define(def: DistributiveOmit<D, "id">): ContentItem<K, D>;
 }
 
 /**
@@ -81,11 +85,13 @@ export function createContentHandle<
   type: K,
   id: Id,
   define: (def: D) => Item
-): ContentHandleBase<K, Id> & { define(def: Omit<D, "id">): Item } {
+): ContentHandleBase<K, Id> & { define(def: DistributiveOmit<D, "id">): Item } {
   return Object.freeze({
     handleKind: "content-handle",
     type,
     id,
-    define: (def: Omit<D, "id">) => define({ ...def, id } as D),
+    // Spreading a distributed `Omit` back together is not a conversion
+    // TypeScript can see through, so the join is asserted.
+    define: (def: DistributiveOmit<D, "id">) => define({ ...def, id } as unknown as D),
   });
 }

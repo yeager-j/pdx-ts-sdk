@@ -66,6 +66,7 @@ const capability = createMod({
 
 function technology(id: string, name: string) {
   return capability.technology(id, {
+    weight: 100,
     name,
     cost: 1000,
     area: "physics",

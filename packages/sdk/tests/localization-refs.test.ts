@@ -14,6 +14,8 @@ function capability(prefix = "loc_refs") {
 
 function technology(mod: ReturnType<typeof capability>, name: string, desc?: string) {
   return mod.technology(name, {
+    cost: 100,
+    weight: 100,
     name: "Resonance Theory",
     ...(desc === undefined ? {} : { desc }),
     area: "physics",
