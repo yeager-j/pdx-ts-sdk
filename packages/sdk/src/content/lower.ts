@@ -178,7 +178,20 @@ function isAssetFileItem(value: unknown): value is AssetFileItem {
   return (
     typeof value === "object" &&
     value !== null &&
-    (value as { readonly itemKind?: unknown }).itemKind === "asset"
+    (value as { readonly itemKind?: unknown }).itemKind === "asset" &&
+    typeof (value as { readonly path?: unknown }).path === "string"
+  );
+}
+
+function refuseContentScalar(
+  value: unknown,
+  field: ContentFieldBase,
+  ctx?: LoweringContext
+): never {
+  const fieldPath = joinPath(ctx?.path ?? "", field.key);
+  const path = joinPath(ctx?.definitionId ?? ctx?.ownerId ?? "", fieldPath);
+  throw new TypeError(
+    `Cannot lower "${path}": expected a string, number, or boolean; received ${authoredForm(value)}`
   );
 }
 
@@ -203,7 +216,8 @@ function contentScalar(
     // fold-time checks — a placed-Asset proof and an existence warning — are
     // told apart there rather than by re-inspecting the emitted scalar.
     const item = isAssetFileItem(value) ? value : undefined;
-    const path = item?.path ?? (value as string);
+    const path =
+      item?.path ?? (typeof value === "string" ? value : refuseContentScalar(value, field, ctx));
     if (ctx?.collectPath !== undefined) {
       const where = { path, field: joinPath(ctx.path, field.key) };
       ctx.collectPath(
@@ -243,10 +257,7 @@ function contentScalar(
   if (typeof converted === "number" || typeof converted === "boolean") {
     return scalar(converted);
   }
-  const path = joinPath(ctx?.ownerId ?? "", joinPath(ctx?.path ?? "", field.key));
-  throw new TypeError(
-    `Cannot lower "${path}": expected a string, number, or boolean; received ${authoredForm(converted)}`
-  );
+  return refuseContentScalar(converted, field, ctx);
 }
 
 /**

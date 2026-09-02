@@ -25,6 +25,8 @@ export interface LoweringContext {
   readonly collect?: RefUseSink;
   readonly collectPath?: AssetPathSink;
   readonly path: string;
+  /** The top-level id written to PDXScript, when lowering a definition or patch. */
+  readonly definitionId?: string;
   readonly ownerId: string;
   /**
    * Where inline text a spliced trigger or effect recorded is registered.

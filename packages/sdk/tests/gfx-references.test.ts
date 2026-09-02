@@ -331,4 +331,13 @@ describe("asset paths", () => {
     );
     expect(assetPathWarnings(pure.warnings)).toEqual([]);
   });
+
+  it("refuses a malformed pdxmesh file before constructing its entry", () => {
+    const mod = gfxMod("hulls");
+    const mesh = mod.pdxmesh("frigate", { file: { path: 10 } as never });
+
+    expect(() => mod.compile([mod.feature(undefined, [mesh])])).toThrow(
+      'Cannot lower "hulls_frigate.file": expected a string, number, or boolean; received block'
+    );
+  });
 });

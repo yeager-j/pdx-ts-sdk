@@ -621,6 +621,7 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
   const ctx: PatchLoweringContext = {
     collect: (use: RecordedRefUse) => refs.push(use),
     path: "",
+    definitionId: source.id,
     ownerId: mint.ownerId,
     // A patched member's spliced script keys its inline text under the same
     // `<prefix>_<vanillaId>` owner the member's own slots mint from, so the
