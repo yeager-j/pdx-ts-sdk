@@ -19,23 +19,21 @@
  */
 
 import type { Cardinality, RuleField, RuleType } from "../../cwt/model.ts";
+import { Emitter, type TsValue } from "../../emit/typescript.ts";
 import type { DocEntry } from "../../logs/trigger-docs.ts";
+import type { ClassifiedLink } from "../../lower/links.ts";
 import {
   loweredRuleConflictSkips,
   type LoweredRule,
   type LoweredRuleBlock,
 } from "../../lower/lowered-rule.ts";
-import { canonicalThisScope, scopeUnionType } from "../../lower/scope-context.ts";
 import {
   aliasListMembers,
   canonicalScopeSet,
-  cardinalityArrayType,
   clauseScopeContext,
   expandAliasFields,
-  mapType,
   mergeBlock,
   pureSpliceCategory,
-  repeatedMemberType,
   skippedRule,
   skipReason,
   type ArgField,
@@ -66,14 +64,14 @@ import {
   type EffectFieldCardinalityOverride,
 } from "../../overlay/index.ts";
 import type { EffectPolicy } from "../../policy/effects.ts";
-import { Emitter, type TsValue } from "../../render/emitter.ts";
 import { member as renderMember } from "../../render/writer.ts";
 import { aliasStructTypeName } from "../content/alias-struct.ts";
+import { canonicalThisScope, scopeUnionType } from "../scope-context.ts";
 import { canonicalScopes } from "../support.ts";
 import { effectMetaCode } from "./effect-meta.ts";
-import type { ClassifiedLink } from "./links.ts";
 import type { ScriptEffectReferenceRow, ScriptScopeLinkReferenceRow } from "./script-reference.ts";
 import { tsDoc } from "./triggers.ts";
+import { cardinalityArrayType, mapType, repeatedMemberType } from "./type-projection.ts";
 
 const EFFECT_CLAUSES = new Set<ClauseCategory>(["trigger", "effect", "modifier_rule"]);
 
@@ -1021,7 +1019,7 @@ function generatedEffectRule(
       "no scopes in either the rules or the game's dump"
     );
   }
-  if (rule.scopes === null || rule.scopeType === null) {
+  if (rule.scopes === null) {
     return skippedRule(key, "unknown-scope", `unknown scope in ${rule.supportedScopes.join(" ")}`);
   }
   return { key, rule, scopes: rule.scopes };

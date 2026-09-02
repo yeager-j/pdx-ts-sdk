@@ -22,7 +22,7 @@
  * accidental hole.
  */
 
-import type { DocTable, FieldOmissionRow, MemberDocRow } from "../../render/field-rows.ts";
+import type { DocTable, FieldOmissionRow, MemberDocRow } from "./field-rows.ts";
 
 /** Field-table documentation imported from one generated registry or alias module. */
 export interface FieldDocsModule {

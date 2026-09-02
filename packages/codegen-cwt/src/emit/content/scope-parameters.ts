@@ -5,12 +5,12 @@
  * scope parameter.
  */
 
-import type { EmittedField } from "../../lower/fields.ts";
-import type { FieldContext } from "../../lower/scope-context.ts";
+import { Emitter } from "../../emit/typescript.ts";
+import type { EmittedField } from "../../lower/content-model.ts";
 import { pascalCase } from "../../naming.ts";
 import { CONTENT_SCOPE_PARAMETERS, type ContentScopeParameter } from "../../overlay/index.ts";
-import { Emitter } from "../../render/emitter.ts";
 import type { AmbientScopeKey } from "../../special-scope-paths.ts";
+import type { FieldContext } from "../scope-context.ts";
 
 /** A {@link ContentScopeParameter.declaredFrom} row, resolved against the rules. */
 export interface DeclaredFrom {

@@ -6,9 +6,9 @@
  * typed interfaces over the same per-effect record.
  */
 
+import { aliasCategoryModule, type TsValue } from "../../emit/typescript.ts";
 import type { ArgField, BlockValue, MapValue } from "../../lower/script-shape.ts";
 import { camelCase, compareStrings, docComment } from "../../naming.ts";
-import { aliasCategoryModule, type TsValue } from "../../render/emitter.ts";
 import type {
   EffectCluster,
   EffectShape,

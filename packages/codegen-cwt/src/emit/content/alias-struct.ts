@@ -46,16 +46,17 @@
 
 import type { RuleField, RuleType } from "../../cwt/model.ts";
 import type { AliasDecl } from "../../cwt/rules.ts";
+import { contentConversionOf, type Emitter, type TsValue } from "../../emit/typescript.ts";
 import { formOfShape } from "../../lower/authored-form.ts";
 import { camelCase, docComment, isPlainName, pascalCase } from "../../naming.ts";
-import { contentConversionOf, type Emitter, type TsValue } from "../../render/emitter.ts";
+import { constArray, member as renderMember } from "../../render/writer.ts";
+import { refTypesSuffix } from "../value-metadata.ts";
 import {
   omissionLine,
   type DocTable,
   type FieldOmissionRow,
   type MemberDocRow,
-} from "../../render/field-rows.ts";
-import { constArray, refTypesSuffix, member as renderMember } from "../../render/writer.ts";
+} from "./field-rows.ts";
 
 /** Generated authoring code and coverage evidence for one fixed-shape alias category. */
 export interface AliasStructEmission {
@@ -346,16 +347,17 @@ function valueMemberEmission(
   docs: readonly string[]
 ): AliasMemberEmission {
   const propertyName = memberName(key);
+  const memberType = emitter.typeOf(value);
   return {
     propertyName,
     blockMember: renderMember({
       name: propertyName,
-      type: emitter.useValue(value).type,
+      type: memberType,
       optional: true,
       docs,
     }),
     metadata: valueField(key, value),
-    docs: { optional: true, docs, memberType: value.type },
+    docs: { optional: true, docs, memberType },
     clauseTables: [],
     clauseTableNames: [],
     docTables: [],
@@ -370,12 +372,12 @@ function valueMemberEmission(
  */
 function clauseDocTables(
   localizationInputType: string,
-  ref: TsValue,
+  refType: string,
   clauseFieldsConstant: string,
   groupFieldsConstant: string,
   groupName: string
 ): readonly DocTable[] {
-  const groupType = `readonly ${groupName}<${ref.type}>[]`;
+  const groupType = `readonly ${groupName}<${refType}>[]`;
   return [
     {
       constant: clauseFieldsConstant,
@@ -383,7 +385,7 @@ function clauseDocTables(
         value: {
           optional: true,
           docs: ["The single value the requirement accepts."],
-          memberType: ref.type,
+          memberType: refType,
         },
         or: {
           optional: true,
@@ -416,7 +418,7 @@ function clauseDocTables(
         values: {
           optional: false,
           docs: ["The group's operands, emitted as repeated `value` keys."],
-          memberType: `readonly ${ref.type.includes(" | ") ? `(${ref.type})` : ref.type}[]`,
+          memberType: `readonly ${refType.includes(" | ") ? `(${refType})` : refType}[]`,
         },
       },
     },
@@ -501,7 +503,7 @@ function memberEmission(
       docTables: [
         ...clauseDocTables(
           emitter.use("LocalizationInput"),
-          shape.ref,
+          emitter.typeOf(shape.ref),
           clauseFieldsConstant,
           groupFieldsConstant,
           groupName

@@ -220,16 +220,18 @@ src/
 |-- reconcile/           source joining and drift-baseline checks
 |-- policy/              registry allowlist and reviewed generation policy
 |-- overlay/             audited departures from raw rules
-|-- lower/               source declarations to supported authoring model
-|-- render/              code writer, imports, symbols, and file protocol
-|-- emit/                output-family emitters
+|-- lower/               render-free semantic authoring model
+|-- emit/                TypeScript projection and output-family emitters
+|-- render/              generic code writer, imports, symbols, and file protocol
 |-- corpus/              installed-definition observations and conformance
 |-- report.ts            visible pipeline accounting
 `-- drift-baseline.json  accepted two-source differences
 ```
 
 Filesystem access stays near the shell. Parsers, reconciliation, lowering, and
-emitters are testable over in-memory data.
+emitters are testable over in-memory data. Lowering and reconciliation do not
+depend on TypeScript construction. Emission owns that projection, while the
+rendering layer only formats and assembles generated files.
 
 ## Verification
 

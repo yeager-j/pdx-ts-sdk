@@ -13,12 +13,12 @@
  */
 
 import type { RuleSet } from "../../cwt/rules.ts";
+import type { Emitter, Usage } from "../../emit/typescript.ts";
 import { structuralSpliceOf } from "../../lower/rule-shapes.ts";
 import { CONTENT_FIELD_OVERRIDES } from "../../overlay/index.ts";
-import type { Emitter, Usage } from "../../render/emitter.ts";
-import type { DocTable, FieldOmissionRow } from "../../render/field-rows.ts";
 import { emitAliasSplice, type AliasSpliceEmission } from "./alias-splice.ts";
 import { emitAliasStruct } from "./alias-struct.ts";
+import type { DocTable, FieldOmissionRow } from "./field-rows.ts";
 
 /** One generated module and report entry for a structural alias category. */
 export interface AliasCategoryEmission {

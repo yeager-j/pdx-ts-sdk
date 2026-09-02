@@ -5,126 +5,19 @@
 
 import type { RuleType } from "../cwt/model.ts";
 import { scopeGroupIndex, scopeIndex, type RuleSet } from "../cwt/rules.ts";
-import type { ContentConversion } from "../lower/content-shape.ts";
+import type { LoweringContext } from "../lower/context.ts";
+import { referenceTargetsOf, type LoweredValue, type ScalarConversion } from "../lower/value.ts";
 import { pascalCase } from "../naming.ts";
 import { OverlayAudit } from "../overlay/audit.ts";
 import { COMPLEX_ENUM_REFERENCE_OVERLAYS } from "../overlay/index.ts";
-import { ImportRecorder, knownSymbol, type FileImports, type SymbolKind } from "./symbols.ts";
+import { ImportRecorder, knownSymbol, type SymbolKind } from "../render/symbols.ts";
+import type { Usage } from "../render/usage.ts";
 
-/**
- * How an authored value becomes a PDXScript scalar — the expression shape
- * {@link TsValue.toScalar} writes, not the coarser vocabulary the runtime records.
- *
- * The two are different questions and conflating them is a real defect. The
- * runtime has three behaviours, so `refId(x)`, `x.path` and `x.text` all record
- * as `"ref"`. Merging a union needs the finer answer: two arms that record the
- * same way can still write different expressions, and taking one arm's
- * `toScalar` for the other's values is how `.path` gets applied to a typed
- * reference, which has no `path` and yields `undefined`.
- */
-export type ScalarConversion = "identity" | "refId" | "stringRefId" | "scopePath" | "literalText";
-
-/**
- * Projects a conversion onto the vocabulary the runtime field metadata records.
- *
- * Every non-identity conversion records as `"ref"` because `refId` implements
- * all of them at runtime; the distinctions above matter only while choosing
- * which expression to write.
- */
-export function contentConversionOf(
-  conversion: ScalarConversion
-): Extract<ContentConversion, "identity" | "ref"> {
-  return conversion === "identity" ? "identity" : "ref";
-}
-
-/**
- * A lowered TypeScript value shape and the metadata needed to serialize it.
- * Emitters use this contract to write both author-facing types and runtime conversion metadata.
- */
-export interface TsValue {
-  /** The TypeScript type text written into generated declarations. */
-  readonly type: string;
-  /** Converts an expression of {@link TsValue.type} into a PDXScript scalar expression. */
-  readonly toScalar: (expression: string) => string;
-  /** The runtime conversion required before the authored value is serialized. */
-  readonly conversion: ScalarConversion;
-  /**
-   * Content registries referenced when every admitted form is a typed reference.
-   * Mixed or open forms leave this undefined so runtime validation does not infer false ownership.
-   */
-  readonly refTypes?: readonly string[];
-  /**
-   * Every admitted scalar token when the CWT rule defines a closed set.
-   * Tokens use game spelling, including `yes` and `no`; open forms leave this undefined.
-   */
-  readonly literals?: readonly string[];
-  /**
-   * Rule-declared boolean tokens, retained even when another arm makes the value domain open.
-   * Effect recording uses them to distinguish booleans from arbitrary strings with the same text.
-   */
-  readonly booleanLiterals?: readonly ("yes" | "no")[];
-  /**
-   * Marks `value_field` and `int_value_field` values that need `scriptValueScalar` before AST
-   * serialization. Their scalar conversion remains the identity so conversion metadata stays
-   * accurate.
-   */
-  readonly scriptValue?: true;
-  /**
-   * Structured SDK value forms accepted by this scalar shape.
-   * Runtime recording uses these tags to select an object arm without guessing from JavaScript type.
-   */
-  readonly objectKinds?: readonly ScalarObjectKind[];
-  /** SDK symbols spelled by {@link TsValue.type} that the output file must import. */
-  readonly typeSymbols?: readonly string[];
-  /**
-   * SDK symbol called by {@link TsValue.toScalar}, when one is required.
-   * This import is used by `emit/script/triggers.ts`, which writes conversion expressions.
-   */
-  readonly scalarSymbol?: string;
-  /**
-   * Marks a value the rules type as a localisation key, which the SDK lowers
-   * through `localizationScalar` rather than {@link TsValue.toScalar}.
-   *
-   * The conversion needs the field's own path, which a `toScalar` expression
-   * has no way to carry, because inline text recorded by script is keyed
-   * against that path once an owner is known. `localizationScalarExpr` in
-   * `emit/script/trigger-push-code.ts` is the one writer of that call.
-   */
-  readonly localizationInput?: true;
-  /**
-   * Engine sentinels declared beside the localisation arm, which pass through
-   * as themselves rather than becoming display text.
-   */
-  readonly localizationLiterals?: readonly string[];
-}
-
-/** A runtime-discriminated object form accepted by a scalar field. */
-export type ScalarObjectKind =
-  "scope-ref" | "typed-ref" | "localization-ref" | "localized-text" | "literal-text";
-
-/**
- * Whether a scalar admits a localization reference, and so must record the
- * item behind one so the fold can place its text (SDK-306).
- *
- * A value only ever admits one where the rule names a localisation key, so
- * this reads the same tag the runtime already dispatches object arms on rather
- * than a second flag that could disagree with it.
- */
-export function recordsLocalization(value: TsValue): boolean {
-  return value.objectKinds?.includes("localization-ref") === true;
-}
+export { contentConversionOf, recordsLocalization, referenceTargetsOf } from "../lower/value.ts";
+export type { LoweredValue as TsValue, ScalarObjectKind } from "../lower/value.ts";
 
 /** The symbols and generated aliases referenced while emitting one output file. */
-export interface Usage {
-  /** CWT enum aliases referenced by the file. */
-  readonly enums: string[];
-  /** CWT content-reference aliases referenced by the file. */
-  readonly refs: string[];
-  /** CWT value-set aliases referenced by the file. */
-  readonly valueSets: string[];
-  /** Every SDK symbol the file's emitters declared a use of, by module. */
-  readonly imports: FileImports;
-}
+export type { Usage } from "../render/usage.ts";
 
 /**
  * A `scope[X]`/`scope_group[G]` arm, spelled without spaces inside the type
@@ -179,55 +72,11 @@ export function aliasCategoryModule(category: string): string {
 }
 
 /**
- * The content registries an overloaded value's ids may name.
- *
- * An all-reference overload keeps its target types. A complex-enum overlay can
- * also retain its target beside exact literals, which are a closed spelling
- * exception rather than an open alternative. Other non-reference arms make an
- * id-shaped value legal for reasons the registries cannot see, so the result is
- * `undefined`. Names stay as the rules spell them, subtype qualifier included
- * (`agreement_term.discrete`).
- *
- * Separate from {@link Emitter.unionFor} because a position can carry the
- * registries without spelling the branded type — a map key lowers to `string`
- * — and asking this question must not record a use of a name the generated
- * file never writes.
- */
-export function referenceTargetsOf(types: readonly RuleType[]): readonly string[] | undefined {
-  const targetOf = (type: RuleType): string | undefined => {
-    if (type.kind === "typeRef") {
-      return type.name;
-    }
-    if (type.kind === "enum") {
-      const overlay = COMPLEX_ENUM_REFERENCE_OVERLAYS.get(type.name);
-      return overlay?.target;
-    }
-    return undefined;
-  };
-  const referenced = types.flatMap((type) => {
-    const target = targetOf(type);
-    return target === undefined ? [] : [target];
-  });
-  if (referenced.length === types.length) {
-    return [...new Set(referenced)];
-  }
-  const isLiteralComplexEnumUnion =
-    referenced.length > 0 &&
-    types.some((type) => type.kind === "enum" && COMPLEX_ENUM_REFERENCE_OVERLAYS.has(type.name)) &&
-    types.every(
-      (type) =>
-        type.kind === "literal" ||
-        (type.kind === "enum" && COMPLEX_ENUM_REFERENCE_OVERLAYS.has(type.name))
-    );
-  return isLiteralComplexEnumUnion ? [...new Set(referenced)] : undefined;
-}
-
-/**
  * Lowers CWT value types and records every generated symbol used by each output file.
  * Create one emitter per codegen run, and bracket each file with {@link Emitter.beginFile} and
  * {@link Emitter.endFile}.
  */
-export class Emitter {
+export class Emitter implements LoweringContext {
   /** The parsed CWT rules that provide enum, reference, and scope definitions. */
   readonly rules: RuleSet;
   /**
@@ -326,12 +175,59 @@ export class Emitter {
     return name;
   }
 
-  /** Records every symbol a lowered value's type spells, then returns the same value for emission. */
-  useValue(value: TsValue): TsValue {
-    for (const name of value.typeSymbols ?? []) {
-      this.use(name);
+  /** Renders a lowered value's authoring type and records its generated imports. */
+  typeOf(value: LoweredValue): string {
+    const parts = value.types.flatMap((type) => {
+      switch (type.kind) {
+        case "primitive":
+          return [type.name];
+        case "sdk":
+          return [this.use(type.name)];
+        case "literal":
+          return [JSON.stringify(type.value)];
+        case "scope":
+          this.use("ScopeValue");
+          return [type.scopes === "any" ? "ScopeValue" : scopeValueType(type.scopes)];
+        case "enum":
+          this.usedEnums.add(type.name);
+          this.scopedEnums.add(type.name);
+          return [this.enumTypeName(type.name)];
+        case "reference":
+          this.usedRefs.add(type.name);
+          this.scopedRefs.add(type.name);
+          return [
+            type.unchecked
+              ? `${this.refTypeName(type.name)} | string`
+              : this.refTypeName(type.name),
+          ];
+        case "valueSet":
+          this.usedValueSets.add(type.name);
+          this.scopedValueSets.add(type.name);
+          return [this.valueSetTypeName(type.name)];
+      }
+    });
+    return mergeScopeArms([...new Set(parts.flatMap((part) => part.split(" | ")))]).join(" | ");
+  }
+
+  /** Compatibility adapter for existing emission call sites. */
+  useValue(value: LoweredValue): { readonly type: string } {
+    return { type: this.typeOf(value) };
+  }
+
+  /** Renders the scalar conversion expression and records any helper import. */
+  scalarExpression(value: LoweredValue, expression: string): string {
+    switch (value.conversion) {
+      case "identity":
+        return expression;
+      case "refId":
+        return `${this.use("refId")}(${expression})`;
+      case "stringRefId":
+        return `String(${this.use("refId")}(${expression}))`;
+      case "scopePath":
+        return `${expression}.path`;
+      case "literalText":
+        return `${expression}.text`;
     }
-    return value;
   }
 
   /**
@@ -394,7 +290,34 @@ export class Emitter {
    * Lowers one rule type and records any enum, reference, value-set, or scope usage it introduces.
    * Returns `null` when the rule has no sensible scalar representation.
    */
-  valueFor(type: RuleType, inLocalisationUnion = false): TsValue | null {
+  valueFor(type: RuleType, inLocalisationUnion = false): LoweredValue | null {
+    const value = this.lowerValueFor(type, inLocalisationUnion);
+    if (value !== null) {
+      this.recordGeneratedValueNames(value);
+    }
+    return value;
+  }
+
+  private recordGeneratedValueNames(value: LoweredValue): void {
+    for (const type of value.types) {
+      switch (type.kind) {
+        case "enum":
+          this.usedEnums.add(type.name);
+          this.scopedEnums.add(type.name);
+          break;
+        case "reference":
+          this.usedRefs.add(type.name);
+          this.scopedRefs.add(type.name);
+          break;
+        case "valueSet":
+          this.usedValueSets.add(type.name);
+          this.scopedValueSets.add(type.name);
+          break;
+      }
+    }
+  }
+
+  private lowerValueFor(type: RuleType, inLocalisationUnion: boolean): LoweredValue | null {
     if (inLocalisationUnion) {
       const beside = this.valueBesideLocalisation(type);
       if (beside !== undefined) {
@@ -404,14 +327,13 @@ export class Emitter {
     switch (type.kind) {
       case "bool":
         return {
-          type: "boolean",
-          toScalar: (expression) => expression,
+          types: [{ kind: "primitive", name: "boolean" }],
           conversion: "identity",
           literals: ["yes", "no"],
         };
       case "int":
       case "float":
-        return { type: "number", toScalar: (expression) => expression, conversion: "identity" };
+        return { types: [{ kind: "primitive", name: "number" }], conversion: "identity" };
       case "valueField":
         // CWT's `value_field`/`int_value_field` admit a literal number, a
         // scripted variable, a `scope.variable` path, `value:<script_value>`,
@@ -421,11 +343,9 @@ export class Emitter {
         // `number` as an arm, so every existing numeric call site keeps
         // typechecking unchanged; only the non-numeric forms are new.
         return {
-          type: "ScriptValue",
-          toScalar: (expression) => expression,
+          types: [{ kind: "sdk", name: "ScriptValue" }],
           conversion: "identity",
           scriptValue: true,
-          typeSymbols: ["ScriptValue"],
         };
       // Display text or a reference — one input for every position that stores
       // a key. A bare string is the English text and never a key: an existing
@@ -436,25 +356,19 @@ export class Emitter {
       // the splice into a definition, an event, or a patch supplies an owner.
       case "localisation":
         return {
-          type: "LocalizationInput",
-          toScalar: (expression) => `refId(${expression})`,
+          types: [{ kind: "sdk", name: "LocalizationInput" }],
           conversion: "refId",
           objectKinds: ["localization-ref", "localized-text"],
-          typeSymbols: ["LocalizationInput"],
-          scalarSymbol: "refId",
           localizationInput: true,
         };
       case "scalar":
       case "filepath":
       case "icon":
       case "colour":
-        return { type: "string", toScalar: (expression) => expression, conversion: "identity" };
+        return { types: [{ kind: "primitive", name: "string" }], conversion: "identity" };
       case "valueSet": {
-        this.usedValueSets.add(type.name);
-        this.scopedValueSets.add(type.name);
         return {
-          type: this.valueSetTypeName(type.name),
-          toScalar: (expression) => expression,
+          types: [{ kind: "valueSet", name: type.name }],
           conversion: "identity",
         };
       }
@@ -467,31 +381,27 @@ export class Emitter {
         const argument = type.name.toLowerCase();
         if (argument === "any" || argument === "all") {
           return {
-            type: "ScopeValue",
-            toScalar: (expression) => `${expression}.path`,
+            types: [{ kind: "scope", scopes: "any" }],
             conversion: "scopePath",
             objectKinds: ["scope-ref"],
-            typeSymbols: ["ScopeValue"],
           };
         }
         const canonical = this.canonicalScope(type.name);
         if (canonical === null) {
           this.unknownScopes.add(type.name);
-          return { type: "string", toScalar: (expression) => expression, conversion: "identity" };
+          return { types: [{ kind: "primitive", name: "string" }], conversion: "identity" };
         }
         return {
-          type: scopeValueType([canonical]),
-          toScalar: (expression) => `${expression}.path`,
+          types: [{ kind: "scope", scopes: [canonical] }],
           conversion: "scopePath",
           objectKinds: ["scope-ref"],
-          typeSymbols: ["ScopeValue"],
         };
       }
       case "scopeGroup": {
         const members = this.rules.scopeGroups.get(type.name);
         if (members === undefined) {
           this.unknownScopeGroups.add(type.name);
-          return { type: "string", toScalar: (expression) => expression, conversion: "identity" };
+          return { types: [{ kind: "primitive", name: "string" }], conversion: "identity" };
         }
         const canonical = members.map((member) => this.canonicalScope(member));
         if (canonical.includes(null)) {
@@ -501,24 +411,21 @@ export class Emitter {
             }
           }
           this.unknownScopeGroups.add(type.name);
-          return { type: "string", toScalar: (expression) => expression, conversion: "identity" };
+          return { types: [{ kind: "primitive", name: "string" }], conversion: "identity" };
         }
         this.usedScopeGroups.add(type.name);
         const scopes = [
           ...new Set(canonical.filter((scope): scope is string => scope !== null)),
         ].sort();
         return {
-          type: scopeValueType(scopes),
-          toScalar: (expression) => `${expression}.path`,
+          types: [{ kind: "scope", scopes }],
           conversion: "scopePath",
           objectKinds: ["scope-ref"],
-          typeSymbols: ["ScopeValue"],
         };
       }
       case "literal":
         return {
-          type: JSON.stringify(type.text),
-          toScalar: (expression) => expression,
+          types: [{ kind: "literal", value: type.text }],
           conversion: "identity",
           literals: [type.text],
           ...(type.text === "yes" || type.text === "no" ? { booleanLiterals: [type.text] } : {}),
@@ -526,24 +433,17 @@ export class Emitter {
       case "enum": {
         const members = this.rules.enums.get(type.name);
         if (members === undefined) {
-          return { type: "string", toScalar: (expression) => expression, conversion: "identity" };
+          return { types: [{ kind: "primitive", name: "string" }], conversion: "identity" };
         }
-        this.usedEnums.add(type.name);
-        this.scopedEnums.add(type.name);
         const reference = COMPLEX_ENUM_REFERENCE_OVERLAYS.get(type.name);
         return {
-          type: this.enumTypeName(type.name),
-          toScalar:
-            reference === undefined
-              ? (expression) => expression
-              : (expression) => `String(refId(${expression}))`,
+          types: [{ kind: "enum", name: type.name }],
           conversion: reference === undefined ? "identity" : "stringRefId",
           ...(reference === undefined
             ? {}
             : {
                 refTypes: [reference.target],
                 objectKinds: ["typed-ref" as const],
-                scalarSymbol: "refId",
               }),
           // An enum CWT names but never populates emits as bare `string`, so
           // its set is open however the rules spell it.
@@ -551,16 +451,11 @@ export class Emitter {
         };
       }
       case "typeRef": {
-        this.usedRefs.add(type.name);
-        this.scopedRefs.add(type.name);
-        const name = this.refTypeName(type.name);
         return {
-          type: `${name} | string`,
-          toScalar: (expression) => `refId(${expression})`,
+          types: [{ kind: "reference", name: type.name, unchecked: true }],
           conversion: "refId",
           refTypes: [type.name],
           objectKinds: ["typed-ref"],
-          scalarSymbol: "refId",
         };
       }
       default:
@@ -586,15 +481,14 @@ export class Emitter {
    *
    * Returns `undefined` for an arm that needs no adjustment.
    */
-  private valueBesideLocalisation(type: RuleType): TsValue | undefined {
+  private valueBesideLocalisation(type: RuleType): LoweredValue | undefined {
     switch (type.kind) {
       case "scalar":
       case "filepath":
       case "icon":
       case "colour":
         return {
-          type: "LiteralText",
-          toScalar: (expression) => `${expression}.text`,
+          types: [{ kind: "sdk", name: "LiteralText" }],
           // `refId` does not handle LiteralText: it falls through to
           // `TypedRef.id` and would produce `undefined`. Every field emitted
           // from this arm also carries `locKey: true`, so `contentScalar`
@@ -602,18 +496,13 @@ export class Emitter {
           // the resolved value is a plain string, which `refId` returns unchanged.
           conversion: "literalText",
           objectKinds: ["literal-text"],
-          typeSymbols: ["LiteralText"],
         };
       case "typeRef": {
-        this.usedRefs.add(type.name);
-        this.scopedRefs.add(type.name);
         return {
-          type: this.refTypeName(type.name),
-          toScalar: (expression) => `refId(${expression})`,
+          types: [{ kind: "reference", name: type.name, unchecked: false }],
           conversion: "refId",
           refTypes: [type.name],
           objectKinds: ["typed-ref"],
-          scalarSymbol: "refId",
         };
       }
       case "enum":
@@ -633,15 +522,12 @@ export class Emitter {
    * Lowers an overloaded rule into one signature while recording every arm's usage.
    * Returns `null` when any arm has no sensible scalar representation.
    */
-  unionFor(types: readonly RuleType[]): TsValue | null {
+  unionFor(types: readonly RuleType[]): LoweredValue | null {
     const localisation = types.some((type) => type.kind === "localisation");
     const values = types.map((type) => this.valueFor(type, localisation));
-    if (!values.every((value): value is TsValue => value !== null)) {
+    if (!values.every((value): value is LoweredValue => value !== null)) {
       return null;
     }
-    // Split compound members (`XRef | string`) so `string` dedupes across
-    // arms instead of repeating in the joined union.
-    const parts = mergeScopeArms([...new Set(values.flatMap((value) => value.type.split(" | ")))]);
     const conversions = new Set(values.map((value) => value.conversion));
     const refTypes = referenceTargetsOf(types);
     // One open arm opens the whole union, the same rule `refTypes` follows: a
@@ -651,10 +537,6 @@ export class Emitter {
       : undefined;
     const booleanLiterals = [...new Set(values.flatMap((value) => value.booleanLiterals ?? []))];
     const objectKinds = [...new Set(values.flatMap((value) => value.objectKinds ?? []))];
-    // Every arm's type survives into `parts` — `mergeScopeArms` collapses scope
-    // arms into another scope arm and the `Set` only drops exact duplicates — so
-    // the union of the arms' symbols is exactly what the joined type spells.
-    const typeSymbols = [...new Set(values.flatMap((value) => value.typeSymbols ?? []))];
     const firstValue = values[0]!;
     const conversionsDiffer = conversions.size > 1;
     // Propagated only when every conversion agrees: a mixed union uses `refId`,
@@ -662,7 +544,6 @@ export class Emitter {
     // overload a value_field arm alongside a typeRef.
     const scriptValue =
       !conversionsDiffer && values.every((value) => value.scriptValue === true) ? true : undefined;
-    const scalarSymbol = conversionsDiffer ? "refId" : firstValue.scalarSymbol;
     const conversion: ScalarConversion = conversionsDiffer ? "refId" : firstValue.conversion;
     // The sentinels a mixed localisation position keeps: `default` selects the
     // game's own fail text, `random` its own name generator, and neither is a
@@ -672,8 +553,7 @@ export class Emitter {
       ? [...new Set(types.flatMap((type) => (type.kind === "literal" ? [type.text] : [])))]
       : [];
     return {
-      type: parts.join(" | "),
-      toScalar: conversionsDiffer ? (expression) => `refId(${expression})` : firstValue.toScalar,
+      types: values.flatMap((value) => value.types),
       conversion,
       refTypes,
       literals,
@@ -682,8 +562,6 @@ export class Emitter {
       ...(booleanLiterals.length === 0 ? {} : { booleanLiterals }),
       ...(scriptValue === undefined ? {} : { scriptValue }),
       ...(objectKinds.length === 0 ? {} : { objectKinds }),
-      ...(typeSymbols.length === 0 ? {} : { typeSymbols }),
-      ...(scalarSymbol === undefined ? {} : { scalarSymbol }),
     };
   }
 }

@@ -10,18 +10,18 @@ import {
 } from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt, type CwtNode } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { readAliases, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { containerContext } from "@pdx-ts/codegen-cwt/emit/scope-context";
 import { emitEffects } from "@pdx-ts/codegen-cwt/emit/script/effects";
 import { emitEvents } from "@pdx-ts/codegen-cwt/emit/script/events";
 import { emitScopeLinks } from "@pdx-ts/codegen-cwt/emit/script/links";
+import { mapType, repeatedMemberType } from "@pdx-ts/codegen-cwt/emit/script/type-projection";
+import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRule, lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
-import { containerContext } from "@pdx-ts/codegen-cwt/lower/scope-context";
 import {
   clauseScopeContext,
-  mapType,
   mergeBlock,
-  repeatedMemberType,
   type ArgField,
   type ArgValue,
   type MapValue,
@@ -37,7 +37,6 @@ import { createModifierOperationPolicy } from "@pdx-ts/codegen-cwt/policy/modifi
 import { RESERVED_TRIGGER_EXPORT_NAMES } from "@pdx-ts/codegen-cwt/policy/triggers";
 import { loadBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
 import { scopeAuthorityOf } from "@pdx-ts/codegen-cwt/reconcile/scope-authority";
-import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -349,7 +348,6 @@ describe("LoweredRule", () => {
   it("carries legal scopes and nested-clause facts through one model", () => {
     const rule = triggers.get("count_owned_planet")!;
     expect(rule.scopes).toEqual(["country", "sector"]);
-    expect(rule.scopeType).toBe('"country" | "sector"');
     expect(rule.blocks).toHaveLength(1);
     expect(rule.body.splice).toBeNull();
     expect([...rule.body.clauses]).toEqual([["limit", ["planet"]]]);
@@ -905,15 +903,18 @@ describe("LoweredRule", () => {
     const parent = effects
       .get("create_fleet")!
       .blocks[0]!.named.filter((field) => field.key.kind === "name" && field.key.name === "parent");
-    const merged = mergedFields(new Emitter(rules), parent);
+    const fieldEmitter = new Emitter(rules);
+    const merged = mergedFields(fieldEmitter, parent);
     expect(Array.isArray(merged)).toBe(true);
     if (!Array.isArray(merged)) {
       throw new Error(merged.detail);
     }
-    expect(merged[0]?.value).toMatchObject({
-      kind: "scalar",
-      value: { type: 'ScopeValue<"fleet"> | "none"' },
-    });
+    const first = merged[0]?.value;
+    expect(first?.kind).toBe("scalar");
+    if (first?.kind !== "scalar") {
+      throw new Error("Expected scalar parent field");
+    }
+    expect(fieldEmitter.typeOf(first.value)).toBe('ScopeValue<"fleet"> | "none"');
   });
 
   /**
@@ -942,8 +943,7 @@ describe("LoweredRule", () => {
       keyName: "int",
       indexType: "number",
       value: {
-        type: "TraitRef | string",
-        toScalar: (expression) => expression,
+        types: [{ kind: "reference", name: "trait", unchecked: true }],
         conversion: "identity",
       },
       cardinality: { min: 0, max: null },
@@ -1147,7 +1147,10 @@ describe("a spliced alias category with a script authoring surface", () => {
 describe("a repeated argument's declared bound", () => {
   const item: ArgValue = {
     kind: "scalar",
-    value: { type: "EthicRef", toScalar: (expression) => expression, conversion: "identity" },
+    value: {
+      types: [{ kind: "reference", name: "ethic", unchecked: false }],
+      conversion: "identity",
+    },
   };
 
   it("spells a bounded repetition as the lengths it admits", () => {

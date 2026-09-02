@@ -1,6 +1,6 @@
-import type { EmittedField } from "../lower/fields.ts";
-import type { RuleScopes } from "../lower/scope-facts.ts";
+import type { EmittedField } from "../lower/content-model.ts";
 import { compareStrings } from "../naming.ts";
+import type { RuleScopes } from "../scope-facts.ts";
 import type { FieldObservation, RegistryCorpus } from "./observations.ts";
 
 /**
@@ -134,7 +134,7 @@ export const WRITTEN_FORM_EXEMPT = new Map<string, string>([
   [
     "inlineModifiers",
     "splices modifiers unkeyed at the block root (lowerTopLevelSplice in " +
-      "emit/fields.ts): there is no field key of its own, so no EmittedField " +
+      "emit/content/field-projection.ts): there is no field key of its own, so no EmittedField " +
       "carrying this shape is ever produced to look it up.",
   ],
   [
@@ -142,7 +142,7 @@ export const WRITTEN_FORM_EXEMPT = new Map<string, string>([
     "the generated descriptor's own metadata names this shape, but the " +
       "corpus-facing nested field it produces is measured under the plain " +
       '"trigger" shape instead (the inlineTrigger arm of structShape in ' +
-      "emit/fields.ts) — the interior IS checked, just under trigger's " +
+      "emit/content/field-projection.ts) — the interior IS checked, just under trigger's " +
       "existing row rather than one of its own.",
   ],
 ]);

@@ -9,20 +9,8 @@
 import type { DescentNode } from "../../corpus/observations.ts";
 import type { RuleField } from "../../cwt/model.ts";
 import type { ContentBody, ContentType } from "../../cwt/rules.ts";
-import {
-  authoredLiterals,
-  emittedMemberType,
-  flatten,
-  lowerTopLevelSplice,
-  memberOptional,
-  mergeByName,
-  pickOrdinary,
-  repeatsSiblings,
-  useWideningSymbols,
-  type EmittedField,
-} from "../../lower/fields.ts";
+import { Emitter } from "../../emit/typescript.ts";
 import type { AliasNameField } from "../../lower/rule-shapes.ts";
-import type { FieldContext } from "../../lower/scope-context.ts";
 import { partitionSubtypeFields } from "../../lower/subtype-partition.ts";
 import {
   camelCase,
@@ -43,14 +31,26 @@ import {
   SYNTHETIC_LOCALISATION,
   type ContentFieldOverride,
 } from "../../overlay/index.ts";
-import { Emitter } from "../../render/emitter.ts";
+import { constArray, member as renderMember } from "../../render/writer.ts";
+import type { FieldContext } from "../scope-context.ts";
+import {
+  authoredLiterals,
+  emittedMemberType,
+  flatten,
+  lowerTopLevelSplice,
+  memberOptional,
+  mergeByName,
+  pickOrdinary,
+  repeatsSiblings,
+  useWideningSymbols,
+  type EmittedField,
+} from "./field-projection.ts";
 import {
   omissionLine,
   type DocTable,
   type FieldOmissionRow,
   type MemberDocRow,
-} from "../../render/field-rows.ts";
-import { constArray, member as renderMember } from "../../render/writer.ts";
+} from "./field-rows.ts";
 import {
   localisationMembers,
   localisationMetadata,

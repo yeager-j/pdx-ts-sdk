@@ -5,9 +5,9 @@ import {
   localisationMetadata,
   planLocalisation,
 } from "@pdx-ts/codegen-cwt/emit/content/localisation";
+import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { REQUIRED_LOCALISATION } from "@pdx-ts/codegen-cwt/overlay";
-import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));

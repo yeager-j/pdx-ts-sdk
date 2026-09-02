@@ -15,6 +15,7 @@ import {
   contentPublicBarrel,
   type PublicBarrelModule,
 } from "@pdx-ts/codegen-cwt/emit/content/public-barrel";
+import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import {
   referenceNameOf,
@@ -33,7 +34,6 @@ import {
   type ContentManifestEntry,
 } from "@pdx-ts/codegen-cwt/policy/manifest";
 import { PUBLIC_NESTED_TYPES } from "@pdx-ts/codegen-cwt/policy/public-surface";
-import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));

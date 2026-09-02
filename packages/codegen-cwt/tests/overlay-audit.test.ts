@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/content/alias-splice";
 import { emitAliasStruct } from "@pdx-ts/codegen-cwt/emit/content/alias-struct";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content/content-type";
+import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { structuralSpliceOf } from "@pdx-ts/codegen-cwt/lower/rule-shapes";
 import { camelCase } from "@pdx-ts/codegen-cwt/naming";
@@ -58,7 +59,6 @@ import {
   handWrittenTriggerRulesByKey,
   type HandWrittenTriggerExport,
 } from "@pdx-ts/codegen-cwt/policy/triggers";
-import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 // Read by path rather than through `@pdx-ts/sdk`: neither table is on any of

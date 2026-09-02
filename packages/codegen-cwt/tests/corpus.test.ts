@@ -25,8 +25,8 @@ import {
 } from "@pdx-ts/codegen-cwt/corpus";
 import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/content/alias-splice";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content/content-type";
+import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
-import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 /** `planet` holds `planet` and `moon`; `moon` holds `moon`. The real shape. */

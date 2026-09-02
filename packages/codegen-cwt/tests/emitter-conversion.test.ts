@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 
 import type { RuleField, RuleType } from "../src/cwt/model.ts";
 import type { RuleSet } from "../src/cwt/rules.ts";
+import { Emitter, type TsValue } from "../src/emit/typescript.ts";
 import { loadRules } from "../src/load-rules.ts";
-import { Emitter, type TsValue } from "../src/render/emitter.ts";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const rules = loadRules(path.join(ROOT, "vendor/cwtools-stellaris-config/config"));
@@ -102,10 +102,10 @@ describe("emitter scalar conversions", () => {
     ];
 
     expect(values.length).toBeGreaterThan(100);
-    expect(values.some((value) => value.type.includes("LiteralText"))).toBe(true);
+    expect(values.some((value) => emitter.typeOf(value).includes("LiteralText"))).toBe(true);
 
     for (const value of values) {
-      expect(value.toScalar("x")).toBe(CONVERSION_EXPRESSIONS[value.conversion]);
+      expect(emitter.scalarExpression(value, "x")).toBe(CONVERSION_EXPRESSIONS[value.conversion]);
     }
   });
 
@@ -132,7 +132,7 @@ describe("emitter scalar conversions", () => {
       mixed += 1;
       const merged = emitter.unionFor(types);
       expect(merged?.conversion).toBe("refId");
-      expect(merged?.toScalar("x")).toBe("refId(x)");
+      expect(merged === null ? null : emitter.scalarExpression(merged, "x")).toBe("refId(x)");
     }
 
     expect(mixed).toBeGreaterThan(0);

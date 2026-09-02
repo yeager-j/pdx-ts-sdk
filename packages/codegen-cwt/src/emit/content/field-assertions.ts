@@ -7,11 +7,11 @@
  * throws when the field it names stops lowering the way its row claims.
  */
 
-import type { RuleField, RuleType } from "../cwt/model.ts";
-import { ASSET_PATH_FIELDS, type ContentFieldOverride } from "../overlay/index.ts";
-import type { Emitter } from "../render/emitter.ts";
+import type { RuleField, RuleType } from "../../cwt/model.ts";
+import { ASSET_PATH_FIELDS, type ContentFieldOverride } from "../../overlay/index.ts";
+import type { Emitter } from "../typescript.ts";
 import { arrayType, metadata, repeatsSiblings } from "./field-metadata.ts";
-import type { LoweredField } from "./fields.ts";
+import type { FieldProjection } from "./field-projection.ts";
 
 /**
  * Applies an overlay arity assertion by correcting the declared cardinality.
@@ -85,12 +85,12 @@ export function assertedUncheckedString(
  */
 export function assertedAssetPath(
   emitter: Emitter,
-  lowered: LoweredField | null,
+  lowered: FieldProjection | null,
   group: readonly RuleField[],
   name: string,
   widening: string | undefined,
   path: string
-): LoweredField | null {
+): FieldProjection | null {
   if (!ASSET_PATH_FIELDS.has(path)) {
     return lowered;
   }

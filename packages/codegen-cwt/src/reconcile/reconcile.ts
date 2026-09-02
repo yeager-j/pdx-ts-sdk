@@ -9,13 +9,13 @@ import {
   type LinkDecl,
   type RuleSet,
 } from "../cwt/rules.ts";
-import { joinModifierScopes } from "../emit/script/modifiers.ts";
 import type { ModifierDocs } from "../logs/modifier-docs.ts";
 import type { ScopeLinks } from "../logs/scopes.ts";
 import type { DocDump } from "../logs/trigger-docs.ts";
 import { compareStrings } from "../naming.ts";
 import { UNIVERSAL_SCOPES } from "../overlay/index.ts";
 import { AMBIENT_SCOPE_KEYS, SPECIAL_SCOPE_PATHS } from "../special-scope-paths.ts";
+import { reconcileModifierScopes } from "./modifier-scopes.ts";
 
 /** Names present in only one side of a rules-and-documentation comparison. */
 export interface NameDrift {
@@ -452,7 +452,7 @@ export function reconcile(
   const staticLinks = [...rules.links.values()].filter(
     (link) => link.type === "scope" && !link.fromData
   );
-  const modifierJoin = joinModifierScopes(
+  const modifierJoin = reconcileModifierScopes(
     rules,
     modifierDocs,
     (token) => canonicalScopes.get(token.toLowerCase()) ?? null

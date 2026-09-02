@@ -30,6 +30,7 @@
  */
 
 import { scopeIndex } from "../../cwt/rules.ts";
+import { Emitter } from "../../emit/typescript.ts";
 import { eventKinds, type EventKindSpec } from "../../lower/event-kinds.ts";
 import { canonicalScopeSet, skippedRule, type SkippedRule } from "../../lower/script-shape.ts";
 import {
@@ -40,7 +41,6 @@ import {
   pascalCase,
 } from "../../naming.ts";
 import type { EffectPolicy } from "../../policy/effects.ts";
-import { Emitter } from "../../render/emitter.ts";
 import type { ScriptEffectReferenceRow } from "./script-reference.ts";
 
 /** Generated event modules, report totals, and fire-effect reference rows. */

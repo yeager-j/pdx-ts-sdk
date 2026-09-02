@@ -7,6 +7,12 @@
 import type { DescentNode, RepeatedStructKeying } from "../../corpus/observations.ts";
 import type { RuleField } from "../../cwt/model.ts";
 import type { ContentType } from "../../cwt/rules.ts";
+import { Emitter } from "../../emit/typescript.ts";
+import { wildcardBlockOf } from "../../lower/rule-shapes.ts";
+import { camelCase, constantCase, docComment } from "../../naming.ts";
+import { CONTENT_DECLINED_FIELDS, type RepeatedStructDefinition } from "../../overlay/index.ts";
+import { constArray, member as renderMember } from "../../render/writer.ts";
+import type { FieldContext } from "../scope-context.ts";
 import {
   authoredLiterals,
   emittedMemberType,
@@ -16,14 +22,8 @@ import {
   pickOrdinary,
   type EmittedField,
   type FieldMetadata,
-} from "../../lower/fields.ts";
-import { wildcardBlockOf } from "../../lower/rule-shapes.ts";
-import type { FieldContext } from "../../lower/scope-context.ts";
-import { camelCase, constantCase, docComment } from "../../naming.ts";
-import { CONTENT_DECLINED_FIELDS, type RepeatedStructDefinition } from "../../overlay/index.ts";
-import { Emitter } from "../../render/emitter.ts";
-import type { DocTable, FieldOmissionRow, MemberDocRow } from "../../render/field-rows.ts";
-import { constArray, member as renderMember } from "../../render/writer.ts";
+} from "./field-projection.ts";
+import type { DocTable, FieldOmissionRow, MemberDocRow } from "./field-rows.ts";
 import {
   localisationMembers,
   localisationMetadata,

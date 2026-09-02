@@ -13,8 +13,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { RuleType } from "@pdx-ts/codegen-cwt/cwt/model";
 import type { AliasDecl } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
-import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -187,14 +187,18 @@ describe("localisation union classification", () => {
   it("lowers a raw scalar arm as literal text and a reference arm without a string escape", () => {
     const emitter = new Emitter(rules);
     const rawScalar = emitter.unionFor([{ kind: "localisation" }, { kind: "scalar" }]);
-    expect(rawScalar?.type).toBe("LocalizationInput | LiteralText");
+    expect(rawScalar === null ? null : emitter.typeOf(rawScalar)).toBe(
+      "LocalizationInput | LiteralText"
+    );
     expect(rawScalar?.localizationInput).toBe(true);
 
     const reference = emitter.unionFor([
       { kind: "localisation" },
       { kind: "typeRef", name: "job" },
     ]);
-    expect(reference?.type).toBe("LocalizationInput | JobRef");
+    expect(reference === null ? null : emitter.typeOf(reference)).toBe(
+      "LocalizationInput | JobRef"
+    );
     expect(reference?.objectKinds).toContain("typed-ref");
   });
 

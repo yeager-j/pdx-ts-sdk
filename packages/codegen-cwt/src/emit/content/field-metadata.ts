@@ -6,14 +6,14 @@
  * gate's view of a field from disagreeing.
  */
 
-import { isOptional, isRepeated, type RuleField } from "../cwt/model.ts";
-import type { ContentFieldOverride } from "../overlay/index.ts";
-import { contentConversionOf, type TsValue } from "../render/emitter.ts";
-import { refTypesEntries } from "../render/writer.ts";
-import { formOfShape } from "./authored-form.ts";
-import { contentShape } from "./content-shape.ts";
-import type { EmittedField } from "./fields.ts";
-import type { FieldScope } from "./scope-context.ts";
+import { isOptional, isRepeated, type RuleField } from "../../cwt/model.ts";
+import { formOfShape } from "../../lower/authored-form.ts";
+import type { EmittedField } from "../../lower/content-model.ts";
+import { contentShape } from "../../lower/content-shape.ts";
+import { contentConversionOf, type LoweredValue } from "../../lower/value.ts";
+import type { ContentFieldOverride } from "../../overlay/index.ts";
+import type { FieldScope } from "../scope-context.ts";
+import { refTypesEntries } from "../value-metadata.ts";
 
 /**
  * Selects literal tokens suitable for generated authoring documentation.
@@ -33,7 +33,7 @@ export function authoredLiterals(literals: readonly string[] | undefined): {
  * Renders the conversion metadata for an authored scalar.
  * Closed reference values also include the registry names their ids must satisfy.
  */
-export function scalarMetadata(value: TsValue): string[] {
+export function scalarMetadata(value: LoweredValue): string[] {
   return [
     `conversion: ${JSON.stringify(contentConversionOf(value.conversion))}`,
     ...refTypesEntries(value),
@@ -119,7 +119,7 @@ export function withMetadataEntry(descriptor: FieldMetadata, entry: string): Fie
 export function admitsScalars(
   field: RuleField,
   shape: string,
-  value: TsValue | null
+  value: LoweredValue | null
 ): Omit<EmittedField, "field"> {
   return {
     shape,

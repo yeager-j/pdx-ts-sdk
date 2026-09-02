@@ -29,6 +29,16 @@
 
 import type { DescentNode } from "../../corpus/observations.ts";
 import { isOptional, type RuleField, type ScopeContext } from "../../cwt/model.ts";
+import type { Emitter } from "../../emit/typescript.ts";
+import { structuralSpliceOf } from "../../lower/rule-shapes.ts";
+import { camelCase, capitalizedArticle, docComment } from "../../naming.ts";
+import {
+  CONTENT_DECLINED_FIELDS,
+  CONTENT_FIELD_OVERRIDES,
+  FIELD_WIDENINGS,
+} from "../../overlay/index.ts";
+import { constArray, member as renderMember } from "../../render/writer.ts";
+import type { FieldContext } from "../scope-context.ts";
 import {
   authoredLiterals,
   emittedMemberType,
@@ -39,23 +49,13 @@ import {
   topLevelSplices,
   useWideningSymbols,
   type EmittedField,
-} from "../../lower/fields.ts";
-import { structuralSpliceOf } from "../../lower/rule-shapes.ts";
-import type { FieldContext } from "../../lower/scope-context.ts";
-import { camelCase, capitalizedArticle, docComment } from "../../naming.ts";
-import {
-  CONTENT_DECLINED_FIELDS,
-  CONTENT_FIELD_OVERRIDES,
-  FIELD_WIDENINGS,
-} from "../../overlay/index.ts";
-import type { Emitter } from "../../render/emitter.ts";
+} from "./field-projection.ts";
 import {
   omissionLine,
   type DocTable,
   type FieldOmissionRow,
   type MemberDocRow,
-} from "../../render/field-rows.ts";
-import { constArray, member as renderMember } from "../../render/writer.ts";
+} from "./field-rows.ts";
 
 /** Generated authoring code and coverage evidence for one structural alias splice. */
 export interface AliasSpliceEmission {

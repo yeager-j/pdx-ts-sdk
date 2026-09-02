@@ -317,7 +317,7 @@ export function assertHandWrittenTriggerExportsMatchRules(
  * One instance per pipeline run, owned by the `Emitter` that is already
  * threaded to every site that would call {@link applied}. This deliberately
  * is not module-level mutable state: before SDK-256, asset-field lowering used
- * a module-level `appliedAssetPaths` `Set`; `lower/field-assertions.ts` now
+ * a module-level `appliedAssetPaths` `Set`; `emit/content/field-assertions.ts` now
  * records `ASSET_PATH_FIELDS` through this class. The old shape had no owner,
  * so nothing scoped it to one run or let two pipeline runs in the same process
  * (as several test files perform) avoid leaking applied-state into each other.

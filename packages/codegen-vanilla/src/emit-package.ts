@@ -15,8 +15,8 @@
  */
 
 import { basename } from "node:path";
-import type { RuleScopes } from "@pdx-ts/codegen-cwt/lower/scope-facts";
 import { pascalCase } from "@pdx-ts/codegen-cwt/naming";
+import type { RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
 
 import { emitEventTrie } from "./emit-events.ts";
 import {

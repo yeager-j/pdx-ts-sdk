@@ -3,7 +3,7 @@
  *
  * Every function here inspects a `RuleType`/`RuleField` — or, where the rules
  * alone don't close the answer, the parsed rule model reachable through
- * `Emitter` (an enum's members, an alias category's members) — and returns
+ * `LoweringContext` (an enum's members, an alias category's members) — and returns
  * either a verdict (`null` for "not this shape") or the structural pieces the
  * verdict already found (which block, which trigger declaration, which enum
  * values). None of them knows how to lower what they find into TypeScript;
@@ -14,7 +14,7 @@ import { type FieldKey, type RuleField, type RuleType } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
 import { camelCase, isPlainName } from "../naming.ts";
 import { type ContentFieldShape } from "../overlay/index.ts";
-import type { Emitter } from "../render/emitter.ts";
+import type { LoweringContext } from "./context.ts";
 
 /** Returns a block's anonymous value types, or `null` when it has none. */
 export function bareValuesOf(type: RuleType): readonly RuleType[] | null {
@@ -63,7 +63,10 @@ export interface EnumKeyedEntry {
  * Returns `null` when the declaration is ambiguous or the enum cannot provide a closed
  * set of plain member names.
  */
-export function enumKeyedEntryOf(emitter: Emitter, block: BlockType): EnumKeyedEntry | null {
+export function enumKeyedEntryOf(
+  emitter: LoweringContext,
+  block: BlockType
+): EnumKeyedEntry | null {
   const candidates = block.fields.flatMap((field) =>
     field.key.kind === "computed" && field.key.type.kind === "enum" && field.type.kind === "block"
       ? [{ declaration: field, block: field.type, enumName: field.key.type.name }]
@@ -212,7 +215,7 @@ export function derivedClauseShape(field: RuleField): ContentFieldShape | undefi
  * Expands an all-scalar alias category into ordinary optional named fields.
  * Returns `null` if any member name or value cannot be represented by the struct pipeline.
  */
-export function aliasScalarFields(emitter: Emitter, category: string): RuleField[] | null {
+export function aliasScalarFields(emitter: LoweringContext, category: string): RuleField[] | null {
   const members = emitter.rules.aliasCategories.get(category);
   if (members === undefined || members.size === 0) {
     return null;
@@ -255,7 +258,7 @@ export type AliasNameField = RuleField & {
  * the category is absent, ambiguous, or scalar-valued.
  */
 export function structuralSpliceOf(
-  emitter: Emitter,
+  emitter: LoweringContext,
   category: string
 ): {
   /** The PDXScript key emitted for the structural member. */

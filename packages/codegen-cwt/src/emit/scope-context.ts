@@ -12,9 +12,10 @@
  */
 
 import { scopeGroupName, type FieldKey, type RuleField, type ScopeContext } from "../cwt/model.ts";
+import type { LoweredRuleScopes } from "../lower/lowered-rule.ts";
 import { UNIVERSAL_SCOPES } from "../overlay/index.ts";
-import type { Emitter } from "../render/emitter.ts";
 import { AMBIENT_SCOPE_KEYS, type AmbientScopeKey } from "../special-scope-paths.ts";
+import type { Emitter } from "./typescript.ts";
 
 interface CanonicalScope {
   readonly type: string;
@@ -24,6 +25,11 @@ interface CanonicalScope {
 /** Renders canonical scope names as a TypeScript literal union. */
 export function scopeUnionType(scopes: readonly string[]): string {
   return scopes.map((scope) => JSON.stringify(scope)).join(" | ");
+}
+
+/** Renders a lowered rule's canonical scope set as a TypeScript type. */
+export function ruleScopeType(scopes: LoweredRuleScopes): string {
+  return scopes === "universal" ? "ScopeName" : scopeUnionType(scopes);
 }
 
 /** The declared scope group one annotation names, or `null` for anything else. */

@@ -6,9 +6,9 @@
  * builder it emits.
  */
 
+import { Emitter, recordsLocalization, type TsValue } from "../../emit/typescript.ts";
 import type { ArgField, ArgValue, BlockValue, MapValue } from "../../lower/script-shape.ts";
 import { camelCase, propertyAccess } from "../../naming.ts";
-import { Emitter, recordsLocalization, type TsValue } from "../../render/emitter.ts";
 
 /**
  * The expression a scalar `TsValue` pushes into `kv()`, `scriptValueScalar`-
@@ -16,10 +16,7 @@ import { Emitter, recordsLocalization, type TsValue } from "../../render/emitter
  * `@name` input becomes a `var` node rather than a defensively-quoted string.
  */
 export function pushExpr(emitter: Emitter, value: TsValue, expr: string): string {
-  if (value.scalarSymbol !== undefined) {
-    emitter.use(value.scalarSymbol);
-  }
-  const scalar = value.toScalar(expr);
+  const scalar = emitter.scalarExpression(value, expr);
   return value.scriptValue === true ? `${emitter.use("scriptValueScalar")}(${scalar})` : scalar;
 }
 
@@ -196,9 +193,6 @@ function scalarPushCode(
   // Indexed rather than named after the field, so the local can never
   // collide with `args`, `entries`, `refs`, or a sibling field's name.
   const local = `id${index}`;
-  if (value.scalarSymbol !== undefined) {
-    emitter.use(value.scalarSymbol);
-  }
   return (
     `const ${local} = ${scalarExpr(emitter, value, access, fieldPath)};\n` +
     `    ${sink}.push(${emitter.use("kv")}(${key}, ${local}));\n` +
@@ -388,9 +382,6 @@ export function pushValueListCode(
       return `${items}.push(${pdxScalar});` + recordLoc;
     }
     const id = `id${index}`;
-    if (scalar.scalarSymbol !== undefined) {
-      emitter.use(scalar.scalarSymbol);
-    }
     return (
       `const ${id} = ${scalarExpr(emitter, scalar, item, fieldPath)};\n` +
       `${items}.push(${emitter.use("scalar")}(${id}));\n` +

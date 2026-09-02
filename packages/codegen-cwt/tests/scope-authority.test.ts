@@ -5,18 +5,18 @@ import { fileURLToPath } from "node:url";
 import { scopeOf, type RuleField } from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { readAliases, scopeIndex, type AliasDecl } from "@pdx-ts/codegen-cwt/cwt/rules";
-import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
-import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
-import { parseScopeLinks } from "@pdx-ts/codegen-cwt/logs/scopes";
-import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
-import { lowerRule } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
 import {
   canonicalThisScope,
   scopeType,
   splitRootMetadata,
   withFrom,
-} from "@pdx-ts/codegen-cwt/lower/scope-context";
-import { loadScopeFacts } from "@pdx-ts/codegen-cwt/lower/scope-facts";
+} from "@pdx-ts/codegen-cwt/emit/scope-context";
+import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
+import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
+import { parseScopeLinks } from "@pdx-ts/codegen-cwt/logs/scopes";
+import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
+import { lowerRule } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
 import { compareToBaseline, loadBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
 import {
   reconcile,
@@ -28,7 +28,7 @@ import {
   scopeAuthorityOf,
   type RuleScopeDecision,
 } from "@pdx-ts/codegen-cwt/reconcile/scope-authority";
-import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
+import { loadScopeFacts } from "@pdx-ts/codegen-cwt/scope-facts";
 import { describe, expect, it } from "vitest";
 
 /** The repo root, from this module — never the directory vitest was started in. */

@@ -11,40 +11,16 @@
  * of growing parallel ones that disagree.
  */
 
-import type { DescentNode } from "../corpus/observations.ts";
-import { isRepeated, type RuleField, type RuleType } from "../cwt/model.ts";
-import { camelCase, docComment, pascalCase } from "../naming.ts";
-import {
-  type ContentFieldOverride,
-  type ContentFieldShape,
-  type FieldWidening,
-} from "../overlay/index.ts";
-import { Emitter, type TsValue } from "../render/emitter.ts";
-import type { DocTable, FieldOmissionRow } from "../render/field-rows.ts";
-import { refTypesEntries } from "../render/writer.ts";
-import { formOfShape } from "./authored-form.ts";
-import { contentShape } from "./content-shape.ts";
-import { assertedArity, assertedAssetPath, assertedUncheckedString } from "./field-assertions.ts";
+import type { DescentNode } from "../../corpus/observations.ts";
+import { isRepeated, type RuleField, type RuleType } from "../../cwt/model.ts";
+import { formOfShape } from "../../lower/authored-form.ts";
+import type { EmittedField } from "../../lower/content-model.ts";
+import { contentShape } from "../../lower/content-shape.ts";
 import {
   economicResourceOperationInterior,
   triggeredModifierInterior,
   weightInterior,
-} from "./field-interiors.ts";
-import {
-  admitsBlock,
-  admitsScalars,
-  arrayType,
-  metadata,
-  scalarMetadata,
-  withMetadataEntry,
-  type FieldMetadata,
-} from "./field-metadata.ts";
-import {
-  lowerScalarMap,
-  lowerStruct,
-  lowerStructMap,
-  lowerTriggerStruct,
-} from "./field-structs.ts";
+} from "../../lower/field-interiors.ts";
 import {
   aliasScalarFields,
   bareValuesOf,
@@ -54,7 +30,14 @@ import {
   structuralSpliceOf,
   triggeredModifierPotential,
   type AliasNameField,
-} from "./rule-shapes.ts";
+} from "../../lower/rule-shapes.ts";
+import type { LoweredValue } from "../../lower/value.ts";
+import { camelCase, docComment, pascalCase } from "../../naming.ts";
+import {
+  type ContentFieldOverride,
+  type ContentFieldShape,
+  type FieldWidening,
+} from "../../overlay/index.ts";
 import {
   containerContext,
   contravariantScopeType,
@@ -64,7 +47,28 @@ import {
   splitRootMetadata,
   withFrom,
   type FieldContext,
-} from "./scope-context.ts";
+} from "../scope-context.ts";
+import type { Emitter } from "../typescript.ts";
+import { refTypesEntries } from "../value-metadata.ts";
+import { assertedArity, assertedAssetPath, assertedUncheckedString } from "./field-assertions.ts";
+import {
+  admitsBlock,
+  admitsScalars,
+  arrayType,
+  metadata,
+  scalarMetadata,
+  withMetadataEntry,
+  type FieldMetadata,
+} from "./field-metadata.ts";
+import type { DocTable, FieldOmissionRow } from "./field-rows.ts";
+import {
+  lowerScalarMap,
+  lowerStruct,
+  lowerStructMap,
+  lowerTriggerStruct,
+} from "./field-structs.ts";
+
+export type { EmittedField } from "../../lower/content-model.ts";
 
 export {
   authoredLiterals,
@@ -75,53 +79,14 @@ export {
 } from "./field-metadata.ts";
 
 /**
- * Describes one lowered field in the terms used by corpus conformance checks.
- * Consumers use it to compare shape, repetition, scalar values, and closure scope.
+ * The TypeScript projection and conformance evidence for one supported field.
+ * This is an emission result, not the semantic lowering model.
  */
-export interface EmittedField {
-  /** The game's own key, or a dotted path for one lowered inside a struct. */
-  readonly field: string;
-  /** Authored member path owning this field, preserved through nested lowering. */
-  readonly authoredPath?: readonly string[];
-  /** The runtime shape name, the same token the field metadata carries. */
-  readonly shape: string;
-  /** True when the authoring member lets the key repeat at the sibling level. */
-  readonly repeated: boolean;
-  /**
-   * Marks a struct whose repetition occurs as anonymous blocks inside one key.
-   * The corpus checker uses this to distinguish wrapped lists from repeated sibling keys.
-   */
-  readonly wrapped?: boolean;
-  /** Every scalar the member admits, when the lowering closed the set. */
-  readonly literals?: readonly string[];
-  /**
-   * The canonical scopes in which this field's closures run.
-   * `"any"` is unpinned; `{ parameter }` means the enclosing definition selects
-   * one of the listed scopes.
-   */
-  readonly scope?:
-    | readonly string[]
-    | "any"
-    | {
-        /** Scopes allowed for the enclosing definition's scope parameter. */
-        readonly parameter: readonly string[];
-      };
-  /**
-   * The script clause kind held by this block, when it contains scoped rules.
-   * Consumers must use this value instead of inferring a clause from the shape name.
-   */
-  readonly clause?: "trigger" | "effect";
-}
-
-/**
- * The generated member type, runtime descriptor, and conformance evidence for
- * one lowered CWT field. Optional code and descent data describe nested blocks.
- */
-export interface LoweredField {
+export interface FieldProjection {
   /**
    * The TypeScript type exposed on the generated authoring member, as plain
    * type text. The field-docs ledger records this spelling, so it carries no
-   * comments even when {@link LoweredField.documentedMemberType} does.
+   * comments even when {@link FieldProjection.documentedMemberType} does.
    */
   readonly memberType: string;
   /**
@@ -149,7 +114,7 @@ export interface LoweredField {
   readonly docs?: readonly string[];
   /** Extra top-level declarations a nested struct level needed, prepended by the caller. */
   readonly code?: string;
-  /** Every name {@link LoweredField.code} exports, for the public barrel's check. */
+  /** Every name {@link FieldProjection.code} exports, for the public barrel's check. */
   readonly exportedNames?: readonly string[];
   /** Rows bubbled up from a nested struct level, their paths already prefixed. */
   readonly unsupported?: readonly FieldOmissionRow[];
@@ -174,7 +139,7 @@ export interface LoweredField {
  * The type text to write into the emitted interface, which documents the
  * members of an inline object type where the lowering described them.
  */
-export function emittedMemberType(lowered: LoweredField): string {
+export function emittedMemberType(lowered: FieldProjection): string {
   return lowered.documentedMemberType ?? lowered.memberType;
 }
 
@@ -335,7 +300,7 @@ function lowerValue(
   field: RuleField,
   name: string,
   widening: string | undefined
-): LoweredField | null {
+): FieldProjection | null {
   const value = emitter.valueFor(field.type);
   if (value === null) {
     return null;
@@ -350,9 +315,10 @@ function lowerValue(
   // `locKey: true` is that signal, and the runtime resolves the member
   // through it (SDK-303).
   const isLocKey = field.type.kind === "localisation";
+  const renderedValueType = emitter.typeOf(value);
   const scalarType = isLocKey
     ? emitter.use("LocalizationInput")
-    : authoredScalarType(field.type, value.type);
+    : authoredScalarType(field.type, renderedValueType);
   const base = scalarType + (widening === undefined ? "" : ` | ${widening}`);
   if (!isLocKey) {
     emitter.useValue(value);
@@ -381,7 +347,7 @@ function lowerValueList(
   name: string,
   widening: string | undefined,
   quoted: boolean
-): LoweredField | null {
+): FieldProjection | null {
   const bare = bareValuesOf(field.type);
   if (bare === null) {
     return null;
@@ -413,7 +379,7 @@ function lowerModifierBlock(
   name: string,
   ctx: FieldContext,
   override: ContentFieldOverride | undefined
-): LoweredField {
+): FieldProjection {
   const scope = scopeType(emitter, field, ctx, override?.scope);
   return {
     memberType: `${emitter.use("ModifierClosure")}<${scopeArg(emitter, scope)}>`,
@@ -436,7 +402,7 @@ function lowerWeightBlock(
   override: ContentFieldOverride | undefined,
   path: string,
   shape: "weightBlock" | "weightBlockWithLoc"
-): LoweredField {
+): FieldProjection {
   const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
   const closure = shape === "weightBlock" ? "WeightBlock" : "WeightBlockWithLoc";
   return {
@@ -452,7 +418,7 @@ function lowerAliasStruct(
   field: RuleField,
   name: string,
   category: string
-): LoweredField {
+): FieldProjection {
   const memberType = emitter.useAliasCategory(category, `${pascalCase(category)}Block`);
   return {
     memberType: isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
@@ -468,7 +434,7 @@ function lowerTrigger(
   name: string,
   ctx: FieldContext,
   override: ContentFieldOverride | undefined
-): LoweredField {
+): FieldProjection {
   const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
   return {
     memberType: withFrom(emitter, `${emitter.use("Trigger")}<${scopeArg(emitter, scope)}>`, scope),
@@ -484,7 +450,7 @@ function lowerEffect(
   name: string,
   ctx: FieldContext,
   override: ContentFieldOverride | undefined
-): LoweredField {
+): FieldProjection {
   const scope = scopeType(emitter, field, ctx, override?.scope);
   return {
     memberType: `${emitter.use("EffectBlock")}<${effectBlockArgs(emitter, scope)}>`,
@@ -501,7 +467,7 @@ function lowerEconomicResources(
   ctx: FieldContext,
   override: ContentFieldOverride | undefined,
   shape: "economicResources" | "economicResourcesNoProduce"
-): LoweredField {
+): FieldProjection {
   const scope = scopeType(emitter, field, ctx, override?.scope);
   const block =
     shape === "economicResources" ? "EconomicResourceBlock" : "EconomicResourceBlockNoProduce";
@@ -523,7 +489,7 @@ function lowerEconomicResourceOperation(
   name: string,
   ctx: FieldContext,
   path: string
-): LoweredField {
+): FieldProjection {
   const parts = economicResourceOperationParts(field);
   const triggerScope = contravariantScopeType(emitter, parts.trigger, containerContext(field, ctx));
   const memberType =
@@ -551,7 +517,7 @@ function lowerTriggeredModifier(
   ctx: FieldContext,
   override: ContentFieldOverride | undefined,
   path: string
-): LoweredField {
+): FieldProjection {
   const modifierScope = scopeType(emitter, field, ctx, override?.scope);
   const potentialScope = scopeType(
     emitter,
@@ -592,7 +558,7 @@ function lowerWeightedEvents(
   emitter: Emitter,
   field: RuleField,
   name: string
-): LoweredField | null {
+): FieldProjection | null {
   if (field.type.kind !== "block") {
     return null;
   }
@@ -606,15 +572,15 @@ function lowerWeightedEvents(
   if (value === null) {
     return null;
   }
-  emitter.useValue(value);
+  const eventType = emitter.typeOf(value);
   return {
-    memberType: `readonly { weight: number; event?: ${value.type} }[]`,
+    memberType: `readonly { weight: number; event?: ${eventType} }[]`,
     documentedMemberType:
       "readonly {\n" +
       docComment(WEIGHTED_EVENT_MEMBER_DOCS.weight) +
       "weight: number;\n" +
       docComment(WEIGHTED_EVENT_MEMBER_DOCS.event) +
-      `event?: ${value.type};\n` +
+      `event?: ${eventType};\n` +
       "}[]",
     docs: ["Weighted event rows. A row's weight must be a whole number."],
     metadata: metadata(field, name, "weightedEvents", scalarMetadata(value)),
@@ -633,7 +599,7 @@ function lowerSelectedShape(
   widening: string | undefined,
   path: string,
   shape: OrdinaryFieldShape
-): LoweredField | null {
+): FieldProjection | null {
   switch (shape) {
     case "value":
       return lowerValue(emitter, field, name, widening);
@@ -679,7 +645,7 @@ function lowerFallbackShape(
   ctx: FieldContext,
   widening: string | undefined,
   path: string
-): LoweredField | null {
+): FieldProjection | null {
   const bare = bareValuesOf(field.type);
   if (bare !== null) {
     // A single bare block, rather than a bare scalar, is the "wrapped" spelling
@@ -709,7 +675,7 @@ function lowerInferredShape(
   override: ContentFieldOverride | undefined,
   widening: string | undefined,
   path: string
-): LoweredField | null {
+): FieldProjection | null {
   const triggerStruct = lowerTriggerStruct(emitter, field, name, path, ctx);
   if (triggerStruct !== null) {
     return triggerStruct;
@@ -757,7 +723,7 @@ function lowerOrdinary(
   override: ContentFieldOverride | undefined,
   widening: string | undefined,
   path: string
-): LoweredField | null {
+): FieldProjection | null {
   const selectedShape = override?.shape ?? derivedClauseShape(field);
   if (selectedShape === undefined) {
     return lowerInferredShape(emitter, field, name, ctx, override, widening, path);
@@ -792,7 +758,7 @@ function lowerDual(
   override: ContentFieldOverride | undefined,
   widening: string | undefined,
   path: string
-): LoweredField | null {
+): FieldProjection | null {
   const scalarArms: RuleField[] = [];
   const blockArms: RuleField[] = [];
   for (const field of group) {
@@ -868,7 +834,7 @@ function lowerScalarUnion(
   group: readonly RuleField[],
   name: string,
   widening: string | undefined
-): LoweredField | null {
+): FieldProjection | null {
   const boolish = (type: RuleType): boolean =>
     type.kind === "literal" && (type.text === "yes" || type.text === "no");
   if (group.some((field) => field.type.kind === "block" || boolish(field.type))) {
@@ -921,7 +887,7 @@ function lowerScalarUnion(
 function locKeyUnion(
   emitter: Emitter,
   group: readonly RuleField[],
-  value: TsValue
+  value: LoweredValue
 ):
   | { readonly type: string; readonly literals: readonly string[]; readonly metadata: string[] }
   | undefined {
@@ -958,7 +924,7 @@ export function pickOrdinary(
   override: ContentFieldOverride | undefined,
   widening: string | undefined,
   path: string
-): LoweredField | null {
+): FieldProjection | null {
   const identified = asIdentityName(declared, override, path);
   const lowered = assertedAssetPath(
     emitter,
@@ -1028,7 +994,7 @@ function pickLowering(
   override: ContentFieldOverride | undefined,
   widening: string | undefined,
   path: string
-): LoweredField | null {
+): FieldProjection | null {
   const unchecked = assertedUncheckedString(
     emitter,
     assertedArity(declared, override),
@@ -1036,7 +1002,7 @@ function pickLowering(
     path
   );
   const group = unchecked.group;
-  const documented = (lowered: LoweredField | null): LoweredField | null =>
+  const documented = (lowered: FieldProjection | null): FieldProjection | null =>
     lowered === null || unchecked.docs.length === 0
       ? lowered
       : { ...lowered, docs: unchecked.docs };

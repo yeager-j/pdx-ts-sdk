@@ -9,20 +9,14 @@
  * against.
  */
 
-import type { TsValue } from "@pdx-ts/codegen-cwt/render/emitter";
-import {
-  constArray,
-  member,
-  refTypesEntries,
-  refTypesSuffix,
-} from "@pdx-ts/codegen-cwt/render/writer";
+import type { TsValue } from "@pdx-ts/codegen-cwt/emit/typescript";
+import { refTypesEntries, refTypesSuffix } from "@pdx-ts/codegen-cwt/emit/value-metadata";
+import { constArray, member } from "@pdx-ts/codegen-cwt/render/writer";
 import { describe, expect, it } from "vitest";
 
 /** A minimal `TsValue` for testing writer metadata. */
-function tsValue(
-  overrides: Partial<TsValue> & Pick<TsValue, "type" | "toScalar" | "conversion">
-): TsValue {
-  return overrides;
+function tsValue(overrides: Partial<TsValue> & Pick<TsValue, "types" | "conversion">): TsValue {
+  return overrides as TsValue;
 }
 
 describe("member", () => {
@@ -92,12 +86,14 @@ describe("constArray", () => {
 });
 
 const referencing: TsValue = tsValue({
-  type: "TechnologyRef",
-  toScalar: (e) => `refId(${e})`,
+  types: [{ kind: "reference", name: "technology", unchecked: false }],
   conversion: "refId",
   refTypes: ["technology"],
 });
-const plain: TsValue = tsValue({ type: "string", toScalar: (e) => e, conversion: "identity" });
+const plain: TsValue = tsValue({
+  types: [{ kind: "primitive", name: "string" }],
+  conversion: "identity",
+});
 
 describe("refTypesSuffix / refTypesEntries share one fact about a value", () => {
   it("format the same presence/absence of refTypes two different ways", () => {

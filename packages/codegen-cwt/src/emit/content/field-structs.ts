@@ -1,18 +1,33 @@
 /** Lowers CWT block fields into generated struct declarations and metadata. */
 
-import type { DescentNode } from "../corpus/observations.ts";
-import { isRepeated, type RuleField } from "../cwt/model.ts";
-import { camelCase, constantCase, docComment, pascalCase } from "../naming.ts";
+import type { DescentNode } from "../../corpus/observations.ts";
+import { isRepeated, type RuleField } from "../../cwt/model.ts";
+import { formOfShape } from "../../lower/authored-form.ts";
+import {
+  enumKeyedEntryOf,
+  structBlockOf,
+  triggerStructOf,
+  wildcardBlockOf,
+  type BlockType,
+  type EnumKeyedEntry,
+} from "../../lower/rule-shapes.ts";
+import { camelCase, constantCase, docComment, pascalCase } from "../../naming.ts";
 import {
   CONTENT_FIELD_DOCS,
   CONTENT_FIELD_OVERRIDES,
   FIELD_WIDENINGS,
   type ContentFieldOverride,
-} from "../overlay/index.ts";
-import { Emitter } from "../render/emitter.ts";
-import type { DocTable, FieldOmissionRow, MemberDocRow } from "../render/field-rows.ts";
-import { constArray, member as renderMember } from "../render/writer.ts";
-import { formOfShape } from "./authored-form.ts";
+} from "../../overlay/index.ts";
+import { constArray, member as renderMember } from "../../render/writer.ts";
+import {
+  containerContext,
+  contravariantScopeType,
+  scopeArg,
+  withFrom,
+  type FieldContext,
+  type FieldScope,
+} from "../scope-context.ts";
+import type { Emitter } from "../typescript.ts";
 import {
   arrayType,
   authoredLiterals,
@@ -26,24 +41,9 @@ import {
   pickOrdinary,
   useWideningSymbols,
   type EmittedField,
-  type LoweredField,
-} from "./fields.ts";
-import {
-  enumKeyedEntryOf,
-  structBlockOf,
-  triggerStructOf,
-  wildcardBlockOf,
-  type BlockType,
-  type EnumKeyedEntry,
-} from "./rule-shapes.ts";
-import {
-  containerContext,
-  contravariantScopeType,
-  scopeArg,
-  withFrom,
-  type FieldContext,
-  type FieldScope,
-} from "./scope-context.ts";
+  type FieldProjection,
+} from "./field-projection.ts";
+import type { DocTable, FieldOmissionRow, MemberDocRow } from "./field-rows.ts";
 
 /**
  * Lowers an anonymous, identity-less block field: the fallback that
@@ -427,7 +427,7 @@ export function lowerStructMap(
   path: string,
   ctx: FieldContext,
   override: ContentFieldOverride | undefined
-): LoweredField | null {
+): FieldProjection | null {
   const block = wildcardBlockOf(field.type);
   if (block === null) {
     return null;
@@ -476,7 +476,7 @@ export function lowerScalarMap(
   emitter: Emitter,
   field: RuleField,
   name: string
-): LoweredField | null {
+): FieldProjection | null {
   if (field.type.kind !== "block") {
     return null;
   }
@@ -505,7 +505,7 @@ export function lowerStruct(
   name: string,
   path: string,
   ctx: FieldContext
-): LoweredField | null {
+): FieldProjection | null {
   const located = structBlockOf(field.type);
   if (located === null) {
     return null;
@@ -558,7 +558,7 @@ export function lowerTriggerStruct(
   name: string,
   path: string,
   ctx: FieldContext
-): LoweredField | null {
+): FieldProjection | null {
   const located = triggerStructOf(field.type);
   if (located === null) {
     return null;

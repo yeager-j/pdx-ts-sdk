@@ -9,17 +9,14 @@
 
 import type { RuleType } from "../../cwt/model.ts";
 import type { AliasDecl } from "../../cwt/rules.ts";
+import { Emitter, recordsLocalization, type TsValue } from "../../emit/typescript.ts";
 import type { DocEntry } from "../../logs/trigger-docs.ts";
 import { loweredRuleConflictSkips, type LoweredRule } from "../../lower/lowered-rule.ts";
-import { canonicalThisScope, scopeUnionType } from "../../lower/scope-context.ts";
 import {
   bareBlockValue,
-  cardinalityArrayType,
   clauseScopeContext,
   comparisonValue,
-  mapType,
   mergeBlock,
-  repeatedMemberType,
   skippedRule,
   skipReason,
   type ArgField,
@@ -42,8 +39,8 @@ import {
   TRIGGER_DOC_SUMMARY_OVERRIDES,
 } from "../../overlay/index.ts";
 import { HAND_WRITTEN_TRIGGER_RULES_BY_KEY } from "../../policy/triggers.ts";
-import { Emitter, recordsLocalization, type TsValue } from "../../render/emitter.ts";
 import { member as renderMember } from "../../render/writer.ts";
+import { canonicalThisScope, ruleScopeType, scopeUnionType } from "../scope-context.ts";
 import type { ScriptTriggerReferenceRow } from "./script-reference.ts";
 import {
   contributesRefs,
@@ -53,6 +50,7 @@ import {
   scalarExpr,
   unauthorableAliasValue,
 } from "./trigger-push-code.ts";
+import { cardinalityArrayType, mapType, repeatedMemberType } from "./type-projection.ts";
 
 const TRIGGER_CLAUSES = new Set<ClauseCategory>(["trigger"]);
 
@@ -339,13 +337,10 @@ function localizationEntryReturn(
   if (value.refTypes === undefined) {
     return collect + returned(scalarExpr(emitter, value, access, key));
   }
-  if (value.scalarSymbol !== undefined) {
-    emitter.use(value.scalarSymbol);
-  }
   // The id is bound once and both written and recorded, for the same reason
   // {@link scalarEntryReturn} binds one.
   return (
-    `${indent}const id = ${value.toScalar(access)};\n` +
+    `${indent}const id = ${emitter.scalarExpression(value, access)};\n` +
     collect +
     `${indent}refs.push({ targets: ${JSON.stringify(value.refTypes)}, id, ` +
     `field: ${keyText} });\n` +
@@ -375,11 +370,8 @@ function scalarEntryReturn(
   }
   // The id is bound once and both written and recorded, so the emitted entry
   // and the reference the build checks can never drift apart.
-  if (value.scalarSymbol !== undefined) {
-    emitter.use(value.scalarSymbol);
-  }
   return (
-    `${indent}const id = ${value.toScalar(access)};\n` +
+    `${indent}const id = ${emitter.scalarExpression(value, access)};\n` +
     `${indent}return ${emitter.use("trigger")}([${emitter.use("kv")}(${JSON.stringify(key)}, id)], ` +
     `[{ targets: ${JSON.stringify(value.refTypes)}, id, field: ${JSON.stringify(key)} }]);\n`
   );
@@ -755,7 +747,7 @@ export function emitTriggers(
       );
       continue;
     }
-    const scope = rule.scopeType;
+    const scope = rule.scopes === null ? null : ruleScopeType(rule.scopes);
     if (scope === null) {
       skipped.push(
         skippedRule(key, "unknown-scope", `unknown scope in ${rule.supportedScopes.join(" ")}`)

@@ -7,11 +7,11 @@
  */
 
 import type { ContentType } from "../../cwt/rules.ts";
+import { Emitter } from "../../emit/typescript.ts";
 import { camelCase, docComment } from "../../naming.ts";
 import { REQUIRED_LOCALISATION, SYNTHETIC_LOCALISATION } from "../../overlay/index.ts";
-import { Emitter } from "../../render/emitter.ts";
-import type { FieldOmissionRow } from "../../render/field-rows.ts";
 import { member as renderMember } from "../../render/writer.ts";
+import type { FieldOmissionRow } from "./field-rows.ts";
 
 /** One canonical localisation slot and its resolved authoring requiredness. */
 export interface LocalisationPlanEntry {

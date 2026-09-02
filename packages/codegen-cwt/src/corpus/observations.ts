@@ -1,4 +1,4 @@
-import type { RuleScopes } from "../lower/scope-facts.ts";
+import type { RuleScopes } from "../scope-facts.ts";
 
 /**
  * Aggregates how one field appears across a registry corpus.
