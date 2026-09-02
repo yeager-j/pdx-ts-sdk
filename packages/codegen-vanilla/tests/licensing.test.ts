@@ -16,6 +16,7 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { describe, expect, it } from "vitest";
 
 import { emitEventTrie } from "../src/emit-events.ts";
@@ -32,6 +33,7 @@ import {
 } from "../src/emit.ts";
 import { generateVanillaPackage } from "../src/generate.ts";
 import { RUNTIME_ID_SET_REGISTRIES } from "../src/manifest.ts";
+import { FAKE_INSTALL_UNMATCHED_COMPLEX_ENUMS } from "./fake-install.ts";
 
 /** The repo root, from this module — never the directory vitest was started in. */
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -42,6 +44,7 @@ const OPTIONS = {
   configRoot: path.join(ROOT, "vendor/cwtools-stellaris-config/config"),
   docsRoot: path.join(ROOT, "vendor/cwtools-stellaris-config/script-docs/v4.4.1"),
   trieThreshold: 5,
+  allowedUnmatchedComplexEnums: FAKE_INSTALL_UNMATCHED_COMPLEX_ENUMS,
 };
 
 const generated = generateVanillaPackage(OPTIONS);
@@ -279,6 +282,7 @@ describe("negative control", () => {
       generateVanillaPackage({
         ...OPTIONS,
         installRoot: fileURLToPath(new URL("./fixtures/fake-install-poisoned", import.meta.url)),
+        allowedUnmatchedComplexEnums: [...loadRules(OPTIONS.configRoot).complexEnums.keys()],
       })
     ).toThrow(/sound id: refusing to emit "The Grand Herald has arrived\."/);
   });

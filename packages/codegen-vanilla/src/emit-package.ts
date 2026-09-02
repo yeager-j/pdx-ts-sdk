@@ -46,6 +46,7 @@ import {
 import { assertExtractionComplete } from "./extraction-gap.ts";
 import type { InferredScope, ScriptedKind } from "./infer-scopes.ts";
 import {
+  PROVEN_EMPTY_COMPLEX_ENUMS,
   RUNTIME_ENUM_SET_NAMES,
   RUNTIME_ID_SET_REGISTRIES,
   VANILLA_MANIFEST,
@@ -61,6 +62,14 @@ export interface EmitOptions {
    * fixture can exercise the trie without shipping 2,000 fake sprites.
    */
   readonly trieThreshold?: number;
+  /**
+   * Complex enums an intentionally partial fixture does not supply.
+   *
+   * Production generation should leave this empty. Each listed enum must be
+   * present in the facts with zero selector-bearing files, so a stale fixture
+   * exception fails instead of hiding new evidence.
+   */
+  readonly allowedUnmatchedComplexEnums?: readonly string[];
 }
 
 export interface TrieReport {
@@ -93,6 +102,7 @@ export interface ComplexEnumReport {
   readonly name: string;
   readonly members: number;
   readonly files: number;
+  readonly selectorFiles: number;
   readonly diagnostics: number;
   readonly missing: boolean;
 }
@@ -193,6 +203,37 @@ export interface VanillaReport {
 /** How many definitions to name in the report before the tail is noise. */
 const REPORTED_UNKNOWN_KEYS = 25;
 
+function assertComplexEnumSelectorsReached(
+  complexEnums: VanillaBuildFacts["complexEnums"],
+  allowedUnmatched: readonly string[]
+): void {
+  const byName = new Map(complexEnums.map((one) => [one.name, one]));
+  const allowed = new Set<string>();
+  for (const name of allowedUnmatched) {
+    const read = byName.get(name);
+    if (read === undefined) {
+      throw new Error(`allowed unmatched complex enum ${name} is not in the build facts`);
+    }
+    if (read.selectorFiles !== 0) {
+      throw new Error(`allowed unmatched complex enum ${name} has selector-bearing source files`);
+    }
+    allowed.add(name);
+  }
+
+  const unmatched = complexEnums.filter((one) => one.selectorFiles === 0 && !allowed.has(one.name));
+  if (unmatched.length === 0) {
+    return;
+  }
+  throw new Error(
+    `refusing to emit: ${unmatched.length} exact-membership complex ${
+      unmatched.length === 1 ? "enum has" : "enums have"
+    } no selector-bearing source files:\n` +
+      unmatched.map((one) => `  ${one.name}`).join("\n") +
+      "\nMatching an extension does not prove that the game defines no members. Fix the CWT path, " +
+      "extension, or selector, then regenerate."
+  );
+}
+
 /**
  * Turns the inference's per-definition diagnostics into the two aggregates the
  * report needs.
@@ -260,6 +301,14 @@ export function emitVanillaPackage(
   assertExtractionComplete([
     ...facts.complexEnums.flatMap((one) => one.gaps),
     ...facts.localization.gaps,
+  ]);
+  assertComplexEnumSelectorsReached(facts.complexEnums, [
+    ...new Set([
+      ...PROVEN_EMPTY_COMPLEX_ENUMS.filter((name) =>
+        facts.complexEnums.some((one) => one.name === name)
+      ),
+      ...(options.allowedUnmatchedComplexEnums ?? []),
+    ]),
   ]);
 
   const threshold = options.trieThreshold ?? DEFAULT_TRIE_THRESHOLD;
@@ -347,6 +396,7 @@ export function emitVanillaPackage(
       name: complex.name,
       members: complex.members.length,
       files: complex.files,
+      selectorFiles: complex.selectorFiles,
       diagnostics: complex.diagnostics,
       missing: complex.missing,
     });

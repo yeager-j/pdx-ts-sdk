@@ -102,6 +102,7 @@ function facts(overrides: Partial<VanillaBuildFacts> = {}): VanillaBuildFacts {
       name,
       members: [],
       files: 1,
+      selectorFiles: 1,
       diagnostics: 0,
       missing: false,
       gaps: [],
@@ -118,6 +119,46 @@ function facts(overrides: Partial<VanillaBuildFacts> = {}): VanillaBuildFacts {
 }
 
 describe("emitVanillaPackage extraction gaps", () => {
+  it("refuses to publish an exact-membership enum with no selector-bearing source files", () => {
+    const complexEnums = facts().complexEnums.map((one) => ({
+      ...one,
+      members: [],
+      files: 1,
+      selectorFiles: 0,
+      missing: false,
+    }));
+
+    expect(() => emitVanillaPackage(facts({ complexEnums }))).toThrow(
+      /refusing to emit: 1 exact-membership complex enum has no selector-bearing source files:[\s\S]*component_tag/
+    );
+  });
+
+  it("emits a proven empty enum after reading its matching source files", () => {
+    const complexEnums = facts().complexEnums.map((one) => ({
+      ...one,
+      members: [],
+    }));
+
+    expect(() => emitVanillaPackage(facts({ complexEnums }))).not.toThrow();
+  });
+
+  it("emits the reviewed map-scenario exception when no file reaches its selector", () => {
+    const complexEnums = [
+      ...facts().complexEnums,
+      {
+        name: "map_setup_scenario_system_id",
+        members: [],
+        files: 6,
+        selectorFiles: 0,
+        diagnostics: 0,
+        missing: false,
+        gaps: [],
+      },
+    ];
+
+    expect(() => emitVanillaPackage(facts({ complexEnums }))).not.toThrow();
+  });
+
   it("refuses to publish an enum union a reader came back short of", () => {
     const complexEnums = facts().complexEnums.map((one) => ({
       ...one,

@@ -30,6 +30,7 @@ import { readVanillaFacts } from "../src/read-facts.ts";
 import { readRegistryIds } from "../src/read-ids.ts";
 import { readScriptedDefinitions } from "../src/read-scripted.ts";
 import { bucketPath, fileBucketKey, type TrieNode } from "../src/trie.ts";
+import { FAKE_INSTALL_UNMATCHED_COMPLEX_ENUMS } from "./fake-install.ts";
 
 /** The repo root, from this module — never the directory vitest was started in. */
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -40,6 +41,7 @@ const OPTIONS = {
   configRoot: path.join(ROOT, "vendor/cwtools-stellaris-config/config"),
   docsRoot: path.join(ROOT, "vendor/cwtools-stellaris-config/script-docs/v4.4.1"),
   trieThreshold: 5,
+  allowedUnmatchedComplexEnums: FAKE_INSTALL_UNMATCHED_COMPLEX_ENUMS,
 };
 
 const generated = generateVanillaPackage(OPTIONS);
