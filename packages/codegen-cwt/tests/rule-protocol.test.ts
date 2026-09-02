@@ -51,6 +51,28 @@ const docs = parseTriggerDocs(
 const emitter = new Emitter(rules);
 const scopes = scopeIndex(rules);
 const authority = scopeAuthorityOf(loadBaseline(), scopes);
+const SPATIAL_OBJECT_SCOPE_TYPE = [
+  "ambient_object",
+  "archaeological_site",
+  "astral_rift",
+  "bypass",
+  "carrier",
+  "colony",
+  "debris",
+  "fleet",
+  "megastructure",
+  "planet",
+  "ship",
+  "situation",
+  "starbase",
+  "system",
+]
+  .map((scope) => `"${scope}"`)
+  .join(" | ");
+const SPATIAL_OBJECT_SCOPE_INTERFACES =
+  "AmbientObjectScope | ArchaeologicalSiteScope | AstralRiftScope | BypassScope | " +
+  "CarrierScope | ColonyScope | DebrisScope | FleetScope | MegastructureScope | " +
+  "PlanetScope | ShipScope | SituationScope | StarbaseScope | SystemScope";
 
 function bareValue(overrides: Partial<RuleBareValue> = {}): RuleBareValue {
   return {
@@ -330,7 +352,7 @@ describe("LoweredRule", () => {
     expect(rule.scopeType).toBe('"country" | "sector"');
     expect(rule.blocks).toHaveLength(1);
     expect(rule.body.splice).toBeNull();
-    expect([...rule.body.clauses]).toEqual([["limit", "planet"]]);
+    expect([...rule.body.clauses]).toEqual([["limit", ["planet"]]]);
     expect([...rule.body.args]).toEqual(["count"]);
   });
 
@@ -477,11 +499,11 @@ describe("LoweredRule", () => {
 
     expect(push).toMatchObject({
       kind: "fields",
-      fields: [{ value: { kind: "clause", scope: "bypass", transition: "push" } }],
+      fields: [{ value: { kind: "clause", scope: ["bypass"], transition: "push" } }],
     });
     expect(replacement).toMatchObject({
       kind: "fields",
-      fields: [{ value: { kind: "clause", scope: "bypass", transition: "replace" } }],
+      fields: [{ value: { kind: "clause", scope: ["bypass"], transition: "replace" } }],
     });
   });
 
@@ -499,6 +521,32 @@ describe("LoweredRule", () => {
     expect(emitted.meta).toContain(
       '{ prop: "effect", key: "effect", kind: "effect", transition: "replace" }'
     );
+  });
+
+  it("renders scope-group clauses and callbacks as unions", () => {
+    const effectEmitter = new Emitter(rules);
+    const input = syntheticEffectInput(
+      [
+        "## scopes = { country }",
+        "alias[effect:synthetic_group_clause] = {",
+        "\t## push_scope = scope_group[spatial_object]",
+        "\tlimit = { alias_name[trigger] = alias_match_left[trigger] }",
+        "}",
+        "## scopes = { country }",
+        "## push_scope = scope_group[spatial_object]",
+        "alias[effect:synthetic_group_wrapper] = { alias_name[effect] = alias_match_left[effect] }",
+      ].join("\n"),
+      effectEmitter
+    );
+    const emitted = emitEffects(effectEmitter, docs.effects, scopes, input.rules, input.policy, []);
+
+    expect(emitted.interfaces).toContain(
+      `syntheticGroupClause(args: { limit: Trigger<${SPATIAL_OBJECT_SCOPE_TYPE}> }): void;`
+    );
+    expect(emitted.interfaces).toContain(
+      `syntheticGroupWrapper(body: (scope: ${SPATIAL_OBJECT_SCOPE_INTERFACES}) => void): void;`
+    );
+    expect(emitted.interfaces).not.toContain("AmbientObjectShipScope");
   });
 
   it("rejects declarations that disagree about their nested scope transition", () => {

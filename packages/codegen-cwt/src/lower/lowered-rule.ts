@@ -20,11 +20,11 @@ export type LoweredRuleScopes = readonly string[] | "universal";
 export interface LoweredRuleBody {
   /** The scope of an unkeyed trigger or effect splice, when present. */
   readonly splice: {
-    /** The canonical pushed scope or rendered scope union, or `null` for the enclosing scope. */
-    readonly scope: string | null;
+    /** The canonical pushed scopes, or `null` for the enclosing scope. */
+    readonly scope: readonly string[] | null;
   } | null;
-  /** Named clause fields and the canonical scope or rendered scope union each clause runs in. */
-  readonly clauses: ReadonlyMap<string, string | null>;
+  /** Named clause fields and the canonical scopes each clause runs in. */
+  readonly clauses: ReadonlyMap<string, readonly string[] | null>;
   /** Lowercase names of non-clause arguments. */
   readonly args: ReadonlySet<string>;
 }
@@ -145,7 +145,7 @@ export function lowerRule(
   const blocks: LoweredRuleBlock[] = [];
   const spliceCandidates: ClauseScope[] = [];
   const clauseCandidates = new Map<string, ClauseScope[]>();
-  const clauses = new Map<string, string | null>();
+  const clauses = new Map<string, readonly string[] | null>();
   const args = new Set<string>();
 
   for (const declaration of declarations) {
@@ -208,7 +208,7 @@ export function lowerRule(
     );
   }
 
-  let splice: { scope: string | null } | null = null;
+  let splice: { scope: readonly string[] | null } | null = null;
   if (clauseScopesAgree(spliceCandidates)) {
     const candidate = spliceCandidates[0];
     if (candidate !== undefined) {

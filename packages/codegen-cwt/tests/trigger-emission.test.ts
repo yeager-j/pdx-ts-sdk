@@ -76,8 +76,38 @@ function pureSplice(key: string, options: readonly string[] = []): string {
 const BOTH_WRAPPER_ROWS = [pureSplice("hidden_progress"), pureSplice("simple_progress")].join(
   "\n\n"
 );
+const SPATIAL_OBJECT_SCOPE_TYPE = [
+  "ambient_object",
+  "archaeological_site",
+  "astral_rift",
+  "bypass",
+  "carrier",
+  "colony",
+  "debris",
+  "fleet",
+  "megastructure",
+  "planet",
+  "ship",
+  "situation",
+  "starbase",
+  "system",
+]
+  .map((scope) => `"${scope}"`)
+  .join(" | ");
 
 describe("trigger emission", () => {
+  it("renders a scope-group wrapper as a literal union", () => {
+    const groupWrapper = pureSplice("group_wrapper", [
+      "## push_scope = scope_group[spatial_object]",
+    ]);
+    const emitted = emitInlineTriggers([BOTH_WRAPPER_ROWS, groupWrapper].join("\n\n"));
+
+    expect(emitted.code).toContain(
+      `groupWrapper(condition: Trigger<${SPATIAL_OBJECT_SCOPE_TYPE}>): Trigger<ScopeName>`
+    );
+    expect(emitted.code).not.toContain('Trigger<"\\"ambient_object\\" |');
+  });
+
   it("emits one reference row for every generated builder", () => {
     expect(emission.references).toHaveLength(emission.emitted);
     expect(new Set(emission.references.map((reference) => reference.method))).toEqual(

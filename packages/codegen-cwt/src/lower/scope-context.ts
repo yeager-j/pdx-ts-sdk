@@ -21,6 +21,11 @@ interface CanonicalScope {
   readonly scopes: readonly string[];
 }
 
+/** Renders canonical scope names as a TypeScript literal union. */
+export function scopeUnionType(scopes: readonly string[]): string {
+  return scopes.map((scope) => JSON.stringify(scope)).join(" | ");
+}
+
 /** The declared scope group one annotation names, or `null` for anything else. */
 function declaredScopeGroup(
   emitter: Emitter,
@@ -62,7 +67,7 @@ function canonicalScope(emitter: Emitter, declared: string, source: string): Can
   }
   emitter.usedScopeGroups.add(group.name);
   return {
-    type: scopes.map((scope) => JSON.stringify(scope)).join(" | "),
+    type: scopeUnionType(scopes),
     scopes,
   };
 }
@@ -98,12 +103,8 @@ export function canonicalThisScope(
   emitter: Emitter,
   declared: string,
   source: string
-): string | null {
-  const canonical = canonicalScope(emitter, declared, source);
-  if (canonical === null) {
-    return null;
-  }
-  return canonical.scopes.length === 1 ? canonical.scopes[0]! : canonical.type;
+): readonly string[] | null {
+  return canonicalScope(emitter, declared, source)?.scopes ?? null;
 }
 
 function fieldLabel(key: FieldKey): string {
@@ -275,14 +276,14 @@ function contextLiteral(scope: FieldScope): string {
 }
 
 /**
- * Emits runtime metadata when a block's single THIS scope differs from ROOT.
- * Unpinned, multi-scope, and rootless blocks need no split-root marker.
+ * Emits runtime metadata when a block's THIS scope differs from ROOT.
+ * Unpinned and rootless blocks need no split-root marker.
  */
 export function splitRootMetadata(scope: FieldScope): readonly string[] {
-  if (scope.root === null || scope.scopes === "any" || scope.scopes.length !== 1) {
+  if (scope.root === null || scope.scopes === "any") {
     return [];
   }
-  return JSON.stringify(scope.scopes[0]) === scope.root ? [] : ["splitRoot: true"];
+  return scope.type === scope.root ? [] : ["splitRoot: true"];
 }
 
 /**

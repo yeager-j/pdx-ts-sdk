@@ -10,7 +10,12 @@ import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseScopeLinks } from "@pdx-ts/codegen-cwt/logs/scopes";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRule } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
-import { canonicalThisScope, scopeType, withFrom } from "@pdx-ts/codegen-cwt/lower/scope-context";
+import {
+  canonicalThisScope,
+  scopeType,
+  splitRootMetadata,
+  withFrom,
+} from "@pdx-ts/codegen-cwt/lower/scope-context";
 import { loadScopeFacts } from "@pdx-ts/codegen-cwt/lower/scope-facts";
 import { compareToBaseline, loadBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
 import {
@@ -389,8 +394,8 @@ describe("a scope annotation naming a declared scope group", () => {
 
     expect(scope.type).toBe(spatialObjectType);
     expect(scope.scopes).toEqual(spatialObjectScopes);
-    expect(canonicalThisScope(emitter, "scope_group[spatial_object]", "test annotation")).toBe(
-      spatialObjectType
+    expect(canonicalThisScope(emitter, "scope_group[spatial_object]", "test annotation")).toEqual(
+      spatialObjectScopes
     );
   });
 
@@ -422,6 +427,25 @@ describe("a scope annotation naming a declared scope group", () => {
     expect(() => scopeType(emitter, replaced, ctx)).toThrowError(
       'names unknown scope "scope_group[not_a_group]"'
     );
+  });
+
+  it("marks a group-scoped block split only when ROOT differs", () => {
+    const differentRoot = scopeType(
+      emitter,
+      field("on_start", replacedScopes("this = scope_group[spatial_object] root = country")),
+      ctx
+    );
+    const matchingRoot = scopeType(
+      emitter,
+      field(
+        "on_start",
+        replacedScopes("this = scope_group[spatial_object] root = scope_group[spatial_object]")
+      ),
+      ctx
+    );
+
+    expect(splitRootMetadata(differentRoot)).toEqual(["splitRoot: true"]);
+    expect(splitRootMetadata(matchingRoot)).toEqual([]);
   });
 
   it("matches a group name however the annotation spells it", () => {
