@@ -32,6 +32,36 @@ import { scriptValueScalar, type ScriptValue } from "./trigger-core.ts";
 
 declare const refBrand: unique symbol;
 
+/** SDK-internal marker for a scope path that resolves against its receiving recording. */
+export const deferredScopePath = Symbol("deferredScopePath");
+
+/** SDK-internal resolver carried from an authored scope value into the PDXScript AST. */
+export type DeferredScopePathResolver = (consumer?: unknown) => string;
+
+type DeferredScopeValue = ScopeValue & {
+  readonly [deferredScopePath]?: DeferredScopePathResolver;
+};
+
+type DeferredScopeScalar = Extract<PdxScalar, { readonly kind: "str" }> & {
+  readonly [deferredScopePath]: DeferredScopePathResolver;
+};
+
+/** SDK-internal lowering for a scope-valued scalar position. */
+export function scopeValueScalar(value: ScopeValue): PdxScalar {
+  const resolver = (value as DeferredScopeValue)[deferredScopePath];
+  if (resolver === undefined) {
+    return scalar(value.path);
+  }
+  return {
+    kind: "str",
+    get value() {
+      return resolver();
+    },
+    quoted: false,
+    [deferredScopePath]: resolver,
+  } as DeferredScopeScalar;
+}
+
 /**
  * A reference to a key defined by some content type.
  *
@@ -150,7 +180,12 @@ export function refId<T extends string | number | boolean>(
   if (isObjectLike(value)) {
     switch (referenceForm(value)) {
       case "scope":
-        return (value as ScopeValue).path;
+        // The public return type stays scalar-like for existing callers. The
+        // AST node is preserved at runtime so lexical scope paths can resolve
+        // against the recording that finally consumes them.
+        return (value as DeferredScopeValue)[deferredScopePath] === undefined
+          ? (value as ScopeValue).path
+          : (scopeValueScalar(value as ScopeValue) as unknown as string);
       case "localization":
         return (value as LocalizationRef).key;
       case "typed":
@@ -248,8 +283,8 @@ export function localizationScalar(
   // refusal — a localization position can say what it wanted, and does.
   if (isReferenceValue(value)) {
     const lowered = refId(value as TypedRef<string> | ScopeValue);
-    if (typeof lowered === "string") {
-      return scalar(lowered);
+    if (typeof lowered === "string" || typeof lowered === "object") {
+      return typeof lowered === "string" ? scalar(lowered) : lowered;
     }
   }
   throw new Error(
@@ -423,7 +458,7 @@ export function toScalar(
     // would otherwise throw the generic refusal.
     if (isReferenceValue(value)) {
       const lowered = refId(value as TypedRef<string> | ScopeValue);
-      if (typeof lowered === "string") {
+      if (typeof lowered === "string" || typeof lowered === "object") {
         return lowered;
       }
     }

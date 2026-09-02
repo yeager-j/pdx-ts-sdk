@@ -46,6 +46,11 @@ export interface ScopeValue<S extends ScopeName = ScopeName> {
  * to the recording where it is consumed, so a captured outer proxy becomes
  * `prev` or a deeper verified PREV path inside nested callbacks. Reading it
  * after its callback returns or across an unverified transition throws.
+ *
+ * @example
+ * country.createFleet({
+ *   effect: (fleet) => fleet.setOwner(country.ref),
+ * });
  */
 export interface EffectScope<S extends ScopeName> {
   /** The proxy's current scope as a lexical, non-openable scalar reference. */

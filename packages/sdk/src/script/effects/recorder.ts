@@ -30,6 +30,7 @@ import type { ScopeObjOf } from "../../generated/effects.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import { recordLocalization, type RecordedRefUse } from "../../references.ts";
 import {
+  deferredScopePath,
   isComparisonList,
   isEffectBlockValue,
   isStructuredValue,
@@ -38,6 +39,7 @@ import {
   refId,
   toScalar,
   type ComparisonArg,
+  type DeferredScopePathResolver,
 } from "../scalar.ts";
 import type { ScriptedEffectCall } from "../scripted.ts";
 import { trigger, type Trigger } from "../trigger-core.ts";
@@ -71,6 +73,7 @@ type ScopeTransition = "same" | "push" | "replace" | "unknown";
 type ScopeIdentity = symbol;
 interface RuntimeScopeValue {
   readonly [cannotWitnessNaturalFrom]?: true;
+  readonly [deferredScopePath]?: DeferredScopePathResolver;
   readonly [lexicalScope]?: true;
   readonly [scopeLease]?: ScriptLease;
   readonly [contextPrevDepth]?: number;
@@ -121,6 +124,9 @@ function lexicalScopeValue<S extends ScopeName>(
     kind: "scope-ref",
     get path() {
       return lexicalScopePath(recording);
+    },
+    [deferredScopePath](consumer) {
+      return lexicalScopePath(recording, consumer as Recording | undefined);
     },
     [lexicalScope]: true,
   };
@@ -268,16 +274,16 @@ interface Recording extends RecordingState {
   };
 }
 
-function resolveContextPrevEntries(
+function resolveRecordingEntries(
   entries: readonly PdxEntry[],
   recording: Recording | undefined
 ): PdxEntry[] {
   return recording === undefined
     ? [...entries]
-    : entries.map((entry) => resolveContextPrevEntry(entry, recording));
+    : entries.map((entry) => resolveRecordingEntry(entry, recording));
 }
 
-function resolveContextPrevEntry(entry: PdxEntry, recording: Recording): PdxEntry {
+function resolveRecordingEntry(entry: PdxEntry, recording: Recording): PdxEntry {
   const context = (entry as PdxEntry & ContextPrevEntry)[contextPrevEntry];
   const key =
     context === undefined
@@ -287,32 +293,36 @@ function resolveContextPrevEntry(entry: PdxEntry, recording: Recording): PdxEntr
     kind: "entry",
     key,
     op: entry.op,
-    value: resolveContextPrevValue(entry.value, recording),
+    value: resolveRecordingValue(entry.value, recording),
     ...(entry.line === undefined ? {} : { line: entry.line }),
   };
 }
 
-function resolveContextPrevValue(value: PdxValue, recording: Recording): PdxValue {
-  return value.kind === "container" ? resolveContextPrevContainer(value, recording) : value;
+function resolveRecordingValue(value: PdxValue, recording: Recording): PdxValue {
+  if (value.kind === "container") {
+    return resolveRecordingContainer(value, recording);
+  }
+  const resolver = (value as PdxScalar & RuntimeScopeValue)[deferredScopePath];
+  return resolver === undefined ? value : pdxScalar(resolver(recording));
 }
 
-function resolveContextPrevContainer(value: PdxContainer, recording: Recording): PdxContainer {
+function resolveRecordingContainer(value: PdxContainer, recording: Recording): PdxContainer {
   return {
     kind: "container",
-    items: value.items.map((item) => resolveContextPrevItem(item, recording)),
+    items: value.items.map((item) => resolveRecordingItem(item, recording)),
     ...(value.header === undefined ? {} : { header: value.header }),
   };
 }
 
-function resolveContextPrevItem(item: PdxItem, recording: Recording): PdxItem {
+function resolveRecordingItem(item: PdxItem, recording: Recording): PdxItem {
   if (item.kind === "entry") {
-    return resolveContextPrevEntry(item, recording);
+    return resolveRecordingEntry(item, recording);
   }
   if (item.kind === "container") {
-    return resolveContextPrevContainer(item, recording);
+    return resolveRecordingContainer(item, recording);
   }
   if (item.kind === "param") {
-    return { ...item, items: item.items.map((child) => resolveContextPrevItem(child, recording)) };
+    return { ...item, items: item.items.map((child) => resolveRecordingItem(child, recording)) };
   }
   return item;
 }
@@ -352,12 +362,20 @@ function lexicalRoute(active: Recording, target: Recording): LexicalRoute {
     : { kind: "unrelated" };
 }
 
-function lexicalScopePath(recording: Recording | undefined): string {
-  assertLive(recording, "ref");
+function lexicalScopePath(
+  recording: Recording | undefined,
+  consumer: Recording | undefined = RECORDINGS.at(-1)
+): string {
+  // A recording resolves its own deferred values immediately after its body
+  // returns. It is already closed to author code at that point, but it is
+  // still the valid consumer of references authored inside that body.
+  if (recording !== consumer) {
+    assertLive(recording, "ref");
+  }
   if (recording === undefined) {
     return "this";
   }
-  const active = RECORDINGS.at(-1);
+  const active = consumer;
   if (active === undefined) {
     return "this";
   }
@@ -451,18 +469,33 @@ function effectReceiver(
   const sink: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   const adjacencyWitness = { sink: active.sink, mark: active.sink.length + 1 };
+  const owner = routedRecording(active, recording, sink, refs, adjacencyWitness);
   return {
     sink,
     refs,
-    owner: routedRecording(active, recording, sink, refs, adjacencyWitness),
+    owner,
     commit: () => {
       if (sink.length === 0) {
         return;
       }
+      sink.splice(0, sink.length, ...resolveRecordingEntries(sink, owner));
       active.sink.push(block(prevKey(depth), sink));
       active.refs.push(...refs);
     },
   };
+}
+
+/** Runs one lowering operation with its routed receiver as the scalar consumer. */
+function withActiveRecording<T>(recording: Recording | undefined, body: () => T): T {
+  if (recording === undefined || RECORDINGS.at(-1) === recording) {
+    return body();
+  }
+  RECORDINGS.push(recording);
+  try {
+    return body();
+  } finally {
+    RECORDINGS.pop();
+  }
 }
 
 /**
@@ -1508,7 +1541,7 @@ function makeAnyScope(sink: PdxEntry[], refs: RecordedRefUse[], recording?: Reco
   const invoke = (prop: string, args: readonly unknown[]): unknown => {
     const receiver = effectReceiver(recording, { sink, refs, owner: recording });
     const method = dispatch(prop, receiver) as (...parameters: unknown[]) => unknown;
-    const result = method(...args);
+    const result = withActiveRecording(receiver.owner, () => method(...args));
     receiver.commit();
     return result;
   };
@@ -1686,7 +1719,7 @@ function recordBlock<S extends ScopeName>(
   assertSynchronousClosure(result, "An effect closure");
   // Trigger arguments are evaluated before a pushed callback opens. Resolve
   // declared PREV paths only now, against the block that will contain them.
-  into.splice(0, into.length, ...resolveContextPrevEntries(into, recording));
+  into.splice(0, into.length, ...resolveRecordingEntries(into, recording));
   return into;
 }
 

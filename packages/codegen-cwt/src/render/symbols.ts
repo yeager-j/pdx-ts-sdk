@@ -95,6 +95,7 @@ const SYMBOL_MODULES: readonly ModuleSymbols[] = [
       "localizationScalar",
       "mapEntries",
       "refId",
+      "scopeValueScalar",
     ],
   },
   {

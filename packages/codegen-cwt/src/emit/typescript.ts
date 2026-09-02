@@ -200,7 +200,7 @@ export class Emitter {
       case "stringRefId":
         return `String(${this.use("refId")}(${expression}))`;
       case "scopePath":
-        return `${expression}.path`;
+        return `${this.use("scopeValueScalar")}(${expression})`;
       case "literalText":
         return `${expression}.text`;
     }

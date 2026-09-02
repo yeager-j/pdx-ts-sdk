@@ -25,6 +25,7 @@ import type { StaticModifierHostContract } from "../src/script/effects/static-mo
 import type { IfChain, ScopeRef, ScopeValue, ScriptCtx } from "../src/script/effects/types.ts";
 import { isEffectBlockValue, mapEntries } from "../src/script/scalar.ts";
 import {
+  exists,
   hasCountryFlag,
   hasOwner,
   hasPlanetFlag,
@@ -974,6 +975,35 @@ tooltip = {
 
     expect(serialize(sink)).toBe(`hidden_effect = {
 	set_owner = this
+}
+`);
+  });
+
+  it("resolves lexical scalar targets against a routed receiver", () => {
+    const sink = recordEffects<"fleet">([], (fleet) => {
+      fleet.owner.effects(() => {
+        fleet.setOwner(fleet.ref);
+      });
+    });
+
+    expect(serialize(sink)).toBe(`owner = {
+	prev = {
+		set_owner = this
+	}
+}
+`);
+  });
+
+  it("resolves lexical scalar targets when a deferred trigger is attached", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      const countryExists = exists(country.ref);
+      country.everyOwnedPlanet({ limit: countryExists }, () => undefined);
+    });
+
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	limit = {
+		exists = prev
+	}
 }
 `);
   });
