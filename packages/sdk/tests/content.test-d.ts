@@ -220,7 +220,21 @@ describe("generated content authoring types", () => {
     const objective = contentMod.crisisObjective("first_objective", {
       name: "First Objective",
       potential: hasAuthority("auth_democratic"),
-      reward: { base: 10 },
+      reward: { base: 200, round: true, roundTo: 5 },
+    });
+    expectTypeOf<CrisisObjectiveFields["reward"]["round"]>().toEqualTypeOf<boolean | undefined>();
+    expectTypeOf<CrisisObjectiveFields["reward"]["roundTo"]>().toEqualTypeOf<
+      ScriptValue | undefined
+    >();
+    contentMod.crisisObjective("wrong_rounding", {
+      name: "Wrong Rounding",
+      reward: {
+        base: 10,
+        // @ts-expect-error — round is the boolean simple-maths operation
+        round: 1,
+        // @ts-expect-error — round_to requires a value-field operand
+        roundTo: true,
+      },
     });
     const path = contentMod.crisisPath("player_crisis", {
       crisisCurrency: { resource: currency, localization: crisisCurrencyText },
@@ -1700,6 +1714,19 @@ describe("generated content authoring types", () => {
       aiWeight: {
         // @ts-expect-error — same hybrid shape, reached through a variable
         modifiers: [hybridRow],
+      },
+    });
+    const roundedComplexTriggerRow = {
+      trigger: "x",
+      mode: "factor" as const,
+      round: true,
+      roundTo: 5,
+    };
+    contentMod.tradition("rounded_complex_trigger_row", {
+      name: "X",
+      aiWeight: {
+        // @ts-expect-error — complex_trigger_modifier declares no rounding fields
+        modifiers: [roundedComplexTriggerRow],
       },
     });
   });

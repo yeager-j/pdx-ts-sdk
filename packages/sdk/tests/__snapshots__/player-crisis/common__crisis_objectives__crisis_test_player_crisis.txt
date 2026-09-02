@@ -3,7 +3,14 @@ crisis_test_crisis_objective_first_objective = {
 		has_authority = auth_democratic
 	}
 	reward = {
-		base = 10
+		base = 200
+		round = yes
+		round_to = 5
+		complex_trigger_modifier = {
+			trigger = count_playable_country
+			mode = subtract
+			mult = 7.5
+		}
 	}
 	recurring = yes
 }

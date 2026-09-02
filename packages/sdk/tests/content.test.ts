@@ -1383,7 +1383,18 @@ function definePlayerCrisisExample(): PureMod {
     name: "First Objective",
     desc: "Prove that this crisis has begun.",
     potential: hasAuthority("auth_democratic"),
-    reward: { base: 10 },
+    reward: {
+      base: 200,
+      modifiers: [
+        {
+          trigger: "count_playable_country",
+          mode: "subtract",
+          mult: 7.5,
+        },
+      ],
+      round: true,
+      roundTo: 5,
+    },
     recurring: true,
   });
   const path = mod.crisisPath("player_crisis", {
@@ -2159,8 +2170,11 @@ describe("generated content registries", () => {
       name: "Operation Order",
       aiWeight: reversed
         ? {
+            modifiers: [{ roundTo: 11, round: true }],
             maxValue: 9,
             minValue: 8,
+            roundTo: 10,
+            round: true,
             divide: 7,
             multiplier: 6,
             mult: 5,
@@ -2177,8 +2191,11 @@ describe("generated content registries", () => {
             mult: 5,
             multiplier: 6,
             divide: 7,
+            round: true,
+            roundTo: 10,
             minValue: 8,
             maxValue: 9,
+            modifiers: [{ round: true, roundTo: 11 }],
           },
     });
   }
@@ -2205,8 +2222,14 @@ describe("generated content registries", () => {
         "\t\tmult = 5\n" +
         "\t\tmultiply = 6\n" +
         "\t\tdivide = 7\n" +
+        "\t\tround = yes\n" +
+        "\t\tround_to = 10\n" +
         "\t\tmin = 8\n" +
         "\t\tmax = 9\n" +
+        "\t\tmodifier = {\n" +
+        "\t\t\tround = yes\n" +
+        "\t\t\tround_to = 11\n" +
+        "\t\t}\n" +
         "\t}"
     );
   });

@@ -18,6 +18,7 @@ import {
   MODIFIER_OPERATIONS,
   recordEffects,
   scopeLinkOutput,
+  type ModifierOperationMember,
 } from "@pdx-ts/sdk/internals";
 import type {
   ComplexTriggerModifier,
@@ -692,10 +693,10 @@ export function handleFor(
  * one, rather than admitting only `Modifier<S>[]` and pushing that
  * narrowing burden onto every call site.
  */
-export interface WeightBlockLike<S extends SimScopeName> {
+export type WeightBlockLike<S extends SimScopeName> = Pick<Modifier<S>, ModifierOperationMember> & {
   readonly base?: number;
   readonly modifiers?: readonly WeightBlockRow<S, Modifier<S>>[];
-}
+};
 
 function isComplexTriggerModifierRow<S extends SimScopeName>(
   row: WeightBlockRow<S, Modifier<S>>
@@ -707,11 +708,10 @@ function isComplexTriggerModifierRow<S extends SimScopeName>(
  * Computes a `modifier_rule` block's value: a starting `base`, then each
  * `modifier` row whose `when` trigger holds applies its one operation in
  * order. The operation set and spellings mirror `Modifier` itself
- * (`packages/sdk/src/script/effects/types.ts`, kept in sync by the `SameKeys` guard
- * above) — `add`/`subtract`/`mult`/`multiplier`/`factor`/`divide` change the
- * running value, `minValue`/`maxValue` clamp it, and `weight` is detected but
- * refused (see `applyModifierRow`'s `weight` case) because nothing has
- * verified its semantic against the game.
+ * (`packages/sdk/src/script/effects/types.ts`) — `add`/`subtract`/`mult`/
+ * `multiplier`/`factor`/`divide` change the running value, `minValue`/
+ * `maxValue` clamp it, and `weight`/`round`/`roundTo` are detected but refused
+ * because nothing has verified their exact semantics against the game.
  *
  * A row combining more than one operation is refused rather than guessed:
  * nothing in the corpus measures a cross-operation order within one row, so
@@ -730,6 +730,12 @@ export function evaluateWeightBlock<S extends SimScopeName>(
   scope: SimScope<S>
 ): number {
   let value = block.base ?? 0;
+  const hasTopLevelOperation = MODIFIER_OPERATIONS.some(
+    ({ member }) => block[member] !== undefined
+  );
+  if (hasTopLevelOperation) {
+    value = applyModifierOperations(block, value);
+  }
   for (const row of block.modifiers ?? []) {
     if (isComplexTriggerModifierRow(row)) {
       throw new InterpreterError(
@@ -744,12 +750,15 @@ export function evaluateWeightBlock<S extends SimScopeName>(
     if (row.when !== undefined && !evaluate(row.when, scope)) {
       continue;
     }
-    value = applyModifierRow(row, value);
+    value = applyModifierOperations(row, value);
   }
   return value;
 }
 
-function applyModifierRow<S extends SimScopeName>(modifier: Modifier<S>, value: number): number {
+function applyModifierOperations<S extends SimScopeName>(
+  modifier: Pick<Modifier<S>, ModifierOperationMember | "desc">,
+  value: number
+): number {
   const present = MODIFIER_OPERATIONS.map((operation) => operation.member).filter(
     (member) => modifier[member] !== undefined
   );
@@ -765,6 +774,12 @@ function applyModifierRow<S extends SimScopeName>(modifier: Modifier<S>, value: 
   const [op] = present;
   if (op === undefined) {
     throw new InterpreterError("unreachable: present.length === 1 was just checked");
+  }
+  if (op === "round" || op === "roundTo") {
+    throw new InterpreterError(
+      `${op}: recognized but not evaluated — rounding order and tie behavior have not been ` +
+        `verified against the game. ${coverageSummary()}`
+    );
   }
   const amount = modifier[op];
   if (typeof amount !== "number") {

@@ -244,6 +244,35 @@ describe("situation scope", () => {
     ).toThrow(/evaluates exactly one operation per row/);
   });
 
+  it("detects rounding operations instead of silently ignoring them", () => {
+    const situation = fixture(
+      { countries: [{ name: "player" }], situations: [{ name: "crisis", targetCountry: 0 }] },
+      { events: [] }
+    ).situation(0);
+
+    expect(() =>
+      evaluateWeightBlock(
+        {
+          base: 0,
+          modifiers: [{ desc: "ambiguous", add: 2, round: true }],
+        },
+        situation
+      )
+    ).toThrow(/evaluates exactly one operation per row/);
+    expect(() =>
+      evaluateWeightBlock(
+        {
+          base: 0,
+          modifiers: [{ desc: "unverified", roundTo: 5 }],
+        },
+        situation
+      )
+    ).toThrow(/roundTo: recognized but not evaluated/);
+    expect(() => evaluateWeightBlock({ base: 12, roundTo: 5 }, situation)).toThrow(
+      /roundTo: recognized but not evaluated/
+    );
+  });
+
   it("refuses to guess a semantic for `weight` used on its own — the vendored rules give it no documented meaning distinct from `set`", () => {
     const situation = fixture(
       { countries: [{ name: "player" }], situations: [{ name: "crisis", targetCountry: 0 }] },
