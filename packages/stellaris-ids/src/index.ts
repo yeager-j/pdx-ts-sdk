@@ -29,6 +29,7 @@ export type { VanillaComponentSlotMember } from "./enums/component-slot.ts";
 export type { VanillaComponentTagMember } from "./enums/component-tag.ts";
 export type { VanillaCouncilorId } from "./registries/councilor.ts";
 export type { VanillaCountryShipOfSizeLimitId } from "./registries/country-ship-of-size-limit.ts";
+export type { VanillaCountryTypeId } from "./registries/country-type.ts";
 export type { VanillaCrisisLevelId } from "./registries/crisis-level.ts";
 export type { VanillaCrisisObjectiveId } from "./registries/crisis-objective.ts";
 export type { VanillaCrisisPathId } from "./registries/crisis-path.ts";

@@ -22,6 +22,7 @@ import {
   VANILLA_SUBTYPE_REFERENCE_PROJECTIONS,
   type VanillaSubtypeReferenceProjection,
 } from "@pdx-ts/codegen-cwt/overlay";
+import { loadBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
 
 import type { VanillaIdRow } from "./manifest.ts";
 import type { BucketLayout } from "./trie.ts";
@@ -92,14 +93,23 @@ export interface RegistrySpec {
 /** The extension the game assumes when the rules declare none. */
 const DEFAULT_EXTENSION = ".txt";
 
+function unreviewedDiagnostics(
+  diagnostics: ReturnType<typeof loadContentTypesFrom>["diagnostics"]
+) {
+  const reviewed = new Set(loadBaseline().malformedOptions);
+  return diagnostics.filter(
+    (diagnostic) => !reviewed.has(`${diagnostic.file}:${diagnostic.line} ${diagnostic.text}`)
+  );
+}
+
 /**
  * Resolves every id row against the rules.
  *
  * Types declared in a file `loadRules` reads come from there, so the main
  * pipeline's view stays the single source. The rest — sounds, sprites,
  * strategic resources — are read from their own files through
- * `loadContentTypesFrom`, which touches neither `RULE_FILES` nor the drift
- * baseline.
+ * `loadContentTypesFrom`. Its parser diagnostics must already be recorded in
+ * the CWT drift baseline.
  */
 export function resolveRegistries(
   configRoot: string,
@@ -109,11 +119,11 @@ export function resolveRegistries(
   const outside = rows.filter((row) => !rules.contentTypes.has(row.type));
   const extraSources = [...new Set(outside.map((row) => row.source))].sort();
   const { contentTypes: extra, diagnostics } = loadContentTypesFrom(configRoot, extraSources);
-  if (diagnostics.length > 0) {
+  const unreviewed = unreviewedDiagnostics(diagnostics);
+  if (unreviewed.length > 0) {
     throw new Error(
-      "Hermetic content type resolution has no drift baseline; malformed CWT rules must be " +
-        "fixed rather than accepted:\n" +
-        diagnostics.map(({ file, line, text }) => `  ${file}:${line} ${text}`).join("\n")
+      "Hermetic content type resolution found unreviewed malformed CWT rules:\n" +
+        unreviewed.map(({ file, line, text }) => `  ${file}:${line} ${text}`).join("\n")
     );
   }
   const subtypeReferencedTypes = typesReferencedBySubtype(rules);

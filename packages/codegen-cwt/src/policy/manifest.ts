@@ -234,6 +234,7 @@ export const VANILLA_REF_EXTRAS = [
   { type: "anomaly_category", source: "common/anomalies.cwt", oversized: true },
   { type: "planet_modifier", source: "common/modifiers.cwt" },
   { type: "asteroid_belt_type", source: "common/asteroid_belts.cwt" },
+  { type: "country_type", source: "common/country_types.cwt" },
 ] as const satisfies readonly VanillaRefExtra[];
 
 const REGISTRY_NAME = /^[A-Za-z][A-Za-z0-9_]*$/;
