@@ -1,5 +1,5 @@
 import { createMod } from "@pdx-ts/sdk";
-import { eventTarget, hasOwner, vanilla } from "@pdx-ts/sdk/stellaris";
+import { eventTarget, hasCountryFlag, hasOwner, vanilla } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Crystal Resonance",
@@ -12,6 +12,7 @@ const signalWorld = eventTarget<"planet">("crystal_resonance_signal_world");
 
 const aftershock = events.planet(2, {
   scopes: { from: "country" },
+  trigger: (ctx) => ctx.from.trigger(hasCountryFlag("tutorial_event_enabled")),
   title: "A World Answers",
   desc: "The signal has found an echo beneath the planet's surface.",
   picture: vanilla.spriteType.eventpictures.GFX_evt_mysterious_signal,

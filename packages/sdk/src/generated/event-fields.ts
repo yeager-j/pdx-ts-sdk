@@ -4,6 +4,7 @@
 // From: codegen-cwt event field support policy
 
 import type { LocalizationInput } from "../authoring/localization.ts";
+import type { WithFrom } from "../content/types.ts";
 import type {
   AiChance,
   EventBodyContext,
@@ -102,9 +103,9 @@ export interface GeneratedEventFields<S extends ScopeName, Context extends Ambie
   /** astral-rift difficulty */
   readonly difficulty?: S extends "astral_rift" ? number : never;
   /** event visibility gate */
-  readonly trigger?: Trigger<S>;
+  readonly trigger?: WithFrom<Trigger<S>, S, EventBodyContext<S, Context>>;
   /** event cancellation gate */
-  readonly abortTrigger?: Trigger<S>;
+  readonly abortTrigger?: WithFrom<Trigger<S>, S, EventBodyContext<S, Context>>;
   /** effects run on abort */
   readonly abortEffect?: EventEffect<S, Context>;
   /** non-triggered scheduling weight */

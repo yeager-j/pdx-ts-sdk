@@ -235,14 +235,14 @@ const EVENT_FIELD_POLICY: readonly EventFieldPolicyEntry[] = [
     "trigger",
     "block 0..1 {alias_name[trigger]}",
     "trigger",
-    "Trigger<S>",
+    "WithFrom<Trigger<S>, S, EventBodyContext<S, Context>>",
     "event visibility gate"
   ),
   supported(
     "abort_trigger",
     "block 0..1 {alias_name[trigger]}",
     "abortTrigger",
-    "Trigger<S>",
+    "WithFrom<Trigger<S>, S, EventBodyContext<S, Context>>",
     "event cancellation gate"
   ),
   supported(
@@ -613,6 +613,7 @@ export function emitEventFieldProtocol(policy: ReturnType<typeof createEventFiel
     'import type { ScopeObjOf } from "./effects.ts";\n' +
     'import type { EventChainRef, MessageTypeRef, SoundEffectRef, SpecimenRef, SpriteRef } from "./refs.ts";\n' +
     'import type { ScopeName } from "./scopes.ts";\n' +
+    'import type { WithFrom } from "../content/types.ts";\n' +
     'import type { AmbientScopeContext, ScriptCtx } from "../script/effects/types.ts";\n' +
     'import type { Trigger } from "../script/trigger-core.ts";\n' +
     'import type { AiChance, EventBodyContext, EventLocation, EventOption, EventOptionIcon, EventSituation, EventTriggeredDescription, EventWindowType, MeanTimeToHappen, WeightMultiplier } from "../events/types.ts";\n' +

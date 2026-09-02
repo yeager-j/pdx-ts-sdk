@@ -28,7 +28,27 @@ import {
 import { recordEffects, withScriptCtx } from "../script/effects/recorder.ts";
 import type { AmbientScopeContext, Modifier, ScriptCtx } from "../script/effects/types.ts";
 import { refId } from "../script/scalar.ts";
+import type { Trigger } from "../script/trigger-core.ts";
 import type { DefinedEvent, EventBodyContext, EventDef, EventOptionLoc, LocSink } from "./types.ts";
+
+type EventTrigger<S extends ScopeName, Context extends AmbientScopeContext> =
+  Trigger<S> | ((ctx: ScriptCtx<S, Context>) => Trigger<S>);
+
+function isTrigger<S extends ScopeName, Context extends AmbientScopeContext>(
+  value: EventTrigger<S, Context>
+): value is Trigger<S> {
+  return (value as { readonly kind?: unknown }).kind === "trigger";
+}
+
+function resolveEventTrigger<S extends ScopeName, Context extends AmbientScopeContext>(
+  value: EventTrigger<S, Context>,
+  ctx: ScriptCtx<S, Context>
+): Trigger<S> {
+  if (isTrigger(value)) {
+    return value;
+  }
+  return value(ctx);
+}
 
 /**
  * Lowers a `WeightBlock`-shaped modifier row list, reusing the `modifier_rule`
@@ -393,16 +413,18 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     entries.push(kv("difficulty", flags.difficulty));
   }
   if (def.trigger !== undefined) {
-    entries.push(block("trigger", [...def.trigger.entries]));
-    refs.push(...underField(def.trigger.refs, "trigger"));
+    const trigger = resolveEventTrigger(def.trigger, ctx);
+    entries.push(block("trigger", [...trigger.entries]));
+    refs.push(...underField(trigger.refs, "trigger"));
   }
   if (def.majorTrigger !== undefined) {
     entries.push(block("major_trigger", [...def.majorTrigger.entries]));
     refs.push(...underField(def.majorTrigger.refs, "major_trigger"));
   }
   if (def.abortTrigger !== undefined) {
-    entries.push(block("abort_trigger", [...def.abortTrigger.entries]));
-    refs.push(...underField(def.abortTrigger.refs, "abort_trigger"));
+    const abortTrigger = resolveEventTrigger(def.abortTrigger, ctx);
+    entries.push(block("abort_trigger", [...abortTrigger.entries]));
+    refs.push(...underField(abortTrigger.refs, "abort_trigger"));
   }
   if (def.abortEffect !== undefined) {
     const recorded: RecordedRefUse[] = [];

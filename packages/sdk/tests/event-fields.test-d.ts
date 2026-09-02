@@ -10,7 +10,7 @@
 import { describe, it } from "vitest";
 
 import { createMod } from "../src/index.ts";
-import { hasAutomationSetting, hasEventChain } from "../src/script/triggers.ts";
+import { hasAutomationSetting, hasCountryFlag, hasEventChain } from "../src/script/triggers.ts";
 
 function events(prefix: string) {
   return createMod({ name: "Event fields", prefix, supportedVersion: "4.4.*" }).namespace();
@@ -93,6 +93,21 @@ describe("subtype-conditional EventDef fields (SDK-46)", () => {
       hideWindow: true,
       // @ts-expect-error — this event declared no `from:`; ctx.from is an inert sentinel, not a ScopeRef
       situation: (ctx) => ctx.from,
+    });
+  });
+
+  it("limits context-aware event triggers to declared ambient scopes", () => {
+    const eventNamespace = events("event_fields_types_j");
+    eventNamespace.country(1, {
+      scopes: { from: "country" },
+      hideWindow: true,
+      trigger: (ctx) => ctx.from.trigger(hasCountryFlag("event_fields_types_trigger")),
+      abortTrigger: (ctx) => ctx.from.trigger(hasCountryFlag("event_fields_types_abort_trigger")),
+    });
+    eventNamespace.country(2, {
+      hideWindow: true,
+      // @ts-expect-error — this event declared no `from:` ambient scope.
+      trigger: (ctx) => ctx.from.trigger(hasCountryFlag("event_fields_types_missing_from")),
     });
   });
 });
