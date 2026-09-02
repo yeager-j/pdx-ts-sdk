@@ -10,7 +10,7 @@ import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseScopeLinks } from "@pdx-ts/codegen-cwt/logs/scopes";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRule } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
-import { scopeType } from "@pdx-ts/codegen-cwt/lower/scope-context";
+import { canonicalThisScope, scopeType, withFrom } from "@pdx-ts/codegen-cwt/lower/scope-context";
 import { loadScopeFacts } from "@pdx-ts/codegen-cwt/lower/scope-facts";
 import { compareToBaseline, loadBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
 import {
@@ -365,24 +365,63 @@ describe("a body field naming a scope scopes.cwt does not define", () => {
 
 describe("a scope annotation naming a declared scope group", () => {
   const ctx = { scope: null, unpinned: "ScopeName" };
+  const spatialObjectScopes = [
+    "ambient_object",
+    "archaeological_site",
+    "astral_rift",
+    "bypass",
+    "carrier",
+    "colony",
+    "debris",
+    "fleet",
+    "megastructure",
+    "planet",
+    "ship",
+    "situation",
+    "starbase",
+    "system",
+  ];
+  const spatialObjectType = spatialObjectScopes.map((scope) => `"${scope}"`).join(" | ");
 
-  it("fails lowering in the THIS position rather than widening the block", () => {
+  it("lowers the THIS position to the group's member union", () => {
     const pushed = field("on_start", pushedScope("scope_group[spatial_object]"));
+    const scope = scopeType(emitter, pushed, ctx);
 
-    expect(() => scopeType(emitter, pushed, ctx)).toThrowError(
-      'names scope group "spatial_object". A scope group in the THIS position is not modeled'
+    expect(scope.type).toBe(spatialObjectType);
+    expect(scope.scopes).toEqual(spatialObjectScopes);
+    expect(canonicalThisScope(emitter, "scope_group[spatial_object]", "test annotation")).toBe(
+      spatialObjectType
     );
   });
 
-  it("leaves an ambient slot inaccessible without disturbing the field's own scope", () => {
+  it("lowers an ambient slot without disturbing the field's own scope", () => {
     const replaced = field(
       "on_start",
-      replacedScopes("this = country from = scope_group[spatial_object]")
+      replacedScopes(
+        "this = country root = scope_group[spatial_object] from = scope_group[spatial_object]"
+      )
     );
     const scope = scopeType(emitter, replaced, ctx);
 
     expect(scope.type).toBe('"country"');
-    expect(scope.from).toBeNull();
+    expect(scope.from).toBe(spatialObjectType);
+    expect(scope.root).toBe(spatialObjectType);
+    expect(scope.context.from).toBe(spatialObjectType);
+    expect(withFrom(emitter, 'Trigger<"country">', scope)).toBe(
+      `WithFrom<Trigger<"country">, "country", { readonly root: ${spatialObjectType}; ` +
+        `readonly from: ${spatialObjectType} }>`
+    );
+  });
+
+  it("still rejects a group that scopes.cwt does not declare", () => {
+    const replaced = field(
+      "on_start",
+      replacedScopes("this = country from = scope_group[not_a_group]")
+    );
+
+    expect(() => scopeType(emitter, replaced, ctx)).toThrowError(
+      'names unknown scope "scope_group[not_a_group]"'
+    );
   });
 
   it("matches a group name however the annotation spells it", () => {

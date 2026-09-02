@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { scopeOf, type RuleField, type ScopeContext } from "@pdx-ts/codegen-cwt/cwt/model";
@@ -9,6 +9,7 @@ import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseScopeLinks } from "@pdx-ts/codegen-cwt/logs/scopes";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import {
+  checkDrift,
   compareToBaseline,
   loadBaseline,
   updatedBaseline,
@@ -244,6 +245,22 @@ describe("the drift gate", { timeout: 30_000 }, () => {
       "  + unknown CWT keyword: test.cwt:1 quantum_range[0..3]",
     ]);
   });
+
+  it("formats a rebaseline with the configuration resolved from its destination", async () => {
+    const directory = mkdtempSync(path.join(ROOT, ".rebaseline-test-"));
+    const baselinePath = path.join(directory, "drift-baseline.json");
+    const changed = { ...report, malformedOptions: ["first", "second"] };
+
+    try {
+      await checkDrift(changed, baseline, true, baselinePath);
+      const written = readFileSync(baselinePath, "utf8");
+
+      expect(written).toContain('"malformedOptions": ["first", "second"],');
+      expect(JSON.parse(written).malformedOptions).toEqual(["first", "second"]);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("where the fork and the game's dump disagree", () => {
@@ -407,19 +424,12 @@ describe("a scope annotation inside a rule body", { timeout: 30_000 }, () => {
       dumpLinks
     );
 
-  it("separates a declared scope group from a scope scopes.cwt does not define", () => {
+  it("accepts a declared scope group without recording drift", () => {
     const declared = withGroupSlot("spatial_object");
-    // The vendored rules already fill ambient slots with this group, so the
-    // synthetic reference joins that entry rather than adding its own.
-    const entry = declared.scopeGroupAmbientSlots.find((slot) =>
-      slot.startsWith("scope_group[spatial_object] — ")
-    );
 
-    expect(entry).toContain("synthetic-body.cwt:1");
+    expect(declared.scopeGroupAmbientSlots).toEqual([]);
     expect(declared.unknownScopes.some((scope) => scope.startsWith("scope_group["))).toBe(false);
-    expect(compareToBaseline(declared, baseline)).toContain(
-      `  + scope group in ambient slot: ${entry}`
-    );
+    expect(compareToBaseline(declared, baseline)).toEqual([]);
   });
 
   it("still reports a group name scopes.cwt never declared as an unknown scope", () => {

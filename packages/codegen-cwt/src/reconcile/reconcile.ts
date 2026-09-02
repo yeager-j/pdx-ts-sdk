@@ -127,11 +127,8 @@ export interface DriftReport {
    */
   readonly unknownScopes: readonly string[];
   /**
-   * Scope annotations that place a scope group in a scope slot (`from = scope_group[x]`).
-   * The generator cannot narrow one slot to several scopes, so it leaves an ambient slot
-   * inaccessible; a group in the `this` slot is listed here too but fails lowering, since
-   * leaving it unpinned would widen the block instead. Each entry is the group and its
-   * `<file>:<count>` references.
+   * Declared scope groups that the generator could not lower in an annotation slot.
+   * This remains empty while every supported group form lowers to a literal union.
    */
   readonly scopeGroupAmbientSlots: readonly string[];
   /** Rules whose `## scopes` disagree with the game's own dump. */
@@ -327,7 +324,6 @@ function collectScopeReferences(
   canonicalScopes: ReadonlyMap<string, string>
 ): ScopeReferenceReport {
   const unknown = emptyScopeReferences();
-  const groupSlots = emptyScopeReferences();
   // Matched the way `Emitter.scopeGroup` matches, so the report and lowering
   // never disagree about whether a group reference resolves.
   const scopeGroups = scopeGroupIndex(rules);
@@ -336,7 +332,7 @@ function collectScopeReferences(
   const listFor = (scope: string): ScopeReferences | null => {
     const group = scopeGroupName(scope);
     if (group !== null) {
-      return scopeGroups.has(group.toLowerCase()) ? groupSlots : unknown;
+      return scopeGroups.has(group.toLowerCase()) ? null : unknown;
     }
     return canonicalScopes.has(scope) || UNIVERSAL_SCOPES.has(scope) ? null : unknown;
   };
@@ -438,7 +434,7 @@ function collectScopeReferences(
 
   return {
     unknownScopes: describeScopeReferences(unknown),
-    scopeGroupAmbientSlots: describeScopeReferences(groupSlots),
+    scopeGroupAmbientSlots: [],
   };
 }
 

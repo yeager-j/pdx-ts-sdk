@@ -16,10 +16,22 @@ import { UNIVERSAL_SCOPES } from "../overlay/index.ts";
 import type { Emitter } from "../render/emitter.ts";
 import { AMBIENT_SCOPE_KEYS, type AmbientScopeKey } from "../special-scope-paths.ts";
 
+interface CanonicalScope {
+  readonly type: string;
+  readonly scopes: readonly string[];
+}
+
 /** The declared scope group one annotation names, or `null` for anything else. */
-function declaredScopeGroup(emitter: Emitter, declared: string): string | null {
+function declaredScopeGroup(
+  emitter: Emitter,
+  declared: string
+): { readonly name: string; readonly members: readonly string[] } | null {
   const group = scopeGroupName(declared);
-  return group !== null && emitter.scopeGroup(group) !== null ? group : null;
+  if (group === null) {
+    return null;
+  }
+  const members = emitter.scopeGroup(group);
+  return members === null ? null : { name: group, members };
 }
 
 function knownScope(emitter: Emitter, declared: string, source: string): string {
@@ -33,59 +45,65 @@ function knownScope(emitter: Emitter, declared: string, source: string): string 
   return canonical;
 }
 
+function canonicalScope(emitter: Emitter, declared: string, source: string): CanonicalScope | null {
+  if (UNIVERSAL_SCOPES.has(declared.toLowerCase())) {
+    return null;
+  }
+  const group = declaredScopeGroup(emitter, declared);
+  if (group === null) {
+    const scope = knownScope(emitter, declared, source);
+    return { type: JSON.stringify(scope), scopes: [scope] };
+  }
+  const scopes = [
+    ...new Set(group.members.map((member) => knownScope(emitter, member, source))),
+  ].sort();
+  if (scopes.length === 0) {
+    throw new Error(`${source} names empty scope group "${group.name}".`);
+  }
+  emitter.usedScopeGroups.add(group.name);
+  return {
+    type: scopes.map((scope) => JSON.stringify(scope)).join(" | "),
+    scopes,
+  };
+}
+
 /**
  * Canonicalizes the scope an ambient slot names — `from`, `root`, `prev`, and
- * their repeats. A universal scope and a declared scope group both resolve to
- * `null`, which keeps the slot inaccessible to authors.
+ * their repeats. A declared scope group resolves to the union of its members.
+ * A universal scope resolves to `null`, which keeps the slot inaccessible to
+ * authors.
  *
  * @param source Where the annotation was read, named in the failure message.
- * @throws When the name is neither of those and not a known scope. The drift
- *   gate reports such names under `unknownScopes`.
+ * @throws When the name is not a known scope or declared scope group. The
+ *   drift gate reports such names under `unknownScopes`.
  */
 export function canonicalAmbientScope(
   emitter: Emitter,
   declared: string,
   source: string
 ): string | null {
-  if (UNIVERSAL_SCOPES.has(declared.toLowerCase())) {
-    return null;
-  }
-  if (declaredScopeGroup(emitter, declared) !== null) {
-    // A slot holding one of several scopes has no single type, and a union FROM
-    // is not modeled yet (SDK-402). `null` leaves the slot inaccessible, which
-    // narrows rather than widens; the drift report lists these under
-    // `scopeGroupAmbientSlots`.
-    return null;
-  }
-  return knownScope(emitter, declared, source);
+  return canonicalScope(emitter, declared, source)?.type ?? null;
 }
 
 /**
  * Canonicalizes the scope a THIS position names — a `push_scope`, the `this` of
- * a `replace_scopes`, or a nested clause's pushed scope. A universal scope
- * resolves to `null`, leaving the block unpinned.
+ * a `replace_scopes`, or a nested clause's pushed scope. A declared scope
+ * group resolves to the union of its members. A universal scope resolves to
+ * `null`, leaving the block unpinned.
  *
  * @param source Where the annotation was read, named in the failure message.
- * @throws When the name is a declared scope group, which has no single type to
- *   pin here, or is not a known scope. Either would silently widen the block to
- *   every scope; the drift gate reports both under its scope lists.
+ * @throws When the name is not a known scope or declared scope group.
  */
 export function canonicalThisScope(
   emitter: Emitter,
   declared: string,
   source: string
 ): string | null {
-  if (UNIVERSAL_SCOPES.has(declared.toLowerCase())) {
+  const canonical = canonicalScope(emitter, declared, source);
+  if (canonical === null) {
     return null;
   }
-  const group = declaredScopeGroup(emitter, declared);
-  if (group !== null) {
-    throw new Error(
-      `${source} names scope group "${group}". A scope group in the THIS position is not ` +
-        "modeled: resolving it would widen the block to every scope in the group."
-    );
-  }
-  return knownScope(emitter, declared, source);
+  return canonical.scopes.length === 1 ? canonical.scopes[0]! : canonical.type;
 }
 
 function fieldLabel(key: FieldKey): string {
@@ -132,19 +150,19 @@ export interface FieldContext {
  * Use these values when rendering generic arguments and conformance metadata.
  */
 export interface FieldScope {
-  /** The TS type parameter: one canonical scope literal, or the unpinned type. */
+  /** The TS type parameter: canonical scope literals, or the unpinned type. */
   readonly type: string;
   /** {@link FieldContext.unpinnedSymbol}, where {@link FieldScope.type} is it. */
   readonly unpinned?: string;
   /** The same thing as data, `"any"` where nothing pinned it. */
   readonly scopes: readonly string[] | "any";
   /**
-   * The TypeScript literal scope held by FROM inside the block.
+   * The TypeScript literal scope or scope union held by FROM inside the block.
    * `null` keeps an undeclared or `any` FROM inaccessible to authors.
    */
   readonly from: string | null;
   /**
-   * The TypeScript literal scope held by ROOT inside the block.
+   * The TypeScript literal scope or scope union held by ROOT inside the block.
    * It is independent of the block's own scope and `null` when undeclared.
    */
   readonly root: string | null;
@@ -192,8 +210,7 @@ function ambientType(
     return null;
   }
   const source = `Scope annotation "${ambient}" on field "${fieldLabel(field.key)}"`;
-  const canonical = canonicalAmbientScope(emitter, declared, source);
-  return canonical === null ? null : JSON.stringify(canonical);
+  return canonicalAmbientScope(emitter, declared, source);
 }
 
 /**
@@ -236,10 +253,10 @@ export function scopeType(
     return unpinned;
   }
   const source = `Scope annotation "this" on field "${fieldLabel(field.key)}"`;
-  const canonical = canonicalThisScope(emitter, declared, source);
+  const canonical = canonicalScope(emitter, declared, source);
   return canonical === null
     ? unpinned
-    : { type: JSON.stringify(canonical), scopes: [canonical], from, root, context };
+    : { type: canonical.type, scopes: canonical.scopes, from, root, context };
 }
 
 /**

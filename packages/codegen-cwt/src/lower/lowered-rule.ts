@@ -20,10 +20,10 @@ export type LoweredRuleScopes = readonly string[] | "universal";
 export interface LoweredRuleBody {
   /** The scope of an unkeyed trigger or effect splice, when present. */
   readonly splice: {
-    /** The canonical pushed scope, or `null` for the enclosing rule scope. */
+    /** The canonical pushed scope or rendered scope union, or `null` for the enclosing scope. */
     readonly scope: string | null;
   } | null;
-  /** Named clause fields and the scope each clause runs in. */
+  /** Named clause fields and the canonical scope or rendered scope union each clause runs in. */
   readonly clauses: ReadonlyMap<string, string | null>;
   /** Lowercase names of non-clause arguments. */
   readonly args: ReadonlySet<string>;

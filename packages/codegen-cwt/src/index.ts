@@ -890,7 +890,7 @@ async function main(): Promise<void> {
   );
 
   const baseline = loadBaseline();
-  checkDrift(reconcile(rules, docs, modifierDocs, links), baseline, rebaseline);
+  await checkDrift(reconcile(rules, docs, modifierDocs, links), baseline, rebaseline);
   const authority = scopeAuthorityOf(baseline, scopeIndex(rules));
 
   const emitter = new Emitter(rules);
