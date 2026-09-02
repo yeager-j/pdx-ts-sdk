@@ -38,7 +38,12 @@ import {
 } from "./blocks.ts";
 import { contentFieldDescent, mapContentFieldRecords } from "./field-descent.ts";
 import { childContext, collectRefs, joinPath, type LoweringContext } from "./lowering-context.ts";
-import { type ContentField, type ContentFieldBase, type ContentRefTypes } from "./schema.ts";
+import {
+  authoredForm,
+  type ContentField,
+  type ContentFieldBase,
+  type ContentRefTypes,
+} from "./schema.ts";
 import type {
   EconomicResourceBlock,
   EconomicResourceBlockNoProduce,
@@ -235,7 +240,13 @@ function contentScalar(
     const lowered = scriptValueScalar(converted);
     return typeof lowered === "object" ? lowered : scalar(lowered);
   }
-  return scalar(converted as number | boolean);
+  if (typeof converted === "number" || typeof converted === "boolean") {
+    return scalar(converted);
+  }
+  const path = joinPath(ctx?.ownerId ?? "", joinPath(ctx?.path ?? "", field.key));
+  throw new TypeError(
+    `Cannot lower "${path}": expected a string, number, or boolean; received ${authoredForm(converted)}`
+  );
 }
 
 /**

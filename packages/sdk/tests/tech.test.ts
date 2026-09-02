@@ -72,6 +72,25 @@ describe("Technology", () => {
     );
   });
 
+  it.each([
+    ["block", { base: 10 }],
+    ["closure", () => ({ base: 10 })],
+  ] as const)("refuses a %s value for numeric weight during compile (SDK-399)", (form, weight) => {
+    const technology = mod.technology(`invalid_weight_${form}`, {
+      name: "Invalid Weight",
+      area: "physics",
+      tier: 1,
+      category: ["particles"],
+      cost: 100,
+      weight: weight as never,
+    });
+
+    expect(() => mod.compile([mod.feature(undefined, [technology])])).toThrow(
+      `Cannot lower "mymod_tech_invalid_weight_${form}.weight": ` +
+        `expected a string, number, or boolean; received ${form}`
+    );
+  });
+
   it("emits the modifier clause at both levels the rules declare it (SDK-63)", () => {
     // 243 shipped technologies write `modifier`, and 55 write the same clause
     // again inside `technology_swap` — the largest unlowered field on the
