@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   checkRelease,
   prepareReleaseCoordinates,
+  RELEASE_LITERAL_FILES,
   RELEASE_PACKAGES,
   stellarisIdsRevisionDecision,
   validateReleaseVersion,
@@ -56,16 +57,15 @@ function releaseFixture(staleLiteral = "0.5.0"): string {
     "packages/create-stellaris-mod/src/release-manifest.ts",
     `export const SCAFFOLDER_RELEASE_MANIFEST = {\n  sdk: {\n    packageName: "@pdx-ts/sdk",\n    range: "0.5.0",\n  },\n  sdkTesting: {\n    packageName: "@pdx-ts/sdk-testing",\n    range: "0.5.0",\n  },\n};\n`
   );
-  write(
-    root,
-    "packages/create-stellaris-mod/tests/transcripts.test.ts",
-    `declareSdk(target, ">=${staleLiteral}");\n`
-  );
-  write(
-    root,
-    "packages/create-stellaris-mod/tests/goldens/transcripts/generate-sdk-range-not-subset.txt",
-    `err| verified against ${staleLiteral}\n`
-  );
+  for (const file of RELEASE_LITERAL_FILES) {
+    // Ends the sentence with the version on purpose: a literal in prose is the
+    // shape the guard used to miss, and it is what golden transcripts contain.
+    write(
+      root,
+      file,
+      `err| declareSdk(target, ">=${staleLiteral}"), verified against ${staleLiteral}.\n`
+    );
+  }
   return root;
 }
 
@@ -100,9 +100,10 @@ describe("release preparation", () => {
     expect(
       readFileSync(join(root, "packages/create-stellaris-mod/src/release-manifest.ts"), "utf8")
     ).toContain('range: "0.5.1"');
-    expect(
-      readFileSync(join(root, "packages/create-stellaris-mod/tests/transcripts.test.ts"), "utf8")
-    ).toContain(">=0.5.1");
+    for (const file of RELEASE_LITERAL_FILES) {
+      expect(contents(root, file), file).toContain("0.5.1");
+      expect(contents(root, file), file).not.toContain("0.5.0");
+    }
   });
 
   it("rejects invalid versions and stale release literals before writing", () => {
@@ -115,6 +116,20 @@ describe("release preparation", () => {
       version: string;
     };
     expect(sdk.version).toBe("0.5.0");
+  });
+
+  it("sees a stale literal that ends a sentence", () => {
+    // The guard's version pattern used to demand a character that is not a word
+    // character, dot or hyphen after the version, and a sentence's own period is
+    // a dot. A golden transcript ending in the coordinate was therefore invisible
+    // to it, and the stale version was found much later, by a failing test, with
+    // the release already half prepared.
+    const root = releaseFixture();
+    for (const file of RELEASE_LITERAL_FILES) {
+      write(root, file, "err| no version can be proved to be inside 0.4.9.\n");
+    }
+
+    expect(() => prepareReleaseCoordinates(root, "0.5.1")).toThrow("Stale release version literal");
   });
 
   it("leaves every coordinate untouched when a later manifest is malformed", () => {
