@@ -27,7 +27,7 @@ type ProjectLayoutFieldDescriptor = {
 /** The SDK Project Layout descriptors projected into manifest parsing and schema generation. */
 export const PROJECT_LAYOUT_FIELDS = {
   contentDirectory: {
-    required: true,
+    required: false,
     description: "Normalized directory below src where Feature source is written.",
     pattern: new RegExp(String.raw`^src(?:/${PORTABLE_COMPONENT})+$`),
     patternError: (value) =>
@@ -60,10 +60,10 @@ export function projectLayoutFieldSchema(
 
 /** Validated Project Manifest directories and their portable path segments. */
 export interface ProjectLayout {
-  /** Normalized project-relative directory below `src` containing Feature modules. */
-  readonly contentDirectory: string;
-  /** Portable path segments parsed from `contentDirectory`. */
-  readonly contentSegments: readonly string[];
+  /** Normalized project-relative directory below `src` containing Feature modules, when present. */
+  readonly contentDirectory?: string;
+  /** Portable path segments parsed from `contentDirectory`, when present. */
+  readonly contentSegments?: readonly string[];
   /** Normalized project-relative directory mirrored into the built mod. */
   readonly assetsDirectory?: string;
   /** Portable path segments parsed from `assetsDirectory`, when present. */
@@ -96,21 +96,22 @@ export function parseProjectLayoutField(
 
 /** Validates and parses all source directories in one Project Manifest. */
 export function parseProjectLayout(input: {
-  readonly contentDirectory: string;
+  readonly contentDirectory?: string;
   readonly assetsDirectory?: string;
 }): ProjectLayout {
-  const contentSegments = parseProjectLayoutField("contentDirectory", input.contentDirectory);
-  if (input.assetsDirectory === undefined) {
-    return Object.freeze({
-      contentDirectory: input.contentDirectory,
-      contentSegments,
-    });
-  }
-  const assetsSegments = parseProjectLayoutField("assetsDirectory", input.assetsDirectory);
-  return Object.freeze({
-    contentDirectory: input.contentDirectory,
-    contentSegments,
-    assetsDirectory: input.assetsDirectory,
-    assetsSegments,
-  });
+  const content =
+    input.contentDirectory === undefined
+      ? {}
+      : {
+          contentDirectory: input.contentDirectory,
+          contentSegments: parseProjectLayoutField("contentDirectory", input.contentDirectory),
+        };
+  const assets =
+    input.assetsDirectory === undefined
+      ? {}
+      : {
+          assetsDirectory: input.assetsDirectory,
+          assetsSegments: parseProjectLayoutField("assetsDirectory", input.assetsDirectory),
+        };
+  return Object.freeze({ ...content, ...assets });
 }

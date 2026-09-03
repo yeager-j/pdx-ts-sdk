@@ -156,11 +156,11 @@ describe("the project-layout fields", () => {
     expect(build(manifest)).toThrow('"contentDirectory" must be a string, and is a number.');
   });
 
-  it("names a required directory that is absent", () => {
+  it("accepts a manifest without a contentDirectory", () => {
+    // A project that declares its features module discovers nothing, so the
+    // directory discovery would walk is not something it has to name.
     const { contentDirectory: _omitted, ...manifest } = goodManifest();
-    expect(build(manifest)).toThrow(
-      'A Project Manifest has no "contentDirectory" key, which is required.'
-    );
+    expect(build(manifest)).not.toThrow();
   });
 
   it("refuses an assetsDirectory that is not a string", () => {

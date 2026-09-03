@@ -20,6 +20,7 @@
  * instruction.
  */
 
+import { describeValue as describe } from "./describe-value.ts";
 import { ProjectManifestError } from "./errors.ts";
 import { PROJECT_LAYOUT_FIELDS, type ProjectLayoutFieldName } from "./project-layout.ts";
 
@@ -67,20 +68,6 @@ export interface ParsedProjectManifest {
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-/** What a value *is*, phrased for someone reading an error about their JSON. */
-function describe(value: unknown): string {
-  if (value === undefined) {
-    return "absent";
-  }
-  if (value === null) {
-    return "null";
-  }
-  if (Array.isArray(value)) {
-    return "an array";
-  }
-  return `a ${typeof value}`;
 }
 
 function quoteList(values: readonly string[]): string {
