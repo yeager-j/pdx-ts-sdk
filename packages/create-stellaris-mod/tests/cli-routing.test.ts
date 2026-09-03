@@ -155,7 +155,10 @@ describe("init", () => {
 
     expect(spelled.out()).toBe(bare.out());
     expect(bare.out()).toContain("stellaris-mod.json");
-    expect(bare.out()).toContain("src/content/example.ts");
+    expect(bare.out()).toContain("src/features/example.ts");
+    expect(bare.out()).toContain("src/features.ts");
+    expect(bare.out()).toContain("src/build.ts");
+    expect(bare.out()).toContain("knip.json");
     expect(bare.out()).toContain("src/inspect.ts");
     expect(bare.out()).toContain("  .agents/skills/pdx-project-startup/SKILL.md\n");
     expect(bare.out()).toContain("  .agents/skills/pdx-sdk-authoring/SKILL.md\n");

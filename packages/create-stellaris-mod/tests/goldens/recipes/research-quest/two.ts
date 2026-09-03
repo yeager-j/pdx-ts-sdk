@@ -14,9 +14,9 @@
  * event that is declared below it.
  *
  * `#mod` is the project's own alias for `src/mod.ts` (see `package.json#imports`),
- * so moving this file deeper inside the content directory never rewrites the
- * import. The filename decides nothing either: the `mod.feature(...)` call at the
- * bottom is what names the emitted files.
+ * so this import never changes when the file moves. The filename decides
+ * nothing either: the `mod.feature(...)` call at the bottom is what names the
+ * emitted files, and what puts it in the mod is its line in `src/features.ts`.
  */
 
 import { onActions, vanilla } from "@pdx-ts/sdk/stellaris";
@@ -29,9 +29,9 @@ export const chain = mod.eventChain("resonance_theory", {
   desc: "PLACEHOLDER: what the situation log says this quest is about.",
 });
 
-// One event namespace per feature file; every event below is
-// `<prefix>_resonance_theory.<n>` from birth. The handle stays local — a
-// namespace belongs to exactly one file and must not be exported.
+// A namespace belongs to exactly one Feature; every event below is
+// `<prefix>_resonance_theory.<n>` from birth. Keep the handle inside this
+// Feature's own files, and never export it.
 const events = mod.namespace("resonance_theory");
 
 // `onSuccess` runs in the owner's country scope when the research finishes. It

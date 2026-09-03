@@ -3,8 +3,8 @@
  *
  * A production project plan materialized into a temporary directory. The helper
  * symlinks this repository's packages in as `node_modules`, drops generated
- * source into the content directory, and then runs two child processes over it
- * — `tsc -p` and the project's own build.
+ * source into `src/features/` and declares it in `src/features.ts`, and then
+ * runs two child processes over it — `tsc -p` and the project's own build.
  *
  * Child processes, not in-process imports, and for a specific reason: `#mod` is
  * resolved by Node's own resolver reading a real `package.json`, and
@@ -30,8 +30,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import ts from "typescript";
 
+import { FEATURE_LIST_PATH, featureDeclaration } from "../../src/catalog/declaration.ts";
 import type { Resolved } from "../../src/options.ts";
 import { planProject } from "../../src/plan.ts";
+import { featuresTs } from "../../src/templates/source.ts";
 
 const PACKAGE = path.resolve(import.meta.dirname, "../..");
 const REPO = path.resolve(PACKAGE, "../..");
@@ -78,12 +80,16 @@ export interface CommandResult {
 
 export interface GoldenProject {
   readonly dir: string;
-  readonly contentDir: string;
+  readonly featuresDir: string;
   readonly outDir: string;
   /** Whether this source-linked test harness added its compiler condition. */
   usesSourceCondition(): boolean;
-  /** Writes one generated feature source into the project's content directory. */
-  place(basename: string, contents: string): void;
+  /**
+   * Writes one generated feature source into `src/features/` and rewrites
+   * `src/features.ts` to declare every module placed so far. Placing a
+   * basename again replaces its contents and keeps its one line.
+   */
+  place(basename: `${string}.ts`, contents: string): void;
   typecheck(): CommandResult;
   build(): CommandResult;
   /** Every file the build wrote, as `/`-separated paths relative to `outDir`. */
@@ -129,18 +135,21 @@ export function createGoldenProject(): GoldenProject {
     symlinkSync(path.join(REPO, target), link);
   }
 
-  const contentDir = path.join(dir, "src/content");
+  const featuresDir = path.join(dir, "src/features");
   const outDir = path.join(dir, "out");
+  const placed = new Set<`${string}.ts`>();
 
   return {
     dir,
-    contentDir,
+    featuresDir,
     outDir,
 
     usesSourceCondition: () => hasSourceCompilerCondition(dir),
 
     place(basename, contents) {
-      writeFileSync(path.join(contentDir, basename), contents);
+      writeFileSync(path.join(featuresDir, basename), contents);
+      placed.add(basename);
+      writeFileSync(path.join(dir, FEATURE_LIST_PATH), featureList([...placed]));
     },
 
     typecheck: () => run(process.execPath, [TSC, "-p", dir], dir),
@@ -162,11 +171,12 @@ export function createGoldenProject(): GoldenProject {
 }
 
 /**
- * Materialize the production scaffold, then make the two test-only changes the
- * matrix needs: an empty content directory and a build harness whose output
- * directory is supplied by the test. `createGoldenProject` adds its harness
- * compiler settings afterwards; they are intentionally not production plan
- * data. No committed mirror can silently drift from `planProject`.
+ * Materialize the production scaffold, then make the three test-only changes
+ * the matrix needs: an empty feature directory, a feature list that declares
+ * nothing yet, and a build harness whose output directory is supplied by the
+ * test. `createGoldenProject` adds its harness compiler settings afterwards;
+ * they are intentionally not production plan data. No committed mirror can
+ * silently drift from `planProject`.
  */
 function materializeGoldenProject(dir: string): void {
   for (const [relPath, entry] of planProject(GOLDEN_PROJECT, "golden-fixture")) {
@@ -179,9 +189,24 @@ function materializeGoldenProject(dir: string): void {
     }
   }
 
-  rmSync(path.join(dir, "src/content/example.ts"));
-  rmSync(path.join(dir, "src/content/example.test.ts"));
+  rmSync(path.join(dir, "src/features/example.ts"));
+  rmSync(path.join(dir, "src/features/example.test.ts"));
+  writeFileSync(path.join(dir, FEATURE_LIST_PATH), featureList([]));
   writeFileSync(path.join(dir, "src/build-check.ts"), BUILD_CHECK);
+}
+
+/**
+ * The scaffold's own feature list with its example line replaced by one line
+ * per placed module. The docblock is kept so the file is the production one
+ * minus the example, and the binding is the stem itself, which every accepted
+ * stem can be once suffixed: `class` and `await` are legal stems.
+ */
+function featureList(basenames: readonly `${string}.ts`[]): string {
+  const docblock = featuresTs(GOLDEN_PROJECT).replace(/\nexport \{[^\n]*\n$/, "\n");
+  const declarations = basenames.map((basename) =>
+    featureDeclaration({ identifier: `${basename.replace(/\.ts$/, "")}_feature`, basename })
+  );
+  return declarations.length === 0 ? docblock : `${docblock}${declarations.join("\n")}\n`;
 }
 
 /**
@@ -224,7 +249,7 @@ function hasSourceCompilerCondition(dir: string): boolean {
 const BUILD_CHECK = `/** The matrix harness's parameterized production build. */
 import { render, write } from "@pdx-ts/sdk";
 
-import { buildTheMod } from "./mod.ts";
+import { buildTheMod } from "./build.ts";
 
 const outDir = process.argv[2];
 if (outDir === undefined) {

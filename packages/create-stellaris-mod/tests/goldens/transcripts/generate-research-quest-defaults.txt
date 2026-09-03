@@ -1,2 +1,3 @@
-out| <project>/src/content/resonance_theory.ts
+err| declared in <project>/src/features.ts: export { feature as resonanceTheory } from "./features/resonance_theory.ts";
+out| <project>/src/features/resonance_theory.ts
 exit 0

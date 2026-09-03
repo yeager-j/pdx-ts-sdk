@@ -68,9 +68,12 @@ describe("the scaffolded tree", () => {
       "CLAUDE.md",
       "README.md",
       "eslint.config.js",
+      "knip.json",
       "package.json",
-      "src/content/example.test.ts",
-      "src/content/example.ts",
+      "src/build.ts",
+      "src/features.ts",
+      "src/features/example.test.ts",
+      "src/features/example.ts",
       "src/flags.ts",
       "src/index.ts",
       "src/inspect.ts",
@@ -142,7 +145,7 @@ describe("the scaffolded tree", () => {
       ],
       [
         ".agents/skills/pdx-sdk-authoring/SKILL.md",
-        "9be42fdd62d613912f66cd1a85b985c1b043dae2cdc9f3f5f8768f1c55c4045e",
+        "8a7a2bbff96aafc1b7ad0c8493f00f259d3c2c09f25068f33e59ebdc215ebce9",
       ],
       [
         ".agents/skills/pdx-sdk-docs/SKILL.md",
@@ -317,20 +320,32 @@ describe("the scaffolded tree", () => {
     expect(devDependencies["eslint"]).toBeUndefined();
     expect(devDependencies["typescript-eslint"]).toBeUndefined();
     expect(scripts["format"]).toBeUndefined();
-    expect(scripts["lint"]).toBeUndefined();
+    // knip is not an opt-in: the feature list is the only thing that puts a
+    // module in the mod, so the dead-file check stays whether or not ESLint
+    // does, and the script shrinks to just it.
+    expect(scripts["lint"]).toBe("knip --no-config-hints");
+    expect(devDependencies["knip"]).toBeDefined();
+  });
+
+  it("runs ESLint and then knip under one lint script when both are kept", () => {
+    const { scripts } = manifest(plan());
+    expect(scripts!["lint"]).toBe("eslint . && knip --no-config-hints");
   });
 
   it("keeps vanilla loading available without a detected install", () => {
     const files = plan({ installPath: undefined, gameVersion: undefined });
     expect(files.get("src/vanilla.ts")).toContain("export function loadVanilla()");
-    expect(files.get("src/mod.ts")).toContain('import { loadVanilla } from "./vanilla.ts";');
-    expect(files.get("src/mod.ts")).toContain("return project.build({ vanilla: loadVanilla() });");
+    expect(files.get("src/build.ts")).toContain('import { loadVanilla } from "./vanilla.ts";');
+    expect(files.get("src/build.ts")).toContain(
+      "return project.build(features, { vanilla: loadVanilla() });"
+    );
   });
 
   it("emits strict JSON where the format is strict", () => {
     for (const relPath of [
       "package.json",
       ".prettierrc",
+      "knip.json",
       "stellaris-mod.json",
       "stellaris-mod.schema.json",
     ]) {
@@ -364,19 +379,19 @@ describe("the scaffolded tree", () => {
   });
 
   it("forwards the optional vanilla view directly to the project pipeline", () => {
-    const mod = plan().get("src/mod.ts");
-    expect(mod).toContain("return project.build({ vanilla: loadVanilla() });");
-    expect(mod).not.toContain("vanilla === undefined");
+    const build = plan().get("src/build.ts");
+    expect(build).toContain("return project.build(features, { vanilla: loadVanilla() });");
+    expect(build).not.toContain("vanilla === undefined");
   });
 
   it("carries the author's prefix into every place the SDK will read it", () => {
     const files = plan({ prefix: "aurora", name: "Aurora" });
     expect(files.get("stellaris-mod.json")).toContain('"aurora": {');
     expect(files.get("src/flags.ts")).toContain('countryFlags("aurora_welcomed")');
-    expect(files.get("src/content/example.ts")).toContain('mod.technology("first_steps"');
-    expect(files.get("src/content/example.ts")).toContain("mod.namespace()");
-    expect(files.get("src/content/example.ts")).toContain('mod.feature("example"');
-    expect(files.get("src/content/example.test.ts")).toContain("aurora_welcomed");
+    expect(files.get("src/features/example.ts")).toContain('mod.technology("first_steps"');
+    expect(files.get("src/features/example.ts")).toContain("mod.namespace()");
+    expect(files.get("src/features/example.ts")).toContain('mod.feature("example"');
+    expect(files.get("src/features/example.test.ts")).toContain("aurora_welcomed");
   });
 
   it("escapes a mod name that would otherwise break the file it lands in", () => {
@@ -396,13 +411,18 @@ describe("the Project Manifest", () => {
     const manifest = JSON.parse(plan().get("stellaris-mod.json")!) as {
       $schema: string;
       mod: Record<string, unknown>;
-      contentDirectory: string;
       assetsDirectory: string;
     };
     expect(Object.keys(manifest.mod)).toEqual(["my_mod"]);
     expect(manifest.$schema).toBe("./stellaris-mod.schema.json");
-    expect(manifest.contentDirectory).toBe("src/content");
     expect(manifest.assetsDirectory).toBe("assets");
+  });
+
+  it("names no Feature source, because the feature list does", () => {
+    // The manifest used to carry `contentDirectory` for discovery. Feature
+    // source is declared in `src/features.ts` now, so a manifest that still
+    // named a directory would be a second placement authority nothing reads.
+    expect(plan().get("stellaris-mod.json")).not.toContain("contentDirectory");
   });
 
   it("is where src/mod.ts reads the config from", () => {
@@ -425,26 +445,66 @@ describe("the Project Manifest", () => {
     expect(mod).not.toContain("DirectoryPattern");
   });
 
-  it("discovers features where the manifest says they are, not where a convention says", () => {
-    // The manifest is the single placement authority. `generate` writes into
-    // `contentDirectory`; if this file hard-coded `./content/` instead, an
-    // author who moved the directory would get generated files the build never
-    // imports — present, correct, and silently absent from the mod.
-    const mod = plan().get("src/mod.ts")!;
-    expect(mod).toContain("createModProject(manifest");
-    expect(mod).toContain("return project.build(");
-    expect(mod).not.toContain("discoverFeatures(");
-    expect(mod).not.toContain("contentDirectoryPattern");
-    expect(mod).not.toContain('new URL("./content/"');
+  it("builds the Features the list declares, not the ones a directory holds", () => {
+    // The feature list is the single placement authority. `generate` appends
+    // to it; if the build discovered a directory instead, a module the list
+    // did not name would still ship, and one the list named but a directory
+    // walk skipped would not.
+    const build = plan().get("src/build.ts")!;
+    expect(build).toContain('import * as features from "./features.ts"');
+    expect(build).toContain("return project.build(features, ");
+    expect(build).not.toContain("discoverFeatures(");
+    expect(build).not.toContain("contentDirectory");
     expect(manifest(plan())["imports"]).toBeDefined();
   });
 
-  it("captures the manifest Asset tree inside each build invocation", () => {
+  it("keeps mod.ts free of the feature modules that import it", () => {
+    // Feature modules import `mod` from `#mod`. A static import of
+    // `features.ts` from `mod.ts` would evaluate them first, and they would
+    // read `mod` in its temporal dead zone. That is why `build.ts` exists.
     const mod = plan().get("src/mod.ts")!;
-    expect(mod).toContain("export async function buildTheMod");
-    expect(mod).toContain("return project.build(");
-    expect(mod).not.toContain("mod.assetTree(");
-    expect(mod).not.toContain("mod.compile(");
+    expect(mod).toContain("export const project = createModProject(manifest");
+    expect(mod).toContain("export const { config, mod } = project");
+    expect(mod).not.toMatch(/^import .*"\.\/(?:features|vanilla|build)\.ts"/m);
+    expect(mod).not.toContain("buildTheMod");
+    expect(mod).not.toContain("project.build(");
+  });
+
+  it("declares exactly the example Feature in the feature list", () => {
+    const list = plan().get("src/features.ts")!;
+    const exports = list.split("\n").filter((line) => line.startsWith("export "));
+    expect(exports).toEqual(['export { feature as example } from "./features/example.ts";']);
+    expect(list).toContain("never creates or");
+  });
+
+  it("captures the manifest Asset tree inside each build invocation", () => {
+    const build = plan().get("src/build.ts")!;
+    expect(build).toContain("export async function buildTheMod");
+    expect(build).toContain("return project.build(");
+    expect(build).not.toContain("mod.assetTree(");
+    expect(build).not.toContain("mod.compile(");
+  });
+
+  it("checks for dead feature modules with knip, and for nothing else", () => {
+    const knip = JSON.parse(plan().get("knip.json")!) as {
+      entry: string[];
+      project: string[];
+      vitest: boolean;
+      rules: Record<string, string>;
+    };
+    expect(knip.entry).toEqual(["src/index.ts", "src/inspect.ts", "src/install.ts"]);
+    expect(knip.project).toEqual(["src/**/*.ts", "!src/**/*.test.ts"]);
+    // Left on, the vitest plugin makes every test file an entry, and a feature
+    // module reachable only through its own test would pass the check.
+    expect(knip.vitest).toBe(false);
+    const on = Object.entries(knip.rules)
+      .filter(([, level]) => level === "error")
+      .map(([rule]) => rule)
+      .sort();
+    expect(on).toEqual(["files", "unresolved"]);
+    expect(Object.values(knip.rules).every((level) => level === "error" || level === "off")).toBe(
+      true
+    );
   });
 
   it("documents the default mirrored Asset directory", () => {
@@ -459,14 +519,14 @@ describe("the Project Manifest", () => {
     const inspect = plan().get("src/inspect.ts")!;
     const install = plan().get("src/install.ts")!;
     expect(build).toContain('import { runBuild } from "@pdx-ts/sdk"');
-    expect(build).toContain('import { buildTheMod } from "#mod"');
+    expect(build).toContain('import { buildTheMod } from "./build.ts"');
     expect(build).toContain("await runBuild(buildTheMod(), { outDir, previewsDir })");
     expect(inspect).toContain('import { runInspect } from "@pdx-ts/sdk"');
-    expect(inspect).toContain('import { buildTheMod } from "#mod"');
+    expect(inspect).toContain('import { buildTheMod } from "./build.ts"');
     expect(inspect).toContain("await runInspect(buildTheMod(), {");
     expect(inspect).toContain("manifest,");
     expect(install).toContain('import { runInstall } from "@pdx-ts/sdk"');
-    expect(install).toContain('import { buildTheMod } from "#mod"');
+    expect(install).toContain('import { buildTheMod } from "./build.ts"');
     expect(install).toContain("await runInstall(buildTheMod())");
     expect(build).not.toContain('from "./mod.ts"');
     expect(inspect).not.toContain('from "./mod.ts"');
@@ -479,19 +539,19 @@ describe("the Project Manifest", () => {
   it("aliases the mod module, so feature source computes no relative path", () => {
     const { imports } = manifest(plan()) as unknown as { imports: Record<string, string> };
     expect(imports["#mod"]).toBe("./src/mod.ts");
-    expect(plan().get("src/content/example.ts")).toContain('import { mod } from "#mod"');
-    expect(plan().get("src/content/example.ts")).not.toContain('from "../mod.ts"');
+    expect(plan().get("src/features/example.ts")).toContain('import { mod } from "#mod"');
+    expect(plan().get("src/features/example.ts")).not.toContain('from "../mod.ts"');
   });
 
   it("documents the authored Feature stem as output identity", () => {
-    const example = plan().get("src/content/example.ts")!;
+    const example = plan().get("src/features/example.ts")!;
     expect(example).toContain("Rename or move this file and the emitted paths stay the same");
     expect(example).toContain("Change the stem to change its");
     expect(example).not.toContain("Rename this file and the emitted filenames follow");
   });
 
   it("gives the scaffolded visible event checked picture and sound media", () => {
-    const example = plan().get("src/content/example.ts")!;
+    const example = plan().get("src/features/example.ts")!;
     expect(example).toContain(
       "picture: vanilla.spriteType.eventpictures.GFX_evt_mysterious_signal"
     );
@@ -589,6 +649,7 @@ describe("dependency resolution", () => {
     for (const gameVersion of [undefined, "4.4.6.1", "4.4.6"]) {
       const files = plan({ gameVersion });
       expect(files.get("src/mod.ts"), String(gameVersion)).not.toContain("@pdx-ts/stellaris-ids");
+      expect(files.get("src/build.ts"), String(gameVersion)).not.toContain("@pdx-ts/stellaris-ids");
     }
   });
 
@@ -663,7 +724,7 @@ describe("the vanilla view's absence and its failures", () => {
     // `runBuild(buildTheMod(), ...)` evaluates the argument first, so a
     // synchronous throw from `loadVanilla()` would escape the runner that
     // exists to present failures. An async function makes it a rejection.
-    expect(plan().get("src/mod.ts")).toContain("export async function buildTheMod()");
+    expect(plan().get("src/build.ts")).toContain("export async function buildTheMod()");
   });
 });
 
@@ -743,10 +804,12 @@ describe("the generated sources", () => {
     expect(plan().get("vitest.config.ts")).toContain('include: ["src/**/*.test.ts"]');
   });
 
-  it("lints the one-namespace-per-file bijection", () => {
+  it("lints one namespace per Feature", () => {
     const config = plan().get("eslint.config.js")!;
     expect(config).toContain("pdx/one-namespace-per-file");
     expect(config).toContain("callee.property.name='namespace'");
+    expect(config).toContain("A namespace belongs to exactly one Feature");
+    expect(config).not.toContain("bijection");
   });
 
   it("lints duplicate direct definitions of one typed event handle", () => {
@@ -784,21 +847,23 @@ describe("SDK-54: config has no build side effect", () => {
     // the mod's prefix would — never builds or writes anything. `render`,
     // `write` and `install` are the SDK's only disk-touching exports; none of
     // them belongs in this file.
-    const mod = plan().get("src/mod.ts")!;
-    expect(mod).toContain("export const { config, mod } = project");
-    expect(mod).toContain("export async function buildTheMod");
-    expect(mod).not.toContain("discoverFeatures(");
-    expect(mod).not.toContain("assetTree(");
-    expect(mod).not.toContain(".compile(");
-    expect(mod).not.toContain("render(");
-    expect(mod).not.toContain("write(");
-    expect(mod).not.toContain("install(");
+    for (const relPath of ["src/mod.ts", "src/build.ts"]) {
+      const contents = plan().get(relPath)!;
+      expect(contents, relPath).not.toContain("discoverFeatures(");
+      expect(contents, relPath).not.toContain("assetTree(");
+      expect(contents, relPath).not.toContain(".compile(");
+      expect(contents, relPath).not.toContain("render(");
+      expect(contents, relPath).not.toContain("write(");
+      expect(contents, relPath).not.toContain("install(");
+    }
+    expect(plan().get("src/mod.ts")).toContain("export const { config, mod } = project");
+    expect(plan().get("src/build.ts")).toContain("export async function buildTheMod");
   });
 
   it("gives every project command exactly one fold to share", () => {
-    // Every entrypoint imports the same buildTheMod() from src/mod.ts, so there
-    // is exactly one capability compile, built once with whatever vanilla view
-    // src/mod.ts resolved.
+    // Every entrypoint imports the same buildTheMod() from src/build.ts, so
+    // there is exactly one capability compile, built once with whatever
+    // vanilla view src/build.ts resolved.
     const files = plan();
     for (const relPath of ["src/index.ts", "src/inspect.ts", "src/install.ts"]) {
       const contents = files.get(relPath)!;

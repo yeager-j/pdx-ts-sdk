@@ -2,9 +2,9 @@
  * `create-stellaris-mod view <recipe>` — everything one recipe will ask, and
  * the flags that answer it.
  *
- * Like `list`, it needs no project. That is why the output filename is stated
- * as a pattern rather than a path: `view` has not read anybody's Project
- * Manifest and would be guessing at `contentDirectory` if it named one.
+ * Like `list`, it needs no project and no name. That is why the output file
+ * and the declaration line are stated as patterns: both hang off a name the
+ * author has not typed yet.
  *
  * The copyable command at the bottom is the point of the whole page. An author
  * reading this is deciding whether to run `generate`, and the fastest honest
@@ -77,6 +77,7 @@ function page(view: RecipeView): string {
     ],
     ["Creates", summary.itemKinds.join(", ")],
     ["Writes", view.outputPattern],
+    ["Declares", view.declarationPattern],
   ];
   const labelWidth = Math.max(...facts.map(([label]) => label.length));
 

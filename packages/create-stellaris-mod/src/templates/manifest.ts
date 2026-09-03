@@ -2,8 +2,9 @@
  * `stellaris-mod.json` and the JSON schema beside it.
  *
  * The manifest is the project's single author-owned source of truth for mod
- * identity, launcher metadata, and source layout: `src/mod.ts` passes it to
- * `createModProject` rather than restating the same facts. The
+ * identity, launcher metadata, and the Asset tree: `src/mod.ts` passes it to
+ * `createModProject` rather than restating the same facts. Feature source is
+ * not in it; `src/features.ts` declares that. The
  * sole key under `mod` is the mod prefix, which is what makes
  * `keyof typeof manifest.mod` recover it exactly rather than widening to
  * `string`.
@@ -42,7 +43,6 @@ export function manifestJson(resolved: Resolved): string {
         tags: resolved.tags,
       },
     },
-    contentDirectory: "src/content",
     assetsDirectory: "assets",
   });
 }
@@ -52,7 +52,7 @@ export function manifestSchema(): string {
     $schema: "https://json-schema.org/draft/2020-12/schema",
     title: "Stellaris mod project manifest",
     description:
-      "Mod identity, launcher metadata, generated Feature source, and the mirrored Asset tree. " +
+      "Mod identity, launcher metadata, and the mirrored Asset tree. " +
       "src/mod.ts passes this to createModProject.",
     type: "object",
     required: [

@@ -36,7 +36,6 @@ import { VERIFIED_SDK_VERSION } from "./helpers/release-coordinate.ts";
 
 const MANIFEST = {
   mod: { golden_mod: { name: "Golden Fixture", supportedVersion: "v4.4.*" } },
-  contentDirectory: "src/content",
 };
 
 let roots: string[] = [];
@@ -66,11 +65,12 @@ interface ProjectShape {
   readonly sdkSpecifier?: string;
 }
 
-/** A minimal but complete project: manifest, `#mod`, and a content directory. */
+/** A minimal but complete project: manifest, `#mod`, a feature directory, and the list. */
 function writeProject(dir: string, shape: ProjectShape = {}): string {
-  mkdirSync(path.join(dir, "src/content"), { recursive: true });
+  mkdirSync(path.join(dir, "src/features"), { recursive: true });
   writeFileSync(path.join(dir, "stellaris-mod.json"), `${JSON.stringify(MANIFEST, null, 2)}\n`);
   writeFileSync(path.join(dir, "src/mod.ts"), "// wiring\n");
+  writeFileSync(path.join(dir, "src/features.ts"), "");
   const packageJson =
     "packageJson" in shape
       ? shape.packageJson
@@ -288,13 +288,15 @@ describe("--cwd", () => {
     const root = makeRoot();
     const project = writeProject(path.join(root, "project"));
     mkdirSync(path.join(root, "links"));
-    const alias = path.join(root, "links/content");
-    symlinkSync(path.join(project, "src/content"), alias);
+    const alias = path.join(root, "links/features");
+    symlinkSync(path.join(project, "src/features"), alias);
 
     const { code, out, err } = await generate(root, ["--cwd", alias]);
-    expect(err).toBe("");
+    expect(err).toMatch(
+      /^declared in .*src\/features\.ts: export \{ feature as resonanceTheory \}/
+    );
     expect(code).toBe(0);
-    expect(out.trim().split(path.sep).join("/").endsWith("src/content/resonance_theory.ts")).toBe(
+    expect(out.trim().split(path.sep).join("/").endsWith("src/features/resonance_theory.ts")).toBe(
       true
     );
   });
@@ -317,7 +319,7 @@ describe("when the filesystem says no", () => {
       return;
     }
     const project = writeProject(path.join(makeRoot(), "project"));
-    rmSync(path.join(project, "src/content"), { recursive: true });
+    rmSync(path.join(project, "src/features"), { recursive: true });
     // Readable and traversable, not writable: the preflight sees a real
     // directory and stops at the missing segment, and the publisher's own
     // `mkdir` is what fails.

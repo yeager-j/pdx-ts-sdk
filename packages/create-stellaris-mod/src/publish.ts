@@ -4,14 +4,13 @@
  * Two guarantees, and both of them are about somebody else's project rather
  * than about this CLI's convenience:
  *
- * **Containment.** `contentDirectory` comes out of a file an author edits by
- * hand, so it is treated as input rather than as configuration. It is validated
- * as a logical relative path, every existing segment of it is `lstat`ed and
- * required to be a real directory, and the deepest existing ancestor's real
- * path must sit under the project root's real path. A symlinked segment is
- * refused even when it resolves back inside the project: "it points somewhere
- * fine right now" is a statement about this instant, and the publication
- * happens at a later one.
+ * **Containment.** The feature directory is fixed at `src/features/`, but the
+ * project it sits in is the author's, so its path is still checked rather than
+ * trusted: every existing segment of it is `lstat`ed and required to be a real
+ * directory, and the deepest existing ancestor's real path must sit under the
+ * project root's real path. A symlinked segment is refused even when it
+ * resolves back inside the project: "it points somewhere fine right now" is a
+ * statement about this instant, and the publication happens at a later one.
  *
  * **No replacement, ever.** The publisher never overwrites an existing dirent —
  * not a file, not a directory, not a symlink. That is why publication is
@@ -46,10 +45,6 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 
-import { parseProjectLayoutField } from "./project-layout.ts";
-
-export { ProjectLayoutError } from "./project-layout.ts";
-
 export class PublishError extends Error {
   constructor(message: string) {
     super(message);
@@ -81,25 +76,13 @@ export class UnsupportedPublicationError extends PublishError {
   }
 }
 
-/**
- * `contentDirectory`, as segments.
- *
- * The logical form is the whole point: one or more `/`-separated segments,
- * relative, with nothing that a path normalizer would rewrite. Anything else is
- * refused rather than normalized, because normalizing means guessing what an
- * author meant by a path that does not mean what it says.
- */
-export function validateContentDirectory(raw: string): readonly string[] {
-  return parseProjectLayoutField("contentDirectory", raw);
-}
-
 /** What the target name currently is, as `lstat` sees it. */
 export type TargetKind = "absent" | "file" | "dir" | "symlink" | "other";
 
 export interface TargetPreflight {
   /** The project root, already resolved to its real path. */
   readonly rootDir: string;
-  /** The deepest `contentDirectory` segment that exists, real path. */
+  /** The deepest segment of the feature directory that exists, real path. */
   readonly existingDir: string;
   /** The segments that do not exist yet, in order, and are not created here. */
   readonly missingSegments: readonly string[];
@@ -147,8 +130,8 @@ export async function preflightTarget(
     }
     if (!stats.isDirectory()) {
       throw new ContainmentError(
-        `${candidate} is not a directory, so the content directory the manifest names does not ` +
-          `exist and cannot be created.`
+        `${candidate} is not a directory, so the feature directory below it does not exist and ` +
+          `cannot be created.`
       );
     }
     existingDir = candidate;

@@ -46,6 +46,7 @@
     "@types/semver": "^7.8.0",
     "ajv": "^8.17.1",
     "eslint": "^10.9.1",
+    "knip": "^6.34.0",
     "smol-toml": "^1.8.0",
     "typescript-eslint": "^8.68.0",
     "yaml": "^2.9.0"

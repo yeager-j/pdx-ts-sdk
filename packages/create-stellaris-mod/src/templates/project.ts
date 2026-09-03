@@ -32,6 +32,7 @@ export const VERSIONS = {
   eslint_js: "^10.0.0",
   // Floor at the range the repo verifies; earlier 8.x lacks the eslint 10 peer.
   typescript_eslint: "^8.66.0",
+  knip: "^6.34.0",
 } as const;
 
 function json(value: unknown): string {
@@ -130,6 +131,7 @@ export function packageJson(resolved: Resolved, packageName: string): string {
     "@types/node": VERSIONS.types_node,
     typescript: VERSIONS.typescript,
     vitest: VERSIONS.vitest,
+    knip: VERSIONS.knip,
     ...testingDependency(resolved),
   };
   if (resolved.eslint) {
@@ -152,9 +154,14 @@ export function packageJson(resolved: Resolved, packageName: string): string {
   if (resolved.prettier) {
     scripts["format"] = "prettier --write .";
   }
-  if (resolved.eslint) {
-    scripts["lint"] = "eslint .";
-  }
+  // knip is not optional the way ESLint is: the feature list is the only
+  // thing that puts a module in the mod, so a module the list does not name
+  // is dead code that compiles, and knip is what reports it. Hints are off
+  // because knip also reads the npm scripts and calls knip.json's explicit
+  // entries redundant; they stay explicit so the config says what the roots
+  // are without a reader having to derive them from the scripts.
+  const knip = "knip --no-config-hints";
+  scripts["lint"] = resolved.eslint ? `eslint . && ${knip}` : knip;
 
   return json({
     name: packageName,
@@ -165,7 +172,7 @@ export function packageJson(resolved: Resolved, packageName: string): string {
     // native TypeScript type stripping.
     engines: { node: ">=22.18.0" },
     // Every feature module imports the mod as `#mod`, so moving a module
-    // between directories under src/content/ never rewrites an import — and a
+    // between directories under src/features/ never rewrites an import — and a
     // generated file has no relative path to compute in the first place.
     imports: { "#mod": "./src/mod.ts" },
     scripts,
@@ -228,25 +235,25 @@ import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
 /**
- * An event namespace and an event file are in bijection: one namespace per
- * file, one file per namespace. The build enforces it too, but it can only do
- * so once you run it — this says the same thing while you are still typing, and
- * says it where the mistake is.
+ * A namespace belongs to exactly one Feature, and its handle stays inside that
+ * Feature's own files. The build enforces it too, but it can only do so once
+ * you run it — this says the same thing while you are still typing, and says
+ * it where the mistake is.
  *
- * Two namespaces in one module mean one feature would claim two event
+ * Two namespaces in one module mean one Feature would claim two event
  * identities. The fix is always to split the module, which is no loss — a
- * namespace is a feature's event chain, and two of them are two features.
+ * namespace is a Feature's event chain, and two of them are two Features.
  */
 const oneNamespacePerFile = {
   meta: {
     type: "problem",
-    docs: { description: "An event namespace and an event file are in bijection" },
+    docs: { description: "A namespace belongs to exactly one Feature" },
     schema: [],
     messages: {
       duplicate:
-        "A second mod.namespace() in one module (the first is on line {{line}}). An event " +
-        "namespace and an event file are in bijection, so move this namespace and its " +
-        "events into their own module.",
+        "A second mod.namespace() in one module (the first is on line {{line}}). A namespace " +
+        "belongs to exactly one Feature, so move this namespace and its events into their " +
+        "own Feature.",
     },
   },
   create(context) {
@@ -377,11 +384,56 @@ export function vitestConfig(): string {
 
 export default defineConfig({
   test: {
-    // Tests live beside the content they test, inside src/content/. Explicit
-    // feature discovery selects modules before import, so its default skips
-    // these companion files — see src/content/example.test.ts.
+    // Tests live beside the Features they test, inside src/features/. Only the
+    // lines in src/features.ts put a module in the mod, so a companion test
+    // file is never mistaken for content; see src/features/example.test.ts.
     include: ["src/**/*.test.ts"],
   },
 });
 `;
+}
+
+/**
+ * The dead-file check, and nothing else.
+ *
+ * knip's other reports are turned off on purpose, since each of them is either
+ * false in a project of this shape or already owned by another tool. Unused
+ * exports are the norm here (a feature module exports its Items so a sibling
+ * *can* import them), the dependency graph is small enough to read, and
+ * TypeScript already refuses an unresolved type. What no other tool reports is
+ * the one mistake this layout makes possible: a module under `src/features/`
+ * whose line in `src/features.ts` is missing, which compiles, passes its tests,
+ * and ships nothing. `files` catches that. `unresolved` stays on because a
+ * specifier knip cannot follow is a hole in that check.
+ *
+ * The vitest plugin is disabled explicitly. Left on, every `*.test.ts` becomes
+ * an entry, and a feature module reachable only through its own test would pass
+ * the very check this configuration exists for.
+ */
+export function knipConfig(): string {
+  return json({
+    $schema: "https://unpkg.com/knip@6/schema.json",
+    entry: ["src/index.ts", "src/inspect.ts", "src/install.ts"],
+    project: ["src/**/*.ts", "!src/**/*.test.ts"],
+    vitest: false,
+    rules: {
+      files: "error",
+      unresolved: "error",
+      binaries: "off",
+      catalog: "off",
+      catalogReferences: "off",
+      cycles: "off",
+      dependencies: "off",
+      devDependencies: "off",
+      duplicates: "off",
+      enumMembers: "off",
+      exports: "off",
+      namespaceMembers: "off",
+      nsExports: "off",
+      nsTypes: "off",
+      optionalPeerDependencies: "off",
+      types: "off",
+      unlisted: "off",
+    },
+  });
 }

@@ -76,12 +76,17 @@ describe("the compiled binary", () => {
     });
 
     expect(result.error).toBeUndefined();
-    expect(result.stderr).toBe("");
+    const written = path.join(project.realDir, "src/features/resonance_theory.ts");
+    const list = path.join(project.realDir, "src/features.ts");
+    const declaration =
+      'export { feature as resonanceTheory } from "./features/resonance_theory.ts";';
+    // stderr carries the one fact stdout does not: the line the list gained.
+    expect(result.stderr).toBe(`declared in ${list}: ${declaration}\n`);
     expect(result.status).toBe(0);
 
-    const written = path.join(project.realDir, "src/content/resonance_theory.ts");
     // stdout is exactly the path, so `generate ... | xargs $EDITOR` works.
     expect(result.stdout).toBe(`${written}\n`);
     expect(readFileSync(written, "utf8")).toBe(readFileSync(GOLDEN, "utf8"));
+    expect(readFileSync(list, "utf8").endsWith(`${declaration}\n`)).toBe(true);
   });
 });

@@ -3,20 +3,14 @@
  * for what the matrix as a whole proves and how it is split.
  *
  * One golden project hosts both variants and every compiler run: the variants
- * derive the same basename, so each placement swaps the one content file and
- * the harness's incremental typecheck re-checks only it. The moved-directory
- * describe at the bottom is the exception — it edits the project manifest, so
- * it takes a project of its own.
+ * derive the same basename, so each placement swaps the one feature file and
+ * the harness's incremental typecheck re-checks only it.
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { CATALOG } from "../src/catalog/index.ts";
 import type { GeneratedFeatureSource } from "../src/catalog/types.ts";
-import { main } from "../src/cli.ts";
-import { capture } from "./helpers/capture.ts";
 import { createGoldenProject, type GoldenProject } from "./helpers/golden-project.ts";
 import {
   COMPILER_TIMEOUT,
@@ -152,57 +146,6 @@ describe("research-quest, in one real project", () => {
         'eventScope: "cabbage_event"',
         "cabbage_event"
       );
-    },
-    COMPILER_TIMEOUT
-  );
-});
-
-/**
- * The manifest is the single placement authority, proved the only way that
- * counts: move `contentDirectory`, run the real command, and build the project.
- *
- * The failure this guards against is the quiet one. `generate` honours the
- * manifest, so a project whose `src/mod.ts` discovered a hard-coded `content/`
- * would take the generated file happily and emit a mod without it — no error,
- * no warning, just a technology that is not in the game.
- */
-describe("a project that moved its content directory", () => {
-  let project: GoldenProject;
-  let exitCode: number;
-  let stdout: string;
-
-  beforeAll(async () => {
-    project = createGoldenProject();
-    const manifestPath = path.join(project.dir, "stellaris-mod.json");
-    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
-      contentDirectory: string;
-    };
-    manifest.contentDirectory = "src/features/generated";
-    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-    // The old directory stays, empty, so discovery finding the file is a
-    // statement about the manifest rather than about the only directory left.
-    const { io, out } = capture(project.dir);
-    exitCode = await main(["generate", "technology", NAME, "--yes"], io);
-    stdout = out();
-  }, COMPILER_TIMEOUT);
-
-  afterAll(() => project?.dispose());
-
-  it("writes into the directory the manifest names", () => {
-    expect(exitCode).toBe(0);
-    expect(
-      stdout.trim().split(path.sep).join("/").endsWith(`src/features/generated/${STEM}.ts`)
-    ).toBe(true);
-    expect(existsSync(path.join(project.dir, `src/features/generated/${STEM}.ts`))).toBe(true);
-    expect(existsSync(path.join(project.dir, `src/content/${STEM}.ts`))).toBe(false);
-  });
-
-  it(
-    "builds it, because discovery reads the same field",
-    () => {
-      const result = project.build();
-      expect(result.status, result.output).toBe(0);
-      expect(project.outFiles()).toContain(`common/technology/${PREFIX}_${STEM}.txt`);
     },
     COMPILER_TIMEOUT
   );

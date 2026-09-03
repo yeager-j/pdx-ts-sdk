@@ -22,8 +22,9 @@
  * `exports`, which resolve to `dist/`. Nothing here can pass by accident on the
  * `pdx-source` condition the repo uses internally.
  *
- * The toolchain (typescript, vitest, ESLint and its config packages, @types/node)
- * is still symlinked from the repo root, so no step needs the network.
+ * The toolchain (typescript, vitest, ESLint and its config packages, knip,
+ * @types/node) is still symlinked from the repo root, so no step needs the
+ * network.
  */
 
 import { execFileSync, spawnSync } from "node:child_process";
@@ -149,6 +150,7 @@ function installTarballs(dir: string, tarballs: string): void {
     "@eslint",
     "eslint",
     "typescript-eslint",
+    "knip",
     "@clack",
     "fast-string-width",
     "fast-wrap-ansi",
@@ -158,7 +160,7 @@ function installTarballs(dir: string, tarballs: string): void {
     linkDependency(modules, dep);
   }
   mkdirSync(path.join(modules, ".bin"), { recursive: true });
-  for (const bin of ["tsc", "vitest", "eslint"]) {
+  for (const bin of ["tsc", "vitest", "eslint", "knip"]) {
     symlinkSync(path.join(ROOT_MODULES, ".bin", bin), path.join(modules, ".bin", bin));
   }
 }
@@ -290,30 +292,29 @@ describe("a scaffolded project", () => {
     const manifest = parseManifest(readFileSync(manifestPath, "utf8"), manifestPath);
     expect(manifest.prefix).toBe("smoke_mod");
     expect(manifest.config.name).toBe("Smoke Mod");
-    expect(manifest.contentDirectory).toBe("src/content");
+    expect(manifest.contentDirectory).toBeUndefined();
     expect(manifest.assetsDirectory).toBe("assets");
   });
 
   it("aliases the mod module as #mod", () => {
     // Declared here, and proved by the typecheck, build, lint and test steps
-    // below — all of which resolve `#mod` through Node's and TypeScript's real
-    // resolvers against real packed tarballs.
+    // below — all of which resolve `#mod` through Node's, TypeScript's and
+    // knip's real resolvers against real packed tarballs.
     const pkg = JSON.parse(readFileSync(path.join(projectDir, "package.json"), "utf8")) as {
       imports: Record<string, string>;
     };
     expect(pkg.imports["#mod"]).toBe("./src/mod.ts");
-    expect(readFileSync(path.join(projectDir, "src/content/example.ts"), "utf8")).toContain(
+    expect(readFileSync(path.join(projectDir, "src/features/example.ts"), "utf8")).toContain(
       'import { mod } from "#mod"'
     );
-    expect(readFileSync(path.join(projectDir, "src/index.ts"), "utf8")).toContain(
-      'import { buildTheMod } from "#mod"'
+    expect(readFileSync(path.join(projectDir, "src/build.ts"), "utf8")).toContain(
+      'import { project } from "#mod"'
     );
-    expect(readFileSync(path.join(projectDir, "src/inspect.ts"), "utf8")).toContain(
-      'import { buildTheMod } from "#mod"'
-    );
-    expect(readFileSync(path.join(projectDir, "src/install.ts"), "utf8")).toContain(
-      'import { buildTheMod } from "#mod"'
-    );
+    for (const entry of ["src/index.ts", "src/inspect.ts", "src/install.ts"]) {
+      expect(readFileSync(path.join(projectDir, entry), "utf8"), entry).toContain(
+        'import { buildTheMod } from "./build.ts"'
+      );
+    }
   });
 
   it("does not write to disk merely by importing config (SDK-54)", () => {
@@ -351,7 +352,7 @@ describe("a scaffolded project", () => {
     ).not.toThrow();
   });
 
-  it("runs the generated ESLint configuration", () => {
+  it("runs the generated ESLint configuration and knip under one lint script", () => {
     const result = spawnSync("npm", ["run", "lint"], {
       cwd: projectDir,
       encoding: "utf8",
@@ -359,6 +360,57 @@ describe("a scaffolded project", () => {
       shell: process.platform === "win32",
     });
     expect(result.status, result.stdout + result.stderr).toBe(0);
+  });
+
+  it("configures knip with rules the installed knip knows", () => {
+    // The rules block names every issue type so that a knip upgrade adding one
+    // is a deliberate decision here rather than a report nobody turned off.
+    // The schema is the installed package's own, read after the install.
+    const schema = JSON.parse(
+      readFileSync(path.join(projectDir, "node_modules/knip/schema.json"), "utf8")
+    ) as { properties: { rules: { properties: Record<string, unknown> } } };
+    const config = JSON.parse(readFileSync(path.join(projectDir, "knip.json"), "utf8")) as {
+      rules: Record<string, string>;
+    };
+    expect(Object.keys(config.rules).sort()).toEqual(
+      Object.keys(schema.properties.rules.properties).sort()
+    );
+  });
+
+  it("fails lint on a feature module the feature list does not declare, by name", () => {
+    // The one mistake this layout makes possible: a module that compiles,
+    // passes its tests, and ships nothing because no line names it.
+    const orphan = path.join(projectDir, "src/features/orphan.ts");
+    writeFileSync(
+      orphan,
+      [
+        'import { mod } from "#mod";',
+        "",
+        'export const feature = mod.feature("orphan", [',
+        '  mod.technology("orphan", {',
+        '    name: "Orphan",',
+        '    desc: "Declared nowhere.",',
+        "    cost: 100,",
+        '    area: "physics",',
+        "    tier: 1,",
+        '    category: "particles",',
+        "    weight: 1,",
+        "  }),",
+        "]);",
+        "",
+      ].join("\n")
+    );
+    try {
+      const result = spawnSync(process.execPath, ["node_modules/knip/bin/knip.js"], {
+        cwd: projectDir,
+        encoding: "utf8",
+        env: { ...process.env, PDX_NO_VANILLA: "1" },
+      });
+      expect(result.status, result.stdout + result.stderr).not.toBe(0);
+      expect(result.stdout + result.stderr).toContain("src/features/orphan.ts");
+    } finally {
+      rmSync(orphan, { force: true });
+    }
   });
 
   it("rejects a second direct define call on one typed event handle", () => {
@@ -426,7 +478,7 @@ describe("a scaffolded project", () => {
     expect(output).toContain("Built Smoke Mod");
     expect(output).toContain("0 assets · 0 bytes");
 
-    // The claim `src/content/example.ts`'s own docblock makes: one module, one
+    // The claim `src/features/example.ts`'s own docblock makes: one module, one
     // stem, two registry directories.
     expect(output).toContain("common/technology/smoke_mod_example.txt");
     expect(output).toContain("events/smoke_mod_example.txt");
@@ -506,7 +558,7 @@ describe("a scaffolded project", () => {
       [
         'import { writeFileSync } from "node:fs";',
         'import { render } from "@pdx-ts/sdk";',
-        'import { buildTheMod } from "./src/mod.ts";',
+        'import { buildTheMod } from "./src/build.ts";',
         "",
         "const first = await buildTheMod();",
         'writeFileSync(new URL("./assets/gfx/interface/icon.bin", import.meta.url), "after");',
@@ -591,10 +643,9 @@ describe("a scaffolded project", () => {
   });
 
   it("keeps its colocated test out of the built mod", () => {
-    // `src/content/example.test.ts` sits inside the discovered directory. If
-    // discovery stopped skipping it, the build would throw rather than quietly
-    // emit — so a successful build above is already the evidence. This pins the
-    // reason: no registry file is named after it.
+    // `src/features/example.test.ts` sits beside the feature it tests. Nothing
+    // in `src/features.ts` declares it, so the build never sees it. This pins
+    // the consequence: no registry file is named after it.
     const output = runIn(projectDir, process.execPath, ["src/index.ts"]);
     expect(output).not.toContain("example_test");
     expect(output).not.toContain("example.test");
@@ -630,7 +681,7 @@ describe("a scaffolded project", () => {
     // nonfatal warning (a localization value containing a quote, which
     // Paradox's yml format cannot escape) and proves `install.ts` reports it
     // through its own loop, independent of that accident.
-    const examplePath = path.join(projectDir, "src/content/example.ts");
+    const examplePath = path.join(projectDir, "src/features/example.ts");
     const original = readFileSync(examplePath, "utf8");
     const withQuotedDesc = original.replace(
       'desc: "The first technology this mod adds.",',

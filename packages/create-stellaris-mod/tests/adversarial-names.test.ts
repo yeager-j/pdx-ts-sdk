@@ -263,7 +263,7 @@ describe("every accepted name, in one real project", () => {
 
   afterAll(() => project?.dispose());
 
-  /** Renders every accepted name into the shared project's content directory. */
+  /** Renders every accepted name into the shared project's feature directory. */
   function placeAll(render: (names: DerivedNames) => string): void {
     freshOut(project);
     for (const [name] of ACCEPTED) {

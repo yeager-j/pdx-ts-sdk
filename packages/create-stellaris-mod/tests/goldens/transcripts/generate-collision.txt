@@ -1,2 +1,2 @@
-err| <project>/src/content/resonance_theory.ts already exists, and nothing here replaces a file that is already yours. Generate under a different name, or move the existing file first.
+err| <project>/src/features/resonance_theory.ts already exists, and nothing here replaces a file that is already yours. Generate under a different name, or move the existing file first.
 exit 1
