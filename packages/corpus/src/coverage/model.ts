@@ -9,7 +9,10 @@
  * every site that is not `removed`.
  */
 
-import type { ScriptSkipCategory, SkippedRule } from "@pdx-ts/codegen-cwt/lower/script-shape";
+import type {
+  ScriptGenerationSkipCategory,
+  SkippedRule,
+} from "@pdx-ts/codegen-cwt/lower/script-shape";
 import type { EffectPolicy } from "@pdx-ts/codegen-cwt/policy/effects";
 import { HAND_WRITTEN_TRIGGER_EXPORTS } from "@pdx-ts/codegen-cwt/policy/triggers";
 
@@ -126,27 +129,9 @@ export function handWrittenOwnership(effectPolicy: EffectPolicy): HandWrittenOwn
   };
 }
 
-const POLICY_OWNED_CATEGORIES: ReadonlySet<ScriptSkipCategory> = new Set<ScriptSkipCategory>([
-  "handwritten-trigger",
-  "event-fire-effect",
-  "abstract-placeholder",
-]);
-
-/** Link skips a hand-written surface may own; without an owner they are gaps. */
-const OWNABLE_LINK_CATEGORIES: ReadonlySet<ScriptSkipCategory> = new Set<ScriptSkipCategory>([
-  "value-link",
-  "polymorphic-output-scope",
-]);
-
-/** Event-kind skips describe an event kind, not a rule, so they are never a site. */
-const EVENT_KIND_CATEGORIES: ReadonlySet<ScriptSkipCategory> = new Set<ScriptSkipCategory>([
-  "scopeless-event-kind",
-  "missing-fire-rule-scope",
-  "event-policy-rejected",
-]);
-
 /**
- * Classifies one skipped trigger, effect, or link.
+ * Classifies one skipped trigger, effect, or link: one dispatch over the
+ * skip's category.
  *
  * Every generator-limitation category is a `gap` with the skip's detail as
  * its reason; the ledger join that adds an issue happens in the surface
@@ -162,37 +147,52 @@ const EVENT_KIND_CATEGORIES: ReadonlySet<ScriptSkipCategory> = new Set<ScriptSki
  * report lists them as policy-owned. Coverage asks a different question, what
  * an author can write, and these two keys nobody can.
  *
+ * A `value-link` or `polymorphic-output-scope` skip is policy-owned when
+ * `ownership.links` names a hand-written surface for the key; otherwise it
+ * is a gap.
+ *
  * @throws {Error} On an event-kind category, which names no rule.
  */
 export function siteClassOfSkip(
   skip: SkippedRule,
   ownership: HandWrittenOwnership
 ): SiteClassification {
-  if (EVENT_KIND_CATEGORIES.has(skip.category)) {
-    throw new Error(`${skip.name}: ${skip.category} describes an event kind, not a rule site`);
+  switch (skip.category) {
+    case "scopeless-event-kind":
+    case "missing-fire-rule-scope":
+    case "event-policy-rejected":
+      throw new Error(`${skip.name}: ${skip.category} describes an event kind, not a rule site`);
+    case "removed-api":
+      return { class: "removed", reason: skip.detail };
+    case "abstract-placeholder":
+      return {
+        class: "policy-owned",
+        reason: `${skip.detail}; bound by hand in packages/sdk/src/script/scripted.ts`,
+      };
+    case "handwritten-trigger":
+    case "event-fire-effect":
+      return { class: "policy-owned", reason: skip.detail };
+    case "structural-effect":
+      return ownership.unsupportedStructuralEffects.has(skip.name)
+        ? { class: "gap", reason: skip.detail }
+        : { class: "policy-owned", reason: skip.detail };
+    case "value-link":
+    case "polymorphic-output-scope": {
+      const owner = ownership.links.get(skip.name);
+      return owner === undefined
+        ? { class: "gap", reason: skip.detail }
+        : { class: "policy-owned", reason: owner };
+    }
+    case "data-link":
+    case "missing-output-scope":
+    case "unknown-output-scope":
+    case "unknown-input-scope":
+      return { class: "gap", reason: skip.detail };
+    default: {
+      // Every remaining category is a generator limitation. The annotation
+      // fails to compile when a new non-generation category is added above.
+      const generation: ScriptGenerationSkipCategory = skip.category;
+      return { class: "gap", reason: skip.detail };
+    }
   }
-  if (skip.category === "removed-api") {
-    return { class: "removed", reason: skip.detail };
-  }
-  if (skip.category === "abstract-placeholder") {
-    return {
-      class: "policy-owned",
-      reason: `${skip.detail}; bound by hand in packages/sdk/src/script/scripted.ts`,
-    };
-  }
-  if (skip.category === "structural-effect") {
-    return ownership.unsupportedStructuralEffects.has(skip.name)
-      ? { class: "gap", reason: skip.detail }
-      : { class: "policy-owned", reason: skip.detail };
-  }
-  if (POLICY_OWNED_CATEGORIES.has(skip.category)) {
-    return { class: "policy-owned", reason: skip.detail };
-  }
-  const owner = OWNABLE_LINK_CATEGORIES.has(skip.category)
-    ? ownership.links.get(skip.name)
-    : undefined;
-  if (owner !== undefined) {
-    return { class: "policy-owned", reason: owner };
-  }
-  return { class: "gap", reason: skip.detail };
 }
