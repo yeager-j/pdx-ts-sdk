@@ -78,6 +78,7 @@ const DECLARED = loadRulesFrom(
 
 /** One CWT type with a `path`, as the registry denominator counts it. */
 export interface DeclaredType {
+  /** The `type[...]` declaration as the rules loader read it. */
   readonly type: ContentType;
   /** `path` relative to the game root: `game/` stripped. */
   readonly path: string;

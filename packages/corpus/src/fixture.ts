@@ -297,8 +297,11 @@ export interface RegistryMeasurement {
   readonly registry: string;
   /** Directory under the install root the corpus reads, e.g. `common/technology`. */
   readonly registryPath: string;
+  /** The one top-level key that holds definitions, or `null` when every key is one. */
   readonly keyword: string | null;
+  /** The body field that carries identity when definitions are not keyed by id. */
   readonly nameField: string | null;
+  /** A top-level key the type's negated key filter excludes, or `null`. */
   readonly excludedKey: string | null;
   /** `path_extension`, dotted and resolved — which files in the directory count. */
   readonly pathExtension: string;
@@ -393,41 +396,63 @@ export const MEASUREMENTS: readonly RegistryMeasurement[] = CONTENT_MANIFEST.map
   };
 });
 
-/** {@link FieldObservation} with its sets flattened to sorted arrays. */
+/**
+ * {@link FieldObservation} with its sets flattened to sorted arrays. Every
+ * count is a number of definitions.
+ */
 export interface SerializedObservation {
+  /** Definitions writing the key at least once. */
   readonly definitions: number;
+  /** Definitions writing it more than once at the sibling level. */
   readonly repeated: number;
+  /** Definitions writing a scalar value at least once. */
   readonly scalars: number;
+  /** Definitions writing a block value at least once. */
   readonly blocks: number;
+  /** Definitions whose block value holds bare scalars (`field = { foo bar }`). */
   readonly bareValues: number;
+  /** Definitions with anonymous sub-blocks inside the field's block. */
   readonly bareBlocks: number;
+  /** Definitions writing an empty block, which gives no evidence of the interior form. */
   readonly emptyBlocks: number;
+  /** Scalar spellings observed, sorted, capped at `VALUE_SAMPLE`. */
   readonly values: readonly string[];
+  /** Every key written directly inside a block value, sorted. */
   readonly keys: readonly string[];
+  /** Distinct direct-key sets per definition, each sorted, the list sorted element-wise. */
   readonly keysByDefinition: readonly (readonly string[])[];
 }
 
 /** One registry's committed observations: `<registry>.json` in the fixture. */
 export interface RegistryFixture {
+  /** The registry name, which is also the file stem. */
   readonly registry: string;
+  /** Shipped definitions of the registry. */
   readonly definitions: number;
+  /** Files scanned at the registry's path. */
   readonly files: number;
   /**
    * sha256 over the registry directory's sorted `name:sha256(bytes)` lines, so
    * a content change is mechanically detectable without committing content.
    */
   readonly fingerprint: string;
+  /** Dotted corpus path to what the definitions write there, keys sorted. */
   readonly fields: Readonly<Record<string, SerializedObservation>>;
+  /** Present only for a registry with a reviewed scalar tuple. */
   readonly scalarTuples?: readonly SerializedScalarTuple[];
 }
 
 /** One reviewed scalar co-occurrence, counted after resolving global scripted variables. */
 export interface SerializedScalarTuple {
+  /** The corpus paths whose values co-occur, in the reviewed order. */
   readonly fields: readonly string[];
+  /** One resolved value per field, in the same order. */
   readonly values: readonly string[];
+  /** Definitions writing exactly this combination. */
   readonly definitions: number;
 }
 
+/** The committed `meta.json`: which install the fixtures describe. */
 export interface CorpusMeta {
   /** The install's build the fixture was extracted from, `v`-less (`4.4.6`). */
   readonly gameVersion: string;
@@ -439,13 +464,19 @@ export interface CorpusMeta {
 
 /** The committed `script-usage.json`: {@link ScriptUsage} filtered to the vocabulary. */
 export interface ScriptUsageFixture {
+  /** The install directories counted, relative to the game root, in the order walked. */
   readonly roots: readonly string[];
+  /** `.txt` files found under every root, parsed or not. */
   readonly files: number;
+  /** Root-relative paths of files the parser rejected, sorted; their keys are not counted. */
   readonly failedFiles: readonly string[];
+  /** sha256 over the sorted `path:sha256(bytes)` lines of every file. */
   readonly fingerprint: string;
   /** The vocabulary the counts were filtered to, so a stale filter is detectable. */
   readonly vocabulary: {
+    /** How many declared names the vocabulary held. */
     readonly size: number;
+    /** {@link ScriptVocabulary.fingerprint} at extraction. */
     readonly fingerprint: string;
   };
   /** Per root, vocabulary key to occurrence count, keys sorted; zero counts absent. */
@@ -458,6 +489,7 @@ export interface UnexposedTypeFixture {
   readonly path: string;
   /** Shipped definitions; 0 when the install has no such directory. */
   readonly definitions: number;
+  /** Files scanned at the type's path. */
   readonly files: number;
   /** As a registry's; `missing` when the install has no such directory. */
   readonly fingerprint: string;
@@ -469,6 +501,7 @@ export interface UnexposedTypeFixture {
 export interface FolderFixture {
   /** Top-level block definitions in the folder's own files. */
   readonly definitions: number;
+  /** `.txt` files directly in the folder. */
   readonly files: number;
 }
 
@@ -482,10 +515,15 @@ export interface UnexposedTypesFixture {
   readonly fingerprint: string;
 }
 
+/** Everything one extraction writes to the fixture directory. */
 export interface ExtractedCorpus {
+  /** `meta.json`. */
   readonly meta: CorpusMeta;
+  /** One `<registry>.json` per manifested registry, in manifest order. */
   readonly registries: readonly RegistryFixture[];
+  /** `script-usage.json`. */
   readonly scriptUsage: ScriptUsageFixture;
+  /** `unexposed-types.json`. */
   readonly unexposedTypes: UnexposedTypesFixture;
 }
 

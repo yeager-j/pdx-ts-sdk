@@ -1,5 +1,6 @@
 /** The pure syntax-coverage model: sites, surfaces, summary, and formatting. */
 
+export { coverageOf, type Coverage, type CoverageInputs } from "./build.ts";
 export { sitesOfEventFields, type EventFieldPolicyTables } from "./event-fields.ts";
 export { formatCoverageReport, type CoverageProvenance, type FolderWithoutType } from "./format.ts";
 export {

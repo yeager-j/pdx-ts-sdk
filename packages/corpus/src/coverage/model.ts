@@ -51,9 +51,11 @@ export type CoverageSurfaceId =
 
 /** One classified unit of syntax. */
 export interface CoverageSite {
+  /** The surface the site is counted on. */
   readonly surface: CoverageSurfaceId;
   /** The rule key, or the registry field's dotted corpus path. */
   readonly key: string;
+  /** What the SDK can do with the site; see {@link CoverageClass}. */
   readonly class: CoverageClass;
   /** Why the site has its class, in the words of the source that decided it. */
   readonly reason: string;
@@ -70,9 +72,11 @@ export interface CoverageSite {
 
 /** One surface's sites, sorted by key. */
 export interface CoverageSurface {
+  /** Unique across a report; the summary refuses a duplicate. */
   readonly id: CoverageSurfaceId;
   /** The name the report prints. */
   readonly label: string;
+  /** Every site of the surface, one per unit of syntax. */
   readonly sites: readonly CoverageSite[];
   /**
    * The table row this surface is folded into instead of printing its own.
@@ -86,8 +90,11 @@ export type UsageOf = (key: string) => number;
 
 /** A class and its reason, before the ledger join adds an issue. */
 export interface SiteClassification {
+  /** The class the site gets. */
   readonly class: CoverageClass;
+  /** Why, in the words of the source that decided it. */
   readonly reason: string;
+  /** The Linear issue of a tracked gap; absent for every other class. */
   readonly issue?: string;
 }
 

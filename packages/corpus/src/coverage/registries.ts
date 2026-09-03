@@ -43,6 +43,7 @@ export function rerootPath(path: string, roots: readonly PathRoot[]): string {
 
 /** Everything one registry's sites are built from. */
 export interface RegistryCoverageInput {
+  /** The registry name; the surface is `registry:<name>`. */
   readonly registry: string;
   /** Corpus-spelled paths of every lowered field, own, nested, and spliced. */
   readonly emitted: readonly string[];

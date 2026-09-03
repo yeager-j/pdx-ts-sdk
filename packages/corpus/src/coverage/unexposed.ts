@@ -58,9 +58,13 @@ const SCRIPTED_DEFINITION_DECLINED =
  * a vanilla inline script from a patch is a separate gap the `inline_script`
  * rows of `gaps.ts` (SDK-17) still track.
  *
- * `packages/docs-site/src/registry-coverage.ts` `CHANNELS` lists the channel
- * folders for the docs; the two lists must agree. That list also names
- * `localisation` and assets, which have no CWT type, and
+ * Each `policy-owned` row is a claim that the SDK writes the folder.
+ * `tests/coverage.test.ts` proves it: it builds a mod through the cited
+ * methods, writes it to disk, and fails naming any row whose folder no file
+ * lands under. `packages/docs-site/src/registry-coverage.ts` `CHANNELS`
+ * documents the same behaviour from the same SDK, so a change to either
+ * surfaces in one of the two tests. That list also names `localisation` and
+ * assets, which have no CWT type, and
  * `common/country_limits/ownership_limits`, which is the manifested
  * `country_ship_of_size_limit` registry; none of those is an unexposed type.
  */

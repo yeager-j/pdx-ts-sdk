@@ -17,6 +17,7 @@ import type { ScriptGapReport } from "@pdx-ts/codegen-cwt/policy/script-gaps";
 import { describe, expect, it } from "vitest";
 
 import {
+  coverageOf,
   declaredTopLevelFields,
   formatCoverageReport,
   HAND_WRITTEN_LINKS,
@@ -31,6 +32,7 @@ import {
   sitesOfUnexposedType,
   summarizeCoverage,
   type CoverageClass,
+  type CoverageInputs,
   type CoverageSite,
   type CoverageSurface,
   type RegistryCoverageInput,
@@ -1031,5 +1033,144 @@ describe("determinism", () => {
     };
     expect(sitesOfRegistry(reversed)).toEqual(sitesOfRegistry(input));
     expect(sitesOfRegistry(input).map((site) => site.key)).toEqual(["a", "b", "c", "d", "e"]);
+  });
+});
+
+describe("coverageOf", () => {
+  /** One site of every surface, with one remainder on most of them. */
+  const inputs: CoverageInputs = {
+    triggers: {
+      declared: ["always", "gone"],
+      emitted: ["always"],
+      skipped: [skippedRule("gone", "removed-api", "declared removed")],
+    },
+    effects: {
+      declared: ["if", "switch"],
+      emitted: [],
+      skipped: [
+        skippedRule("if", "structural-effect", "control flow"),
+        skippedRule("switch", "structural-effect", "control flow"),
+      ],
+    },
+    fireSkips: [],
+    scriptGaps: NO_GAPS,
+    modifiers: {
+      universal: ["b_universal"],
+      groups: new Map([["country", ["a_country"]]]),
+      unscoped: ["c_unscoped"],
+      unknownCategories: [],
+      unknownScopeTokens: [],
+      dynamicFamilies: [],
+      categoryScopes: new Map(),
+    },
+    declaredLinks: ["owner", "target"],
+    links: {
+      links: [{ key: "owner", method: "owner", inputScopes: [], outputScope: "country", docs: [] }],
+      skipped: [skippedRule("target", "polymorphic-output-scope", "any")],
+      navigation: new Map(),
+    },
+    eventFields: {
+      event: [{ scriptKey: "id", shape: "scalar 1", disposition: "supported", reason: "the id" }],
+      option: [],
+    },
+    ownership: OWNERSHIP,
+    registries: [
+      {
+        registry: "building",
+        emitted: ["cost"],
+        omissions: [{ path: "resources", kind: "unsupported", reason: "block shape" }],
+        splices: new Map(),
+        corpus: new Map([
+          ["cost", 40],
+          ["resources", 30],
+        ]),
+        acknowledged: [
+          {
+            registry: "building",
+            field: "resources",
+            count: 30,
+            reason: "block shape",
+            issue: "SDK-62",
+          },
+        ],
+        formMismatches: [],
+      },
+    ],
+    unexposedTypes: [
+      {
+        type: "deposit",
+        path: "common/deposits",
+        fields: ["icon"],
+        referenceable: false,
+        definitions: 300,
+        usage: new Map([["icon", 290]]),
+      },
+      {
+        type: "on_action",
+        path: "common/on_actions",
+        fields: ["events"],
+        referenceable: false,
+        definitions: 50,
+        usage: new Map([["events", 50]]),
+      },
+    ],
+    scriptUsage: usageOf({ always: 1000, gone: 2, if: 10, switch: 1, a_country: 4 }),
+    eventUsage: usageOf({ id: 7 }),
+    linkUsage: usageOf({ owner: 9, target: 3 }),
+    provenance: PROVENANCE,
+  };
+
+  it("builds every surface, the group row, and the remainders", () => {
+    const { report, lines } = coverageOf(inputs);
+    expect(report.surfaces.map((surface) => surface.summary.label)).toEqual([
+      "triggers",
+      "effects",
+      "modifiers",
+      "scope links",
+      "event fields",
+      "building",
+    ]);
+    expect(lines.slice(3, 12)).toEqual([
+      "triggers                           100.0%   100.0%      2          1      0        0       0     0       1",
+      "effects                             50.0%    90.9%      2          0      1        0       0     1       0",
+      "modifiers                           66.7%   100.0%      3          2      0        0       0     1       0",
+      "scope links                        100.0%   100.0%      2          1      1        0       0     0       0",
+      "event fields                       100.0%   100.0%      1          0      1        0       0     0       0",
+      "building                            50.0%    57.1%      2          1      0        0       0     1       0",
+      "registries not exposed              50.0%    14.7%      2          0      1        0       0     1       0",
+      "registries (all)                    50.0%    22.0%      4          1      1        0       0     2       0",
+      "overall                             69.2%    77.8%     14          5      4        0       0     4       1",
+    ]);
+    expect(lines.slice(15)).toEqual([
+      "Remainder — triggers (1):",
+      "  removed gone — declared removed (used 2)",
+      "Remainder — effects (1):",
+      "  gap switch — untracked: control flow (used 1)",
+      "Remainder — modifiers (1):",
+      "  gap c_unscoped — untracked: no scope evidence in modifier categories (drift-gated) (used 0)",
+      "Remainder — scope links (0):",
+      "Remainder — event fields (0):",
+      "Remainder — building (1):",
+      "  gap resources — SDK-62: block shape (used 30)",
+      "Remainder — deposit (1):",
+      "  gap icon — untracked: registry not exposed (no manifest row) (used 290)",
+      "Remainder — on_action (0):",
+    ]);
+  });
+
+  it("gives identical lines whatever order the input lists arrive in", () => {
+    const reverse = <T>(list: readonly T[]): T[] => [...list].reverse();
+    const shuffled: CoverageInputs = {
+      ...inputs,
+      triggers: { ...inputs.triggers, declared: reverse([...inputs.triggers.declared]) },
+      effects: { ...inputs.effects, skipped: reverse(inputs.effects.skipped) },
+      declaredLinks: reverse([...inputs.declaredLinks]),
+      registries: inputs.registries.map((registry) => ({
+        ...registry,
+        corpus: new Map(reverse([...registry.corpus])),
+      })),
+      unexposedTypes: reverse(inputs.unexposedTypes),
+    };
+    expect(coverageOf(shuffled).lines).toEqual(coverageOf(inputs).lines);
   });
 });

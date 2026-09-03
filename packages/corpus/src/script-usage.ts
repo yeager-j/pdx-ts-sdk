@@ -95,6 +95,7 @@ export interface ScriptVocabularyInput {
 
 /** The lowercased union of every declared script name, and a hash of the sorted list. */
 export interface ScriptVocabulary {
+  /** Every declared name, lowercased; a link's prefix keeps its colon. */
   readonly keys: ReadonlySet<string>;
   /** sha256 over the sorted keys joined by `\n`. */
   readonly fingerprint: string;

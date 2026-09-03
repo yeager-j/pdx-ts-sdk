@@ -8,7 +8,7 @@
  * `npm run typecheck` is this file's type gate.
  */
 
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,6 +16,8 @@ import { cwtFiles, loadContentTypesFrom } from "@pdx-ts/codegen-cwt/cwt/load";
 import { createEffectPolicy } from "@pdx-ts/codegen-cwt/policy/effects";
 import { CONTENT_MANIFEST } from "@pdx-ts/codegen-cwt/policy/manifest";
 import { CWT_CONFIG_DIRECTORY } from "@pdx-ts/codegen-cwt/sources";
+import { createMod, render, write } from "@pdx-ts/sdk";
+import { onActions } from "@pdx-ts/sdk/stellaris";
 import { describe, expect, it } from "vitest";
 
 import { buildCoverage, CoverageInputError } from "../src/coverage-inputs.ts";
@@ -335,6 +337,30 @@ describe("the unexposed types", () => {
     expect(labelsOf("policy-owned")).toEqual(["event_namespace", "on_action"]);
     expect(labelsOf("declined")).toEqual(["scripted_effect", "scripted_trigger"]);
   });
+
+  it("write every policy-owned folder when a mod uses the cited channels", async () => {
+    // A policy-owned row claims the SDK writes the folder. The proof is a
+    // written mod: one event through `mod.namespace`, one hook through
+    // `mod.on`, materialized with the SDK's own `write`.
+    const mod = createMod({
+      name: "Channel proof",
+      prefix: "channel_proof",
+      supportedVersion: "4.4.*",
+    });
+    const event = mod.namespace().country(1, { isTriggeredOnly: true });
+    const hook = mod.on(onActions.onGameStartCountry, [event]);
+    const rendered = render(mod.compile([mod.feature(undefined, [event, hook])]));
+    const out = path.join(mkdtempSync(path.join(tmpdir(), "pdx-channels-")), "out");
+    await write(out, rendered);
+    const written = readdirSync(out, { recursive: true, encoding: "utf8" }).map((file) =>
+      file.split(path.sep).join("/")
+    );
+    const unwritten = [...UNEXPOSED_TYPE_DISPOSITIONS]
+      .filter(([, disposition]) => disposition.class === "policy-owned")
+      .map(([folder]) => folder)
+      .filter((folder) => !written.some((file) => file.startsWith(`${folder}/`)));
+    expect(unwritten, `policy-owned rows whose folder the mod did not write`).toEqual([]);
+  });
 });
 
 describe("the report", () => {
@@ -383,9 +409,35 @@ describe("the report", () => {
 
   it("never reads an install", () => {
     // The report is hermetic: the vanilla evidence is the committed fixtures.
-    for (const file of ["../src/coverage-inputs.ts", "../src/coverage-report.ts"]) {
+    for (const file of [
+      "../src/coverage-inputs.ts",
+      "../src/coverage-report.ts",
+      "../src/coverage/build.ts",
+    ]) {
       const source = readFileSync(fileURLToPath(new URL(file, import.meta.url)), "utf8");
       expect(source, file).not.toContain("@pdx-ts/sdk/installation");
     }
+  });
+
+  it("calculates from parameters only", () => {
+    // `coverageOf` owns the calculation; the fixtures, the emitters, and Git
+    // stay in `coverage-inputs.ts`. Its value imports are the evidence; a
+    // type import runs nothing.
+    const source = readFileSync(
+      fileURLToPath(new URL("../src/coverage/build.ts", import.meta.url)),
+      "utf8"
+    );
+    const imported = [...source.matchAll(/^import (?!type )[^;]*?from "([^"]+)"/gms)].map(
+      (match) => match[1]!
+    );
+    const shell = imported.filter(
+      (module) =>
+        module.startsWith("node:") ||
+        module.includes("fixture") ||
+        module.includes("generator-sources") ||
+        module.includes("/emit/")
+    );
+    expect(shell).toEqual([]);
+    expect(imported.length).toBeGreaterThan(0);
   });
 });

@@ -1,6 +1,7 @@
 /**
- * Assembles the syntax coverage report from the repository: the vendored
- * rules, a fresh run of the script emitters, and the committed fixtures.
+ * Gathers the syntax coverage report's inputs from the repository: the
+ * vendored rules, a fresh run of the script emitters, and the committed
+ * fixtures. The calculation itself is {@link coverageOf}.
  *
  * Reads the repository only. Never an install: the vanilla evidence is the
  * committed corpus and script usage fixtures, so the report runs wherever the
@@ -20,20 +21,11 @@ import { scopeAuthorityOf } from "@pdx-ts/codegen-cwt/reconcile/scope-authority"
 import { CWT_REPOSITORY_DIRECTORY } from "@pdx-ts/codegen-cwt/sources";
 
 import {
-  formatCoverageReport,
+  coverageOf,
   handWrittenOwnership,
-  sitesOfEffects,
-  sitesOfEventFields,
-  sitesOfModifiers,
-  sitesOfRegistry,
-  sitesOfScopeLinks,
-  sitesOfTriggers,
-  sitesOfUnexposedType,
-  summarizeCoverage,
-  type CoverageReport,
-  type CoverageSurface,
-  type FolderWithoutType,
+  type Coverage,
   type RegistryCoverageInput,
+  type UnexposedTypeInput,
   type UsageOf,
 } from "./coverage/index.ts";
 import {
@@ -49,6 +41,7 @@ import {
   SCRIPT_USAGE_FILE,
   SCRIPT_USAGE_ROOTS,
   UNEXPOSED_TYPES_FILE,
+  type CorpusMeta,
   type RegistryReport,
   type ScriptUsageFixture,
   type UnexposedTypesFixture,
@@ -69,9 +62,6 @@ import { ACKNOWLEDGED_MISMATCHES } from "./observations.ts";
 /** The usage root whose counts weigh event fields: `common/` writes `id` and `name` everywhere. */
 const EVENT_FILES_ROOT = "events";
 
-/** The table row every unexposed type folds into. */
-const UNEXPOSED_GROUP = "registries not exposed";
-
 /** Types `vanilla.*` can reference without a registry to author them. */
 const REFERENCEABLE_TYPES: ReadonlySet<string> = new Set(
   VANILLA_REF_EXTRAS.map((entry) => entry.type)
@@ -80,10 +70,8 @@ const REFERENCEABLE_TYPES: ReadonlySet<string> = new Set(
 /** A committed fixture is missing or stale. The remedy is always `npm run corpus:extract`. */
 export class CoverageInputError extends Error {}
 
-/** The report as data and as the lines `npm run coverage` prints. */
-export interface CoverageBuild {
-  readonly report: CoverageReport;
-  readonly lines: readonly string[];
+/** The report over the real repository, with the join evidence tests read. */
+export interface CoverageBuild extends Coverage {
   /** The script gap ledger reconciled with the emitters' skips, for tests that check the join. */
   readonly scriptGaps: ScriptGapReport;
 }
@@ -107,6 +95,31 @@ function registryCoverageInput(report: RegistryReport): RegistryCoverageInput {
       (row) => row.registry === report.registry && row.kind === "form"
     ),
   };
+}
+
+function unexposedTypeInput(
+  declared: DeclaredType,
+  fixture: UnexposedTypesFixture
+): UnexposedTypeInput {
+  const recorded = fixture.types[declared.type.name]!;
+  return {
+    type: declared.type.name,
+    path: declared.path,
+    fields: declared.fields,
+    referenceable: REFERENCEABLE_TYPES.has(declared.type.name),
+    definitions: recorded.definitions,
+    usage: new Map(Object.entries(recorded.fields)),
+  };
+}
+
+function loadCorpusMeta(dir: string): CorpusMeta {
+  const meta = loadMeta(dir);
+  if (meta === null) {
+    throw new CoverageInputError(
+      `no committed ${FIXTURE_PATH}/${META_FILE} — run npm run corpus:extract first`
+    );
+  }
+  return meta;
 }
 
 /** Every manifested registry with a committed fixture, or the missing ones by name. */
@@ -159,23 +172,6 @@ function loadUnexposed(dir: string): UnexposedTypesFixture {
   return fixture;
 }
 
-function unexposedSurface(declared: DeclaredType, fixture: UnexposedTypesFixture): CoverageSurface {
-  const recorded = fixture.types[declared.type.name]!;
-  return {
-    id: `registry:${declared.type.name}`,
-    label: declared.type.name,
-    group: UNEXPOSED_GROUP,
-    sites: sitesOfUnexposedType({
-      type: declared.type.name,
-      path: declared.path,
-      fields: declared.fields,
-      referenceable: REFERENCEABLE_TYPES.has(declared.type.name),
-      definitions: recorded.definitions,
-      usage: new Map(Object.entries(recorded.fields)),
-    }),
-  };
-}
-
 function loadUsage(dir: string): ScriptUsageFixture {
   const usage = loadScriptUsage(dir);
   if (usage === null) {
@@ -205,28 +201,21 @@ function loadUsage(dir: string): ScriptUsageFixture {
  * @throws {CoverageInputError} When a fixture is missing, was extracted
  *   against a different script vocabulary or set of declared types, or
  *   counts different roots.
+ * @throws {Error} When the cwtools config submodule is not checked out: the
+ *   header line reads its commit with `git rev-parse`. Run
+ *   `git submodule update --init`.
  * @throws {Error} When an emitter's accounting contradicts the rules or a
- *   ledger row matches nothing; see the `sitesOf*` builders.
+ *   ledger row matches nothing; see {@link coverageOf}.
  */
 export function buildCoverage(dir: string = FIXTURE_DIR): CoverageBuild {
-  const meta = loadMeta(dir);
-  if (meta === null) {
-    throw new CoverageInputError(
-      `no committed ${FIXTURE_PATH}/${META_FILE} — run npm run corpus:extract first`
-    );
-  }
+  const meta = loadCorpusMeta(dir);
   assertRegistryFixtures(dir);
   const usage = loadUsage(dir);
   const unexposed = loadUnexposed(dir);
   const scriptUsage = usageFromRoots(usage, SCRIPT_USAGE_ROOTS);
-  const eventUsage = usageFromRoots(usage, [EVENT_FILES_ROOT]);
-  // A link with a declared prefix (a value link, a data-driven link) is only
-  // ever written in that form, and the counter credits the prefix.
-  const linkUsage: UsageOf = (key) => scriptUsage(RULES.links.get(key)?.prefix ?? key);
 
   const emitter = new Emitter(RULES);
   const effectPolicy = createEffectPolicy(RULES);
-  const ownership = handWrittenOwnership(effectPolicy);
   const scriptRules = emitScriptRules(
     RULES,
     SOURCES.docs,
@@ -239,74 +228,43 @@ export function buildCoverage(dir: string = FIXTURE_DIR): CoverageBuild {
   const events = emitEvents(emitter, effectPolicy, scriptRules.effects.universalParameters);
   emitter.endFile();
 
-  const surfaces: CoverageSurface[] = [
-    {
-      id: "triggers",
-      label: "triggers",
-      sites: sitesOfTriggers(
-        {
-          declared: RULES.triggers.keys(),
-          emitted: scriptRules.triggers.references.map((row) => row.key),
-          skipped: scriptRules.triggers.skipped,
-        },
-        scriptRules.scriptGaps,
-        scriptUsage,
-        ownership
+  const coverage = coverageOf({
+    triggers: {
+      declared: RULES.triggers.keys(),
+      emitted: scriptRules.triggers.references.map((row) => row.key),
+      skipped: scriptRules.triggers.skipped,
+    },
+    effects: {
+      declared: RULES.effects.keys(),
+      // Every ordinary effect row records one fixed key; a row without one
+      // would fail the accounting check by name.
+      emitted: scriptRules.effects.references.flatMap((row) =>
+        row.key === undefined ? [] : [row.key]
       ),
+      skipped: scriptRules.effects.skipped,
     },
-    {
-      id: "effects",
-      label: "effects",
-      sites: sitesOfEffects(
-        {
-          declared: RULES.effects.keys(),
-          // Every ordinary effect row records one fixed key; a row without
-          // one would fail the accounting check by name.
-          emitted: scriptRules.effects.references.flatMap((row) =>
-            row.key === undefined ? [] : [row.key]
-          ),
-          skipped: scriptRules.effects.skipped,
-        },
-        events.skipped,
-        scriptRules.scriptGaps,
-        scriptUsage,
-        ownership
-      ),
-    },
-    { id: "modifiers", label: "modifiers", sites: sitesOfModifiers(MODIFIER_JOIN, scriptUsage) },
-    {
-      id: "scope-links",
-      label: "scope links",
-      sites: sitesOfScopeLinks(
-        RULES.links.keys(),
-        scriptRules.classifiedLinks,
-        linkUsage,
-        ownership
-      ),
-    },
-    {
-      id: "event-fields",
-      label: "event fields",
-      sites: sitesOfEventFields(EVENT_FIELD_POLICY, eventUsage),
-    },
-    ...committedRegistryReports(dir).map((report): CoverageSurface => ({
-      id: `registry:${report.registry}`,
-      label: report.registry,
-      sites: sitesOfRegistry(registryCoverageInput(report)),
-    })),
-    ...UNEXPOSED_TYPES.map((declared) => unexposedSurface(declared, unexposed)),
-  ];
-  const foldersWithoutType: FolderWithoutType[] = Object.entries(unexposed.folders).map(
-    ([folder, counts]) => ({ path: folder, definitions: counts.definitions })
-  );
-  const report = summarizeCoverage(surfaces);
-  return {
-    report,
-    lines: formatCoverageReport(report, {
+    fireSkips: events.skipped,
+    scriptGaps: scriptRules.scriptGaps,
+    modifiers: MODIFIER_JOIN,
+    declaredLinks: RULES.links.keys(),
+    links: scriptRules.classifiedLinks,
+    eventFields: EVENT_FIELD_POLICY,
+    ownership: handWrittenOwnership(effectPolicy),
+    registries: committedRegistryReports(dir).map(registryCoverageInput),
+    unexposedTypes: UNEXPOSED_TYPES.map((declared) => unexposedTypeInput(declared, unexposed)),
+    scriptUsage,
+    eventUsage: usageFromRoots(usage, [EVENT_FILES_ROOT]),
+    // A link with a declared prefix (a value link, a data-driven link) is only
+    // ever written in that form, and the counter credits the prefix.
+    linkUsage: (key) => scriptUsage(RULES.links.get(key)?.prefix ?? key),
+    provenance: {
       rulesCommit: readCwtCommit(CWT_REPOSITORY_DIRECTORY),
       gameVersion: meta.gameVersion,
-      foldersWithoutType,
-    }),
-    scriptGaps: scriptRules.scriptGaps,
-  };
+      foldersWithoutType: Object.entries(unexposed.folders).map(([folder, counts]) => ({
+        path: folder,
+        definitions: counts.definitions,
+      })),
+    },
+  });
+  return { ...coverage, scriptGaps: scriptRules.scriptGaps };
 }

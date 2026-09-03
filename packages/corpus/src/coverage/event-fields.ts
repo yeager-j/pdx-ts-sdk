@@ -15,7 +15,9 @@ import type { CoverageSite, SiteClassification, UsageOf } from "./model.ts";
 
 /** The reviewed policy for both event tables. */
 export interface EventFieldPolicyTables {
+  /** The keys of an event body. */
   readonly event: readonly EventFieldPolicyEntry[];
+  /** The keys of an event option, the synthetic effect splice included. */
   readonly option: readonly EventFieldPolicyEntry[];
 }
 

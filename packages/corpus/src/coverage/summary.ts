@@ -25,9 +25,11 @@ export type CoverageCounts = Readonly<Record<CoverageClass, number>>;
 
 /** One row of the report's table. */
 export interface CoverageSummary {
+  /** The row's printed name. */
   readonly label: string;
   /** Every site, removed ones included. */
   readonly sites: number;
+  /** How many sites hold each class. */
   readonly counts: CoverageCounts;
   /** Expressible sites over non-removed sites, in [0, 1]; `null` when there are none. */
   readonly declared: number | null;
@@ -37,6 +39,7 @@ export interface CoverageSummary {
 
 /** One surface's row and the sites an author cannot write. */
 export interface SurfaceCoverage {
+  /** The surface's table row. */
   readonly summary: CoverageSummary;
   /** Sites outside the expressible classes, by `used` descending then key. */
   readonly remainder: readonly CoverageSite[];
