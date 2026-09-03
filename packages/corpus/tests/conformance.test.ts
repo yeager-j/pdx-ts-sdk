@@ -37,10 +37,13 @@
  * a banner and skips a visibly named test — a warning, never a failure,
  * because CI without an install must pass and a maintainer with a patched
  * game must notice.
+ *
+ * The script usage fixture beside the registry fixtures (`script-usage.json`,
+ * counts of key text only) is not this gate's evidence; `coverage.test.ts`
+ * reads it.
  */
 
 import {
-  conformance,
   DESCENT_MODES,
   shapeConformance,
   VALUE_SAMPLE,
@@ -54,7 +57,7 @@ import { isEffectKey } from "@pdx-ts/sdk/internals";
 import { describe, expect, it } from "vitest";
 
 import {
-  corpusOfFixture,
+  committedRegistryReports,
   FIXTURE_PATH,
   fixtureStems,
   isRuleTriggerKey,
@@ -83,25 +86,10 @@ const ACKNOWLEDGED = new Map(ACKNOWLEDGED_MISMATCHES.map((row) => [shapeKey(row)
 const REMEDY = "run npm run corpus:extract and review the fixture diff";
 
 const meta = loadMeta();
-const reports = MEASUREMENTS.flatMap((measurement) => {
-  const fixture = loadRegistryFixture(measurement.registry);
-  if (fixture === null) {
-    return [];
-  }
-  const corpus = corpusOfFixture(fixture);
-  return [
-    {
-      measurement,
-      ...conformance(
-        measurement.registry,
-        corpus,
-        measurement.emitted.map((field) => field.field),
-        measurement.splicedKeys
-      ),
-      shape: shapeConformance(corpus, measurement.emitted, ruleScopesOf),
-    },
-  ];
-});
+const reports = committedRegistryReports().map((report) => ({
+  ...report,
+  shape: shapeConformance(report.corpus, report.measurement.emitted, ruleScopesOf),
+}));
 const byRegistry = new Map(reports.map((report) => [report.registry, report]));
 
 /**
@@ -160,11 +148,6 @@ function descentPaths(
     const path = prefix === "" ? node.field : `${prefix}.${node.field}`;
     return [{ path, mode: node.mode }, ...descentPaths(node.children, path)];
   });
-}
-
-/** Observed fields nothing can author: unexpressed minus the declined rows. */
-function unauthorable(report: (typeof reports)[number]) {
-  return report.unexpressed.filter((entry) => !report.measurement.declinedPaths.has(entry.field));
 }
 
 /** Every shape mismatch, as `registry.field kind` keys matching {@link ACKNOWLEDGED}. */
@@ -377,7 +360,7 @@ describe("corpus conformance", () => {
     // field must fail by name or carry an explicit acknowledged-gap row.
     const acknowledged = new Set(ACKNOWLEDGED_GAPS.map((gap) => `${gap.registry}.${gap.field}`));
     const failures = reports.flatMap((report) =>
-      unauthorable(report)
+      report.unauthorable
         .filter(
           (entry) =>
             entry.count >= PRESENCE_FLOOR && !acknowledged.has(`${report.registry}.${entry.field}`)
@@ -401,7 +384,7 @@ describe("corpus conformance", () => {
       if (report === undefined) {
         return [`${name}: names no manifested registry — remove the row`];
       }
-      const entry = unauthorable(report).find((one) => one.field === gap.field);
+      const entry = report.unauthorable.find((one) => one.field === gap.field);
       if (entry === undefined) {
         return [`${name}: now authorable or declined — remove the row`];
       }
@@ -417,7 +400,7 @@ describe("corpus conformance", () => {
     // Printed, not failed: what ratcheting PRESENCE_FLOOR down would add, so
     // the next lowering (or the next floor) is chosen with the numbers in view.
     const rows = reports.flatMap((report) =>
-      unauthorable(report)
+      report.unauthorable
         .filter((entry) => entry.count >= NEAR_FLOOR && entry.count < PRESENCE_FLOOR)
         .map((entry) => `  ${report.registry}.${entry.field} (${entry.count})`)
     );

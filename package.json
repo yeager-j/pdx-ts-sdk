@@ -25,6 +25,7 @@
     "docs:scopes:generate": "npm run scopes:generate --workspace @pdx-ts/docs-site",
     "corpus:extract": "node --conditions=pdx-source packages/corpus/src/extract.ts",
     "corpus:check": "node --conditions=pdx-source packages/corpus/src/check.ts",
+    "coverage": "node --conditions=pdx-source packages/corpus/src/coverage-report.ts",
     "typecheck": "npm run generate:version && tsc --noEmit && npm run typecheck --workspaces --if-present",
     "test": "npm run generate:version && vitest run",
     "test:vanilla": "node --conditions=pdx-source scripts/test-vanilla.mjs",

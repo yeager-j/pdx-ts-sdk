@@ -216,6 +216,7 @@ corpus files, and programmatic Prettier for generated TypeScript.
 ```text
 src/
 |-- index.ts             pipeline coordinator and filesystem shell
+|-- sources.ts           where the rules and documentation dumps live, and how they are read
 |-- cwt/                 CWT lexer, parser, models, and rule loader
 |-- logs/                Stellaris documentation-dump parsers
 |-- reconcile/           source joining and drift-baseline checks
@@ -223,6 +224,8 @@ src/
 |-- overlay/             audited departures from raw rules
 |-- lower/               render-free semantic authoring model
 |-- emit/                TypeScript projection and output-family emitters
+|                        (emit/script/script-rules.ts runs the trigger, link, and
+|                        effect emitters as one unit, for codegen and for coverage)
 |-- render/              generic code writer, imports, symbols, and file protocol
 |-- corpus/              installed-definition observations and conformance
 |-- report.ts            visible pipeline accounting
@@ -252,6 +255,8 @@ npm run build
 
 Review generated text as public API. Corpus conformance is an observed lower
 bound based on shipped Stellaris definitions, not proof that every legal game
-shape has appeared in vanilla.
+shape has appeared in vanilla. `npm run coverage` prints how much of the
+declared syntax the emitted surface can author, per surface and overall; see
+`packages/corpus/README.md`.
 
 See the [CWT Codegen glossary](./CONTEXT.md) for the terms used by this package.

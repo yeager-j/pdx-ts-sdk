@@ -5,10 +5,6 @@
  * as a reviewable diff on the SDK's public API.
  */
 
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { scopeIndex, type ContentType, type RuleSet } from "./cwt/rules.ts";
 import {
   emitAliasCategories,
@@ -28,6 +24,7 @@ import { emitScopeLinkNavigation, emitScopeLinks } from "./emit/script/links.ts"
 import { emitModifiers, joinModifierScopes } from "./emit/script/modifiers.ts";
 import { emitOnActions } from "./emit/script/on-actions.ts";
 import { emitScriptReferences } from "./emit/script/script-reference.ts";
+import { emitScriptRules } from "./emit/script/script-rules.ts";
 import { emitTriggers } from "./emit/script/triggers.ts";
 import {
   canonicalScopes,
@@ -38,10 +35,7 @@ import {
   valuelessEnums,
 } from "./emit/support.ts";
 import { Emitter, type Usage } from "./emit/typescript.ts";
-import { loadRules } from "./load-rules.ts";
 import { parseModifierDocs } from "./logs/modifier-docs.ts";
-import { parseScopeLinks } from "./logs/scopes.ts";
-import { parseTriggerDocs } from "./logs/trigger-docs.ts";
 import {
   referenceNameOf,
   subtypeReferenceRefinements,
@@ -50,7 +44,6 @@ import {
 } from "./lower/content-reference.ts";
 import { emitContentShapeProtocol } from "./lower/content-shape.ts";
 import { classifyLinks } from "./lower/links.ts";
-import { lowerRuleTable } from "./lower/lowered-rule.ts";
 import { kebabCase } from "./naming.ts";
 import {
   assertComplexEnumReferenceOverlaysValid,
@@ -95,24 +88,21 @@ import {
   createModifierOperationPolicy,
   emitModifierOperationProtocol,
 } from "./policy/modifiers.ts";
-import { formatScriptGapReport, reconcileScriptGaps } from "./policy/script-gaps.ts";
-import { HAND_WRITTEN_TRIGGER_EXPORTS, RESERVED_TRIGGER_EXPORT_NAMES } from "./policy/triggers.ts";
-import { CWT_SCRIPT_DOCS_VERSION, readCwtCommit } from "./provenance.ts";
+import { formatScriptGapReport } from "./policy/script-gaps.ts";
+import { HAND_WRITTEN_TRIGGER_EXPORTS } from "./policy/triggers.ts";
+import { readCwtCommit } from "./provenance.ts";
 import { checkDrift, loadBaseline } from "./reconcile/baseline.ts";
 import { reconcile } from "./reconcile/reconcile.ts";
-import { scopeAuthorityOf, type ScopeAuthority } from "./reconcile/scope-authority.ts";
+import { scopeAuthorityOf } from "./reconcile/scope-authority.ts";
 import { GeneratedOutput, header } from "./render/generated-file.ts";
 import { importList } from "./render/symbols.ts";
 import { eventFieldSupportLossLines, printReport, reportSection } from "./report.ts";
-
-const REPOSITORY_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
-const CWT_REPOSITORY_DIRECTORY = path.join(REPOSITORY_ROOT, "vendor/cwtools-stellaris-config");
-const CWT_CONFIG_DIRECTORY = path.join(CWT_REPOSITORY_DIRECTORY, "config");
-const SCRIPT_DOCS_DIRECTORY = path.join(
+import {
+  CWT_CONFIG_DIRECTORY,
   CWT_REPOSITORY_DIRECTORY,
-  "script-docs",
-  CWT_SCRIPT_DOCS_VERSION
-);
+  readGeneratorSources,
+  SCRIPT_DOCS_DIRECTORY,
+} from "./sources.ts";
 
 interface EmittedManifestContent {
   readonly manifest: (typeof CONTENT_MANIFEST)[number];
@@ -128,23 +118,6 @@ interface EmittedManifestContent {
 interface ManifestContentEmission {
   readonly contents: EmittedManifestContent[];
   readonly registryNames: ReadonlySet<string>;
-}
-
-interface GeneratorSources {
-  readonly rules: RuleSet;
-  readonly docs: ReturnType<typeof parseTriggerDocs>;
-  readonly links: ReturnType<typeof parseScopeLinks>;
-  readonly modifierDocs: ReturnType<typeof parseModifierDocs>;
-}
-
-interface ScriptRuleEmission {
-  readonly triggers: ReturnType<typeof emitTriggers>;
-  readonly triggerUsage: Usage;
-  readonly classifiedLinks: ReturnType<typeof classifyLinks>;
-  readonly scopeLinks: ReturnType<typeof emitScopeLinks>;
-  readonly effects: ReturnType<typeof emitEffects>;
-  readonly effectUsage: Usage;
-  readonly scriptGapLines: ReturnType<typeof formatScriptGapReport>;
 }
 
 interface EventModuleEmission {
@@ -222,22 +195,6 @@ interface CodegenReportInput {
   readonly eventFieldPolicy: ReturnType<typeof createEventFieldPolicy>;
 }
 
-function readGeneratorSources(
-  configDirectory: string,
-  scriptDocsDirectory: string
-): GeneratorSources {
-  const rules = loadRules(configDirectory);
-  const docs = parseTriggerDocs(
-    readFileSync(path.join(scriptDocsDirectory, "triggers.log"), "utf8"),
-    readFileSync(path.join(scriptDocsDirectory, "effects.log"), "utf8")
-  );
-  const links = parseScopeLinks(readFileSync(path.join(scriptDocsDirectory, "scopes.log"), "utf8"));
-  const modifierDocs = parseModifierDocs(
-    readFileSync(path.join(scriptDocsDirectory, "modifiers.log"), "utf8")
-  );
-  return { rules, docs, links, modifierDocs };
-}
-
 function describeEmittedFields(emission: ContentEmission): string {
   const nestedFieldCount = emission.nestedEmittedFields.length;
   return (
@@ -309,65 +266,6 @@ function emitManifestContents(rules: RuleSet, emitter: Emitter): ManifestContent
   }
 
   return { contents, registryNames };
-}
-
-function emitScriptRules(
-  rules: RuleSet,
-  docs: ReturnType<typeof parseTriggerDocs>,
-  links: ReturnType<typeof parseScopeLinks>,
-  emitter: Emitter,
-  effectPolicy: ReturnType<typeof createEffectPolicy>,
-  authority: ScopeAuthority
-): ScriptRuleEmission {
-  const index = scopeIndex(rules);
-
-  emitter.beginFile();
-  const loweredTriggers = lowerRuleTable(
-    rules.triggers,
-    docs.triggers,
-    emitter.lowerer,
-    index,
-    authority.triggers
-  );
-  const triggers = emitTriggers(emitter, docs.triggers, loweredTriggers);
-  const triggerUsage = emitter.endFile();
-
-  const documentedLinks = new Map(links.links.map((link) => [link.name, link]));
-  const classifiedLinks = classifyLinks(rules, documentedLinks, index);
-  const reservedScopeLinkNames = new Set([...triggers.names, ...RESERVED_TRIGGER_EXPORT_NAMES]);
-  const scopeLinks = emitScopeLinks(classifiedLinks, index, reservedScopeLinkNames);
-
-  emitter.beginFile();
-  const loweredEffects = lowerRuleTable(
-    rules.effects,
-    docs.effects,
-    emitter.lowerer,
-    index,
-    authority.effects
-  );
-  const effects = emitEffects(
-    emitter,
-    docs.effects,
-    index,
-    loweredEffects,
-    effectPolicy,
-    classifiedLinks.links
-  );
-  const effectUsage = emitter.endFile();
-  const scriptGaps = reconcileScriptGaps({
-    triggers: triggers.skipped,
-    effects: effects.skipped,
-  });
-
-  return {
-    triggers,
-    triggerUsage,
-    classifiedLinks,
-    scopeLinks,
-    effects,
-    effectUsage,
-    scriptGapLines: formatScriptGapReport(scriptGaps),
-  };
 }
 
 function assertGenerationPolicies(

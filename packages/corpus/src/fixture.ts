@@ -17,7 +17,9 @@
  * observations only — field names, forms, counts, ids, content hashes — never
  * script bodies and never localized text. `FieldObservation.values` is the
  * closest call and stays inside it: a capped sample of bare scalar tokens
- * (`yes`, `large`, a referenced id), kept to check closed unions.
+ * (`yes`, `large`, a referenced id), kept to check closed unions. The script
+ * usage fixture (`script-usage.json`, see `script-usage.ts`) carries counts of
+ * key text only, filtered to the names the rules declare.
  *
  * Tooling-side machinery on purpose: this package is private, the SDK never
  * imports it, and nothing here belongs in the published runtime surface.
@@ -31,26 +33,27 @@ import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "nod
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  conformance,
   readRegistryCorpus,
   spliceMembersOf,
+  type ConformanceReport,
   type DescentNode,
   type FieldObservation,
   type RegistryCorpus,
   type RuleScopes,
   type SpliceMember,
+  type UnexpressedField,
 } from "@pdx-ts/codegen-cwt/corpus";
 import { relativeRegistryPath, walkRegistryFiles } from "@pdx-ts/codegen-cwt/corpus/registry-files";
-import { scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
-import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/content/alias-splice";
+import {
+  emitAliasSplice,
+  type AliasSpliceEmission,
+} from "@pdx-ts/codegen-cwt/emit/content/alias-splice";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content/content-type";
-import { joinModifierScopes } from "@pdx-ts/codegen-cwt/emit/script/modifiers";
+import type { FieldOmissionRow } from "@pdx-ts/codegen-cwt/emit/content/field-rows";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
-import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
-import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
-import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import type { EmittedField } from "@pdx-ts/codegen-cwt/lower/content-model";
 import { canonicalScopeSet } from "@pdx-ts/codegen-cwt/lower/script-shape";
-import { CONTENT_DECLINED_FIELDS } from "@pdx-ts/codegen-cwt/overlay";
 import {
   CONTENT_MANIFEST,
   registryNameOf,
@@ -68,6 +71,16 @@ import { InstallNotFoundError } from "@pdx-ts/sdk";
 import { locateInstall, readGameVersion } from "@pdx-ts/sdk/installation";
 import { compareUtf8 } from "@pdx-ts/sdk/internals";
 
+import { rerootPath, type PathRoot } from "./coverage/registries.ts";
+import {
+  MODIFIER_JOIN,
+  RULES,
+  SCOPE_INDEX,
+  SCRIPT_VOCABULARY,
+  SOURCES,
+} from "./generator-sources.ts";
+import { readScriptUsage, type ScriptUsage, type ScriptVocabulary } from "./script-usage.ts";
+
 /**
  * Anchored to the module rather than the process, the same way
  * `codegen-vanilla`'s entry anchors itself: the fixture this reads and writes
@@ -75,13 +88,17 @@ import { compareUtf8 } from "@pdx-ts/sdk/internals";
  * was invoked from.
  */
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
-const CONFIG = path.join(ROOT, "vendor/cwtools-stellaris-config/config");
-const SCRIPT_DOCS = path.join(ROOT, "vendor/cwtools-stellaris-config/script-docs/v4.4.1");
 
 /** Repo-relative, for messages; {@link FIXTURE_DIR} is what the reads use. */
 export const FIXTURE_PATH = "packages/corpus/fixtures";
 export const FIXTURE_DIR = path.join(ROOT, FIXTURE_PATH);
 export const META_FILE = "meta.json";
+/** The script usage fixture, see `script-usage.ts`. */
+export const SCRIPT_USAGE_FILE = "script-usage.json";
+/** The install directories the script usage fixture counts, in fixture order. */
+export const SCRIPT_USAGE_ROOTS: readonly string[] = ["common", "events"];
+/** Fixture files that are not a registry's observations. */
+export const RESERVED_FIXTURE_FILES: ReadonlySet<string> = new Set([META_FILE, SCRIPT_USAGE_FILE]);
 
 /**
  * The presence floor: once the vanilla fixture observes a field in at least
@@ -102,9 +119,9 @@ export const PRESENCE_FLOOR = 25;
  */
 export const NEAR_FLOOR = 5;
 
-const rules = loadRules(CONFIG);
+const rules = RULES;
 const emitter = new Emitter(rules);
-const scopes = scopeIndex(rules);
+const scopes = SCOPE_INDEX;
 
 /**
  * Every modifier name the SDK's generated surface knows, from the same join
@@ -112,14 +129,10 @@ const scopes = scopeIndex(rules);
  * into its body admits all of them as top-level keys, so coverage has to
  * resolve the category rather than read a field list.
  */
-const MODIFIER_NAMES = (() => {
-  const join = joinModifierScopes(
-    rules,
-    parseModifierDocs(readFileSync(path.join(SCRIPT_DOCS, "modifiers.log"), "utf8")),
-    (token) => emitter.lowerer.canonicalScope(token)
-  );
-  return new Set([...join.universal, ...[...join.groups.values()].flat()]);
-})();
+const SCOPED_MODIFIER_NAMES: ReadonlySet<string> = new Set([
+  ...MODIFIER_JOIN.universal,
+  ...[...MODIFIER_JOIN.groups.values()].flat(),
+]);
 
 /**
  * Which scopes each trigger and effect is legal in, resolved exactly the way
@@ -131,10 +144,7 @@ const MODIFIER_NAMES = (() => {
  * holding them.
  */
 const RULE_SCOPES = (() => {
-  const dump = parseTriggerDocs(
-    readFileSync(path.join(SCRIPT_DOCS, "triggers.log"), "utf8"),
-    readFileSync(path.join(SCRIPT_DOCS, "effects.log"), "utf8")
-  );
+  const dump = SOURCES.docs;
   const authority = scopeAuthorityOf(loadBaseline(), scopes);
   const resolve = (
     table: typeof rules.triggers,
@@ -221,10 +231,16 @@ function spliceEmission(category: string): ReturnType<typeof emitAliasSplice> {
   return spliceEmissions.get(category)!;
 }
 
-/** Every field lowered into the categories a registry splices, `planet.class` and friends. */
-function spliceFieldsOf(categories: readonly string[]): EmittedField[] {
+/**
+ * Every splice emission a registry reaches, transitively, each once, paired
+ * with its category: the categories it splices directly, then the ones those
+ * splice in turn. A category with no authoring member (`modifier`) is absent.
+ */
+function spliceEmissionsOf(
+  categories: readonly string[]
+): readonly (readonly [string, AliasSpliceEmission])[] {
   const seen = new Set<string>();
-  const collect = (list: readonly string[]): EmittedField[] =>
+  const collect = (list: readonly string[]): (readonly [string, AliasSpliceEmission])[] =>
     list.flatMap((category) => {
       if (seen.has(category)) {
         return [];
@@ -233,52 +249,33 @@ function spliceFieldsOf(categories: readonly string[]): EmittedField[] {
       const emission = spliceEmission(category);
       return emission === null
         ? []
-        : [...emission.emittedFields, ...collect(emission.spliceCategories)];
+        : [[category, emission] as const, ...collect(emission.spliceCategories)];
     });
   return collect(categories);
 }
 
 /**
- * `CONTENT_DECLINED_FIELDS` rows that land in this registry's corpus, mapped
- * to the dotted paths the corpus reports them under. The overlay keys rows by
- * CWT type name at the top level and by alias *category* inside a splice
- * (`planet_initializer.change_orbit`), while the corpus reports the *member
- * key* (`planet.change_orbit`) — this is where the two spellings meet, so the
- * presence floor can honor a declined field without a second table.
+ * How an emission's omission paths are spelled versus how the corpus spells
+ * them. The emitter keys rows by CWT type name at the top level
+ * (`solar_system_initializer.change_orbit`) and by alias *category* inside a
+ * splice (`planet_initializer.change_orbit`), while the corpus reports the
+ * bare field (`change_orbit`) and the *member key* (`planet.change_orbit`).
+ * {@link rerootPath} applies these; a row no root matches is already spelled
+ * the corpus way.
  */
-function declinedPathsOf(
+function pathRootsOf(
   typeName: string,
   registry: string,
-  inlineSplices: readonly string[]
-): ReadonlySet<string> {
-  const paths = new Set<string>();
-  const collect = (prefix: string, map: (suffix: string) => string): void => {
-    for (const key of CONTENT_DECLINED_FIELDS.keys()) {
-      if (key.startsWith(prefix)) {
-        paths.add(map(key.slice(prefix.length)));
-      }
-    }
-  };
-  collect(`${typeName}.`, (suffix) => suffix);
-  if (registry !== typeName) {
-    collect(`${registry}.`, (suffix) => suffix);
-  }
-  const seen = new Set<string>();
-  const queue = [...inlineSplices];
-  while (queue.length > 0) {
-    const category = queue.pop()!;
-    if (seen.has(category)) {
-      continue;
-    }
-    seen.add(category);
-    const emission = spliceEmission(category);
-    if (emission === null) {
-      continue;
-    }
-    collect(`${category}.`, (suffix) => `${emission.memberKey}.${suffix}`);
-    queue.push(...emission.spliceCategories);
-  }
-  return paths;
+  splices: readonly (readonly [string, AliasSpliceEmission])[]
+): PathRoot[] {
+  return [
+    { prefix: `${typeName}.`, replacement: "" },
+    ...(registry === typeName ? [] : [{ prefix: `${registry}.`, replacement: "" }]),
+    ...splices.map(([category, emission]) => ({
+      prefix: `${category}.`,
+      replacement: `${emission.memberKey}.`,
+    })),
+  ];
 }
 
 /**
@@ -306,8 +303,20 @@ export interface RegistryMeasurement {
   readonly spliceMembers: readonly SpliceMember[];
   /** Every lowered field: own, spliced, and nested with the registry prefix stripped. */
   readonly emitted: readonly EmittedField[];
-  /** Keys the interface admits without enumerating them (spliced modifier names). */
+  /**
+   * Alias categories spliced unkeyed at the top level, each to the corpus
+   * keys it admits by name rather than through emitted fields: every scoped
+   * modifier name for `modifier`, nothing for a category whose members are
+   * emitted fields.
+   */
+  readonly splices: ReadonlyMap<string, ReadonlySet<string>>;
+  /** Every key of every {@link RegistryMeasurement.splices} entry, for the conformance gate. */
   readonly splicedKeys: ReadonlySet<string>;
+  /**
+   * Every declined, unsupported, and collapsed row of the registry's own
+   * emission and of every splice it reaches, rerooted onto corpus spelling.
+   */
+  readonly omissions: readonly FieldOmissionRow[];
   /** Corpus paths `CONTENT_DECLINED_FIELDS` keeps out of the authoring surface. */
   readonly declinedPaths: ReadonlySet<string>;
 }
@@ -328,14 +337,27 @@ export const MEASUREMENTS: readonly RegistryMeasurement[] = CONTENT_MANIFEST.map
   // matching the dotted paths CONTENT_DECLINED_FIELDS/CONTENT_FIELD_OVERRIDES use)
   // — strip that prefix so they line up with the corpus's own unprefixed dotted
   // paths (`stages.icon`).
+  const inlineSplices = emission?.inlineSplices ?? [];
+  const splices = spliceEmissionsOf(inlineSplices);
   const emitted = [
     ...(emission?.emittedFields ?? []),
-    ...spliceFieldsOf(emission?.inlineSplices ?? []),
+    ...splices.flatMap(([, splice]) => splice.emittedFields),
     ...(emission?.nestedEmittedFields ?? []).map((field) => ({
       ...field,
       field: field.field.slice(registry.length + 1),
     })),
   ];
+  const roots = pathRootsOf(entry.type, registry, splices);
+  const omissions = [
+    ...(emission?.omissions ?? []),
+    ...splices.flatMap(([, splice]) => splice.omissions),
+  ].map((row) => ({ ...row, path: rerootPath(row.path, roots) }));
+  const admittedByName = new Map(
+    inlineSplices.map((category): [string, ReadonlySet<string>] => [
+      category,
+      category === "modifier" ? SCOPED_MODIFIER_NAMES : new Set(),
+    ])
+  );
   return {
     registry,
     registryPath,
@@ -353,10 +375,12 @@ export const MEASUREMENTS: readonly RegistryMeasurement[] = CONTENT_MANIFEST.map
       spliceEmission(category)
     ),
     emitted,
-    splicedKeys: (emission?.inlineSplices ?? []).includes("modifier")
-      ? MODIFIER_NAMES
-      : new Set<string>(),
-    declinedPaths: declinedPathsOf(entry.type, registry, emission?.inlineSplices ?? []),
+    splices: admittedByName,
+    splicedKeys: new Set([...admittedByName.values()].flatMap((keys) => [...keys])),
+    omissions,
+    declinedPaths: new Set(
+      omissions.filter((row) => row.kind === "declined").map((row) => row.path)
+    ),
   };
 });
 
@@ -400,13 +424,29 @@ export interface CorpusMeta {
   readonly gameVersion: string;
   /** ISO date of the extraction. Volatile: excluded from drift comparison. */
   readonly extractedAt: string;
-  /** sha256 over the sorted per-registry fingerprints. */
+  /** sha256 over the per-registry fingerprints and the script usage fingerprint. */
   readonly fingerprint: string;
+}
+
+/** The committed `script-usage.json`: {@link ScriptUsage} filtered to the vocabulary. */
+export interface ScriptUsageFixture {
+  readonly roots: readonly string[];
+  readonly files: number;
+  readonly failedFiles: readonly string[];
+  readonly fingerprint: string;
+  /** The vocabulary the counts were filtered to, so a stale filter is detectable. */
+  readonly vocabulary: {
+    readonly size: number;
+    readonly fingerprint: string;
+  };
+  /** Per root, vocabulary key to occurrence count, keys sorted; zero counts absent. */
+  readonly counts: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
 export interface ExtractedCorpus {
   readonly meta: CorpusMeta;
   readonly registries: readonly RegistryFixture[];
+  readonly scriptUsage: ScriptUsageFixture;
 }
 
 /**
@@ -462,6 +502,30 @@ function serializeCorpus(
     fingerprint,
     fields,
     ...(scalarTuples.length === 0 ? {} : { scalarTuples }),
+  };
+}
+
+/** Filters the counts to `vocabulary` and sorts every key, for a byte-stable fixture. */
+export function serializeScriptUsage(
+  usage: ScriptUsage,
+  vocabulary: ScriptVocabulary
+): ScriptUsageFixture {
+  const counts: Record<string, Record<string, number>> = {};
+  for (const root of usage.roots) {
+    const rootCounts = usage.counts.get(root) ?? new Map<string, number>();
+    counts[root] = Object.fromEntries(
+      sorted(rootCounts.keys())
+        .filter((key) => vocabulary.keys.has(key))
+        .map((key) => [key, rootCounts.get(key)!])
+    );
+  }
+  return {
+    roots: usage.roots,
+    files: usage.files,
+    failedFiles: usage.failedFiles,
+    fingerprint: usage.fingerprint,
+    vocabulary: { size: vocabulary.keys.size, fingerprint: vocabulary.fingerprint },
+    counts,
   };
 }
 
@@ -670,15 +734,23 @@ export function extractCorpus(installPath: string): ExtractedCorpus {
       scalarTuples(installPath, measurement, variables)
     )
   );
+  const scriptUsage = serializeScriptUsage(
+    readScriptUsage(installPath, SCRIPT_USAGE_ROOTS),
+    SCRIPT_VOCABULARY
+  );
   return {
     meta: {
       gameVersion,
       extractedAt: new Date().toISOString(),
       fingerprint: sha256(
-        registries.map((registry) => `${registry.registry}:${registry.fingerprint}`).join("\n")
+        [
+          ...registries.map((registry) => `${registry.registry}:${registry.fingerprint}`),
+          `script-usage:${scriptUsage.fingerprint}`,
+        ].join("\n")
       ),
     },
     registries,
+    scriptUsage,
   };
 }
 
@@ -686,7 +758,7 @@ export function extractCorpus(installPath: string): ExtractedCorpus {
 export function writeFixtures(dir: string, extracted: ExtractedCorpus): void {
   mkdirSync(dir, { recursive: true });
   const expected = new Set([
-    META_FILE,
+    ...RESERVED_FIXTURE_FILES,
     ...extracted.registries.map((registry) => `${registry.registry}.json`),
   ]);
   for (const name of readdirSync(dir)) {
@@ -701,6 +773,11 @@ export function writeFixtures(dir: string, extracted: ExtractedCorpus): void {
       "utf8"
     );
   }
+  writeFileSync(
+    path.join(dir, SCRIPT_USAGE_FILE),
+    `${JSON.stringify(extracted.scriptUsage, null, 2)}\n`,
+    "utf8"
+  );
   writeFileSync(path.join(dir, META_FILE), `${JSON.stringify(extracted.meta, null, 2)}\n`, "utf8");
 }
 
@@ -717,6 +794,11 @@ function readJson<T>(file: string): T | null {
 /** The committed fixture's metadata, or `null` before a fixture exists. */
 export function loadMeta(dir: string = FIXTURE_DIR): CorpusMeta | null {
   return readJson<CorpusMeta>(path.join(dir, META_FILE));
+}
+
+/** The committed script usage counts, or `null` when never extracted. */
+export function loadScriptUsage(dir: string = FIXTURE_DIR): ScriptUsageFixture | null {
+  return readJson<ScriptUsageFixture>(path.join(dir, SCRIPT_USAGE_FILE));
 }
 
 /** One registry's committed observations, or `null` when never extracted. */
@@ -736,9 +818,54 @@ export function fixtureStems(dir: string = FIXTURE_DIR): string[] {
     return [];
   }
   return names
-    .filter((name) => name.endsWith(".json") && name !== META_FILE)
+    .filter((name) => name.endsWith(".json") && !RESERVED_FIXTURE_FILES.has(name))
     .map((name) => name.slice(0, -".json".length))
     .sort(compareUtf8);
+}
+
+/**
+ * One registry measured against its fixture: the conformance report plus the
+ * split of its unexpressed fields into the declined and the unauthorable.
+ */
+export interface RegistryReport extends ConformanceReport {
+  readonly measurement: RegistryMeasurement;
+  readonly fixture: RegistryFixture;
+  /** Unexpressed fields `CONTENT_DECLINED_FIELDS` keeps out on purpose. */
+  readonly declined: readonly UnexpressedField[];
+  /** Unexpressed fields nothing can author: the presence floor's input. */
+  readonly unauthorable: readonly UnexpressedField[];
+}
+
+/** Measures one registry's emission against one fixture. */
+export function registryReport(
+  measurement: RegistryMeasurement,
+  fixture: RegistryFixture
+): RegistryReport {
+  const report = conformance(
+    measurement.registry,
+    corpusOfFixture(fixture),
+    measurement.emitted.map((field) => field.field),
+    measurement.splicedKeys
+  );
+  return {
+    measurement,
+    fixture,
+    ...report,
+    declined: report.unexpressed.filter((entry) => measurement.declinedPaths.has(entry.field)),
+    unauthorable: report.unexpressed.filter((entry) => !measurement.declinedPaths.has(entry.field)),
+  };
+}
+
+/**
+ * Every manifested registry with a committed fixture in `dir`, in manifest
+ * order. A registry with no fixture is absent; the conformance gate reports
+ * those by name.
+ */
+export function committedRegistryReports(dir: string = FIXTURE_DIR): RegistryReport[] {
+  return MEASUREMENTS.flatMap((measurement) => {
+    const fixture = loadRegistryFixture(measurement.registry, dir);
+    return fixture === null ? [] : [registryReport(measurement, fixture)];
+  });
 }
 
 export type CanaryVerdict =
