@@ -100,6 +100,21 @@ function printReport(extracted: ExtractedCorpus): string[] {
   );
   reportSection("files the parser rejected", usage.failedFiles);
 
+  const unexposed = Object.entries(extracted.unexposedTypes.types);
+  const unexposedDefinitions = unexposed.reduce((total, [, type]) => total + type.definitions, 0);
+  const folders = Object.entries(extracted.unexposedTypes.folders);
+  const folderDefinitions = folders.reduce((total, [, folder]) => total + folder.definitions, 0);
+  console.log(
+    `\nunexposed types: ${unexposed.length} CWT types without a manifest row, ` +
+      `${unexposedDefinitions} definitions | ${folders.length} common/ folders without a CWT ` +
+      `type, ${folderDefinitions} definitions | fingerprint ` +
+      extracted.unexposedTypes.fingerprint.slice(0, 12)
+  );
+  reportSection(
+    "unexposed types whose directory the install does not have",
+    unexposed.filter(([, type]) => type.fingerprint === "missing").map(([name]) => name)
+  );
+
   const empty = reports.filter(({ fixture }) => fixture.definitions === 0);
   reportSection(
     "ANOMALY: zero definitions — the registry path or keyword is wrong; fix the extractor " +
@@ -113,7 +128,7 @@ const install = locateInstall();
 const extracted = extractCorpus(install);
 writeFixtures(FIXTURE_DIR, extracted);
 const empty = printReport(extracted);
-console.log(`\nwrote ${extracted.registries.length + 2} files to ${FIXTURE_PATH}`);
+console.log(`\nwrote ${extracted.registries.length + 3} files to ${FIXTURE_PATH}`);
 if (empty.length > 0) {
   process.exitCode = 1;
 }

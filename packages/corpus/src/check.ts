@@ -26,11 +26,14 @@ import {
   loadMeta,
   loadRegistryFixture,
   loadScriptUsage,
+  loadUnexposedTypes,
   SCRIPT_USAGE_FILE,
+  UNEXPOSED_TYPES_FILE,
   writeFixtures,
   type RegistryFixture,
   type ScriptUsageFixture,
   type SerializedObservation,
+  type UnexposedTypesFixture,
 } from "./fixture.ts";
 
 /** `a b c +N`: the first `limit` items and how many more there are. */
@@ -135,6 +138,45 @@ export function scriptUsageDrift(
   return lines;
 }
 
+/** Differences between the committed and fresh unexposed-type fixtures. */
+export function unexposedTypesDrift(
+  committed: UnexposedTypesFixture | null,
+  fresh: UnexposedTypesFixture
+): string[] {
+  if (committed === null) {
+    return [`no committed ${UNEXPOSED_TYPES_FILE} — run npm run corpus:extract first`];
+  }
+  const lines: string[] = [];
+  const before = new Map(Object.entries(committed.types));
+  const after = new Map(Object.entries(fresh.types));
+  const added = [...after.keys()].filter((name) => !before.has(name));
+  const removed = [...before.keys()].filter((name) => !after.has(name));
+  if (added.length > 0) {
+    lines.push(`types added: ${compactList(added)}`);
+  }
+  if (removed.length > 0) {
+    lines.push(`types removed: ${compactList(removed)}`);
+  }
+  const changed = [...before.keys()].filter(
+    (name) =>
+      after.has(name) && JSON.stringify(before.get(name)) !== JSON.stringify(after.get(name))
+  );
+  if (changed.length > 0) {
+    lines.push(`types changed: ${compactList(changed)}`);
+  }
+  if (JSON.stringify(committed.folders) !== JSON.stringify(fresh.folders)) {
+    const folders = new Set([...Object.keys(committed.folders), ...Object.keys(fresh.folders)]);
+    const moved = [...folders]
+      .filter(
+        (folder) =>
+          JSON.stringify(committed.folders[folder]) !== JSON.stringify(fresh.folders[folder])
+      )
+      .sort(compareUtf8);
+    lines.push(`folders without a type changed: ${compactList(moved)}`);
+  }
+  return lines;
+}
+
 const install = locateInstall();
 const fresh = extractCorpus(install);
 
@@ -170,6 +212,9 @@ if (committedMeta === null) {
   for (const line of scriptUsageDrift(loadScriptUsage(), fresh.scriptUsage)) {
     drift.push(`script usage: ${line}`);
   }
+  for (const line of unexposedTypesDrift(loadUnexposedTypes(), fresh.unexposedTypes)) {
+    drift.push(`unexposed types: ${line}`);
+  }
 }
 
 if (drift.length === 0) {
@@ -177,7 +222,8 @@ if (drift.length === 0) {
   console.log(
     `corpus fixture is current: Stellaris ${fresh.meta.gameVersion}, ` +
       `${fresh.registries.length} registries, ${definitions} definitions, ` +
-      `script usage over ${fresh.scriptUsage.files} files`
+      `script usage over ${fresh.scriptUsage.files} files, ` +
+      `${Object.keys(fresh.unexposedTypes.types).length} unexposed types`
   );
   rmSync(tempDir, { recursive: true });
 } else {

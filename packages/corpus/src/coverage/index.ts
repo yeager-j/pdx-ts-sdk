@@ -1,7 +1,7 @@
 /** The pure syntax-coverage model: sites, surfaces, summary, and formatting. */
 
 export { sitesOfEventFields, type EventFieldPolicyTables } from "./event-fields.ts";
-export { formatCoverageReport, type CoverageProvenance } from "./format.ts";
+export { formatCoverageReport, type CoverageProvenance, type FolderWithoutType } from "./format.ts";
 export {
   COVERAGE_CLASSES,
   EXPRESSIBLE_CLASSES,
@@ -36,4 +36,13 @@ export {
   type CoverageReport,
   type CoverageSummary,
   type SurfaceCoverage,
+  type SurfaceGroup,
 } from "./summary.ts";
+export {
+  declaredTopLevelFields,
+  sitesOfUnexposedType,
+  TYPES_COUNTED_ELSEWHERE,
+  UNEXPOSED_TYPE_DISPOSITIONS,
+  type UnexposedTypeDisposition,
+  type UnexposedTypeInput,
+} from "./unexposed.ts";

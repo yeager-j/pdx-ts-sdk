@@ -29,7 +29,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -66,18 +66,21 @@ import {
   type RuleScopeDecision,
 } from "@pdx-ts/codegen-cwt/reconcile/scope-authority";
 import { SPECIAL_SCOPE_PATHS } from "@pdx-ts/codegen-cwt/special-scope-paths";
-import { parse, scalarText, type PdxValue } from "@pdx-ts/pdxscript";
+import { parse, PdxSyntaxError, scalarText, type PdxItem, type PdxValue } from "@pdx-ts/pdxscript";
 import { InstallNotFoundError } from "@pdx-ts/sdk";
 import { locateInstall, readGameVersion } from "@pdx-ts/sdk/installation";
 import { compareUtf8 } from "@pdx-ts/sdk/internals";
 
 import { rerootPath, type PathRoot } from "./coverage/registries.ts";
 import {
+  DECLARED_TYPES,
   MODIFIER_JOIN,
   RULES,
   SCOPE_INDEX,
   SCRIPT_VOCABULARY,
   SOURCES,
+  UNEXPOSED_TYPES,
+  type DeclaredType,
 } from "./generator-sources.ts";
 import { readScriptUsage, type ScriptUsage, type ScriptVocabulary } from "./script-usage.ts";
 
@@ -97,8 +100,14 @@ export const META_FILE = "meta.json";
 export const SCRIPT_USAGE_FILE = "script-usage.json";
 /** The install directories the script usage fixture counts, in fixture order. */
 export const SCRIPT_USAGE_ROOTS: readonly string[] = ["common", "events"];
+/** The fixture of CWT types the manifest does not expose, see `extractUnexposedTypes`. */
+export const UNEXPOSED_TYPES_FILE = "unexposed-types.json";
 /** Fixture files that are not a registry's observations. */
-export const RESERVED_FIXTURE_FILES: ReadonlySet<string> = new Set([META_FILE, SCRIPT_USAGE_FILE]);
+export const RESERVED_FIXTURE_FILES: ReadonlySet<string> = new Set([
+  META_FILE,
+  SCRIPT_USAGE_FILE,
+  UNEXPOSED_TYPES_FILE,
+]);
 
 /**
  * The presence floor: once the vanilla fixture observes a field in at least
@@ -443,10 +452,41 @@ export interface ScriptUsageFixture {
   readonly counts: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
+/** One unexposed CWT type's shipped definitions: top-level field counts only. */
+export interface UnexposedTypeFixture {
+  /** The type's path relative to the game root. */
+  readonly path: string;
+  /** Shipped definitions; 0 when the install has no such directory. */
+  readonly definitions: number;
+  readonly files: number;
+  /** As a registry's; `missing` when the install has no such directory. */
+  readonly fingerprint: string;
+  /** Top-level field to the number of definitions writing it, keys sorted. */
+  readonly fields: Readonly<Record<string, number>>;
+}
+
+/** One install folder no CWT type claims. */
+export interface FolderFixture {
+  /** Top-level block definitions in the folder's own files. */
+  readonly definitions: number;
+  readonly files: number;
+}
+
+/** The committed `unexposed-types.json`: counts only, the same licensing boundary. */
+export interface UnexposedTypesFixture {
+  /** Keyed by CWT type name, sorted. */
+  readonly types: Readonly<Record<string, UnexposedTypeFixture>>;
+  /** Every `common/` folder no CWT type claims that holds files, keyed by path, sorted. */
+  readonly folders: Readonly<Record<string, FolderFixture>>;
+  /** sha256 over every type fingerprint and folder count. */
+  readonly fingerprint: string;
+}
+
 export interface ExtractedCorpus {
   readonly meta: CorpusMeta;
   readonly registries: readonly RegistryFixture[];
   readonly scriptUsage: ScriptUsageFixture;
+  readonly unexposedTypes: UnexposedTypesFixture;
 }
 
 /**
@@ -673,8 +713,15 @@ function sha256(text: string): string {
  * move, and those had no fingerprint worth the name before, since the walk did
  * not reach the nested files at all.
  */
-function fingerprintRegistryDir(dir: string, extension: string, pathStrict: boolean): string {
-  const files = walkRegistryFiles(dir, extension, !pathStrict);
+function fingerprintRegistryDir(
+  dir: string,
+  extension: string,
+  pathStrict: boolean,
+  fileName?: string
+): string {
+  const files = walkRegistryFiles(dir, extension, !pathStrict).filter(
+    (file) => fileName === undefined || path.basename(file) === fileName
+  );
   if (files.length === 0) {
     return "missing";
   }
@@ -687,6 +734,132 @@ function fingerprintRegistryDir(dir: string, extension: string, pathStrict: bool
     )
     .sort(compareUtf8);
   return sha256(lines.join("\n"));
+}
+
+/** Top-level field counts of one unexposed type: no descents, no splices, no values. */
+function readUnexposedType(installPath: string, declared: DeclaredType): UnexposedTypeFixture {
+  const type = declared.type;
+  const keyFilter = type.keyFilter;
+  const layout = {
+    extension: type.pathExtension ?? ".txt",
+    pathStrict: type.pathStrict ?? false,
+    skipRootKeys: type.skipRootKeys ?? [],
+    ...(type.pathFile === null || type.pathFile === undefined ? {} : { fileName: type.pathFile }),
+  };
+  const corpus = readRegistryCorpus(installPath, {
+    registry: type.name,
+    registryPath: declared.path,
+    keyword: keyFilter !== null && !keyFilter.negated ? keyFilter.key : null,
+    nameField: type.nameField,
+    isTriggerKey: () => false,
+    descents: [],
+    spliceMembers: [],
+    excludedKey: keyFilter !== null && keyFilter.negated ? keyFilter.key : null,
+    layout,
+  });
+  const fields: Record<string, number> = {};
+  for (const key of sorted(corpus.occurrences.keys())) {
+    fields[key] = corpus.occurrences.get(key)!.definitions;
+  }
+  return {
+    path: declared.path,
+    definitions: corpus.definitions,
+    files: corpus.files,
+    fingerprint: fingerprintRegistryDir(
+      path.join(installPath, declared.path),
+      layout.extension,
+      layout.pathStrict,
+      layout.fileName
+    ),
+    fields,
+  };
+}
+
+/** Every directory under `root`, recursively, relative and `/`-separated, sorted. */
+function directoriesUnder(root: string, relative = ""): string[] {
+  const directory = path.join(root, relative);
+  let names: string[];
+  try {
+    names = readdirSync(directory).sort(compareUtf8);
+  } catch {
+    return [];
+  }
+  return names.flatMap((name) => {
+    if (!statSync(path.join(directory, name)).isDirectory()) {
+      return [];
+    }
+    const child = relative === "" ? name : `${relative}/${name}`;
+    return [child, ...directoriesUnder(root, child)];
+  });
+}
+
+/** Top-level block definitions in one directory's own `.txt` files; a file the parser rejects counts no definitions. */
+function folderDefinitions(directory: string): FolderFixture {
+  const files = readdirSync(directory)
+    .filter((name) => name.endsWith(".txt") && statSync(path.join(directory, name)).isFile())
+    .sort(compareUtf8);
+  let definitions = 0;
+  for (const name of files) {
+    let items: readonly PdxItem[];
+    try {
+      items = parse(readFileSync(path.join(directory, name), "utf8")).items;
+    } catch (error) {
+      if (error instanceof PdxSyntaxError) {
+        continue;
+      }
+      throw error;
+    }
+    definitions += items.filter(
+      (item) => item.kind === "entry" && item.value.kind === "container"
+    ).length;
+  }
+  return { definitions, files: files.length };
+}
+
+/**
+ * Every `common/` folder that holds files and that no CWT type with a path
+ * claims. A type claims its own directory and, unless `path_strict`, every
+ * directory under it; a `path_file` type claims one file, never a directory.
+ */
+function foldersWithoutType(installPath: string): Record<string, FolderFixture> {
+  const claims = DECLARED_TYPES.filter(
+    (declared) => declared.type.pathFile === null || declared.type.pathFile === undefined
+  ).map((declared) => ({ path: declared.path, strict: declared.type.pathStrict ?? false }));
+  const claimed = (directory: string): boolean =>
+    claims.some(
+      (claim) =>
+        directory === claim.path || (!claim.strict && directory.startsWith(`${claim.path}/`))
+    );
+  const folders: Record<string, FolderFixture> = {};
+  for (const relative of directoriesUnder(path.join(installPath, "common"))) {
+    const directory = `common/${relative}`;
+    if (claimed(directory)) {
+      continue;
+    }
+    const counts = folderDefinitions(path.join(installPath, directory));
+    if (counts.files > 0) {
+      folders[directory] = counts;
+    }
+  }
+  return folders;
+}
+
+/** Reads every unexposed CWT type and every unclaimed `common/` folder out of an install. */
+export function extractUnexposedTypes(installPath: string): UnexposedTypesFixture {
+  const types: Record<string, UnexposedTypeFixture> = {};
+  for (const declared of [...UNEXPOSED_TYPES].sort((a, b) =>
+    compareUtf8(a.type.name, b.type.name)
+  )) {
+    types[declared.type.name] = readUnexposedType(installPath, declared);
+  }
+  const folders = foldersWithoutType(installPath);
+  const lines = [
+    ...Object.entries(types).map(([name, type]) => `${name}:${type.fingerprint}`),
+    ...Object.entries(folders).map(
+      ([folder, counts]) => `folder ${folder}:${counts.definitions}/${counts.files}`
+    ),
+  ];
+  return { types, folders, fingerprint: sha256(lines.join("\n")) };
 }
 
 /**
@@ -738,6 +911,7 @@ export function extractCorpus(installPath: string): ExtractedCorpus {
     readScriptUsage(installPath, SCRIPT_USAGE_ROOTS),
     SCRIPT_VOCABULARY
   );
+  const unexposedTypes = extractUnexposedTypes(installPath);
   return {
     meta: {
       gameVersion,
@@ -746,11 +920,13 @@ export function extractCorpus(installPath: string): ExtractedCorpus {
         [
           ...registries.map((registry) => `${registry.registry}:${registry.fingerprint}`),
           `script-usage:${scriptUsage.fingerprint}`,
+          `unexposed-types:${unexposedTypes.fingerprint}`,
         ].join("\n")
       ),
     },
     registries,
     scriptUsage,
+    unexposedTypes,
   };
 }
 
@@ -778,6 +954,11 @@ export function writeFixtures(dir: string, extracted: ExtractedCorpus): void {
     `${JSON.stringify(extracted.scriptUsage, null, 2)}\n`,
     "utf8"
   );
+  writeFileSync(
+    path.join(dir, UNEXPOSED_TYPES_FILE),
+    `${JSON.stringify(extracted.unexposedTypes, null, 2)}\n`,
+    "utf8"
+  );
   writeFileSync(path.join(dir, META_FILE), `${JSON.stringify(extracted.meta, null, 2)}\n`, "utf8");
 }
 
@@ -799,6 +980,11 @@ export function loadMeta(dir: string = FIXTURE_DIR): CorpusMeta | null {
 /** The committed script usage counts, or `null` when never extracted. */
 export function loadScriptUsage(dir: string = FIXTURE_DIR): ScriptUsageFixture | null {
   return readJson<ScriptUsageFixture>(path.join(dir, SCRIPT_USAGE_FILE));
+}
+
+/** The committed unexposed-type counts, or `null` when never extracted. */
+export function loadUnexposedTypes(dir: string = FIXTURE_DIR): UnexposedTypesFixture | null {
+  return readJson<UnexposedTypesFixture>(path.join(dir, UNEXPOSED_TYPES_FILE));
 }
 
 /** One registry's committed observations, or `null` when never extracted. */

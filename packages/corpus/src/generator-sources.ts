@@ -8,10 +8,13 @@
  * an install.
  */
 
-import { scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { cwtFiles, loadRules as loadRulesFrom } from "@pdx-ts/codegen-cwt/cwt/load";
+import { scopeIndex, type ContentType } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { joinModifierScopes, type ModifierJoin } from "@pdx-ts/codegen-cwt/emit/script/modifiers";
 import { ScopeResolver } from "@pdx-ts/codegen-cwt/lower/scopes";
+import { EXTRA_ALIAS_CATEGORIES } from "@pdx-ts/codegen-cwt/overlay";
 import { createEventFieldPolicy } from "@pdx-ts/codegen-cwt/policy/event-fields";
+import { CONTENT_MANIFEST } from "@pdx-ts/codegen-cwt/policy/manifest";
 import {
   CWT_CONFIG_DIRECTORY,
   readGeneratorSources,
@@ -19,6 +22,7 @@ import {
   type GeneratorSources,
 } from "@pdx-ts/codegen-cwt/sources";
 
+import { declaredTopLevelFields, TYPES_COUNTED_ELSEWHERE } from "./coverage/unexposed.ts";
 import { scriptVocabulary, type ScriptVocabulary } from "./script-usage.ts";
 
 /** The parsed rules and documentation dumps. */
@@ -59,3 +63,50 @@ export const SCRIPT_VOCABULARY: ScriptVocabulary = scriptVocabulary({
     .filter((entry) => entry.synthetic !== true)
     .map((entry) => entry.scriptKey),
 });
+
+/**
+ * Every `.cwt` file under the config root, read as one rule set, for the
+ * content types and bodies the manifest does not pull in. The two descriptor
+ * files are left out: they declare `mod_descriptor` twice and no type with a
+ * path, so nothing here needs them. `RULES` stays what codegen loads.
+ */
+const DECLARED = loadRulesFrom(
+  CWT_CONFIG_DIRECTORY,
+  cwtFiles(CWT_CONFIG_DIRECTORY).filter((file) => !file.endsWith("descriptors.cwt")),
+  [...EXTRA_ALIAS_CATEGORIES.keys()]
+);
+
+/** One CWT type with a `path`, as the registry denominator counts it. */
+export interface DeclaredType {
+  readonly type: ContentType;
+  /** `path` relative to the game root: `game/` stripped. */
+  readonly path: string;
+  /** The type's declared top-level fields, from `declaredTopLevelFields`. */
+  readonly fields: readonly string[];
+}
+
+/** The path a CWT type declares, relative to the game root. */
+export function relativeTypePath(type: ContentType): string {
+  return (type.path ?? "").replace(/^game\//, "");
+}
+
+/** Every declared type with a path, in declaration order. */
+export const DECLARED_TYPES: readonly DeclaredType[] = [...DECLARED.contentTypes.values()]
+  .filter((type) => type.path !== null)
+  .map((type) => ({
+    type,
+    path: relativeTypePath(type),
+    fields: declaredTopLevelFields(DECLARED.bodies.get(type.name)),
+  }));
+
+const MANIFESTED_TYPES: ReadonlySet<string> = new Set(CONTENT_MANIFEST.map((entry) => entry.type));
+
+/**
+ * The declared types with a path that no manifest row exposes and no other
+ * surface counts, in declaration order. The registry surface counts these
+ * beside the manifested registries.
+ */
+export const UNEXPOSED_TYPES: readonly DeclaredType[] = DECLARED_TYPES.filter(
+  (declared) =>
+    !MANIFESTED_TYPES.has(declared.type.name) && !TYPES_COUNTED_ELSEWHERE.has(declared.type.name)
+);

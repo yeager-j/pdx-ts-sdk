@@ -5,15 +5,45 @@
  * visibly complete. No line carries a timestamp.
  */
 
+import { compareUtf8 } from "@pdx-ts/sdk/internals";
+
 import type { CoverageSite } from "./model.ts";
 import type { CoverageReport, CoverageSummary } from "./summary.ts";
 
-/** What the header line cites. */
+/** One install folder no CWT type claims, with what it holds. */
+export interface FolderWithoutType {
+  /** Relative to the game root, e.g. `common/inline_scripts`. */
+  readonly path: string;
+  /** Top-level block definitions in the folder's own files. */
+  readonly definitions: number;
+}
+
+/** What the header line cites, and what the caveat under the table reports. */
 export interface CoverageProvenance {
   /** The 40-character commit of the cwtools config fork. */
   readonly rulesCommit: string;
   /** The game version the corpus fixture was extracted from. */
   readonly gameVersion: string;
+  /**
+   * Install folders with definitions and no CWT type. They cannot be sites,
+   * so the report names them instead of counting them.
+   */
+  readonly foldersWithoutType: readonly FolderWithoutType[];
+}
+
+/** How many folders the caveat line names. */
+const CAVEAT_FOLDERS = 5;
+
+function foldersCaveat(folders: readonly FolderWithoutType[]): string {
+  const definitions = folders.reduce((total, folder) => total + folder.definitions, 0);
+  const top = [...folders]
+    .sort((a, b) => b.definitions - a.definitions || compareUtf8(a.path, b.path))
+    .slice(0, CAVEAT_FOLDERS)
+    .map((folder) => `${folder.path} (${folder.definitions})`);
+  return (
+    `folders without a CWT type: ${folders.length} (${definitions} definitions) — not counted` +
+    (top.length === 0 ? "" : `: ${top.join(", ")}`)
+  );
 }
 
 const LABEL_WIDTH = 32;
@@ -85,13 +115,16 @@ export function formatCoverageReport(
       COLUMNS.map(([title]) => title)
     ),
     ...report.surfaces.map((surface) => summaryRow(surface.summary)),
+    ...report.groups.map((group) => summaryRow(group.summary)),
     summaryRow(report.registries),
     summaryRow(report.overall),
     "(used weights are key occurrences for script surfaces and definitions for registries; " +
       "overall mixes them)",
+    foldersCaveat(provenance.foldersWithoutType),
     "",
   ];
-  for (const surface of report.surfaces) {
+  const remainders = [...report.surfaces, ...report.groups.flatMap((group) => group.surfaces)];
+  for (const surface of remainders) {
     lines.push(`Remainder — ${surface.summary.label} (${surface.remainder.length}):`);
     lines.push(...surface.remainder.map(remainderLine));
   }

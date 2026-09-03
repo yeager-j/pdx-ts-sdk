@@ -12,20 +12,35 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { cwtFiles, loadContentTypesFrom } from "@pdx-ts/codegen-cwt/cwt/load";
 import { createEffectPolicy } from "@pdx-ts/codegen-cwt/policy/effects";
+import { CONTENT_MANIFEST } from "@pdx-ts/codegen-cwt/policy/manifest";
+import { CWT_CONFIG_DIRECTORY } from "@pdx-ts/codegen-cwt/sources";
 import { describe, expect, it } from "vitest";
 
 import { buildCoverage, CoverageInputError } from "../src/coverage-inputs.ts";
-import type { CoverageClass, CoverageSite } from "../src/coverage/index.ts";
+import {
+  TYPES_COUNTED_ELSEWHERE,
+  UNEXPOSED_TYPE_DISPOSITIONS,
+  type CoverageClass,
+  type CoverageSite,
+} from "../src/coverage/index.ts";
 import {
   committedRegistryReports,
   FIXTURE_DIR,
   loadScriptUsage,
   MEASUREMENTS,
   SCRIPT_USAGE_FILE,
+  UNEXPOSED_TYPES_FILE,
 } from "../src/fixture.ts";
 import { ACKNOWLEDGED_GAPS } from "../src/gaps.ts";
-import { MODIFIER_NAMES, RULES, SCRIPT_VOCABULARY } from "../src/generator-sources.ts";
+import {
+  MODIFIER_NAMES,
+  relativeTypePath,
+  RULES,
+  SCRIPT_VOCABULARY,
+  UNEXPOSED_TYPES,
+} from "../src/generator-sources.ts";
 import { ACKNOWLEDGED_MISMATCHES } from "../src/observations.ts";
 
 const build = buildCoverage();
@@ -41,9 +56,12 @@ function fixtureCopy(): string {
   return dir;
 }
 
+/** Every surface, its own row or grouped. */
+const allSurfaces = [...report.surfaces, ...report.groups.flatMap((group) => group.surfaces)];
+
 /** The remainder of one surface, by label. */
 function remainderOf(label: string): readonly CoverageSite[] {
-  const surface = report.surfaces.find((one) => one.summary.label === label);
+  const surface = allSurfaces.find((one) => one.summary.label === label);
   if (surface === undefined) {
     throw new Error(`no surface labelled ${label}`);
   }
@@ -242,12 +260,80 @@ describe("the summary rows", () => {
     ]);
     const sitesOf = (rows: typeof report.surfaces): number =>
       rows.reduce((sum, surface) => sum + surface.summary.sites, 0);
-    const registries = report.surfaces.filter(
-      (surface) => !scriptLabels.has(surface.summary.label)
-    );
-    expect(registries).toHaveLength(registryReports.length);
-    expect(report.registries.sites).toBe(sitesOf(registries));
-    expect(report.overall.sites).toBe(sitesOf(report.surfaces));
+    const exposed = report.surfaces.filter((surface) => !scriptLabels.has(surface.summary.label));
+    const grouped = report.groups.flatMap((group) => group.surfaces);
+    expect(exposed).toHaveLength(registryReports.length);
+    expect(report.groups.map((group) => group.summary.label)).toEqual(["registries not exposed"]);
+    expect(grouped).toHaveLength(UNEXPOSED_TYPES.length);
+    expect(report.registries.sites).toBe(sitesOf(exposed) + sitesOf(grouped));
+    expect(report.overall.sites).toBe(sitesOf(report.surfaces) + sitesOf(grouped));
+  });
+});
+
+describe("the unexposed types", () => {
+  /** Every CWT type with a path, from every `.cwt` file, not only the manifest's sources. */
+  const declaredWithPath = [
+    ...loadContentTypesFrom(
+      CWT_CONFIG_DIRECTORY,
+      cwtFiles(CWT_CONFIG_DIRECTORY)
+    ).contentTypes.values(),
+  ].filter((type) => type.path !== null);
+
+  it("cover every declared type with a path, minus the manifest and the types counted elsewhere", () => {
+    // Manifest `type` names, not registry names: `sprite` is exposed as `spriteType`.
+    const manifested = new Set<string>(CONTENT_MANIFEST.map((entry) => entry.type));
+    const expected = declaredWithPath
+      .map((type) => type.name)
+      .filter((name) => !manifested.has(name) && !TYPES_COUNTED_ELSEWHERE.has(name));
+    const listed = report.groups.flatMap((group) => group.surfaces.map((s) => s.summary.label));
+    expect(sorted(listed)).toEqual(sorted(expected));
+    expect(expected.length).toBeGreaterThan(100);
+  });
+
+  it("count the types another surface counts exactly once", () => {
+    // `event` is the event fields surface; each swapped type names the
+    // manifested registry and the emitted field whose nested sites carry it.
+    for (const [type, where] of TYPES_COUNTED_ELSEWHERE) {
+      expect(declaredWithPath.map((one) => one.name)).toContain(type);
+      if (where === "event fields surface") {
+        expect(type).toBe("event");
+        continue;
+      }
+      const [registry, ...field] = where.split(".");
+      const measurement = MEASUREMENTS.find((one) => one.registry === registry);
+      expect(measurement, where).toBeDefined();
+      expect(
+        measurement?.emitted.map((one) => one.field),
+        where
+      ).toContain(field.join("."));
+    }
+  });
+
+  it("give every unexposed type at least one site, all gap, policy-owned, or declined", () => {
+    const offending = report.groups
+      .flatMap((group) => group.surfaces)
+      .flatMap((surface) => {
+        const counts = surface.summary.counts;
+        const other = counts.authorable + counts.partial + counts.removed;
+        return surface.summary.sites === 0 || other > 0 ? [surface.summary.label] : [];
+      });
+    expect(offending).toEqual([]);
+  });
+
+  it("name a declared CWT type path in every disposition row", () => {
+    const paths = new Set(declaredWithPath.map(relativeTypePath));
+    for (const folder of UNEXPOSED_TYPE_DISPOSITIONS.keys()) {
+      expect([...paths], folder).toContain(folder);
+    }
+    const labelsOf = (cls: "policy-owned" | "declined"): string[] =>
+      sorted(
+        report.groups
+          .flatMap((group) => group.surfaces)
+          .filter((surface) => surface.summary.counts[cls] > 0)
+          .map((surface) => surface.summary.label)
+      );
+    expect(labelsOf("policy-owned")).toEqual(["event_namespace", "on_action"]);
+    expect(labelsOf("declined")).toEqual(["scripted_effect", "scripted_trigger"]);
   });
 });
 
@@ -278,6 +364,21 @@ describe("the report", () => {
     writeFileSync(file, JSON.stringify(reversed), "utf8");
     expect(() => buildCoverage(dir)).toThrow(CoverageInputError);
     expect(() => buildCoverage(dir)).toThrow("counts roots events, common, not common, events");
+  });
+
+  it("refuses an unexposed-type fixture that records a different set of types", () => {
+    const dir = fixtureCopy();
+    const file = path.join(dir, UNEXPOSED_TYPES_FILE);
+    const fixture = JSON.parse(readFileSync(file, "utf8")) as { types: Record<string, unknown> };
+    const [first] = Object.keys(fixture.types);
+    delete fixture.types[first!];
+    writeFileSync(file, JSON.stringify(fixture), "utf8");
+    expect(() => buildCoverage(dir)).toThrow(CoverageInputError);
+    expect(() => buildCoverage(dir)).toThrow(`(+${first})`);
+    rmSync(file);
+    expect(() => buildCoverage(dir)).toThrow(
+      `no committed packages/corpus/fixtures/${UNEXPOSED_TYPES_FILE}`
+    );
   });
 
   it("never reads an install", () => {

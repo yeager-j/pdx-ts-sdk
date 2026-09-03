@@ -12,6 +12,7 @@ import { emitEvents } from "@pdx-ts/codegen-cwt/emit/script/events";
 import { emitScriptRules } from "@pdx-ts/codegen-cwt/emit/script/script-rules";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/typescript";
 import { createEffectPolicy } from "@pdx-ts/codegen-cwt/policy/effects";
+import { VANILLA_REF_EXTRAS } from "@pdx-ts/codegen-cwt/policy/manifest";
 import type { ScriptGapReport } from "@pdx-ts/codegen-cwt/policy/script-gaps";
 import { readCwtCommit } from "@pdx-ts/codegen-cwt/provenance";
 import { loadBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
@@ -27,9 +28,11 @@ import {
   sitesOfRegistry,
   sitesOfScopeLinks,
   sitesOfTriggers,
+  sitesOfUnexposedType,
   summarizeCoverage,
   type CoverageReport,
   type CoverageSurface,
+  type FolderWithoutType,
   type RegistryCoverageInput,
   type UsageOf,
 } from "./coverage/index.ts";
@@ -40,12 +43,15 @@ import {
   loadMeta,
   loadRegistryFixture,
   loadScriptUsage,
+  loadUnexposedTypes,
   MEASUREMENTS,
   META_FILE,
   SCRIPT_USAGE_FILE,
   SCRIPT_USAGE_ROOTS,
+  UNEXPOSED_TYPES_FILE,
   type RegistryReport,
   type ScriptUsageFixture,
+  type UnexposedTypesFixture,
 } from "./fixture.ts";
 import { ACKNOWLEDGED_GAPS } from "./gaps.ts";
 import {
@@ -55,11 +61,21 @@ import {
   SCOPE_INDEX,
   SCRIPT_VOCABULARY,
   SOURCES,
+  UNEXPOSED_TYPES,
+  type DeclaredType,
 } from "./generator-sources.ts";
 import { ACKNOWLEDGED_MISMATCHES } from "./observations.ts";
 
 /** The usage root whose counts weigh event fields: `common/` writes `id` and `name` everywhere. */
 const EVENT_FILES_ROOT = "events";
+
+/** The table row every unexposed type folds into. */
+const UNEXPOSED_GROUP = "registries not exposed";
+
+/** Types `vanilla.*` can reference without a registry to author them. */
+const REFERENCEABLE_TYPES: ReadonlySet<string> = new Set(
+  VANILLA_REF_EXTRAS.map((entry) => entry.type)
+);
 
 /** A committed fixture is missing or stale. The remedy is always `npm run corpus:extract`. */
 export class CoverageInputError extends Error {}
@@ -106,6 +122,60 @@ function assertRegistryFixtures(dir: string): void {
   }
 }
 
+/**
+ * The committed unexposed-type fixture, checked against the declared types.
+ *
+ * @throws {Error} When the fixture records a manifested type: the two are
+ *   contradictory, and neither the fixture nor the manifest can be right.
+ */
+function loadUnexposed(dir: string): UnexposedTypesFixture {
+  const fixture = loadUnexposedTypes(dir);
+  if (fixture === null) {
+    throw new CoverageInputError(
+      `no committed ${FIXTURE_PATH}/${UNEXPOSED_TYPES_FILE} — run npm run corpus:extract first`
+    );
+  }
+  const recorded = new Set(Object.keys(fixture.types));
+  const manifested = MEASUREMENTS.map((measurement) => measurement.registry).filter((registry) =>
+    recorded.has(registry)
+  );
+  if (manifested.length > 0) {
+    throw new Error(
+      `${UNEXPOSED_TYPES_FILE} records ${manifested.join(", ")}, which the manifest exposes`
+    );
+  }
+  const declared = new Set(UNEXPOSED_TYPES.map((one) => one.type.name));
+  const stale = [
+    ...[...declared].filter((name) => !recorded.has(name)).map((name) => `+${name}`),
+    ...[...recorded].filter((name) => !declared.has(name)).map((name) => `-${name}`),
+  ];
+  if (stale.length > 0) {
+    throw new CoverageInputError(
+      `${FIXTURE_PATH}/${UNEXPOSED_TYPES_FILE} does not record the declared types ` +
+        `(${stale.slice(0, 8).join(" ")}${stale.length > 8 ? ` +${stale.length - 8}` : ""}) — ` +
+        "run npm run corpus:extract"
+    );
+  }
+  return fixture;
+}
+
+function unexposedSurface(declared: DeclaredType, fixture: UnexposedTypesFixture): CoverageSurface {
+  const recorded = fixture.types[declared.type.name]!;
+  return {
+    id: `registry:${declared.type.name}`,
+    label: declared.type.name,
+    group: UNEXPOSED_GROUP,
+    sites: sitesOfUnexposedType({
+      type: declared.type.name,
+      path: declared.path,
+      fields: declared.fields,
+      referenceable: REFERENCEABLE_TYPES.has(declared.type.name),
+      definitions: recorded.definitions,
+      usage: new Map(Object.entries(recorded.fields)),
+    }),
+  };
+}
+
 function loadUsage(dir: string): ScriptUsageFixture {
   const usage = loadScriptUsage(dir);
   if (usage === null) {
@@ -133,7 +203,8 @@ function loadUsage(dir: string): ScriptUsageFixture {
  * Builds the report over the fixtures in `dir`.
  *
  * @throws {CoverageInputError} When a fixture is missing, was extracted
- *   against a different script vocabulary, or counts different roots.
+ *   against a different script vocabulary or set of declared types, or
+ *   counts different roots.
  * @throws {Error} When an emitter's accounting contradicts the rules or a
  *   ledger row matches nothing; see the `sitesOf*` builders.
  */
@@ -146,6 +217,7 @@ export function buildCoverage(dir: string = FIXTURE_DIR): CoverageBuild {
   }
   assertRegistryFixtures(dir);
   const usage = loadUsage(dir);
+  const unexposed = loadUnexposed(dir);
   const scriptUsage = usageFromRoots(usage, SCRIPT_USAGE_ROOTS);
   const eventUsage = usageFromRoots(usage, [EVENT_FILES_ROOT]);
   // A link with a declared prefix (a value link, a data-driven link) is only
@@ -222,13 +294,18 @@ export function buildCoverage(dir: string = FIXTURE_DIR): CoverageBuild {
       label: report.registry,
       sites: sitesOfRegistry(registryCoverageInput(report)),
     })),
+    ...UNEXPOSED_TYPES.map((declared) => unexposedSurface(declared, unexposed)),
   ];
+  const foldersWithoutType: FolderWithoutType[] = Object.entries(unexposed.folders).map(
+    ([folder, counts]) => ({ path: folder, definitions: counts.definitions })
+  );
   const report = summarizeCoverage(surfaces);
   return {
     report,
     lines: formatCoverageReport(report, {
       rulesCommit: readCwtCommit(CWT_REPOSITORY_DIRECTORY),
       gameVersion: meta.gameVersion,
+      foldersWithoutType,
     }),
     scriptGaps: scriptRules.scriptGaps,
   };

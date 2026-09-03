@@ -8,8 +8,10 @@ The package has five parts:
 
 - `fixtures/` — the committed fixtures: what every shipped definition of each
   manifested registry writes, recorded as observations per registry
-  (`<registry>.json`), and how often vanilla writes each declared script key
-  (`script-usage.json`).
+  (`<registry>.json`); how often vanilla writes each declared script key
+  (`script-usage.json`); and, for every CWT type the manifest does not
+  expose, how many definitions write each top-level field, plus the
+  `common/` folders no CWT type declares (`unexposed-types.json`).
 - `src/extract.ts` and `src/check.ts` — the install-gated commands that write
   the fixtures and detect drift from them.
 - `src/gaps.ts` and `src/observations.ts` — the ledgers. A gap row acknowledges
@@ -34,9 +36,10 @@ npm test                 # runs the conformance gate with every other test
 
 `corpus:extract` and `corpus:check` need an installed game and do not run in
 CI. Re-extract when the game patches, when the observation logic changes, or
-when the rules change the declared script vocabulary, then review the fixture
-diff and commit it with the change that produced it. `corpus:check` diffs
-`script-usage.json` with the registry fixtures. The conformance gate runs in
+when the rules change the declared script vocabulary or the set of declared
+types, then review the fixture diff and commit it with the change that
+produced it. `corpus:check` diffs `script-usage.json` and
+`unexposed-types.json` with the registry fixtures. The conformance gate runs in
 plain `npm test` because it reads the fixture, not an install.
 
 ## The coverage report
@@ -46,11 +49,15 @@ an install, and prints one table and one remainder list. It is not a gate: it
 changes nothing and fails only when a fixture is missing or stale.
 
 The table has one row per surface (triggers, effects, modifiers, scope links,
-event fields, and each registry), a `registries (all)` row, and an `overall`
-row. Each row gives the share of sites an author can write against two
-denominators: `declared` counts sites, `used` weights each site by how often
-vanilla writes it. The remainder lists every site an author cannot write, with
-its class, its reason or Linear issue, and its vanilla usage count. See the
+event fields, and each exposed registry), one `registries not exposed` row
+for every CWT type with a path that the manifest does not expose, a
+`registries (all)` row, and an `overall` row. Each row gives the share of
+sites an author can write against two denominators: `declared` counts sites,
+`used` weights each site by how often vanilla writes it. A caveat line names
+the `common/` folders no CWT type declares; their definitions are reported,
+not counted. The remainder lists every site an author cannot write, with its
+class, its reason or Linear issue, and its vanilla usage count; an unexposed
+type lists its declared top-level fields. See the
 [CWT Codegen glossary](../codegen-cwt/CONTEXT.md) for **Site**, **Syntax
 coverage**, and **Usage**.
 
@@ -66,4 +73,5 @@ field names, forms, counts, ids, and content hashes. It never carries script
 bodies and never carries localized text. The closest call is the capped sample
 of bare scalar tokens per field (`yes`, `large`, a referenced id), kept to
 check closed unions. `script-usage.json` carries counts of key text only,
-filtered to the names the rules declare.
+filtered to the names the rules declare, and `unexposed-types.json` carries
+definition counts per type, field, and folder.

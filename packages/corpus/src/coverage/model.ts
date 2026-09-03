@@ -71,6 +71,11 @@ export interface CoverageSurface {
   /** The name the report prints. */
   readonly label: string;
   readonly sites: readonly CoverageSite[];
+  /**
+   * The table row this surface is folded into instead of printing its own.
+   * Its remainder still prints under its own label.
+   */
+  readonly group?: string;
 }
 
 /** Looks up the vanilla occurrence count of one key. Returns zero for an unknown key. */

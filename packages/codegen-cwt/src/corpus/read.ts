@@ -441,6 +441,8 @@ export interface RegistryLayout {
   readonly pathStrict?: boolean;
   /** Root-key path leading to definitions. `any` matches every key at one level. */
   readonly skipRootKeys?: readonly string[];
+  /** The one file name that holds definitions. Set from the CWT `path_file` rule. */
+  readonly fileName?: string;
 }
 
 /** Returns items below the configured root-key path. */
@@ -589,7 +591,7 @@ export function readRegistryCorpus(root: string, registryRead: RegistryRead): Re
     registryDirectory,
     layout.extension ?? ".txt",
     layout.pathStrict !== true
-  );
+  ).filter((file) => layout.fileName === undefined || path.basename(file) === layout.fileName);
   if (files.length === 0) {
     return { definitions: 0, files: 0, occurrences: new Map() };
   }

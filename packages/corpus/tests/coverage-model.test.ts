@@ -17,6 +17,7 @@ import type { ScriptGapReport } from "@pdx-ts/codegen-cwt/policy/script-gaps";
 import { describe, expect, it } from "vitest";
 
 import {
+  declaredTopLevelFields,
   formatCoverageReport,
   HAND_WRITTEN_LINKS,
   rerootPath,
@@ -27,12 +28,21 @@ import {
   sitesOfRegistry,
   sitesOfScopeLinks,
   sitesOfTriggers,
+  sitesOfUnexposedType,
   summarizeCoverage,
   type CoverageClass,
   type CoverageSite,
   type CoverageSurface,
   type RegistryCoverageInput,
+  type UnexposedTypeInput,
 } from "../src/coverage/index.ts";
+
+/** Provenance for tests that check the layout, not the header. */
+const PROVENANCE = {
+  rulesCommit: "0123456789abcdef0123",
+  gameVersion: "4.4.6",
+  foldersWithoutType: [],
+};
 
 const NO_GAPS: ScriptGapReport = { policyOwned: [], abstractPlaceholders: [], trackedGaps: [] };
 
@@ -733,9 +743,7 @@ describe("formatCoverageReport", () => {
   ]);
 
   it("prints the table, the caveat, and every remainder with its heading", () => {
-    expect(
-      formatCoverageReport(report, { rulesCommit: "0123456789abcdef0123", gameVersion: "4.4.6" })
-    ).toEqual([
+    expect(formatCoverageReport(report, PROVENANCE)).toEqual([
       "syntax coverage: cwtools-stellaris-config @ 0123456789ab; vanilla 4.4.6 (corpus fixture)",
       "",
       "surface                          declared     used  sites authorable policy declined partial   gap removed",
@@ -744,6 +752,7 @@ describe("formatCoverageReport", () => {
       "registries (all)                    20.0%    12.1%      5          1      0        1       1     2       0",
       "overall                             42.9%    79.7%      8          2      1        1       1     2       1",
       "(used weights are key occurrences for script surfaces and definitions for registries; overall mixes them)",
+      "folders without a CWT type: 0 (0 definitions) — not counted",
       "",
       "Remainder — triggers (1):",
       "  removed has_pop_flag — has_pop_flag reason (used 0)",
@@ -759,10 +768,7 @@ describe("formatCoverageReport", () => {
     const empty = summarizeCoverage([
       { id: "triggers", label: "triggers", sites: [siteOf("gone", "removed", 4)] },
     ]);
-    const lines = formatCoverageReport(empty, {
-      rulesCommit: "0123456789abcdef",
-      gameVersion: "1",
-    });
+    const lines = formatCoverageReport(empty, PROVENANCE);
     expect(lines[3]).toBe(
       "triggers                              n/a      n/a      1          0      0        0       0     0       1"
     );
@@ -773,9 +779,207 @@ describe("formatCoverageReport", () => {
     const none = summarizeCoverage([
       { id: "effects", label: "effects", sites: [siteOf("ok", "authorable", 1, "effects")] },
     ]);
-    expect(
-      formatCoverageReport(none, { rulesCommit: "0123456789abcdef", gameVersion: "1" }).at(-1)
-    ).toBe("Remainder — effects (0):");
+    expect(formatCoverageReport(none, PROVENANCE).at(-1)).toBe("Remainder — effects (0):");
+  });
+});
+
+describe("sitesOfUnexposedType", () => {
+  const input: UnexposedTypeInput = {
+    type: "deposit",
+    path: "common/deposits",
+    fields: ["icon", "category", "alias_name[modifier]"],
+    referenceable: true,
+    definitions: 300,
+    usage: new Map([
+      ["icon", 290],
+      ["category", 12],
+      ["unknown_key", 7],
+    ]),
+  };
+
+  it("gives one gap site per declared field, weighted from the fixture", () => {
+    expect(sitesOfUnexposedType(input).map(row)).toEqual([
+      {
+        key: "alias_name[modifier]",
+        class: "gap",
+        reason:
+          "registry not exposed (no manifest row); referenceable through vanilla.* but not authorable",
+        used: 300,
+      },
+      {
+        key: "category",
+        class: "gap",
+        reason:
+          "registry not exposed (no manifest row); referenceable through vanilla.* but not authorable",
+        used: 12,
+      },
+      {
+        key: "icon",
+        class: "gap",
+        reason:
+          "registry not exposed (no manifest row); referenceable through vanilla.* but not authorable",
+        used: 290,
+      },
+    ]);
+  });
+
+  it("weighs a splice site by every definition of the type", () => {
+    const [site] = sitesOfUnexposedType({
+      ...input,
+      fields: ["alias_name[trigger]"],
+      definitions: 1618,
+      usage: new Map(),
+    });
+    expect(site?.key).toBe("alias_name[trigger]");
+    expect(site?.used).toBe(1618);
+  });
+
+  it("gives one site for a type with no declared fields, weighted by its definitions", () => {
+    const sites = sitesOfUnexposedType({ ...input, fields: [], referenceable: false });
+    expect(sites.map(row)).toEqual([
+      {
+        key: "deposit",
+        class: "gap",
+        reason:
+          "registry not exposed (no manifest row); the body declares no fields, so the type is the site",
+        used: 300,
+      },
+    ]);
+  });
+
+  it("owns a type whose folder the SDK writes through a channel", () => {
+    const sites = sitesOfUnexposedType({ ...input, type: "on_action", path: "common/on_actions" });
+    expect(sites.map((site) => site.class)).toEqual([
+      "policy-owned",
+      "policy-owned",
+      "policy-owned",
+    ]);
+    expect(sites[0]?.reason).toContain("mod.on");
+  });
+
+  it("declines a scripted-definition folder the SDK replaces with TypeScript", () => {
+    const sites = sitesOfUnexposedType({
+      ...input,
+      type: "scripted_trigger",
+      path: "common/scripted_triggers",
+    });
+    expect(sites.map((site) => site.class)).toEqual(["declined", "declined", "declined"]);
+    expect(sites[0]?.reason).toContain("a TypeScript function (or constant) replaces");
+  });
+
+  it("refuses a type another surface counts", () => {
+    expect(() => sitesOfUnexposedType({ ...input, type: "event" })).toThrow(
+      "event is counted by event fields surface; it is not an unexposed type"
+    );
+  });
+});
+
+describe("declaredTopLevelFields", () => {
+  it("collects named keys, subtype members, and alias splices, and skips computed keys", () => {
+    const named = (name: string) => ({
+      key: { kind: "name" as const, name },
+      type: { kind: "scalar" as const, text: "int" },
+      cardinality: { min: 0, max: 1 },
+      docs: [],
+      scope: null,
+    });
+    const body = {
+      fields: [
+        named("b"),
+        named("a"),
+        {
+          ...named("subtype"),
+          key: { kind: "subtype" as const, name: "x", negated: false },
+          type: { kind: "block" as const, fields: [named("c"), named("a")] },
+        },
+        { ...named("splice"), key: { kind: "aliasName" as const, category: "modifier" } },
+        {
+          ...named("computed"),
+          key: { kind: "computed" as const, type: { kind: "scalar" as const, text: "enum[x]" } },
+        },
+      ],
+      scope: null,
+      file: "x.cwt",
+    };
+    expect(declaredTopLevelFields(body as never)).toEqual(["a", "alias_name[modifier]", "b", "c"]);
+    expect(declaredTopLevelFields(undefined)).toEqual([]);
+  });
+});
+
+describe("grouped surfaces", () => {
+  const report = summarizeCoverage([
+    { id: "triggers", label: "triggers", sites: [siteOf("always", "authorable", 10)] },
+    {
+      id: "registry:building",
+      label: "building",
+      sites: [siteOf("cost", "authorable", 40, "registry:building")],
+    },
+    {
+      id: "registry:deposit",
+      label: "deposit",
+      group: "registries not exposed",
+      sites: [siteOf("icon", "gap", 290, "registry:deposit")],
+    },
+    {
+      id: "registry:army",
+      label: "army",
+      group: "registries not exposed",
+      sites: [siteOf("damage", "gap", 5, "registry:army")],
+    },
+  ]);
+
+  it("folds grouped surfaces into one row and keeps every remainder", () => {
+    expect(report.surfaces.map((surface) => surface.summary.label)).toEqual([
+      "triggers",
+      "building",
+    ]);
+    expect(report.groups.map((group) => group.summary)).toEqual([
+      {
+        label: "registries not exposed",
+        sites: 2,
+        counts: { authorable: 0, "policy-owned": 0, declined: 0, partial: 0, gap: 2, removed: 0 },
+        declared: 0,
+        used: 0,
+      },
+    ]);
+    expect(report.groups[0]?.surfaces.map((surface) => surface.summary.label)).toEqual([
+      "army",
+      "deposit",
+    ]);
+    expect(report.registries.sites).toBe(3);
+    expect(report.overall.sites).toBe(4);
+  });
+
+  it("prints the group row before the totals, the caveat, and every member's remainder", () => {
+    const lines = formatCoverageReport(report, {
+      ...PROVENANCE,
+      foldersWithoutType: [
+        { path: "common/inline_scripts", definitions: 2371 },
+        { path: "common/name_lists", definitions: 40 },
+        { path: "common/a", definitions: 3 },
+        { path: "common/b", definitions: 3 },
+        { path: "common/c", definitions: 2 },
+        { path: "common/d", definitions: 1 },
+      ],
+    });
+    expect(lines.slice(3, 11)).toEqual([
+      "triggers                           100.0%   100.0%      1          1      0        0       0     0       0",
+      "building                           100.0%   100.0%      1          1      0        0       0     0       0",
+      "registries not exposed               0.0%     0.0%      2          0      0        0       0     2       0",
+      "registries (all)                    33.3%    11.9%      3          1      0        0       0     2       0",
+      "overall                             50.0%    14.5%      4          2      0        0       0     2       0",
+      "(used weights are key occurrences for script surfaces and definitions for registries; overall mixes them)",
+      "folders without a CWT type: 6 (2420 definitions) — not counted: common/inline_scripts (2371), common/name_lists (40), common/a (3), common/b (3), common/c (2)",
+      "",
+    ]);
+    expect(lines.slice(11)).toEqual([
+      "Remainder — triggers (0):",
+      "Remainder — building (0):",
+      "Remainder — army (1):",
+      "  gap damage — untracked: damage reason (used 5)",
+      "Remainder — deposit (1):",
+      "  gap icon — untracked: icon reason (used 290)",
+    ]);
   });
 });
 
@@ -792,10 +996,7 @@ describe("determinism", () => {
       siteOf("x", "authorable", 3, "registry:r"),
     ];
     const render = (order: readonly CoverageSurface[]): string[] =>
-      formatCoverageReport(summarizeCoverage(order), {
-        rulesCommit: "0123456789abcdef",
-        gameVersion: "1",
-      });
+      formatCoverageReport(summarizeCoverage(order), PROVENANCE);
     const forward = render([
       { id: "triggers", label: "triggers", sites },
       { id: "registry:r", label: "r", sites: registry },

@@ -42,11 +42,21 @@ export interface SurfaceCoverage {
   readonly remainder: readonly CoverageSite[];
 }
 
+/** Surfaces folded into one table row, each keeping its own remainder. */
+export interface SurfaceGroup {
+  /** The folded row, labelled by the group name. */
+  readonly summary: CoverageSummary;
+  /** The members, by label. */
+  readonly surfaces: readonly SurfaceCoverage[];
+}
+
 /** The whole report, in print order. */
 export interface CoverageReport {
-  /** Script surfaces in fixed order, then registries by label. */
+  /** Script surfaces in fixed order, then ungrouped registries by label. */
   readonly surfaces: readonly SurfaceCoverage[];
-  /** Every registry surface as one row. */
+  /** Grouped registry surfaces, by group name; printed after {@link CoverageReport.surfaces}. */
+  readonly groups: readonly SurfaceGroup[];
+  /** Every registry surface as one row, grouped ones included. */
   readonly registries: CoverageSummary;
   /** Every surface as one row. */
   readonly overall: CoverageSummary;
@@ -119,19 +129,33 @@ export function summarizeCoverage(surfaces: readonly CoverageSurface[]): Coverag
   const registrySurfaces = surfaces
     .filter(isRegistry)
     .sort((a, b) => compareUtf8(a.label, b.label));
-  const ordered = [...scriptSurfaces, ...registrySurfaces];
+  const ownRow = [...scriptSurfaces, ...registrySurfaces.filter((s) => s.group === undefined)];
+  const coverageOf = (surface: CoverageSurface): SurfaceCoverage => ({
+    summary: summaryOf(surface.label, surface.sites),
+    remainder: remainderOf(surface.sites),
+  });
+  const groupNames = [
+    ...new Set(registrySurfaces.flatMap((s) => (s.group === undefined ? [] : [s.group]))),
+  ].sort(compareUtf8);
   return {
-    surfaces: ordered.map((surface) => ({
-      summary: summaryOf(surface.label, surface.sites),
-      remainder: remainderOf(surface.sites),
-    })),
+    surfaces: ownRow.map(coverageOf),
+    groups: groupNames.map((group) => {
+      const members = registrySurfaces.filter((s) => s.group === group);
+      return {
+        summary: summaryOf(
+          group,
+          members.flatMap((s) => s.sites)
+        ),
+        surfaces: members.map(coverageOf),
+      };
+    }),
     registries: summaryOf(
       "registries (all)",
       registrySurfaces.flatMap((surface) => surface.sites)
     ),
     overall: summaryOf(
       "overall",
-      ordered.flatMap((surface) => surface.sites)
+      [...scriptSurfaces, ...registrySurfaces].flatMap((surface) => surface.sites)
     ),
   };
 }

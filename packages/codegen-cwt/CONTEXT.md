@@ -136,14 +136,24 @@ One unit of syntax the rules declare, on one surface: a trigger key, an effect
 key, a modifier name, a scope link, an event or option field, or a registry
 field path. One site per key, however many arms the rule has. A site is
 covered only when every declared arm is expressible. Each site has one class:
-authorable, policy-owned, declined, partial, gap, or removed.
+authorable, policy-owned, declined, partial, gap, or removed. Registry sites
+include the top-level fields of every CWT type with a path, whether or not the
+manifest exposes it; nested fields of an unexposed type are not counted, and
+a type with no declared fields is one site. Definitions in a folder no CWT
+type declares are reported, not counted.
 
 **Syntax coverage**:
 The share of sites an author can write: authorable plus policy-owned, over
 every site that is not removed. Reported against two denominators. `declared`
 counts sites; `used` weights each site by its vanilla usage, so a site vanilla
-never writes weighs zero. Removed sites are listed but excluded from both.
-`npm run coverage` prints it; it is a report, not a gate.
+never writes weighs zero. Removed sites are listed but excluded from both. The
+registry denominator is every CWT type with a path in the vendored config, not
+only the manifested registries; the types the manifest does not expose fold
+into one `registries not exposed` table row and keep their own remainder
+lists. Scripted triggers and scripted effects are declined by design: a
+TypeScript function replaces a named definition, and the SDK inlines its
+result where it is used. `npm run coverage` prints it; it is a report, not a
+gate.
 
 **Usage**:
 How often vanilla writes a site. A registry field uses the corpus fixture's
