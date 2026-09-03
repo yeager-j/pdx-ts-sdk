@@ -188,6 +188,19 @@ An authoring method returns an immutable Item. An Item becomes part of the mod
 only when a Feature contains it. `mod.feature(stem, items)` gives those Items an
 explicit output stem and provenance.
 
+The Item input can be one module namespace, or a shallow array that mixes
+individual Items and module namespaces. A namespace contributes its
+Item-valued exports; strings, functions, and other ordinary module API are
+ignored:
+
+```ts
+import * as hindLabour from "./apotheosis/hind.ts";
+import * as lionLabour from "./apotheosis/lion.ts";
+import { laboursCategory } from "./apotheosis/shared.ts";
+
+export const feature = mod.feature("apotheosis", [lionLabour, hindLabour, laboursCategory]);
+```
+
 A Feature can fan out across registries:
 
 ```text

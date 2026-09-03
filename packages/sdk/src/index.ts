@@ -21,7 +21,7 @@ export {
   type MintedContentId,
   type ModCapability,
 } from "./authoring/mod.ts";
-export type { ItemBag } from "./authoring/bag.ts";
+export type { FeatureItemsInput, ItemBag } from "./authoring/bag.ts";
 export {
   createModProject,
   type CreateModProjectOptions,

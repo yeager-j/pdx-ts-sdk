@@ -2,11 +2,12 @@
  * Module namespaces as bags of Items and of Features.
  *
  * A project declares its content the way a Rust crate declares its module
- * tree: a feature module places Items with `mod.feature(stem, import * as
- * items)`, and `src/features.ts` re-exports every feature module's `feature`
- * for `mod.compile(features)` and `project.build(features)`. This module reads
- * those namespaces. It is pure: it walks the exports it is given and either
- * returns the values that count or throws about the one that does not.
+ * tree: a feature module places Items from module namespaces, either directly
+ * or alongside other namespaces and Items in an array. `src/features.ts`
+ * re-exports every feature module's `feature` for `mod.compile(features)` and
+ * `project.build(features)`. This module reads those namespaces. It is pure:
+ * it walks the exports it is given and either returns the values that count or
+ * throws about the one that does not.
  */
 
 import { describeValue } from "../describe-value.ts";
@@ -23,6 +24,9 @@ export type ItemBag = {
   readonly [exportName: string]: unknown;
   readonly itemKind?: never;
 };
+
+/** The direct array and module-namespace forms accepted by `mod.feature`. */
+export type FeatureItemsInput = ItemBag | readonly (ModItem | ItemBag)[];
 
 /**
  * Whether the value is a module namespace object, as `import * as` binds.
@@ -69,8 +73,8 @@ function describeNonBag(value: unknown): string {
 export function itemsOfBag(stem: string | undefined, bag: ItemBag): readonly ModItem[] {
   if (!isModuleNamespace(bag)) {
     throw new Error(
-      `${callSite(stem)} takes an array of Items or a module namespace (import * as), ` +
-        `and was given ${describeNonBag(bag)}.`
+      `${callSite(stem)} takes an array containing Items or module namespaces, or one module ` +
+        `namespace (import * as), and was given ${describeNonBag(bag)}.`
     );
   }
   const items: ModItem[] = [];
@@ -115,6 +119,33 @@ export function itemsOfBag(stem: string | undefined, bag: ItemBag): readonly Mod
         `${exportNames}), so nothing would be placed. Pass the module that holds the Items, ` +
         `or an explicit array.`
     );
+  }
+  return Object.freeze(items);
+}
+
+/**
+ * Resolves the array and namespace forms of a Feature's Item input.
+ *
+ * An array is shallow composition: each element is either one Item or one
+ * module namespace. A namespace keeps the filtering, validation, and local
+ * alias deduplication of {@link itemsOfBag}. Separate array elements stay
+ * separate so the Fold can report an Item the author listed twice.
+ */
+export function itemsOfInput(
+  stem: string | undefined,
+  input: FeatureItemsInput
+): readonly ModItem[] {
+  if (!Array.isArray(input)) {
+    return itemsOfBag(stem, input as ItemBag);
+  }
+
+  const items: ModItem[] = [];
+  for (const entry of input as readonly (ModItem | ItemBag)[]) {
+    if (isItem(entry)) {
+      items.push(entry as ModItem);
+      continue;
+    }
+    items.push(...itemsOfBag(stem, entry));
   }
   return Object.freeze(items);
 }

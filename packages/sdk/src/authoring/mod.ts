@@ -56,7 +56,7 @@ import {
   type AssetFileItem,
   type AssetTreeInput,
 } from "./assets.ts";
-import { featuresOfInput, itemsOfBag, type ItemBag } from "./bag.ts";
+import { featuresOfInput, itemsOfInput, type FeatureItemsInput } from "./bag.ts";
 import {
   assertComponentTagOwner,
   createComponentTagItem,
@@ -156,21 +156,22 @@ export type ModCapability<P extends string, I extends IdProfile> = {
   /**
    * Places pure items in one capability-owned feature file.
    *
-   * The items are an explicit array, or a module namespace (`import * as`)
-   * whose Item-valued exports are placed and whose other exports are left
-   * alone. The array form keeps the item type; a namespace places `ModItem`s,
-   * because a nested `export * as` is invisible to the type of the outer one.
+   * The input is one module namespace (`import * as`), or a shallow array that
+   * mixes individual Items and module namespaces. Item-valued namespace
+   * exports are placed and other exports are left alone. An Item-only array
+   * keeps its item type; any namespace widens it to `ModItem`, because a nested
+   * `export * as` is invisible to the type of the outer namespace.
    *
    * @example
    * import * as items from "./apotheosis/items.ts";
-   * export const feature = mod.feature("apotheosis", items);
+   * import * as events from "./apotheosis/events.ts";
+   * export const feature = mod.feature("apotheosis", [items, events]);
    */
-  feature(stem: string | undefined, items: ItemBag): CapabilityFeature<P>;
-  /** Places the listed items in one capability-owned feature file, keeping their type. */
   feature<T extends ModItem>(
     stem: string | undefined,
     items: readonly T[]
   ): CapabilityFeature<P, T>;
+  feature(stem: string | undefined, items: FeatureItemsInput): CapabilityFeature<P>;
   /** Captures one regular source file into SDK-owned Asset bytes. */
   assetFile(input: AssetFileInput): AssetFileItem;
   /** Captures every regular file in one source directory into SDK-owned Asset bytes. */
@@ -606,12 +607,8 @@ export function createCapability<const P extends string, const I extends IdProfi
       createCapabilityEvents(config.prefix, name),
     assetFile: (input: AssetFileInput) => captureAssetFile(capabilityOwner, input),
     assetTree: (input: AssetTreeInput) => captureAssetTree(capabilityOwner, input),
-    // `Array.isArray` narrows to `any[]` and leaves a readonly array in its
-    // other branch, so both branches below restate what the overloads know.
-    feature: (stem: string | undefined, items: readonly ModItem[] | ItemBag) => {
-      const placed = Array.isArray(items)
-        ? (items as readonly ModItem[])
-        : itemsOfBag(stem, items as ItemBag);
+    feature: (stem: string | undefined, items: FeatureItemsInput) => {
+      const placed = itemsOfInput(stem, items);
       placed.forEach((item) => assertCapabilityItem(item, capabilityOwner));
       const feature = Object.freeze({
         ...createFeature(stem, placed),

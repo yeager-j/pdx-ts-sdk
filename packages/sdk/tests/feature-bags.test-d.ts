@@ -1,7 +1,7 @@
 /**
  * The types of the bag forms: a features module is accepted where its every
- * export is a Feature of this capability, an Item bag places `ModItem`s, and
- * neither one Item nor one Feature passes as a bag.
+ * export is a Feature of this capability, Item bags compose with direct Items,
+ * and neither one Item nor one Feature passes as a bag.
  */
 
 import { describe, expectTypeOf, it } from "vitest";
@@ -41,6 +41,9 @@ describe("an Item bag", () => {
     expectTypeOf(mod.feature("array", [items.alpha])).toEqualTypeOf<
       CapabilityFeature<"feature_bags", typeof items.alpha>
     >();
+    expectTypeOf(mod.feature("composed", [items, items.nested, items.holder.hidden])).toEqualTypeOf<
+      CapabilityFeature<"feature_bags", ModItem>
+    >();
   });
 
   it("is neither one Item nor one Feature", () => {
@@ -48,5 +51,9 @@ describe("an Item bag", () => {
     mod.feature("item", items.alpha);
     // @ts-expect-error — a Feature is compiled, never placed
     mod.feature("feature", features.main);
+    // @ts-expect-error — composition is shallow; nested arrays are not Item bags
+    mod.feature("nested-array", [[items.alpha]]);
+    // @ts-expect-error — an array element must be an Item or an Item bag
+    mod.feature("string", [items.alpha, "not an item"]);
   });
 });

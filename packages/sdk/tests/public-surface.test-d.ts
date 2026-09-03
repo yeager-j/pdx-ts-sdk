@@ -87,8 +87,13 @@ describe("the pipeline entry point", () => {
       readonly sdk.CapabilityFeature<"public_project">[] | sdk.FeaturesModule<"public_project">
     >();
     expectTypeOf<sdk.ItemBag["itemKind"]>().toEqualTypeOf<undefined>();
+    expectTypeOf<sdk.FeatureItemsInput>().toEqualTypeOf<
+      sdk.ItemBag | readonly (sdk.ModItem | sdk.ItemBag)[]
+    >();
     // @ts-expect-error — bag reading is fold machinery, not part of the API.
     void sdk.itemsOfBag;
+    // @ts-expect-error — Item-input normalization is fold machinery too.
+    void sdk.itemsOfInput;
     expectTypeOf<sdk.PureMod["compileInputs"]>().toEqualTypeOf<sdk.CompileInputs>();
     expectTypeOf<sdk.CompileInputs["features"]>().toEqualTypeOf<
       readonly sdk.CompiledFeatureInput[]

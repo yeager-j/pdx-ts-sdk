@@ -145,7 +145,7 @@ describe("the scaffolded tree", () => {
       ],
       [
         ".agents/skills/pdx-sdk-authoring/SKILL.md",
-        "8a7a2bbff96aafc1b7ad0c8493f00f259d3c2c09f25068f33e59ebdc215ebce9",
+        "b6e0547f25648963e05e67c516bb57f5fc91cdb0a4d1efc7c7ba42345f899171",
       ],
       [
         ".agents/skills/pdx-sdk-docs/SKILL.md",

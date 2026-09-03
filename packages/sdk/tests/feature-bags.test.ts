@@ -23,7 +23,7 @@ import { mod } from "./fixtures/bags/mod.ts";
 import * as projectFeatures from "./fixtures/bags/project-features.ts";
 import { project } from "./fixtures/bags/project.ts";
 
-describe("mod.feature with a module namespace", () => {
+describe("mod.feature with Item bags", () => {
   it("places the Item exports, nested namespaces included, and nothing else", () => {
     const feature = mod.feature("bag", items);
 
@@ -58,18 +58,18 @@ describe("mod.feature with a module namespace", () => {
     );
   });
 
-  it("takes only an array or a module namespace", () => {
+  it("takes only an Item-input array or one module namespace", () => {
     expect(() => mod.feature("bare", items.alpha as never)).toThrow(
-      'mod.feature("bare") takes an array of Items or a module namespace (import * as), and was ' +
-        'given one Item (itemKind "content").'
+      'mod.feature("bare") takes an array containing Items or module namespaces, or one module ' +
+        'namespace (import * as), and was given one Item (itemKind "content").'
     );
     expect(() => mod.feature("plain", { alpha: items.alpha } as never)).toThrow(
-      'mod.feature("plain") takes an array of Items or a module namespace (import * as), and ' +
-        "was given an object."
+      'mod.feature("plain") takes an array containing Items or module namespaces, or one ' +
+        "module namespace (import * as), and was given an object."
     );
     expect(() => mod.feature("text", "items" as never)).toThrow(
-      'mod.feature("text") takes an array of Items or a module namespace (import * as), and ' +
-        "was given a string."
+      'mod.feature("text") takes an array containing Items or module namespaces, or one module ' +
+        "namespace (import * as), and was given a string."
     );
   });
 
@@ -89,6 +89,45 @@ describe("mod.feature with a module namespace", () => {
   it("places one Item reached under two export names once", () => {
     const feature = mod.feature("aliased", aliasedItems);
     expect(feature.items).toEqual([aliasedItems.epsilon]);
+  });
+
+  it("composes module namespaces and individual Items in one array", () => {
+    const feature = mod.feature("composed", [items, aliasedItems, items.holder.hidden]);
+
+    expect(feature.items).toHaveLength(5);
+    expect(feature.items).toContain(items.alpha);
+    expect(feature.items).toContain(items.beta);
+    expect(feature.items).toContain(items.nested.deep);
+    expect(feature.items).toContain(aliasedItems.epsilon);
+    expect(feature.items).toContain(items.holder.hidden);
+
+    const rendered = render(mod.compile([feature]));
+    const technology = rendered.get("common/technology/feature_bags_composed.txt");
+    expect(technology).toContain("feature_bags_tech_alpha");
+    expect(technology).toContain("feature_bags_tech_epsilon");
+    expect(technology).toContain("feature_bags_tech_hidden");
+  });
+
+  it("applies namespace validation to every bag in a composed array", () => {
+    expect(() => mod.feature("composed", [items.alpha, emptyItems])).toThrow(
+      'The module passed to mod.feature("composed") exports no Items (its exports are "helper", ' +
+        '"note"), so nothing would be placed. Pass the module that holds the Items, or an ' +
+        "explicit array."
+    );
+    expect(() => mod.feature("composed", [items.alpha, featureInItems])).toThrow(
+      'Export "placed" of the module passed to mod.feature("composed") is a Feature (stem ' +
+        '"elsewhere") - a Feature is compiled by mod.compile, never placed inside another Feature.'
+    );
+    expect(() => mod.feature("composed", [items.alpha, foreignItems])).toThrow(
+      /Content id "other_bags_tech_foreign" does not belong to mod prefix "feature_bags"/
+    );
+  });
+
+  it("leaves duplicate Items across array entries for the Fold to refuse", () => {
+    const feature = mod.feature("duplicate", [items, items.alpha]);
+
+    expect(feature.items.filter((item) => item === items.alpha)).toHaveLength(2);
+    expect(() => mod.compile([feature])).toThrow(/Duplicate technology id/);
   });
 });
 
