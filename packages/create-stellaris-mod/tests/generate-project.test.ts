@@ -293,7 +293,7 @@ describe("--cwd", () => {
 
     const { code, out, err } = await generate(root, ["--cwd", alias]);
     expect(err).toMatch(
-      /^declared in .*src\/features\.ts: export \{ feature as resonanceTheory \}/
+      /^declared in .*src[\\/]features\.ts: export \{ feature as resonanceTheory \}/
     );
     expect(code).toBe(0);
     expect(out.trim().split(path.sep).join("/").endsWith("src/features/resonance_theory.ts")).toBe(
