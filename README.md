@@ -1,4 +1,3 @@
-| [@pdx-ts/corpus](packages/corpus/README.md) | Private install-derived corpus fixture, its commands, ledgers, and conformance gate. |
 # pdx-ts
 
 Write Stellaris mods in TypeScript. Your program runs once at build time and
@@ -392,6 +391,7 @@ and serializer below both paths.
 | [@pdx-ts/stellaris-ids](packages/stellaris-ids/README.md) | Install-derived, game-versioned vanilla identifiers and scripted bindings. |
 | [@pdx-ts/codegen-cwt](packages/codegen-cwt/README.md) | Private rules-derived generator for the SDK TypeScript surface. |
 | [@pdx-ts/codegen-vanilla](packages/codegen-vanilla/README.md) | Private install-derived generator for `stellaris-ids`. |
+| [@pdx-ts/corpus](packages/corpus/README.md) | Private install-derived corpus fixtures, their commands, ledgers, conformance gate, and coverage report. |
 | [@pdx-ts/docs-site](packages/docs-site/README.md) | Next.js and Fumadocs documentation site with executable examples. |
 
 [CONTEXT-MAP.md](CONTEXT-MAP.md) describes the six bounded contexts and the

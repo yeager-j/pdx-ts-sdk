@@ -25,10 +25,23 @@ import {
   fixtureStems,
   loadMeta,
   loadRegistryFixture,
+  loadScriptUsage,
+  loadUnexposedTypes,
+  SCRIPT_USAGE_FILE,
+  UNEXPOSED_TYPES_FILE,
   writeFixtures,
   type RegistryFixture,
+  type ScriptUsageFixture,
   type SerializedObservation,
+  type UnexposedTypesFixture,
 } from "./fixture.ts";
+
+/** `a b c +N`: the first `limit` items and how many more there are. */
+function compactList(items: readonly string[], limit = 8): string {
+  return (
+    items.slice(0, limit).join(" ") + (items.length > limit ? ` +${items.length - limit}` : "")
+  );
+}
 
 /** Field-level differences between one registry's committed and fresh fixtures. */
 function registryDrift(committed: RegistryFixture, fresh: RegistryFixture): string[] {
@@ -50,10 +63,7 @@ function registryDrift(committed: RegistryFixture, fresh: RegistryFixture): stri
   const added = [...after.keys()].filter((key) => !before.has(key));
   const removed = [...before.keys()].filter((key) => !after.has(key));
   const compact = (keys: string[], of: Map<string, SerializedObservation>): string =>
-    keys
-      .slice(0, 8)
-      .map((key) => `${key}(${of.get(key)!.definitions})`)
-      .join(" ") + (keys.length > 8 ? ` +${keys.length - 8}` : "");
+    compactList(keys.map((key) => `${key}(${of.get(key)!.definitions})`));
   if (added.length > 0) {
     lines.push(`fields added: ${compact(added, after)}`);
   }
@@ -64,10 +74,105 @@ function registryDrift(committed: RegistryFixture, fresh: RegistryFixture): stri
     (key) => after.has(key) && JSON.stringify(before.get(key)) !== JSON.stringify(after.get(key))
   );
   if (changed.length > 0) {
-    lines.push(
-      `observations changed: ${changed.slice(0, 8).join(" ")}` +
-        (changed.length > 8 ? ` +${changed.length - 8}` : "")
+    lines.push(`observations changed: ${compactList(changed)}`);
+  }
+  return lines;
+}
+
+/**
+ * Differences between the committed and fresh script usage fixtures. A
+ * missing committed file is drift with the same remedy as everything else.
+ */
+export function scriptUsageDrift(
+  committed: ScriptUsageFixture | null,
+  fresh: ScriptUsageFixture
+): string[] {
+  if (committed === null) {
+    return [`no committed ${SCRIPT_USAGE_FILE} — run npm run corpus:extract first`];
+  }
+  const lines: string[] = [];
+  if (committed.files !== fresh.files) {
+    lines.push(`files ${committed.files} -> ${fresh.files}`);
+  }
+  if (JSON.stringify(committed.failedFiles) !== JSON.stringify(fresh.failedFiles)) {
+    lines.push(`failed files ${committed.failedFiles.join(" ")} -> ${fresh.failedFiles.join(" ")}`);
+  }
+  if (committed.fingerprint !== fresh.fingerprint) {
+    lines.push("content fingerprint changed");
+  }
+  if (
+    committed.vocabulary.size !== fresh.vocabulary.size ||
+    committed.vocabulary.fingerprint !== fresh.vocabulary.fingerprint
+  ) {
+    lines.push(`vocabulary ${committed.vocabulary.size} keys -> ${fresh.vocabulary.size} keys`);
+  }
+  const roots = [...new Set([...Object.keys(committed.counts), ...Object.keys(fresh.counts)])].sort(
+    compareUtf8
+  );
+  for (const root of roots) {
+    const before = new Map(Object.entries(committed.counts[root] ?? {}));
+    const after = new Map(Object.entries(fresh.counts[root] ?? {}));
+    const added = [...after.keys()].filter((key) => !before.has(key));
+    const removed = [...before.keys()].filter((key) => !after.has(key));
+    const changed = [...before.keys()].filter(
+      (key) => after.has(key) && before.get(key) !== after.get(key)
     );
+    if (added.length > 0) {
+      lines.push(
+        `${root}: keys added: ${compactList(added.map((key) => `${key}(${after.get(key)})`))}`
+      );
+    }
+    if (removed.length > 0) {
+      lines.push(
+        `${root}: keys removed: ${compactList(removed.map((key) => `${key}(${before.get(key)})`))}`
+      );
+    }
+    if (changed.length > 0) {
+      lines.push(
+        `${root}: counts changed: ${compactList(
+          changed.map((key) => `${key}(${before.get(key)}->${after.get(key)})`)
+        )}`
+      );
+    }
+  }
+  return lines;
+}
+
+/** Differences between the committed and fresh unexposed-type fixtures. */
+export function unexposedTypesDrift(
+  committed: UnexposedTypesFixture | null,
+  fresh: UnexposedTypesFixture
+): string[] {
+  if (committed === null) {
+    return [`no committed ${UNEXPOSED_TYPES_FILE} — run npm run corpus:extract first`];
+  }
+  const lines: string[] = [];
+  const before = new Map(Object.entries(committed.types));
+  const after = new Map(Object.entries(fresh.types));
+  const added = [...after.keys()].filter((name) => !before.has(name));
+  const removed = [...before.keys()].filter((name) => !after.has(name));
+  if (added.length > 0) {
+    lines.push(`types added: ${compactList(added)}`);
+  }
+  if (removed.length > 0) {
+    lines.push(`types removed: ${compactList(removed)}`);
+  }
+  const changed = [...before.keys()].filter(
+    (name) =>
+      after.has(name) && JSON.stringify(before.get(name)) !== JSON.stringify(after.get(name))
+  );
+  if (changed.length > 0) {
+    lines.push(`types changed: ${compactList(changed)}`);
+  }
+  if (JSON.stringify(committed.folders) !== JSON.stringify(fresh.folders)) {
+    const folders = new Set([...Object.keys(committed.folders), ...Object.keys(fresh.folders)]);
+    const moved = [...folders]
+      .filter(
+        (folder) =>
+          JSON.stringify(committed.folders[folder]) !== JSON.stringify(fresh.folders[folder])
+      )
+      .sort(compareUtf8);
+    lines.push(`folders without a type changed: ${compactList(moved)}`);
   }
   return lines;
 }
@@ -104,13 +209,21 @@ if (committedMeta === null) {
       drift.push(`${registry.registry}: ${line}`);
     }
   }
+  for (const line of scriptUsageDrift(loadScriptUsage(), fresh.scriptUsage)) {
+    drift.push(`script usage: ${line}`);
+  }
+  for (const line of unexposedTypesDrift(loadUnexposedTypes(), fresh.unexposedTypes)) {
+    drift.push(`unexposed types: ${line}`);
+  }
 }
 
 if (drift.length === 0) {
   const definitions = fresh.registries.reduce((total, one) => total + one.definitions, 0);
   console.log(
     `corpus fixture is current: Stellaris ${fresh.meta.gameVersion}, ` +
-      `${fresh.registries.length} registries, ${definitions} definitions`
+      `${fresh.registries.length} registries, ${definitions} definitions, ` +
+      `script usage over ${fresh.scriptUsage.files} files, ` +
+      `${Object.keys(fresh.unexposedTypes.types).length} unexposed types`
   );
   rmSync(tempDir, { recursive: true });
 } else {

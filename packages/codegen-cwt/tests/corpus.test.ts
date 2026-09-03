@@ -365,6 +365,23 @@ describe("nested directories", () => {
   });
 });
 
+describe("path_file layout", () => {
+  it("reads only the named file when the rules declare path_file", () => {
+    // `type[alert]` is `path = game/common` with `path_file = alerts.txt`:
+    // the directory holds every other registry, and only one file is its own.
+    const corpus = corpusOfFiles(
+      {
+        "alerts.txt": "one = { name = a }",
+        "other.txt": "two = { name = b }",
+        "nested/alerts.txt": "three = { name = c }",
+      },
+      { fileName: "alerts.txt" }
+    );
+    expect(corpus.files).toBe(2);
+    expect([...(corpus.occurrences.get("name")?.values ?? [])].sort()).toEqual(["a", "c"]);
+  });
+});
+
 describe("audited key casing", () => {
   // Enforced only for the registries `casing.ts` gives a table, which today is
   // the three `.gfx` ones — every `common/` registry is read exactly as written.

@@ -15,15 +15,38 @@ export interface EffectPolicyEntry {
   readonly owner: EffectOwner;
   /** Why a non-generated surface owns the effect. */
   readonly reason?: string;
+  /**
+   * How a structural key with no method of its own is written: the public
+   * method whose returned chain records it, or `null` when no author can
+   * write it. Absent on every key that has a method.
+   */
+  readonly recordedBy?: string | null;
 }
+
+/**
+ * One structural key's authoring: a public method, or no method and then a
+ * statement of what records the key instead. A null-method row must say
+ * `recordedBy`, so "unsupported" is written down rather than implied.
+ */
+type StructuralEffectSpec =
+  | { readonly method: string; readonly reason: string }
+  | { readonly method: null; readonly recordedBy: string | null; readonly reason: string };
 
 const STRUCTURAL_EFFECTS = {
   if: { method: "if", reason: "control flow" },
-  else: { method: null, reason: "recorded by the if-chain returned from if" },
-  else_if: { method: null, reason: "recorded by the if-chain returned from if" },
+  else: { method: null, recordedBy: "if", reason: "recorded by the if-chain returned from if" },
+  else_if: {
+    method: null,
+    recordedBy: "if",
+    reason: "recorded by the if-chain returned from if",
+  },
   while: { method: "whileLoop", reason: "control flow" },
-  switch: { method: null, reason: "unsupported control-flow surface" },
-  inverted_switch: { method: null, reason: "unsupported control-flow surface" },
+  switch: { method: null, recordedBy: null, reason: "unsupported control-flow surface" },
+  inverted_switch: {
+    method: null,
+    recordedBy: null,
+    reason: "unsupported control-flow surface",
+  },
   random: { method: "random", reason: "weighted control flow" },
   random_list: { method: "randomList", reason: "weighted control flow" },
   locked_random_list: { method: "lockedRandomList", reason: "weighted control flow" },
@@ -42,7 +65,7 @@ const STRUCTURAL_EFFECTS = {
     method: "resetEventChainCounter",
     reason: "event-chain reference contract",
   },
-} as const satisfies Record<string, { readonly method: string | null; readonly reason: string }>;
+} as const satisfies Record<string, StructuralEffectSpec>;
 
 /** The fixed key an SDK-only structural method records, and whether a generated method records it too. */
 interface SyntheticStructuralEffect {
@@ -90,6 +113,8 @@ export interface EffectPolicy {
   readonly structuralMethods: ReadonlySet<string>;
   /** CWT effect keys owned by the structural surface, including keys with no public method. */
   readonly structuralKeys: ReadonlySet<string>;
+  /** Structural keys with no method and nothing that records them: no author can write these. */
+  readonly unsupportedStructuralKeys: ReadonlySet<string>;
   /** CWT keys implemented as typed event-fire methods. */
   readonly fireKeys: ReadonlySet<string>;
   /** Every public method name across generated and hand-written effects. */
@@ -102,8 +127,17 @@ export interface EffectPolicy {
  */
 export function createEffectPolicy(rules: RuleSet): EffectPolicy {
   const byKey = new Map<string, EffectPolicyEntry>();
-  for (const [key, spec] of Object.entries(STRUCTURAL_EFFECTS)) {
-    byKey.set(key, { key, method: spec.method, owner: "structural", reason: spec.reason });
+  for (const [key, spec] of Object.entries(STRUCTURAL_EFFECTS) as [
+    string,
+    StructuralEffectSpec,
+  ][]) {
+    byKey.set(key, {
+      key,
+      method: spec.method,
+      owner: "structural",
+      reason: spec.reason,
+      ...(spec.method === null ? { recordedBy: spec.recordedBy } : {}),
+    });
   }
 
   for (const kind of eventKinds(rules)) {
@@ -144,6 +178,13 @@ export function createEffectPolicy(rules: RuleSet): EffectPolicy {
   const structuralKeys = new Set(
     [...byKey.values()].flatMap((entry) => (entry.owner === "structural" ? [entry.key] : []))
   );
+  const unsupportedStructuralKeys = new Set(
+    [...byKey.values()].flatMap((entry) =>
+      entry.owner === "structural" && entry.method === null && entry.recordedBy === null
+        ? [entry.key]
+        : []
+    )
+  );
   const fireKeys = new Set(
     [...byKey.values()].flatMap((entry) => (entry.owner === "fire" ? [entry.key] : []))
   );
@@ -151,7 +192,15 @@ export function createEffectPolicy(rules: RuleSet): EffectPolicy {
     ...structuralMethods,
     ...[...byKey.values()].flatMap((entry) => (entry.method === null ? [] : [entry.method])),
   ]);
-  return { byKey, structuralIdentity, structuralMethods, structuralKeys, fireKeys, publicMethods };
+  return {
+    byKey,
+    structuralIdentity,
+    structuralMethods,
+    structuralKeys,
+    unsupportedStructuralKeys,
+    fireKeys,
+    publicMethods,
+  };
 }
 
 /** Emits the generated constants and union types that expose effect ownership to the SDK. */
@@ -159,9 +208,17 @@ export function emitEffectPolicyProtocol(policy: EffectPolicy): string {
   const structural = [...policy.structuralMethods].sort();
   const structuralKeys = [...policy.structuralKeys].sort();
   const fireKeys = [...policy.fireKeys].sort();
+  // The generated ledger carries the public ownership facts only; how a
+  // null-method key is recorded is a generator-side fact the SDK does not read.
   const nonGeneratedEntries = [...policy.byKey.values()]
     .filter((entry) => entry.owner !== "generated")
-    .sort((left, right) => compareStrings(left.key, right.key));
+    .sort((left, right) => compareStrings(left.key, right.key))
+    .map(({ key, method, owner, reason }) => ({
+      key,
+      method,
+      owner,
+      ...(reason === undefined ? {} : { reason }),
+    }));
   return (
     docComment([
       "Every CWT effect key a hand-written surface owns instead of a generated builder,",

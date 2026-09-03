@@ -110,6 +110,8 @@ export interface ContentType {
   readonly baseType?: string | null;
   /** The directory containing definitions of this type. */
   readonly path: string | null;
+  /** The one file inside {@link path} that holds the definitions (`path_file`), or `null`. */
+  readonly pathFile?: string | null;
   /** The body field that carries identity when definitions are not keyed by id. */
   readonly nameField: string | null;
   /** The normalized file extension, or `null` when CWT uses the `.txt` default. */
@@ -775,6 +777,7 @@ function readContentType(
     name,
     baseType: scalarValue(entries.get("base_type")),
     path: scalarValue(entries.get("path")),
+    pathFile: scalarValue(entries.get("path_file")),
     nameField,
     pathExtension: pathExtension === null ? null : dotted(pathExtension),
     skipRootKey: skipRootKeys.length === 1 ? skipRootKeys[0]! : null,
