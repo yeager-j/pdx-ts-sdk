@@ -33,13 +33,12 @@
  * spelling — the stray would go unreported and a row would stay green over a
  * value nobody reviewed. Below the cap there is no sample at all: the set is
  * everything the corpus wrote. That is what "keeps every closed literal union
- * under the value-sample cap" in `corpus-conformance.test.ts` asserts, so the
+ * under the value-sample cap" in `conformance.test.ts` asserts, so the
  * cap stays a memory bound rather than becoming a silent filter.
  */
 
 import type { ConformanceMismatchKind } from "@pdx-ts/codegen-cwt/corpus";
-
-import { compareUtf8 } from "../../src/ordering.ts";
+import { compareUtf8 } from "@pdx-ts/sdk/internals";
 
 /** The two kinds this baseline classifies. The other two are acknowledged below. */
 export type ObservationKind = Extract<ConformanceMismatchKind, "arity" | "literal">;
@@ -976,7 +975,7 @@ export function compareObservations(
   for (const [key, one] of measured) {
     const row = rows.get(key);
     if (row === undefined) {
-      added.push(`  + ${key}: new observation — classify it in corpus-observations.ts`);
+      added.push(`  + ${key}: new observation — classify it in observations.ts`);
     } else if (!sameEvidence(row.evidence, one.evidence)) {
       changed.push(
         `  ~ ${key}: evidence ${renderEvidence(row.evidence)} -> ` +

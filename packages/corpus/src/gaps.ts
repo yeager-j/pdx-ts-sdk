@@ -1,7 +1,7 @@
 /**
  * Fields the game writes at or above the presence floor that the SDK cannot
  * yet author, each acknowledged with a reason. The presence-floor test in
- * `corpus-conformance.test.ts` fails on any unauthorable field at
+ * `conformance.test.ts` fails on any unauthorable field at
  * `PRESENCE_FLOOR` occurrences or more that has no row here and no
  * `CONTENT_DECLINED_FIELDS` row — and fails the other way on a row whose field
  * has since become authorable or fallen below the floor, so the table cannot

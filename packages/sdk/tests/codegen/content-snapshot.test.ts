@@ -301,7 +301,7 @@ describe("content-type codegen", () => {
       ?.code?.match(/export interface TechnologyTechnologySwap \{([\s\S]*?)\n\}/)?.[1];
     expect(swapBody).toContain('modifier?: ModifierClosure<"country">;');
     // Both are named to the corpus gate under the paths it measures, which is
-    // what retires their `corpus-gaps.ts` rows: a member that only exists on
+    // what retires their `packages/corpus/src/gaps.ts` rows: a member that only exists on
     // the interface leaves the nested path unexpressed.
     expect(fieldNames(emissions.get("technology")!.emittedFields)).toContain("modifier");
     expect(fieldNames(emissions.get("technology")!.nestedEmittedFields)).toContain(
@@ -329,7 +329,7 @@ describe("content-type codegen", () => {
     );
     expect(technology.code).toContain('key: "diplo_action", member: "diploAction"');
     // Named to the corpus gate at each key's own path, which is what retires
-    // the `corpus-gaps.ts` rows — the reader records `prereqfor_desc.custom`
+    // the `packages/corpus/src/gaps.ts` rows — the reader records `prereqfor_desc.custom`
     // and its interior separately per key, so one shared interface still has
     // to claim all of them.
     const nested = fieldNames(technology.nestedEmittedFields);

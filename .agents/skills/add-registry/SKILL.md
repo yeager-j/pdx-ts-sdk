@@ -43,10 +43,10 @@ source change).
 7. Add all four kinds of evidence, all written through the capability
    (reference below). Done when: every kind is present, the corpus gate
    records a non-zero definition count for the registry, every presence gap is
-   either fixed or acknowledged in `corpus-gaps.ts` with a reason and a Linear
+   either fixed or acknowledged in `packages/corpus/src/gaps.ts` with a reason and a Linear
    issue, every `form` or `scope` mismatch is fixed, and every `arity` or
    `literal` observation the registry introduces is classified in
-   `corpus-observations.ts`.
+   `packages/corpus/src/observations.ts`.
 8. Add or update a README example only when the registry introduces an
    authoring pattern users would not infer from existing registries.
 
@@ -86,19 +86,19 @@ That is the `add-patch-registry` skill.
 ## The four kinds of evidence (step 6 reference)
 
 - **Codegen coverage** in `packages/sdk/tests/codegen/content-snapshot.test.ts`.
-- **Corpus coverage** in `packages/sdk/tests/codegen/corpus-conformance.test.ts` —
+- **Corpus coverage** in `packages/corpus/tests/conformance.test.ts` —
   hermetic: it measures the emitted interface against the committed corpus
-  fixture under `packages/sdk/tests/fixtures/corpus/` (derived observations of
+  fixture under `packages/corpus/fixtures/` (derived observations of
   every shipped definition — field names, forms, counts), for presence and for
   shape, so it runs in plain `npm test` and CI. Adding a registry means
   regenerating the fixture: `npm run corpus:extract` (install-gated), read its
   report, review and commit the fixture diff with the change. Zero recorded
   definitions means the path or keyword is wrong. A field the game writes at
   the presence floor that no author can produce fails — fix the lowering, or
-  acknowledge it in `corpus-gaps.ts` with a reason and a "Corpus Gap" Linear
+  acknowledge it in `packages/corpus/src/gaps.ts` with a reason and a "Corpus Gap" Linear
   issue (measurement for review, not acceptance). A `form` or `scope` mismatch
   fails the same way: fix the lowering, or acknowledge it in
-  `ACKNOWLEDGED_MISMATCHES` (`corpus-observations.ts`). An `arity` or `literal`
+  `ACKNOWLEDGED_MISMATCHES` (`packages/corpus/src/observations.ts`). An `arity` or `literal`
   mismatch is legal rather than broken, but a new registry's are still new: each
   needs a classified row in the `OBSERVATIONS` baseline in that same file,
   citing the CWT declaration it is wider than. A field the emitter invents with

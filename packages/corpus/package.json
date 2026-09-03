@@ -1,0 +1,18 @@
+{
+  "name": "@pdx-ts/corpus",
+  "version": "1.0.0",
+  "description": "Install-derived evidence about the generated authoring surface of @pdx-ts/sdk",
+  "type": "module",
+  "private": true,
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "@pdx-ts/codegen-cwt": "*",
+    "@pdx-ts/pdxscript": "*",
+    "@pdx-ts/sdk": "*"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6"
+  }
+}

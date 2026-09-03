@@ -11,8 +11,9 @@ The repository root is a private npm-workspaces root: it owns the shared inputs 
 Every package, generators included, is a workspace member: `packages/sdk` is the Stellaris-facing
 SDK (`@pdx-ts/sdk`); `packages/pdxscript` is the standalone PDXScript parser/serializer used
 underneath it; `packages/codegen-cwt` and `packages/codegen-vanilla` are the two private generators;
-`packages/stellaris-ids` is the install-derived identifier package. Every gate below runs from
-the repository root.
+`packages/stellaris-ids` is the install-derived identifier package; `packages/corpus` is the
+corpus evidence loop (the committed fixture, the extract and check commands, the gap and
+observation ledgers, and the conformance gate). Every gate below runs from the repository root.
 
 [CONTEXT-MAP.md](CONTEXT-MAP.md) is the vocabulary authority: it names this repo's six
 bounded contexts and links each one's glossary. When a word here is load-bearing, that is
@@ -100,9 +101,9 @@ only when the task fires them:
   `CONTENT_PATCH_REGISTRIES` overlay row that generates the whole `patchX`
   surface.
 - `close-corpus-gap` (`.agents/skills/close-corpus-gap/`) — lowering a field
-  the game writes and no author can produce, retiring its `corpus-gaps.ts`
-  row: measuring the real shape against the install before encoding it, and
-  where the generic model absorbs it.
+  the game writes and no author can produce, retiring its
+  `packages/corpus/src/gaps.ts` row: measuring the real shape against the
+  install before encoding it, and where the generic model absorbs it.
 
 `patchX` is not a consequence of `mod.x` existing: a patch is a whole-object
 override whose load order and emission are verified per registry, and the

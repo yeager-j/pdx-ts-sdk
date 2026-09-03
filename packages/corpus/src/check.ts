@@ -16,9 +16,9 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { locateInstall } from "@pdx-ts/sdk/installation";
+import { compareUtf8 } from "@pdx-ts/sdk/internals";
 
-import { locateInstall } from "../../src/installation/installation/locate.ts";
-import { compareUtf8 } from "../../src/ordering.ts";
 import {
   extractCorpus,
   FIXTURE_PATH,
@@ -28,7 +28,7 @@ import {
   writeFixtures,
   type RegistryFixture,
   type SerializedObservation,
-} from "./corpus-fixture.ts";
+} from "./fixture.ts";
 
 /** Field-level differences between one registry's committed and fresh fixtures. */
 function registryDrift(committed: RegistryFixture, fresh: RegistryFixture): string[] {

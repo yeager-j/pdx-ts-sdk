@@ -15,6 +15,8 @@ authority for its own terms.
   semantics.
 - [CWT Codegen](./packages/codegen-cwt/CONTEXT.md) — `packages/codegen-cwt`.
   Reading cwtools' rule files and emitting the typed authoring surface.
+  `packages/corpus` is a member of this context and uses its glossary: it
+  holds the corpus fixture, the extract and check commands, and the gate.
 - [Vanilla Extraction](./packages/codegen-vanilla/CONTEXT.md) —
   `packages/codegen-vanilla` and `packages/stellaris-ids`. Deriving vanilla's
   identifiers from an installed game, under a licensing boundary.

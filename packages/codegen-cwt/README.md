@@ -238,7 +238,8 @@ rendering layer only formats and assembles generated files.
 
 Package tests exercise the CWT parser, documentation parsers, reconciliation,
 overlay audits, lowerers, and emitters against the pinned inputs. Artifact-level
-tests live with the SDK output under `packages/sdk/tests/codegen/`.
+tests live with the SDK output under `packages/sdk/tests/codegen/`; the corpus
+fixture and its conformance gate live in `packages/corpus/`.
 
 The complete change gate is:
 
