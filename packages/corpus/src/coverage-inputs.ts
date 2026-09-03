@@ -20,6 +20,7 @@ import { CWT_REPOSITORY_DIRECTORY } from "@pdx-ts/codegen-cwt/sources";
 
 import {
   formatCoverageReport,
+  handWrittenOwnership,
   sitesOfEffects,
   sitesOfEventFields,
   sitesOfModifiers,
@@ -37,9 +38,12 @@ import {
   FIXTURE_DIR,
   FIXTURE_PATH,
   loadMeta,
+  loadRegistryFixture,
   loadScriptUsage,
+  MEASUREMENTS,
   META_FILE,
   SCRIPT_USAGE_FILE,
+  SCRIPT_USAGE_ROOTS,
   type RegistryReport,
   type ScriptUsageFixture,
 } from "./fixture.ts";
@@ -89,6 +93,19 @@ function registryCoverageInput(report: RegistryReport): RegistryCoverageInput {
   };
 }
 
+/** Every manifested registry with a committed fixture, or the missing ones by name. */
+function assertRegistryFixtures(dir: string): void {
+  const missing = MEASUREMENTS.filter(
+    (measurement) => loadRegistryFixture(measurement.registry, dir) === null
+  ).map((measurement) => measurement.registry);
+  if (missing.length > 0) {
+    throw new CoverageInputError(
+      `no committed fixture for ${missing.join(", ")} under ${FIXTURE_PATH} — ` +
+        "run npm run corpus:extract first"
+    );
+  }
+}
+
 function loadUsage(dir: string): ScriptUsageFixture {
   const usage = loadScriptUsage(dir);
   if (usage === null) {
@@ -103,9 +120,10 @@ function loadUsage(dir: string): ScriptUsageFixture {
         `${SCRIPT_VOCABULARY.keys.size} — run npm run corpus:extract`
     );
   }
-  if (!usage.roots.includes(EVENT_FILES_ROOT)) {
+  if (JSON.stringify(usage.roots) !== JSON.stringify(SCRIPT_USAGE_ROOTS)) {
     throw new CoverageInputError(
-      `${FIXTURE_PATH}/${SCRIPT_USAGE_FILE} has no ${EVENT_FILES_ROOT} root — run npm run corpus:extract`
+      `${FIXTURE_PATH}/${SCRIPT_USAGE_FILE} counts roots ${usage.roots.join(", ")}, not ` +
+        `${SCRIPT_USAGE_ROOTS.join(", ")} — run npm run corpus:extract`
     );
   }
   return usage;
@@ -114,8 +132,8 @@ function loadUsage(dir: string): ScriptUsageFixture {
 /**
  * Builds the report over the fixtures in `dir`.
  *
- * @throws {CoverageInputError} When a fixture is missing or was extracted
- *   against a different script vocabulary.
+ * @throws {CoverageInputError} When a fixture is missing, was extracted
+ *   against a different script vocabulary, or counts different roots.
  * @throws {Error} When an emitter's accounting contradicts the rules or a
  *   ledger row matches nothing; see the `sitesOf*` builders.
  */
@@ -126,8 +144,9 @@ export function buildCoverage(dir: string = FIXTURE_DIR): CoverageBuild {
       `no committed ${FIXTURE_PATH}/${META_FILE} — run npm run corpus:extract first`
     );
   }
+  assertRegistryFixtures(dir);
   const usage = loadUsage(dir);
-  const scriptUsage = usageFromRoots(usage, usage.roots);
+  const scriptUsage = usageFromRoots(usage, SCRIPT_USAGE_ROOTS);
   const eventUsage = usageFromRoots(usage, [EVENT_FILES_ROOT]);
   // A link with a declared prefix (a value link, a data-driven link) is only
   // ever written in that form, and the counter credits the prefix.
@@ -135,6 +154,7 @@ export function buildCoverage(dir: string = FIXTURE_DIR): CoverageBuild {
 
   const emitter = new Emitter(RULES);
   const effectPolicy = createEffectPolicy(RULES);
+  const ownership = handWrittenOwnership(effectPolicy);
   const scriptRules = emitScriptRules(
     RULES,
     SOURCES.docs,
@@ -158,7 +178,8 @@ export function buildCoverage(dir: string = FIXTURE_DIR): CoverageBuild {
           skipped: scriptRules.triggers.skipped,
         },
         scriptRules.scriptGaps,
-        scriptUsage
+        scriptUsage,
+        ownership
       ),
     },
     {
@@ -176,14 +197,20 @@ export function buildCoverage(dir: string = FIXTURE_DIR): CoverageBuild {
         },
         events.skipped,
         scriptRules.scriptGaps,
-        scriptUsage
+        scriptUsage,
+        ownership
       ),
     },
     { id: "modifiers", label: "modifiers", sites: sitesOfModifiers(MODIFIER_JOIN, scriptUsage) },
     {
       id: "scope-links",
       label: "scope links",
-      sites: sitesOfScopeLinks(RULES.links.keys(), scriptRules.classifiedLinks, linkUsage),
+      sites: sitesOfScopeLinks(
+        RULES.links.keys(),
+        scriptRules.classifiedLinks,
+        linkUsage,
+        ownership
+      ),
     },
     {
       id: "event-fields",

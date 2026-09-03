@@ -6,7 +6,7 @@ export {
   COVERAGE_CLASSES,
   EXPRESSIBLE_CLASSES,
   HAND_WRITTEN_LINKS,
-  HAND_WRITTEN_OWNERSHIP,
+  handWrittenOwnership,
   siteClassOfSkip,
   type CoverageClass,
   type CoverageSite,

@@ -10,6 +10,7 @@
  */
 
 import type { ScriptSkipCategory, SkippedRule } from "@pdx-ts/codegen-cwt/lower/script-shape";
+import type { EffectPolicy } from "@pdx-ts/codegen-cwt/policy/effects";
 import { HAND_WRITTEN_TRIGGER_EXPORTS } from "@pdx-ts/codegen-cwt/policy/triggers";
 
 /**
@@ -82,10 +83,12 @@ export interface SiteClassification {
   readonly issue?: string;
 }
 
-/** Which skipped script surfaces a hand-written SDK module supplies instead. */
+/** Which skipped script surfaces a hand-written SDK module supplies instead, and which it does not. */
 export interface HandWrittenOwnership {
   /** Scope or value link key to the reason the SDK owns it. */
   readonly links: ReadonlyMap<string, string>;
+  /** Structural effect keys the policy owns but nothing writes (`EffectPolicy.unsupportedStructuralKeys`). */
+  readonly unsupportedStructuralEffects: ReadonlySet<string>;
 }
 
 /**
@@ -110,12 +113,16 @@ export const HAND_WRITTEN_LINKS: ReadonlyMap<string, string> = new Map([
   ],
 ]);
 
-/** The ownership every real report uses. */
-export const HAND_WRITTEN_OWNERSHIP: HandWrittenOwnership = { links: HAND_WRITTEN_LINKS };
+/** The ownership every real report uses: the hand-written links, and the effect policy's answer on structural keys. */
+export function handWrittenOwnership(effectPolicy: EffectPolicy): HandWrittenOwnership {
+  return {
+    links: HAND_WRITTEN_LINKS,
+    unsupportedStructuralEffects: effectPolicy.unsupportedStructuralKeys,
+  };
+}
 
 const POLICY_OWNED_CATEGORIES: ReadonlySet<ScriptSkipCategory> = new Set<ScriptSkipCategory>([
   "handwritten-trigger",
-  "structural-effect",
   "event-fire-effect",
   "abstract-placeholder",
 ]);
@@ -141,6 +148,15 @@ const EVENT_KIND_CATEGORIES: ReadonlySet<ScriptSkipCategory> = new Set<ScriptSki
  * builders. `abstract-placeholder` is policy-owned because the SDK binds
  * scripted triggers and effects by hand (`packages/sdk/src/script/scripted.ts`).
  *
+ * A `structural-effect` skip is policy-owned only while an author can write
+ * the key: the policy gives it a method, or names the method whose chain
+ * records it. A structural key the policy marks unsupported (`switch`,
+ * `inverted_switch`) is a gap here. The script gap ledger disagrees on
+ * purpose: SDK-242 keeps every structural key under `effect-policy.ts`
+ * ownership and forbids policy categories in the ledger, so the codegen
+ * report lists them as policy-owned. Coverage asks a different question, what
+ * an author can write, and these two keys nobody can.
+ *
  * @throws {Error} On an event-kind category, which names no rule.
  */
 export function siteClassOfSkip(
@@ -158,6 +174,11 @@ export function siteClassOfSkip(
       class: "policy-owned",
       reason: `${skip.detail}; bound by hand in packages/sdk/src/script/scripted.ts`,
     };
+  }
+  if (skip.category === "structural-effect") {
+    return ownership.unsupportedStructuralEffects.has(skip.name)
+      ? { class: "gap", reason: skip.detail }
+      : { class: "policy-owned", reason: skip.detail };
   }
   if (POLICY_OWNED_CATEGORIES.has(skip.category)) {
     return { class: "policy-owned", reason: skip.detail };

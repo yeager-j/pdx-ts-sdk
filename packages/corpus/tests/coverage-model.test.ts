@@ -18,7 +18,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatCoverageReport,
-  HAND_WRITTEN_OWNERSHIP,
+  HAND_WRITTEN_LINKS,
   rerootPath,
   siteClassOfSkip,
   sitesOfEffects,
@@ -35,6 +35,12 @@ import {
 } from "../src/coverage/index.ts";
 
 const NO_GAPS: ScriptGapReport = { policyOwned: [], abstractPlaceholders: [], trackedGaps: [] };
+
+/** The real hand-written links, and a policy that marks `switch` unsupported. */
+const OWNERSHIP = {
+  links: HAND_WRITTEN_LINKS,
+  unsupportedStructuralEffects: new Set(["switch"]),
+};
 
 /** Usage from a table; unknown keys weigh zero. */
 const usageOf =
@@ -105,23 +111,38 @@ describe("siteClassOfSkip", () => {
     (category, expected) => {
       const skip = skippedRule("some_key", category as ScriptSkipCategory, "detail");
       if (expected === "throws") {
-        expect(() => siteClassOfSkip(skip, HAND_WRITTEN_OWNERSHIP)).toThrow(
+        expect(() => siteClassOfSkip(skip, OWNERSHIP)).toThrow(
           "some_key: " + category + " describes an event kind, not a rule site"
         );
         return;
       }
-      expect(siteClassOfSkip(skip, HAND_WRITTEN_OWNERSHIP).class).toBe(expected);
+      expect(siteClassOfSkip(skip, OWNERSHIP).class).toBe(expected);
     }
   );
 
   it("carries the skip detail as the reason", () => {
-    expect(
-      siteClassOfSkip(skippedRule("k", "unsupported-value", "a shape"), HAND_WRITTEN_OWNERSHIP)
-    ).toEqual({ class: "gap", reason: "a shape" });
+    expect(siteClassOfSkip(skippedRule("k", "unsupported-value", "a shape"), OWNERSHIP)).toEqual({
+      class: "gap",
+      reason: "a shape",
+    });
+  });
+
+  it("classifies a structural effect by whether an author can write it", () => {
+    // `if` has a method, `else` is recorded by the chain `if` returns, and
+    // `switch` has neither: the policy owns all three, coverage counts one gap.
+    const classes = ["if", "else", "switch"].map(
+      (key) =>
+        siteClassOfSkip(skippedRule(key, "structural-effect", `hand-written: ${key}`), OWNERSHIP)
+          .class
+    );
+    expect(classes).toEqual(["policy-owned", "policy-owned", "gap"]);
   });
 
   it("owns a value link or polymorphic link the SDK writes by hand", () => {
-    const ownership = { links: new Map([["target", "hand-written"]]) };
+    const ownership = {
+      links: new Map([["target", "hand-written"]]),
+      unsupportedStructuralEffects: new Set<string>(),
+    };
     expect(
       siteClassOfSkip(skippedRule("target", "polymorphic-output-scope", "any"), ownership)
     ).toEqual({ class: "policy-owned", reason: "hand-written" });
@@ -131,7 +152,10 @@ describe("siteClassOfSkip", () => {
   });
 
   it("does not let ownership reach a non-link category", () => {
-    const ownership = { links: new Map([["k", "hand-written"]]) };
+    const ownership = {
+      links: new Map([["k", "hand-written"]]),
+      unsupportedStructuralEffects: new Set<string>(),
+    };
     expect(siteClassOfSkip(skippedRule("k", "data-link", "from_data"), ownership).class).toBe(
       "gap"
     );
@@ -140,7 +164,7 @@ describe("siteClassOfSkip", () => {
   it("names the scripted binding module for an abstract placeholder", () => {
     const result = siteClassOfSkip(
       skippedRule("<scripted_trigger>", "abstract-placeholder", "abstract"),
-      HAND_WRITTEN_OWNERSHIP
+      OWNERSHIP
     );
     expect(result.class).toBe("policy-owned");
     expect(result.reason).toContain("packages/sdk/src/script/scripted.ts");
@@ -177,7 +201,8 @@ describe("sitesOfTriggers", () => {
         ],
       },
       gaps,
-      usageOf({ emitted: 5, removed: 2, tracked: 1 })
+      usageOf({ emitted: 5, removed: 2, tracked: 1 }),
+      OWNERSHIP
     );
     expect(sites.map(row)).toEqual([
       { key: "doubled", class: "gap", reason: "limit conflicts; owner conflicts", used: 0 },
@@ -205,14 +230,20 @@ describe("sitesOfTriggers", () => {
           },
         ],
       },
-      () => 0
+      () => 0,
+      OWNERSHIP
     );
     expect(sites.map(row)).toEqual([{ key: "k", class: "gap", reason: "d", used: 0 }]);
   });
 
   it("throws when a declared key is neither emitted nor skipped", () => {
     expect(() =>
-      sitesOfTriggers({ declared: ["lost", "b"], emitted: ["b"], skipped: [] }, NO_GAPS, () => 0)
+      sitesOfTriggers(
+        { declared: ["lost", "b"], emitted: ["b"], skipped: [] },
+        NO_GAPS,
+        () => 0,
+        OWNERSHIP
+      )
     ).toThrow("lost: declared but neither emitted nor skipped");
   });
 
@@ -221,7 +252,8 @@ describe("sitesOfTriggers", () => {
       sitesOfTriggers(
         { declared: ["k"], emitted: ["k"], skipped: [skippedRule("k", "empty-block", "d")] },
         NO_GAPS,
-        () => 0
+        () => 0,
+        OWNERSHIP
       )
     ).toThrow("k: both emitted and skipped");
   });
@@ -231,7 +263,8 @@ describe("sitesOfTriggers", () => {
       sitesOfTriggers(
         { declared: [], emitted: ["e"], skipped: [skippedRule("s", "empty-block", "d")] },
         NO_GAPS,
-        () => 0
+        () => 0,
+        OWNERSHIP
       )
     ).toThrow("e: emitted but not declared\n  s: skipped but not declared");
   });
@@ -245,7 +278,8 @@ describe("sitesOfTriggers", () => {
           skipped: [skippedRule("k", "empty-block", "a"), skippedRule("k", "unknown-scope", "b")],
         },
         NO_GAPS,
-        () => 0
+        () => 0,
+        OWNERSHIP
       )
     ).toThrow("triggers k: skipped as both empty-block and unknown-scope");
   });
@@ -263,7 +297,7 @@ describe("sitesOfEffects", () => {
   };
 
   it("keeps a fire effect policy-owned while the event emitter typed it", () => {
-    const sites = sitesOfEffects(facts, [], NO_GAPS, () => 0);
+    const sites = sitesOfEffects(facts, [], NO_GAPS, () => 0, OWNERSHIP);
     expect(sites.map((site) => [site.key, site.class])).toEqual([
       ["country_event", "policy-owned"],
       ["if", "policy-owned"],
@@ -283,7 +317,8 @@ describe("sitesOfEffects", () => {
         skippedRule("event", "scopeless-event-kind", "scopeless"),
       ],
       NO_GAPS,
-      () => 0
+      () => 0,
+      OWNERSHIP
     );
     expect(sites.map(row)).toEqual([
       {
@@ -328,7 +363,8 @@ describe("sitesOfScopeLinks", () => {
         "pop_faction_parameter",
       ],
       classification,
-      usageOf({ owner: 9, target: 3 })
+      usageOf({ owner: 9, target: 3 }),
+      OWNERSHIP
     );
     expect(sites.map((site) => [site.key, site.class, site.used])).toEqual([
       ["modifier", "gap", 0],

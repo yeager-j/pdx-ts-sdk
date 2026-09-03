@@ -8,13 +8,22 @@
  * `npm run typecheck` is this file's type gate.
  */
 
-import { readFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createEffectPolicy } from "@pdx-ts/codegen-cwt/policy/effects";
 import { describe, expect, it } from "vitest";
 
-import { buildCoverage } from "../src/coverage-inputs.ts";
+import { buildCoverage, CoverageInputError } from "../src/coverage-inputs.ts";
 import type { CoverageClass, CoverageSite } from "../src/coverage/index.ts";
-import { committedRegistryReports, loadScriptUsage, MEASUREMENTS } from "../src/fixture.ts";
+import {
+  committedRegistryReports,
+  FIXTURE_DIR,
+  loadScriptUsage,
+  MEASUREMENTS,
+  SCRIPT_USAGE_FILE,
+} from "../src/fixture.ts";
 import { ACKNOWLEDGED_GAPS } from "../src/gaps.ts";
 import { MODIFIER_NAMES, RULES, SCRIPT_VOCABULARY } from "../src/generator-sources.ts";
 import { ACKNOWLEDGED_MISMATCHES } from "../src/observations.ts";
@@ -23,6 +32,14 @@ const build = buildCoverage();
 const { report } = build;
 const usage = loadScriptUsage();
 const registryReports = committedRegistryReports();
+const effectPolicy = createEffectPolicy(RULES);
+
+/** A copy of the committed fixtures, for tests that damage one. */
+function fixtureCopy(): string {
+  const dir = mkdtempSync(path.join(tmpdir(), "pdx-coverage-"));
+  cpSync(FIXTURE_DIR, dir, { recursive: true });
+  return dir;
+}
 
 /** The remainder of one surface, by label. */
 function remainderOf(label: string): readonly CoverageSite[] {
@@ -76,7 +93,9 @@ describe("the script surfaces", () => {
     expect(sites.modifiers).toBe(MODIFIER_NAMES.length);
   });
 
-  it("list exactly the ledger's tracked gaps as trigger and effect gaps", () => {
+  it("list the ledger's tracked gaps and the unsupported structural keys as gaps", () => {
+    // The ledger forbids policy categories (SDK-242), so a structural key
+    // nobody can write is a gap only here, derived from the effect policy.
     const listed = [
       ...remainderOf("triggers").map((site) => ({ ...site, kind: "trigger" })),
       ...remainderOf("effects").map((site) => ({ ...site, kind: "effect" })),
@@ -86,7 +105,29 @@ describe("the script surfaces", () => {
     const tracked = build.scriptGaps.trackedGaps.map(
       (gap) => `${gap.kind}:${gap.name} ${gap.issue}`
     );
-    expect(sorted(listed)).toEqual(sorted(tracked));
+    const unsupported = [...effectPolicy.unsupportedStructuralKeys].map(
+      (key) => `effect:${key} untracked`
+    );
+    expect(sorted(listed)).toEqual(sorted([...tracked, ...unsupported]));
+  });
+
+  it("derive the unsupported structural keys from the policy's null-method rows", () => {
+    const byPolicy = [...effectPolicy.byKey.values()]
+      .filter((entry) => entry.owner === "structural" && entry.method === null)
+      .map(
+        (entry) =>
+          `${entry.key} ${entry.recordedBy === null ? "unsupported" : `via ${entry.recordedBy}`}`
+      );
+    expect(sorted(byPolicy)).toEqual([
+      "else via if",
+      "else_if via if",
+      "inverted_switch unsupported",
+      "switch unsupported",
+    ]);
+    expect(sorted([...effectPolicy.unsupportedStructuralKeys])).toEqual([
+      "inverted_switch",
+      "switch",
+    ]);
   });
 
   it("list exactly the rules' removed keys as removed sites", () => {
@@ -220,6 +261,23 @@ describe("the report", () => {
     for (const one of registryReports) {
       expect(labels).toContain(one.registry);
     }
+  });
+
+  it("refuses a fixture directory missing a registry file", () => {
+    const dir = fixtureCopy();
+    const registry = MEASUREMENTS[0]!.registry;
+    rmSync(path.join(dir, `${registry}.json`));
+    expect(() => buildCoverage(dir)).toThrow(CoverageInputError);
+    expect(() => buildCoverage(dir)).toThrow(`no committed fixture for ${registry}`);
+  });
+
+  it("refuses a usage fixture whose roots differ from the declared ones", () => {
+    const dir = fixtureCopy();
+    const file = path.join(dir, SCRIPT_USAGE_FILE);
+    const reversed = { ...usage, roots: [...(usage?.roots ?? [])].reverse() };
+    writeFileSync(file, JSON.stringify(reversed), "utf8");
+    expect(() => buildCoverage(dir)).toThrow(CoverageInputError);
+    expect(() => buildCoverage(dir)).toThrow("counts roots events, common, not common, events");
   });
 
   it("never reads an install", () => {

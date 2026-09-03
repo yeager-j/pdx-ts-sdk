@@ -18,7 +18,6 @@ import type { ScriptGapReport, ScriptRuleKind } from "@pdx-ts/codegen-cwt/policy
 import { compareUtf8 } from "@pdx-ts/sdk/internals";
 
 import {
-  HAND_WRITTEN_OWNERSHIP,
   siteClassOfSkip,
   type CoverageSite,
   type CoverageSurfaceId,
@@ -133,7 +132,7 @@ export function sitesOfTriggers(
   facts: ScriptRuleEmissionFacts,
   gaps: ScriptGapReport,
   usageOf: UsageOf,
-  ownership: HandWrittenOwnership = HAND_WRITTEN_OWNERSHIP
+  ownership: HandWrittenOwnership
 ): CoverageSite[] {
   return sitesOfDeclaredKeys(
     "triggers",
@@ -159,7 +158,7 @@ export function sitesOfEffects(
   fireSkips: readonly SkippedRule[],
   gaps: ScriptGapReport,
   usageOf: UsageOf,
-  ownership: HandWrittenOwnership = HAND_WRITTEN_OWNERSHIP
+  ownership: HandWrittenOwnership
 ): CoverageSite[] {
   const untypedFires = new Map(
     fireSkips
@@ -180,7 +179,7 @@ export function sitesOfScopeLinks(
   declared: Iterable<string>,
   classification: LinkClassification,
   usageOf: UsageOf,
-  ownership: HandWrittenOwnership = HAND_WRITTEN_OWNERSHIP
+  ownership: HandWrittenOwnership
 ): CoverageSite[] {
   return sitesOfDeclaredKeys(
     "scope-links",
