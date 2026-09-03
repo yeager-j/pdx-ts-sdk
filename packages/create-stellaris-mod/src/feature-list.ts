@@ -116,12 +116,17 @@ export async function preflightFeatureList(
  * @throws FeatureListError - When the file is not the one the preflight saw.
  * @throws DeclarationConflictError - When the list gained the declaration
  * since the preflight. Nothing was written.
- * @throws DeclarationWrittenError - When the write was short or the flush
- * failed. The declaration is in the list, possibly cut short.
+ * @throws DeclarationWrittenError - When the write was short, or the flush or
+ * the close failed after it. The declaration is in the list, possibly cut short.
  */
 export async function appendFeatureDeclaration(preflight: FeatureListPreflight): Promise<void> {
   const { listPath } = preflight;
   const handle = await open(listPath, "a+");
+  // Set the moment `write` returns: from then on the list holds some or all of
+  // the declaration, and every later failure, the flush and the close
+  // included, is one the module has to survive.
+  let written: { readonly line: number } | undefined;
+  let failure: unknown;
   try {
     const observed = await handle.stat();
     if (observed.dev !== preflight.identity.dev || observed.ino !== preflight.identity.ino) {
@@ -137,8 +142,7 @@ export async function appendFeatureDeclaration(preflight: FeatureListPreflight):
     const line = appendedLineNumber(contents);
     const expected = Buffer.byteLength(bytes, "utf8");
     const { bytesWritten } = await handle.write(bytes, null, "utf8");
-    // From here on the list holds some or all of the declaration, and every
-    // failure is one the module has to survive.
+    written = { line };
     if (bytesWritten !== expected) {
       throw new DeclarationWrittenError(
         `${listPath} took ${bytesWritten} of the ${expected} bytes of the declaration, so ` +
@@ -149,16 +153,38 @@ export async function appendFeatureDeclaration(preflight: FeatureListPreflight):
     try {
       await handle.sync();
     } catch (error) {
-      const code = (error as NodeJS.ErrnoException | undefined)?.code ?? "unknown error";
       throw new DeclarationWrittenError(
         `${listPath} took the declaration on line ${line}, but flushing it to disk failed ` +
-          `(${code}), so the line may not have reached the disk in full.`,
+          `(${errnoCode(error)}), so the line may not have reached the disk in full.`,
         line
       );
     }
-  } finally {
-    await handle.close();
+  } catch (error) {
+    failure = error;
   }
+
+  // The close is not in a `finally`, because a `finally` that throws would
+  // replace the error above, and a close that fails after the write is itself
+  // a post-write failure rather than a reason to remove the module.
+  try {
+    await handle.close();
+  } catch (error) {
+    failure ??=
+      written === undefined
+        ? error
+        : new DeclarationWrittenError(
+            `${listPath} took the declaration on line ${written.line}, but closing the file ` +
+              `failed (${errnoCode(error)}), so the line may not have reached the disk in full.`,
+            written.line
+          );
+  }
+  if (failure !== undefined) {
+    throw failure;
+  }
+}
+
+function errnoCode(error: unknown): string {
+  return (error as NodeJS.ErrnoException | undefined)?.code ?? "unknown error";
 }
 
 async function requireRegularFile(listPath: string): Promise<Stats> {

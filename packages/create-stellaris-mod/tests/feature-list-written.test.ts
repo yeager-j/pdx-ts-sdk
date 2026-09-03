@@ -35,7 +35,8 @@ import { capture } from "./helpers/capture.ts";
 import { createTempProject, type TempProject } from "./helpers/golden-project.ts";
 import { NAME, STEM } from "./helpers/matrix.ts";
 
-type FaultKind = "short-write" | "write-refused" | "sync-refused";
+type FaultKind =
+  "short-write" | "write-refused" | "sync-refused" | "close-refused" | "sync-and-close-refused";
 
 /** The one file whose next handle misbehaves, and how. */
 const fault = vi.hoisted(() => ({
@@ -79,8 +80,16 @@ function faulted(handle: FileHandle, kind: FaultKind): FileHandle {
       if (property === "write" && kind === "write-refused") {
         return () => Promise.reject(refused("write"));
       }
-      if (property === "sync" && kind === "sync-refused") {
+      if (property === "sync" && (kind === "sync-refused" || kind === "sync-and-close-refused")) {
         return () => Promise.reject(refused("fsync"));
+      }
+      if (property === "close" && (kind === "close-refused" || kind === "sync-and-close-refused")) {
+        // The real close still runs, so the descriptor is not leaked into
+        // the rest of the run; only the report of it is refused.
+        return async () => {
+          await target.close();
+          throw refused("close");
+        };
       }
       const value = Reflect.get(target, property, target) as unknown;
       return typeof value === "function"
@@ -143,6 +152,31 @@ describe("appendFeatureDeclaration, once bytes have landed", () => {
       `took ${SHORT} of the ${Buffer.byteLength(`${LINE}\n`)} bytes`
     );
     expect(readFileSync(list, "utf8")).toBe(`// mine\n${LINE.slice(0, SHORT)}`);
+  });
+
+  it("reports a refused close after the write as a written declaration", async () => {
+    const { root, list } = listOf("// mine\n");
+    const preflight = await preflightFeatureList(root, NAMES, LINE);
+    fault.current = { file: list, kind: "close-refused" };
+
+    const failure = await appendFeatureDeclaration(preflight).catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(DeclarationWrittenError);
+    expect((failure as DeclarationWrittenError).line).toBe(2);
+    expect((failure as Error).message).toContain("closing the file failed (EIO)");
+    expect(readFileSync(list, "utf8")).toBe(`// mine\n${LINE}\n`);
+  });
+
+  it("keeps the flush failure when the close fails too", async () => {
+    const { root, list } = listOf("// mine\n");
+    const preflight = await preflightFeatureList(root, NAMES, LINE);
+    fault.current = { file: list, kind: "sync-and-close-refused" };
+
+    const failure = await appendFeatureDeclaration(preflight).catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(DeclarationWrittenError);
+    expect((failure as Error).message).toContain("flushing it to disk failed");
+    expect((failure as Error).message).not.toContain("closing the file");
   });
 
   it("leaves a write that never landed as an ordinary failure", async () => {
