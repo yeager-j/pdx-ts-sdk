@@ -4,7 +4,7 @@
  * scope links, value-set factories, branded refs and enums, content types,
  * event types, and the `vanilla` reference builders.
  *
- * The root entry point carries the pipeline (`createMod`, `discoverFeatures`,
+ * The root entry point carries the pipeline (`createModProject`, `createMod`,
  * `render`, `write`, `install`); this module carries the language those
  * builds are written in. See docs/adr/0007.
  */

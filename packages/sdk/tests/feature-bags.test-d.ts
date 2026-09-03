@@ -20,8 +20,7 @@ describe("a features module", () => {
     expectTypeOf(mod.compile(features)).toEqualTypeOf<PureMod>();
     expectTypeOf(project.build(projectFeatures)).toEqualTypeOf<PureMod>();
     expectTypeOf(project.build([])).toEqualTypeOf<PureMod>();
-    expectTypeOf(project.build()).toEqualTypeOf<Promise<PureMod>>();
-    expectTypeOf(project.build({ additionalFeatures: [] })).toEqualTypeOf<Promise<PureMod>>();
+    expectTypeOf(project.build({ declared: projectFeatures.declared })).toEqualTypeOf<PureMod>();
   });
 
   it("is refused when an export is not a Feature, or is another capability's", () => {

@@ -7,7 +7,6 @@ import type { PureMod } from "./compiler/model.ts";
 import { VanillaPackageUnreadableError } from "./errors.ts";
 import { installedVanillaPackagePin } from "./identifiers/package-pin.ts";
 import { vanillaPackageGameVersion } from "./identifiers/version-scheme.ts";
-import { parseProjectLayout } from "./project-layout.ts";
 import { resolveProjectRootPath } from "./project-root.ts";
 import type { ModProjectManifest } from "./project.ts";
 
@@ -81,11 +80,7 @@ export async function runInspect(
       );
     }
     const idsVersion = idsPin.state === "read" ? idsPin.version : null;
-    const report = inspectionReport(
-      mod,
-      options.manifest,
-      packageReport(projectPackage, sdkPackage, idsVersion)
-    );
+    const report = inspectionReport(mod, packageReport(projectPackage, sdkPackage, idsVersion));
     output.write(stringify(report, { aliasDuplicateObjects: false, lineWidth: 0 }));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -137,12 +132,7 @@ function requestedDependencies(packageJson: PackageJson): Readonly<Record<string
   };
 }
 
-function inspectionReport(
-  mod: PureMod,
-  manifest: ModProjectManifest,
-  projectPackage: PackageReport
-): object {
-  const layout = parseProjectLayout(manifest);
+function inspectionReport(mod: PureMod, projectPackage: PackageReport): object {
   const patches = mod.patchPlans.flatMap((plan) =>
     plan.assertions.map((assertion) => ({
       registry: assertion.registry,
@@ -155,7 +145,6 @@ function inspectionReport(
     schema: "pdx-sdk-inspection/v1",
     project: {
       manifest: "stellaris-mod.json",
-      contentDirectory: layout.contentDirectory ?? null,
       package: projectPackage,
     },
     mod: {

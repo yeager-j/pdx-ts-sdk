@@ -27,18 +27,20 @@ my-first-mod/
 ├── assets/                 create this when the mod needs an Asset file
 └── src/
     ├── mod.ts
+    ├── build.ts
+    ├── features.ts         the feature list: one line per Feature
     ├── vanilla.ts          written when the scaffolder found an install
     ├── index.ts
     ├── install.ts
     ├── flags.ts
-    └── content/
+    └── features/
         ├── example.ts
         └── example.test.ts
 ```
 
 `stellaris-mod.json` is the project configuration. The single key under `mod`
-is the mod prefix. The manifest also says where feature source and Asset
-files live. Change these facts here, not in `src/mod.ts`.
+is the mod prefix. The manifest also says where Asset files live. Change these
+facts here, not in `src/mod.ts`.
 
 ```json
 {
@@ -51,7 +53,6 @@ files live. Change these facts here, not in `src/mod.ts`.
       "tags": []
     }
   },
-  "contentDirectory": "src/content",
   "assetsDirectory": "assets"
 }
 ```
@@ -62,8 +63,10 @@ so the scaffold does not create it; add it when you need the first
 [Asset file](/concepts/assets/). Files under `assets/` are copied to the same
 path in the built mod.
 
-`src/mod.ts` passes the manifest to `createModProject`. Its `project.build()`
-function discovers Features, captures `assets/`, and performs one Fold.
+`src/mod.ts` passes the manifest to `createModProject` and exports `mod`, the
+object every feature module authors with. `src/features.ts` is the feature
+list: one line per Feature the mod ships. `src/build.ts` hands that list to
+`project.build`, which captures `assets/` and performs one Fold.
 `src/vanilla.ts` loads the Stellaris install and passes the view into that
 build, which enables vanilla file-collision checks, patching, and the
 identifier-package check; the scaffolder writes it only when it found the
@@ -73,18 +76,19 @@ without one. `src/index.ts` is the build entry point,
 `src/install.ts` backs `npm run install-mod`, and `src/flags.ts` declares the
 country flags the example event sets.
 
-`src/content/example.ts` is a working feature. It contains a technology, a
+`src/features/example.ts` is a working feature. It contains a technology, a
 game-start event, and the hook that fires that event. Each content item is
-placed in the exported `feature`; the build then writes it to the directory
-Stellaris expects. `src/content/example.test.ts` is the test `npm test` runs.
+placed in the exported `feature`, and the line in `src/features.ts` puts that
+Feature in the mod; the build then writes each item to the directory Stellaris
+expects. `src/features/example.test.ts` is the test `npm test` runs.
 Start by editing the technology's `name` and `desc`. Then rewrite the event
 and its effects. That is enough to turn the scaffold into your own mod.
 
 The scaffolder can also add feature modules later:
 `npx create-stellaris-mod list` shows the built-in recipes (a technology, a
 building, an event, a research quest), `view <recipe>` shows one recipe's
-questions and defaults, and `generate <recipe> <name>` writes a new module
-into `src/content/`.
+questions and defaults, and `generate <recipe> <name>` writes
+`src/features/<name>.ts` and adds its line to `src/features.ts`.
 
 ## Build the mod
 
@@ -147,7 +151,7 @@ deliberately — see [Warnings and diagnostics](/guides/warnings-and-diagnostics
 
 ## Where to go next
 
-Read [Features and discovery](/guides/features-and-discovery/) for how
-`src/content/` becomes the mod, [The pipeline](/guides/the-pipeline/) for what
+Read [Features and the module tree](/guides/features/) for how
+`src/features.ts` becomes the mod, [The pipeline](/guides/the-pipeline/) for what
 `npm run build` does, and the [Coverage](/reference/coverage/) page for what
 the SDK can author.

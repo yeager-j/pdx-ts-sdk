@@ -2,8 +2,8 @@
 
 `@pdx-ts/sdk` publishes five entry points, one per kind of consumer:
 
-- `.` — the pipeline: configure, discover, build, materialize. `createModProject`,
-  `createMod`, `discoverFeatures`, `render`, `write`, `install`, the terminal helpers
+- `.` — the pipeline: configure, build, materialize. `createModProject` and its
+  `build`, `createMod`, `render`, `write`, `install`, the terminal helpers
   (`runBuild`, `runInstall`, `runInspect`), the error classes, and the mod-level dev tools
   (`inspectSolarSystem`, `writeSystemPreviews`).
 - `./stellaris` — the game vocabulary: what an author types inside defs,

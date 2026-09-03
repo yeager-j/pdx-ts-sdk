@@ -292,7 +292,6 @@ describe("a scaffolded project", () => {
     const manifest = parseManifest(readFileSync(manifestPath, "utf8"), manifestPath);
     expect(manifest.prefix).toBe("smoke_mod");
     expect(manifest.config.name).toBe("Smoke Mod");
-    expect(manifest.contentDirectory).toBeUndefined();
     expect(manifest.assetsDirectory).toBe("assets");
   });
 
@@ -318,7 +317,7 @@ describe("a scaffolded project", () => {
   });
 
   it("does not write to disk merely by importing config (SDK-54)", () => {
-    // config lives in src/mod.ts, which only reads: discovering and folding
+    // config lives in src/mod.ts, which only reads: declaring and folding
     // content touches no disk. A test — or anything else — that imports
     // `config` to read the mod's prefix must not build the mod as a side
     // effect. This is the ticket's headline claim, and it fails on the

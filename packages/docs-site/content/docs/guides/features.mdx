@@ -1,6 +1,6 @@
 ---
-title: Features and discovery
-description: Place mod items explicitly, discover feature modules, and organize source without tying it to output layout.
+title: Features and the module tree
+description: Place mod items in Features, declare the Features a mod ships from src/features.ts, and organize source without tying it to output layout.
 ---
 
 import { PairedExample } from "@/components/PairedExample";
@@ -59,98 +59,91 @@ Asset paths and shared outputs such as on-action contributions and patch
 plans have their own path rules, so a Feature stem does not directly relocate
 them.
 
-## Discover a directory of Features
+## Declare the Features the mod ships
 
-Small builds can import Features directly and pass them to `mod.compile`. For a
-file-per-Feature project, `createModProject` owns the conventional discovery,
-Asset capture, and compile sequence. This is the scaffold's `src/mod.ts`:
+A project declares its module tree the way a Rust crate does with `lib.rs` and
+its `mod` lines: `src/features.ts` re-exports each feature module's `feature`,
+and the build takes that module as a namespace. The scaffold generates three
+files for this:
 
 ```ts
+// src/mod.ts
 import { createModProject } from "@pdx-ts/sdk";
 
 import manifest from "../stellaris-mod.json" with { type: "json" };
 
-const project = createModProject(manifest, {
+export const project = createModProject(manifest, {
   projectRoot: new URL("../", import.meta.url),
 });
 
 export const { config, mod } = project;
-export const buildTheMod = project.build;
+```
+
+```ts
+// src/features.ts
+export { feature as example } from "./features/example.ts";
+```
+
+```ts
+// src/build.ts
+import { project } from "#mod";
+
+import * as features from "./features.ts";
+import { loadVanilla } from "./vanilla.ts";
+
+export async function buildTheMod() {
+  return project.build(features, { vanilla: loadVanilla() });
+}
 ```
 
 Project creation validates the manifest and its source layout but reads no
-source files. Calling `project.build()` discovers Features under the manifest's
-`contentDirectory`, captures the optional `assetsDirectory`, and performs one
-capability-owned Fold. The bound `build` function can be exported directly.
+source files. `project.build(features)` compiles every export of the features
+module, captures the optional `assetsDirectory`, and performs one
+capability-owned Fold. Every export of `src/features.ts` must be a Feature of
+this mod: a string or a helper there is refused by name, and a module with no
+exports is refused rather than built as an empty mod. An explicit array is
+accepted in the same position.
 
-Use `discover.include` to replace the default discovery pattern:
+A module under `src/features/` that no line names is dead code that still
+compiles and passes its tests. TypeScript's import graph is the module tree, so
+the scaffold's `npm run lint` runs [knip](https://knip.dev) and reports such a
+module by path. A wrong export is a type error: `project.build` accepts only
+Features created by this project's `mod`.
 
-```ts
-export function buildTheMod() {
-  return project.build({
-    discover: { include: /\.feature\.ts$/ },
-  });
-}
-```
+`src/mod.ts` imports nothing else of the project. Feature modules import `mod`,
+so `mod.ts` cannot import `features.ts` back without evaluating them before
+`mod` exists; `src/build.ts` is the one module that imports both sides. For a
+pipeline with different stages, compose `mod.assetTree` and `mod.compile`
+directly. `mod.compile` accepts the same features module or array.
 
-Use `additionalFeatures` to append capability-owned Features without replacing
-discovered content or captured Assets:
+### The private tree under a feature module
 
-```ts
-export function buildTheMod() {
-  return project.build({
-    additionalFeatures: [extraFeature],
-  });
-}
-```
-
-For a pipeline with different stages, use the lower-level interface directly:
-call `discoverFeatures`, capture Assets through `mod.assetTree`, and finish with
-`mod.compile`. These names remain public customization seams.
-
-`discoverFeatures(dir)` accepts a directory `URL` or an absolute path string.
-It recursively walks the directory, selects feature modules, imports them, and
-reads only each module's named `feature` export. Other named exports and the
-default export remain ordinary module API; they are not registered implicitly.
-The type argument binds the discovered Features to this mod's prefix.
-
-By default, discovery selects `.ts` files but excludes common companion files:
-
-```text
-*.test.ts
-*.test-d.ts
-*.spec.ts
-*.bench.ts
-*.d.ts
-```
-
-This lets a test sit beside its Feature without entering the build. Every
-selected module must export one named, stemmed Feature as `feature`.
-A plain helper module inside the discovered directory would therefore fail
-discovery. Keep helpers outside that directory, export them from a selected
-Feature module, or use a custom `include` pattern that selects only your
-feature-module naming convention.
+A feature module can be one file or the root of its own tree. `mod.feature`
+accepts a module namespace in place of an array: every Item-valued export is
+placed, a nested `export * as` namespace is walked the same way, and every
+other export (a string, a function, a plain object) is module API and is left
+alone. One Item reached under two names is placed once.
 
 ```ts
-const features = await discoverFeatures<typeof mod.config.prefix>(
-  new URL("./content/", import.meta.url),
-  { include: /\.feature\.ts$/ }
-);
+// src/features/resonance.ts
+import { mod } from "#mod";
+
+import * as items from "./resonance/items.ts";
+
+export const feature = mod.feature("resonance", items);
 ```
 
-A custom `include` replaces the default pattern; it does not narrow it. The
-default is exported as `DEFAULT_CONTENT_PATTERN` for compositions that start
-from it. The pattern matches `/`-separated paths relative to the directory. A
-walk that selects nothing throws — a directory with no TypeScript and an
-`include` that matched none of the TypeScript files are reported as two
-distinct errors — so a mistyped pattern cannot produce a silently empty
-build.
+A bag that holds no Items is refused, and a Feature among them is refused
+rather than dropped or placed twice. `mod.feature("empty", [])` stays legal,
+because an explicit empty list is a decision.
 
-Discovery reads the filesystem and importing a module executes its top-level
-code, so `discoverFeatures` is impure. `mod.compile(features)` is the pure Fold
-that validates and assembles the returned values. Discovery sorts selected
-module paths for stable imports, but source or discovery order does not decide
-the Fold's output order.
+### One namespace per Feature
+
+An event namespace is in strict bijection with an event file, and a Feature's
+stem names that file, so a namespace belongs to exactly one Feature. Create it
+in the feature module that owns it and do not export the handle from a Feature.
+The scaffold's ESLint rule `pdx/one-namespace-per-file` reports a second
+namespace in one feature module.
 
 ## Source layout is not identity
 
@@ -158,13 +151,13 @@ The module path and basename are not used as a Feature stem, content id, event
 id, or emitted path. These two source locations can produce the same output:
 
 ```text
-src/content/resonance.ts
-src/content/research/crystal-theory.ts
+src/features/resonance.ts
+src/features/research/crystal-theory.ts
 ```
 
 If the moved module still exports the same `mod.feature("resonance", ...)`, with
 the same items, its mod output is unchanged. You may need to update relative
-imports, and the new path must still match discovery, but the path itself does
+imports and the module's line in `src/features.ts`, but the path itself does
 not become mod content.
 
 The authored values remain significant:
@@ -176,7 +169,7 @@ The authored values remain significant:
 - Changing an item's authored logical name changes the id minted for it.
 - Changing an event namespace or number changes its event id.
 
-Organize `src/content/` around the concepts people maintain together: an event
+Organize `src/features/` around the concepts people maintain together: an event
 chain, research theme, origin, crisis, or another gameplay feature. Let the
 Fold map those concepts to Stellaris's output directories. This keeps source
 organization useful to the author without making refactors change game-facing

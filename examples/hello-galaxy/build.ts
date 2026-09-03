@@ -1,9 +1,8 @@
 import { render, write } from "@pdx-ts/sdk";
 
-import { defineHelloGalaxy } from "./mod.ts";
+import { defineHelloGalaxy } from "./index.ts";
 
-const mod = await defineHelloGalaxy();
-const files = render(mod);
+const files = render(defineHelloGalaxy());
 await write(new URL("./out/", import.meta.url), files);
 
 for (const relPath of files.keys()) {

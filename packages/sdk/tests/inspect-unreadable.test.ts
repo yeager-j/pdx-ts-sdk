@@ -49,7 +49,6 @@ describe("runInspect with unreadable identifier metadata", () => {
     await runInspect(mod, {
       manifest: {
         mod: { inspection_unreadable: mod.config },
-        contentDirectory: "src/content",
       },
       projectRoot,
       output: output.output,

@@ -553,7 +553,6 @@ describe("the manifest init writes", () => {
       supportedVersion: "v4.4.*",
       tags: ["Technologies"],
     });
-    expect(manifest.contentDirectory).toBeUndefined();
     expect(manifest.assetsDirectory).toBe("assets");
   });
 

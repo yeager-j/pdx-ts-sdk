@@ -53,6 +53,16 @@ export const PROJECT_MOD_FIELDS = {
   acceptGameVersion: { kind: "string", required: false },
 } as const satisfies Record<string, ProjectModFieldDescriptor>;
 
+/**
+ * The refusal for the one key the manifest used to carry and the SDK no
+ * longer reads (docs/adr/0008). Unknown keys pass through, so a retired one
+ * would be silent: a project that still says where its Features live would
+ * build as if it had never said so.
+ */
+const CONTENT_DIRECTORY_RETIRED =
+  '"contentDirectory" is no longer read: features are declared in src/features.ts. ' +
+  "Remove the key.";
+
 /** A launcher-configuration field named by {@link PROJECT_MOD_FIELDS}. */
 export type ProjectModFieldName = keyof typeof PROJECT_MOD_FIELDS;
 
@@ -81,7 +91,8 @@ function quoteList(values: readonly string[]): string {
  * Unknown keys are left alone. This is the SDK's door rather than the
  * scaffolder's, and a project may carry manifest keys a future release reads;
  * a mistyped field is a fault, an unrecognised one is not this function's
- * business.
+ * business. A key a past release read is the exception: it is refused with
+ * the fix, so a stale manifest cannot look current.
  *
  * @throws ProjectManifestError naming the field and what was found.
  */
@@ -97,6 +108,10 @@ export function parseProjectManifest(manifest: unknown): ParsedProjectManifest {
     throw new ProjectManifestError(
       `A Project Manifest's "mod" must be a JSON object, and is ${describe(mod)}.`
     );
+  }
+
+  if (Object.hasOwn(manifest, "contentDirectory")) {
+    throw new ProjectManifestError(CONTENT_DIRECTORY_RETIRED);
   }
 
   const prefixes = Object.keys(mod);
@@ -161,7 +176,7 @@ function readModConfig(
  * Checks each project-layout field is a string before the path rules read it.
  *
  * `parseProjectLayout` matches a pattern, and a pattern coerces: a numeric
- * `contentDirectory` would be tested as its own digits and refused as a path
+ * `assetsDirectory` would be tested as its own digits and refused as a path
  * fault rather than as the type fault it is.
  */
 function readLayoutFields(
