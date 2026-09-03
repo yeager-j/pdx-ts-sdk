@@ -1,6 +1,6 @@
 {
   "name": "create-stellaris-mod",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Scaffold a Stellaris mod project that builds with @pdx-ts/sdk",
   "type": "module",
   "license": "MIT",
@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",
-    "@pdx-ts/sdk": "^0.7.0",
+    "@pdx-ts/sdk": "^0.8.0",
     "semver": "^7.8.5"
   },
   "devDependencies": {

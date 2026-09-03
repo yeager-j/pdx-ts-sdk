@@ -1,0 +1,4 @@
+interface:
+  display_name: "Prepare Release"
+  short_description: "Prepare and verify a pdx-sdk release"
+  default_prompt: "Prepare the project for the requested release version."

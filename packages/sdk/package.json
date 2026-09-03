@@ -1,6 +1,6 @@
 {
   "name": "@pdx-ts/sdk",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "TypeScript SDK for generating Stellaris mods",
   "type": "module",
   "engines": {
@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",
-    "@pdx-ts/pdxscript": "^0.7.0",
+    "@pdx-ts/pdxscript": "^0.8.0",
     "yaml": "^2.9.0"
   },
   "peerDependencies": {

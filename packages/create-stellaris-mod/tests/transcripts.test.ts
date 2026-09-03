@@ -334,7 +334,7 @@ describe("generate", () => {
 
   it("refuses an SDK range it cannot prove is inside the verified one", async () => {
     const target = open();
-    declareSdk(target, ">=0.7.0");
+    declareSdk(target, ">=0.8.0");
     const { transcript, code } = await run(
       ["generate", "technology", "Resonance Theory", "--yes"],
       {
