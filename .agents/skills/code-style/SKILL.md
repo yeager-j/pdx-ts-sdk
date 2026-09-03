@@ -19,8 +19,10 @@ and file level.
 
 ## Working method
 
+The yardstick throughout is reader cost: how many concepts a reader must hold at once, and how many places they must look to trust the code. Length is evidence only when it changes that.
+
 1. Read the surrounding code and state the behavior the change must preserve or introduce.
-2. Write the smallest direct implementation that follows the local idiom.
+2. Write the implementation whose shape matches the behavior from step 1: one named step per concept the behavior has, and no mechanism the behavior does not require. Judge it by what a reader must hold at once, not by length. A longer version with named steps beats a shorter one the reader must execute in their head.
 3. Read the result as its next maintainer. Remove avoidable cleverness, nesting, indirection, and
    explanation debt.
 4. Improve code that the change must touch, but do not expand into unrelated cleanup.
@@ -43,7 +45,7 @@ conditionals, chains, or a non-obvious language feature. Would named intermediat
 sequence and meaning visible?
 
 **Diagnostic:** An abstraction supports configuration, callbacks, or variants for which only one
-real use exists. What present requirement earns that flexibility?
+real use exists. What present requirement (or known-for-certain future requirement) earns that flexibility?
 
 ## 2. Give names and functions one truthful purpose
 
@@ -86,14 +88,17 @@ import { basename, join } from "node:path";
 
 type Config = { outputDirectory: string };
 
+// Pure function, one calculation
 function calculateOutputPath(filePath: string, config: Config): string {
   return join(config.outputDirectory, basename(filePath));
 }
 
+// Pure function, one transformation
 function transformContents(contents: string): string {
   return contents.trim();
 }
 
+// Impure shell, but still one job: transform the file.
 async function transformFile(filePath: string, config: Config): Promise<void> {
   const contents = await readFile(filePath, "utf8");
   const outputPath = calculateOutputPath(filePath, config);
@@ -188,7 +193,7 @@ exceptional, or already-complete cases. Would guard clauses expose the main path
 repeatedly remembering which earlier conditions remain true. Can the control flow be flattened
 without separating symmetric alternatives?
 
-## 9. Decide each distinction once
+## 9. Decide each distinction once (Meyer's Single Choice)
 
 When the same condition controls several nearby operations, resolve it once into a named value,
 selected implementation, or cohesive branch. Engineering Principles governs the larger placement
@@ -197,6 +202,18 @@ and modeling decision.
 **Diagnostic:** The same predicate or discriminant is checked several times to select related
 values, collaborators, or operations. Can the distinction be resolved once into a named result or
 cohesive branch?
+
+**Diagnostic:** Several ternaries or short branches on one condition each choose a single value, 
+field, or call, and those choices only make sense together. Can the condition select one cohesive 
+configuration or implementation, so the pairing is visible in one place?
+
+**Diagnostic:** A boolean or mode argument crosses function boundaries so that each callee can 
+branch on it again. Can the caller resolve it once into the selected implementation or data, and 
+pass that instead of the flag?
+
+**Diagnostic:** The same set of alternatives appears in more than one switch, map, or union, so 
+adding a case means editing each of them. Which one place owns the list, and can the others be 
+driven by it?
 
 ## Self-review
 
