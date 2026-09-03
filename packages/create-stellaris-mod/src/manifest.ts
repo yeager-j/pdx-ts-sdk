@@ -156,8 +156,8 @@ export interface ProjectManifest {
   /** The sole key under `mod`, which is the mod prefix. */
   readonly prefix: string;
   readonly config: ProjectModConfig;
-  /** A project-relative logical path. Validated as a path when it is used. */
-  readonly contentDirectory: string;
+  /** A project-relative logical path, when the project discovers Features from one. */
+  readonly contentDirectory?: string;
   /** A project-relative directory mirrored into the mod root, when configured. */
   readonly assetsDirectory?: string;
   readonly layout: ProjectLayout;
@@ -231,7 +231,7 @@ export function parseManifest(bytes: string, sourcePath: string): ProjectManifes
   const layout = readProjectLayoutFields(root, sourcePath);
   return {
     ...readMod(root["mod"], sourcePath),
-    contentDirectory: layout.contentDirectory,
+    ...(layout.contentDirectory === undefined ? {} : { contentDirectory: layout.contentDirectory }),
     ...(layout.assetsDirectory === undefined ? {} : { assetsDirectory: layout.assetsDirectory }),
     layout,
     sourcePath,
@@ -398,7 +398,7 @@ function readProjectLayoutFields(root: Record<string, unknown>, sourcePath: stri
     values[field] = value;
   }
   try {
-    return parseProjectLayout(values as { contentDirectory: string; assetsDirectory?: string });
+    return parseProjectLayout(values);
   } catch (error) {
     throw new ManifestError(
       `${sourcePath}: ${error instanceof Error ? error.message : String(error)}`

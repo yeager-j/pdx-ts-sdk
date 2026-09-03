@@ -83,6 +83,33 @@ export function createFeature<T extends ModItem>(
 
 export type ModItemInput = Feature | readonly ModItemInput[];
 
+/**
+ * Whether the value is an Item: content, event, patch, Asset file, or any
+ * other value an authoring method returns.
+ *
+ * `itemKind` is the discriminant every Item carries and nothing else does, so
+ * it settles this without naming one kind. An author can of course write
+ * `{ itemKind: "…" }` by hand; nothing here believes more than the shape, and
+ * whatever comes next (a snapshot sharing it, a placement checking its owner)
+ * treats it as the Item it claims to be.
+ */
+export function isItem(value: unknown): value is { readonly itemKind: string } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { readonly itemKind?: unknown }).itemKind === "string"
+  );
+}
+
+/**
+ * Whether the value is a Feature: a placed list of Items, as `mod.feature`
+ * returns. Structural on purpose, because discovery and bag reading both meet
+ * Features as unknown module exports and have only their shape to go on.
+ */
+export function isFeature(value: unknown): value is Feature {
+  return isItem(value) && value.itemKind === "feature";
+}
+
 /** An item plus the file stem of the feature that created it. */
 export interface PlacedItem<T extends ModItem = ModItem> {
   readonly item: T;

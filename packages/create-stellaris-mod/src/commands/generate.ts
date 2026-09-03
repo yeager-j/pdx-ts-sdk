@@ -168,6 +168,13 @@ export async function runGenerate(
     }
 
     const segments = found.manifest.layout.contentSegments;
+    if (segments === undefined) {
+      return fail(
+        `${found.manifest.sourcePath} has no "contentDirectory", and \`generate\` writes each ` +
+          "feature file into that directory. Add one, for example " +
+          '`"contentDirectory": "src/content"`.'
+      );
+    }
 
     const compatibility = checkSdkCompatibility({
       declaredSpecifier: project.declaredSpecifier,

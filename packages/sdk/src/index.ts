@@ -15,10 +15,13 @@ export {
   type CapabilityEventItem,
   type CapabilityEvents,
   type CapabilityFeature,
+  type FeaturesInput,
+  type FeaturesModule,
   type IdProfile,
   type MintedContentId,
   type ModCapability,
 } from "./authoring/mod.ts";
+export type { ItemBag } from "./authoring/bag.ts";
 export {
   DEFAULT_CONTENT_PATTERN,
   discoverFeatures,

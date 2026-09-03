@@ -155,7 +155,7 @@ function inspectionReport(
     schema: "pdx-sdk-inspection/v1",
     project: {
       manifest: "stellaris-mod.json",
-      contentDirectory: layout.contentDirectory,
+      contentDirectory: layout.contentDirectory ?? null,
       package: projectPackage,
     },
     mod: {

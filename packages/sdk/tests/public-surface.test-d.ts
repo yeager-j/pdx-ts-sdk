@@ -73,6 +73,16 @@ describe("the pipeline entry point", () => {
     expectTypeOf(project.build({ additionalFeatures: [extra] })).toEqualTypeOf<
       Promise<sdk.PureMod>
     >();
+    expectTypeOf(project.build([extra])).toEqualTypeOf<sdk.PureMod>();
+    expectTypeOf<sdk.FeaturesModule<"public_project">[string]>().toEqualTypeOf<
+      sdk.CapabilityFeature<"public_project">
+    >();
+    expectTypeOf<sdk.FeaturesInput<"public_project">>().toEqualTypeOf<
+      readonly sdk.CapabilityFeature<"public_project">[] | sdk.FeaturesModule<"public_project">
+    >();
+    expectTypeOf<sdk.ItemBag["itemKind"]>().toEqualTypeOf<undefined>();
+    // @ts-expect-error — bag reading is fold machinery, not part of the API.
+    void sdk.itemsOfBag;
     expectTypeOf<sdk.PureMod["compileInputs"]>().toEqualTypeOf<sdk.CompileInputs>();
     expectTypeOf<sdk.CompileInputs["features"]>().toEqualTypeOf<
       readonly sdk.CompiledFeatureInput[]

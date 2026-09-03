@@ -22,6 +22,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { compareLogicalPaths, normalizeLogicalPath } from "../ordering.ts";
+import { isFeature } from "./feature.ts";
 import type { CapabilityFeature } from "./mod.ts";
 
 /**
@@ -107,7 +108,7 @@ export async function discoverFeatures<P extends string>(
   const features: CapabilityFeature<P>[] = [];
   for (const module of modules) {
     const exports = (await import(pathToFileURL(module.absolute).href)) as Record<string, unknown>;
-    if (!isCapabilityFeature(exports.feature)) {
+    if (!isFeature(exports.feature)) {
       throw new Error(`${module.relative} must export one capability feature as "feature"`);
     }
     if (exports.feature.stem === undefined) {
@@ -142,14 +143,5 @@ function emptyFeatureWalkMessage(
     `TypeScript files there. Excluded:\n` +
     excluded.map((relPath) => `  - ${relPath}`).join("\n") +
     `\nThe default (${DEFAULT_CONTENT_PATTERN}) takes .ts and leaves out colocated tests.`
-  );
-}
-
-function isCapabilityFeature(value: unknown): value is CapabilityFeature<string> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "itemKind" in value &&
-    value.itemKind === "feature"
   );
 }

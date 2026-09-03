@@ -56,6 +56,7 @@ import {
   type AssetFileItem,
   type AssetTreeInput,
 } from "./assets.ts";
+import { featuresOfInput, itemsOfBag, type ItemBag } from "./bag.ts";
 import {
   assertComponentTagOwner,
   createComponentTagItem,
@@ -100,6 +101,22 @@ export type CapabilityFeature<P extends string, T extends ModItem = ModItem> = F
   readonly [capabilityFeatureOwner]: CapabilityFeatureOwner<P>;
 };
 
+/**
+ * A project's features module: every export is one feature module's `feature`,
+ * as `src/features.ts` re-exports them.
+ *
+ * @example
+ * // src/features.ts
+ * export { feature as apotheosis } from "./features/apotheosis.ts";
+ * export { feature as resonance } from "./features/resonance.ts";
+ */
+export type FeaturesModule<P extends string> = {
+  readonly [name: string]: CapabilityFeature<P>;
+};
+
+/** What `mod.compile` and `project.build` take: an explicit list, or the features module. */
+export type FeaturesInput<P extends string> = readonly CapabilityFeature<P>[] | FeaturesModule<P>;
+
 /** A mod-bound event namespace whose ids are minted from the capability prefix. */
 export type CapabilityEvents<P extends string, N extends string> = GeneratedCapabilityEvents<P, N>;
 
@@ -136,7 +153,20 @@ export type ModCapability<P extends string, I extends IdProfile> = {
     (): CapabilityEvents<P, "">;
     <const N extends string>(name: N): CapabilityEvents<P, N>;
   };
-  /** Places pure items in one capability-owned feature file. */
+  /**
+   * Places pure items in one capability-owned feature file.
+   *
+   * The items are an explicit array, or a module namespace (`import * as`)
+   * whose Item-valued exports are placed and whose other exports are left
+   * alone. The array form keeps the item type; a namespace places `ModItem`s,
+   * because a nested `export * as` is invisible to the type of the outer one.
+   *
+   * @example
+   * import * as items from "./apotheosis/items.ts";
+   * export const feature = mod.feature("apotheosis", items);
+   */
+  feature(stem: string | undefined, items: ItemBag): CapabilityFeature<P>;
+  /** Places the listed items in one capability-owned feature file, keeping their type. */
   feature<T extends ModItem>(
     stem: string | undefined,
     items: readonly T[]
@@ -145,8 +175,14 @@ export type ModCapability<P extends string, I extends IdProfile> = {
   assetFile(input: AssetFileInput): AssetFileItem;
   /** Captures every regular file in one source directory into SDK-owned Asset bytes. */
   assetTree(input: AssetTreeInput): readonly AssetFileItem[];
-  /** Compiles only features placed by this capability into a pure mod value. */
-  compile(features: readonly CapabilityFeature<P>[], options?: BuildOptions): PureMod;
+  /**
+   * Compiles only features placed by this capability into a pure mod value.
+   *
+   * The features are an explicit array, or the project's features module
+   * (`import * as features from "./features.ts"`), every export of which must
+   * be one feature module's `feature`.
+   */
+  compile(features: FeaturesInput<P>, options?: BuildOptions): PureMod;
   /** Creates a pure on-action contribution; place its returned value in a feature. */
   readonly on: typeof on;
   /**
@@ -547,16 +583,22 @@ export function createMod<const P extends string, const I extends IdProfile>(
       createCapabilityEvents(config.prefix, name),
     assetFile: (input: AssetFileInput) => captureAssetFile(capabilityOwner, input),
     assetTree: (input: AssetTreeInput) => captureAssetTree(capabilityOwner, input),
-    feature: <T extends ModItem>(stem: string | undefined, items: readonly T[]) => {
-      items.forEach((item) => assertCapabilityItem(item, capabilityOwner));
+    // `Array.isArray` narrows to `any[]` and leaves a readonly array in its
+    // other branch, so both branches below restate what the overloads know.
+    feature: (stem: string | undefined, items: readonly ModItem[] | ItemBag) => {
+      const placed = Array.isArray(items)
+        ? (items as readonly ModItem[])
+        : itemsOfBag(stem, items as ItemBag);
+      placed.forEach((item) => assertCapabilityItem(item, capabilityOwner));
       return Object.freeze({
-        ...createFeature(stem, items),
+        ...createFeature(stem, placed),
         [capabilityFeatureOwner]: capabilityOwner,
-      }) as CapabilityFeature<P, T>;
+      }) as CapabilityFeature<P>;
     },
-    compile: (features: readonly CapabilityFeature<P>[], buildOptions: BuildOptions = {}) => {
-      features.forEach((feature) => assertCapabilityFeature(feature, capabilityOwner));
-      return buildMod(config, features, buildOptions);
+    compile: (features: FeaturesInput<P>, buildOptions: BuildOptions = {}) => {
+      const compiled = featuresOfInput<CapabilityFeature<P>>(features);
+      compiled.forEach((feature) => assertCapabilityFeature(feature, capabilityOwner));
+      return buildMod(config, compiled, buildOptions);
     },
     on,
     componentTag: <const Name extends string>(name: Name) => {

@@ -114,7 +114,7 @@ const CORPUS: readonly Case[] = [
   { name: "JSON null", bytes: "null", valid: false },
   { name: "a JSON string", bytes: '"my_mod"', valid: false },
   { name: "no mod key", bytes: json({ contentDirectory: "src/content" }), valid: false },
-  { name: "no contentDirectory key", bytes: json({ mod: MINIMAL.mod }), valid: false },
+  { name: "no contentDirectory key", bytes: json({ mod: MINIMAL.mod }), valid: true },
   {
     name: "an unknown top-level key",
     bytes: json({ ...MINIMAL, recipes: ["technology"] }),
