@@ -14,12 +14,11 @@
 import { render } from "@pdx-ts/sdk";
 import { describe, expect, it } from "vitest";
 
-import { defineHelloGalaxy } from "../../../examples/hello-galaxy/mod.ts";
+import { defineHelloGalaxy } from "../../../examples/hello-galaxy/index.ts";
 
-// Top-level await: the example discovers its content from the filesystem, so
-// the file set is only known after the import walk. Rendering here rather than
-// inside the describe keeps the per-file golden loop below a plain `for`.
-const files = render(await defineHelloGalaxy());
+// Rendered once, at module scope, so the per-file golden loop below is a
+// plain `for` over a known file set.
+const files = render(defineHelloGalaxy());
 
 describe("hello-galaxy example mod", () => {
   it("renders the expected file set", () => {
@@ -34,7 +33,7 @@ describe("hello-galaxy example mod", () => {
   });
 
   it("fans one feature module out across the registries it touched", () => {
-    // `content/resonance.ts` holds technologies and events; its authored stem
+    // `features/resonance.ts` holds technologies and events; its authored stem
     // is shared across registries, so the single feature lands in two registry
     // directories under one name.
     expect([...files.keys()].filter((key) => key.endsWith("hello_galaxy_resonance.txt"))).toEqual([

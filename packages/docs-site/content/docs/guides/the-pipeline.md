@@ -11,11 +11,11 @@ createMod → mod.compile (the Fold) → render → write or install
 
 Each step returns a value for the next step. Only the last step writes to disk.
 
-In a scaffolded file-per-Feature project, `createModProject` provides the
-conventional interface for the first two steps. It creates the immutable
-capability immediately, then `project.build()` discovers Features and performs
-one Fold when called. The lower-level functions remain available for a custom
-pipeline.
+In a scaffolded project, `createModProject` provides the conventional
+interface for the first two steps. It creates the immutable capability
+immediately, then `project.build(features)` compiles the declared Features and
+performs one Fold when called. The lower-level functions remain available for a
+custom pipeline.
 
 ```ts
 import { createMod, install, render, write } from "@pdx-ts/sdk";
@@ -51,12 +51,25 @@ import { createModProject } from "@pdx-ts/sdk";
 
 import manifest from "../stellaris-mod.json" with { type: "json" };
 
-const project = createModProject(manifest, {
+export const project = createModProject(manifest, {
   projectRoot: new URL("../", import.meta.url),
 });
 
 export const { config, mod } = project;
-export const buildTheMod = project.build;
+```
+
+and `src/build.ts` hands it the feature list, `src/features.ts`, as a
+namespace:
+
+```ts
+import { project } from "#mod";
+
+import * as features from "./features.ts";
+import { loadVanilla } from "./vanilla.ts";
+
+export async function buildTheMod() {
+  return project.build(features, { vanilla: loadVanilla() });
+}
 ```
 
 The scaffolded entry points use the opt-in terminal module instead of spelling
@@ -88,7 +101,7 @@ capability. Its methods create definitions, references, events, localization,
 [Asset files](/concepts/assets/), and Features that belong to that mod.
 
 This step does not assemble or serialize the mod. Definitions stay ordinary
-TypeScript values until a [Feature](/guides/features-and-discovery/) carries
+TypeScript values until a [Feature](/guides/features/) carries
 them into `mod.compile`.
 
 ## 2. `mod.compile`: the Fold

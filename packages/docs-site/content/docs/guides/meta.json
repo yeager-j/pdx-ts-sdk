@@ -3,7 +3,7 @@
   "pages": [
     "getting-started",
     "entry-points",
-    "features-and-discovery",
+    "features",
     "the-pipeline",
     "triggers-and-effects",
     "scope-and-context",

@@ -1,6 +1,6 @@
 /**
- * A project whose manifest names no `contentDirectory`: it declares its
- * Features instead, and mirrors the committed `project/assets` tree.
+ * A project that declares its Features from `project-features.ts` and mirrors
+ * the committed `project/assets` tree.
  */
 
 import { createModProject } from "../../../src/index.ts";

@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { ProjectManifestError, render } from "../src/index.ts";
+import { render } from "../src/index.ts";
 import * as aliasedItems from "./fixtures/bags/aliased-items.ts";
 import * as cycleA from "./fixtures/bags/cycle-a.ts";
 import * as emptyFeatures from "./fixtures/bags/empty-features.ts";
@@ -143,11 +143,14 @@ describe("project.build with a features module", () => {
     ]);
   });
 
-  it("cannot discover without a contentDirectory, and says what to pass instead", async () => {
-    await expect(project.build()).rejects.toThrow(ProjectManifestError);
-    await expect(project.build()).rejects.toThrow(
-      'Project Manifest has no "contentDirectory", so build(options) cannot discover Features; ' +
-        "pass the features module: project.build(features)."
-    );
+  it("reads a plain object typed as the features module the same way", () => {
+    // The type admits `{ declared: feature }`, so the runtime must too: a
+    // build script may assemble the list rather than import it (PR 336).
+    const built = project.build({ declared: projectFeatures.declared });
+
+    expect(built.compileInputs.features).toEqual([
+      { stem: "assets", itemCount: 1, itemIds: [] },
+      { stem: "declared", itemCount: 1, itemIds: ["bag_project_tech_declared"] },
+    ]);
   });
 });

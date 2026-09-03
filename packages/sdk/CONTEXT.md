@@ -44,8 +44,15 @@ duplicate ids, dangling references, and namespace collisions are caught.
 
 **Mod project**:
 The conventional Project Manifest pipeline returned by `createModProject`. It exposes the immutable
-capability immediately; its bound `build` function validates source layout, discovers Features,
-captures Assets, and invokes one Fold. A different pipeline composes the lower-level interfaces.
+capability immediately; its bound `build` function takes the Feature list, captures Assets, and
+invokes one Fold. A different pipeline composes the lower-level interfaces.
+
+**Feature list**:
+The author-owned `src/features.ts` module that re-exports each feature module's `feature`.
+`project.build` and `mod.compile` take it as a namespace, and every export must be a Feature, so
+a feature module is in the mod exactly when its line is there. Nothing walks the filesystem for
+Features.
+_Avoid_: index file, barrel, registry, discovery
 
 **PureMod**:
 The assembled mod as a value rather than a builder — the thing `render` consumes.

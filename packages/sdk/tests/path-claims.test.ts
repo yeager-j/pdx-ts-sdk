@@ -392,8 +392,8 @@ describe("the conflict set", () => {
   });
 
   it("does not depend on the order the claims arrived in", () => {
-    // Features are discovered from a directory listing and flattened in
-    // authoring order. If either leaked into the report, two authors with the
+    // Features arrive in the order the feature list exports them and are
+    // flattened in authoring order. If either leaked into the report, two authors with the
     // same mod would get different errors from it.
     const base = conflictsOf(crowded);
     let seed = 20260814;

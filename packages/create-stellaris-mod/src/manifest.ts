@@ -156,8 +156,6 @@ export interface ProjectManifest {
   /** The sole key under `mod`, which is the mod prefix. */
   readonly prefix: string;
   readonly config: ProjectModConfig;
-  /** A project-relative logical path, when the project discovers Features from one. */
-  readonly contentDirectory?: string;
   /** A project-relative directory mirrored into the mod root, when configured. */
   readonly assetsDirectory?: string;
   readonly layout: ProjectLayout;
@@ -231,7 +229,6 @@ export function parseManifest(bytes: string, sourcePath: string): ProjectManifes
   const layout = readProjectLayoutFields(root, sourcePath);
   return {
     ...readMod(root["mod"], sourcePath),
-    ...(layout.contentDirectory === undefined ? {} : { contentDirectory: layout.contentDirectory }),
     ...(layout.assetsDirectory === undefined ? {} : { assetsDirectory: layout.assetsDirectory }),
     layout,
     sourcePath,
@@ -344,7 +341,7 @@ export interface FoundManifest {
  * The nearest Project Manifest at or above `startDir`, or `undefined` when
  * there is none anywhere up to the filesystem root.
  *
- * Searching upward is what lets `generate` be run from inside `src/content/`
+ * Searching upward is what lets `generate` be run from inside `src/features/`
  * rather than only from a project root, the way `git` and every package manager
  * behave.
  *

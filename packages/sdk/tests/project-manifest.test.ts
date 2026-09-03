@@ -37,7 +37,7 @@ function goodManifest(): Record<string, unknown> {
         tags: ["Gameplay"],
       },
     },
-    contentDirectory: "src/content",
+    assetsDirectory: "assets",
   };
 }
 
@@ -128,7 +128,7 @@ describe("the manifest envelope", () => {
   });
 
   it("refuses a mod key that is absent or not an object", () => {
-    expect(build({ contentDirectory: "src/content" })).toThrow(
+    expect(build({ assetsDirectory: "assets" })).toThrow(
       'A Project Manifest\'s "mod" must be a JSON object, and is absent.'
     );
     expect(build({ ...goodManifest(), mod: [] })).toThrow(
@@ -151,21 +151,25 @@ describe("the manifest envelope", () => {
 
 describe("the project-layout fields", () => {
   it("refuses a directory that is not a string, rather than testing its digits", () => {
-    const manifest = { ...goodManifest(), contentDirectory: 42 };
+    const manifest = { ...goodManifest(), assetsDirectory: 42 };
     expect(build(manifest)).toThrow(ProjectManifestError);
-    expect(build(manifest)).toThrow('"contentDirectory" must be a string, and is a number.');
+    expect(build(manifest)).toThrow('"assetsDirectory" must be a string, and is a number.');
   });
 
-  it("accepts a manifest without a contentDirectory", () => {
-    // A project that declares its features module discovers nothing, so the
-    // directory discovery would walk is not something it has to name.
-    const { contentDirectory: _omitted, ...manifest } = goodManifest();
+  it("accepts a manifest without an assetsDirectory", () => {
+    const { assetsDirectory: _omitted, ...manifest } = goodManifest();
     expect(build(manifest)).not.toThrow();
   });
 
-  it("refuses an assetsDirectory that is not a string", () => {
-    expect(build({ ...goodManifest(), assetsDirectory: true })).toThrow(
-      '"assetsDirectory" must be a string, and is a boolean.'
+  it("refuses the retired contentDirectory key and names the fix", () => {
+    // Unknown keys pass through, so the one key a past release read has to be
+    // refused by name: a manifest that still says where Features live would
+    // otherwise build as if it had never said so.
+    const manifest = { ...goodManifest(), contentDirectory: "src/content" };
+    expect(build(manifest)).toThrow(ProjectManifestError);
+    expect(build(manifest)).toThrow(
+      '"contentDirectory" is no longer read: features are declared in src/features.ts. ' +
+        "Remove the key."
     );
   });
 });

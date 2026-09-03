@@ -28,7 +28,7 @@ assets/gfx/interface/icon.dds  →  gfx/interface/icon.dds
 assets/gfx/models/ship.mesh    →  gfx/models/ship.mesh
 ```
 
-The generated `src/mod.ts` captures the complete tree with `mod.assetTree` and
+The project's `build` captures the complete tree with `mod.assetTree` and
 places the returned items in an `assets` Feature. A missing or empty `assets/`
 directory is allowed, so the scaffold does not create it; add the directory
 when the mod needs its first Asset file. Leave the generated `mod.assetTree`
@@ -142,7 +142,7 @@ textureFile = gfx/interface/crystal_resonance/icon.dds
 ```
 
 Sprite definitions are items too, so one
-[Feature](/guides/features-and-discovery/) can carry the Assets and the
+[Feature](/guides/features/) can carry the Assets and the
 definitions that use them:
 
 ```ts

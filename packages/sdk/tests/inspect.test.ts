@@ -72,7 +72,6 @@ describe("runInspect", () => {
     const options = {
       manifest: {
         mod: { inspection_probe: compiled.config },
-        contentDirectory: "src/content",
         assetsDirectory: "assets",
       },
       projectRoot,
@@ -88,7 +87,6 @@ describe("runInspect", () => {
     expect(parse(first.text())).toMatchObject({
       schema: "pdx-sdk-inspection/v1",
       project: {
-        contentDirectory: "src/content",
         package: {
           name: "inspection-project",
           version: "0.1.0",
@@ -167,7 +165,6 @@ describe("runInspect", () => {
     await runInspect(compiled, {
       manifest: {
         mod: { repeated_stem_probe: compiled.config },
-        contentDirectory: "src/content",
       },
       projectRoot,
       output: captured.output,
@@ -211,7 +208,6 @@ describe("runInspect", () => {
     await runInspect(compiled, {
       manifest: {
         mod: { patch_origin_probe: compiled.config },
-        contentDirectory: "src/content",
       },
       projectRoot,
       output: captured.output,
@@ -240,7 +236,6 @@ describe("runInspect", () => {
     await runInspect(mod, {
       manifest: {
         mod: { dependency_section_probe: mod.config },
-        contentDirectory: "src/content",
       },
       projectRoot,
       output: captured.output,
@@ -264,7 +259,6 @@ describe("runInspect", () => {
     await runInspect(mod, {
       manifest: {
         mod: { inspection_failure: mod.config },
-        contentDirectory: "src/content",
       },
       projectRoot: temporaryDirectory("pdx-inspection-missing-"),
       output: output.output,

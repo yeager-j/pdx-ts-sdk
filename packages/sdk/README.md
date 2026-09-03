@@ -60,19 +60,19 @@ immutable capability bound to one mod prefix. The capability mints ids, creates
 events and content Items, groups Items into Features, and owns the Fold.
 
 `createModProject(manifest, options)` adds the conventional Project Manifest,
-Feature discovery, Asset capture, and build sequence. Both routes use the same
+declared Feature list, Asset capture, and build sequence. Both routes use the same
 compiler and renderer.
 
 The Fold is the semantic authority. It validates identity, namespace and path
 collisions, dangling references, localization, Asset claims, and patch plans
 before returning a `PureMod`. `render(PureMod)` is pure and produces an
-immutable, hash-identified byte snapshot. Project discovery and Asset capture
-read the filesystem; only `write` and `install` modify materialized output.
+immutable, hash-identified byte snapshot. Asset capture reads the filesystem;
+only `write` and `install` modify materialized output.
 
 ## A project-based mod
 
 The Project Manifest is the author-owned source of truth for mod identity,
-launcher metadata, the Feature source directory, and the optional Asset tree:
+launcher metadata, and the optional Asset tree:
 
 ```json
 {
@@ -85,7 +85,6 @@ launcher metadata, the Feature source directory, and the optional Asset tree:
       "tags": []
     }
   },
-  "contentDirectory": "src/content",
   "assetsDirectory": "assets"
 }
 ```
@@ -97,18 +96,17 @@ import { createModProject } from "@pdx-ts/sdk";
 
 import manifest from "../stellaris-mod.json" with { type: "json" };
 
-const project = createModProject(manifest, {
+export const project = createModProject(manifest, {
   projectRoot: new URL("../", import.meta.url),
 });
 
 export const { config, mod } = project;
-export const buildTheMod = project.build;
 ```
 
-Each selected module exports one named `feature`:
+Each feature module exports one named `feature`:
 
 ```ts
-// src/content/resonance.ts
+// src/features/resonance.ts
 import { mod } from "../mod.ts";
 
 const theory = mod.technology("resonance_theory", {
@@ -123,23 +121,41 @@ const theory = mod.technology("resonance_theory", {
 export const feature = mod.feature("resonance", [theory]);
 ```
 
+`src/features.ts` is the Feature list, one line per Feature the mod ships:
+
+```ts
+export { feature as resonance } from "./features/resonance.ts";
+```
+
+`src/build.ts` imports both sides and compiles exactly the declared Features
+plus the Asset tree, in one Fold:
+
+```ts
+import * as features from "./features.ts";
+import { project } from "./mod.ts";
+
+export function buildTheMod() {
+  return project.build(features);
+}
+```
+
 Build and materialize the result:
 
 ```ts
 import { render, write } from "@pdx-ts/sdk";
 
-import { buildTheMod } from "./mod.ts";
+import { buildTheMod } from "./build.ts";
 
-await write(new URL("../out/", import.meta.url), render(await buildTheMod()));
+await write(new URL("../out/", import.meta.url), render(buildTheMod()));
 ```
 
-`project.build()` accepts `discover` and `additionalFeatures` hooks for
-pre-compile customization. A different pipeline can compose
-`discoverFeatures`, `mod.assetTree`, and `mod.compile` directly.
+`project.build` also accepts an explicit array of Features. A different
+pipeline can compose `mod.assetTree` and `mod.compile` directly; `mod.compile`
+takes the same module namespace or array.
 
 ## Low-level authoring
 
-Use `createMod` when a Project Manifest or filesystem discovery is not useful:
+Use `createMod` when a Project Manifest is not useful:
 
 ```ts
 import { createMod, render } from "@pdx-ts/sdk";
@@ -175,19 +191,20 @@ explicit output stem and provenance.
 A Feature can fan out across registries:
 
 ```text
-src/content/resonance.ts
+src/features/resonance.ts
   -> common/technology/mymod_resonance.txt
   -> events/mymod_resonance.txt
   -> common/on_actions/mymod_resonance.txt
   -> localisation/english/mymod_resonance_l_english.yml
 ```
 
-Source layout does not create ids. Moving a module changes no emitted identity,
-and Feature discovery reads only the module's named `feature` export. Other
-exports remain ordinary ESM API and do not place an Item twice.
+Source layout does not create ids. Moving a module changes no emitted identity;
+only its line in `src/features.ts` follows. The list reads only the module's
+named `feature` export. Other exports remain ordinary ESM API and do not place
+an Item twice.
 
 Output order is canonical: registry declaration order, logical path, then id.
-Feature discovery order and source order do not affect rendered bytes. Anonymous
+The order of the Feature list and source order do not affect rendered bytes. Anonymous
 nested blocks, such as bodies in a solar-system initializer, preserve their
 array order because that order is game data.
 
@@ -371,19 +388,16 @@ const newTechnology = mod.technology("new", {
 });
 
 const geneTailoring = mod.patchTechnology(
-  vanillaInstall
-    .definition("technology", "tech_gene_tailoring")
-    .require("cost", "prerequisites"),
+  vanillaInstall.definition("technology", "tech_gene_tailoring").require("cost", "prerequisites"),
   (technology) => ({
     cost: technology.cost.value * 2,
     prerequisites: [...technology.prerequisites, newTechnology],
   })
 );
 
-const compiled = mod.compile(
-  [mod.feature("patches", [newTechnology, geneTailoring])],
-  { vanilla: vanillaInstall }
-);
+const compiled = mod.compile([mod.feature("patches", [newTechnology, geneTailoring])], {
+  vanilla: vanillaInstall,
+});
 ```
 
 Untouched parsed values keep their syntax-tree meaning, including variable

@@ -26,14 +26,6 @@ type ProjectLayoutFieldDescriptor = {
 
 /** The SDK Project Layout descriptors projected into manifest parsing and schema generation. */
 export const PROJECT_LAYOUT_FIELDS = {
-  contentDirectory: {
-    required: false,
-    description: "Normalized directory below src where Feature source is written.",
-    pattern: new RegExp(String.raw`^src(?:/${PORTABLE_COMPONENT})+$`),
-    patternError: (value) =>
-      `contentDirectory ${JSON.stringify(value)} must be a normalized project-relative path below ` +
-      `src whose components are portable across filesystems.`,
-  },
   assetsDirectory: {
     required: false,
     description: "Normalized project-relative directory mirrored into the mod root on each build.",
@@ -60,10 +52,6 @@ export function projectLayoutFieldSchema(
 
 /** Validated Project Manifest directories and their portable path segments. */
 export interface ProjectLayout {
-  /** Normalized project-relative directory below `src` containing Feature modules, when present. */
-  readonly contentDirectory?: string;
-  /** Portable path segments parsed from `contentDirectory`, when present. */
-  readonly contentSegments?: readonly string[];
   /** Normalized project-relative directory mirrored into the built mod. */
   readonly assetsDirectory?: string;
   /** Portable path segments parsed from `assetsDirectory`, when present. */
@@ -95,17 +83,7 @@ export function parseProjectLayoutField(
 }
 
 /** Validates and parses all source directories in one Project Manifest. */
-export function parseProjectLayout(input: {
-  readonly contentDirectory?: string;
-  readonly assetsDirectory?: string;
-}): ProjectLayout {
-  const content =
-    input.contentDirectory === undefined
-      ? {}
-      : {
-          contentDirectory: input.contentDirectory,
-          contentSegments: parseProjectLayoutField("contentDirectory", input.contentDirectory),
-        };
+export function parseProjectLayout(input: { readonly assetsDirectory?: string }): ProjectLayout {
   const assets =
     input.assetsDirectory === undefined
       ? {}
@@ -113,5 +91,5 @@ export function parseProjectLayout(input: {
           assetsDirectory: input.assetsDirectory,
           assetsSegments: parseProjectLayoutField("assetsDirectory", input.assetsDirectory),
         };
-  return Object.freeze({ ...content, ...assets });
+  return Object.freeze({ ...assets });
 }

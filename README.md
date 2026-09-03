@@ -7,7 +7,14 @@ runtime, template engine, or custom file format.
 
 ```ts
 import { createMod } from "@pdx-ts/sdk";
-import { countryFlags, hasCivic, hasCountryFlag, isAtWar, not, vanilla } from "@pdx-ts/sdk/stellaris";
+import {
+  countryFlags,
+  hasCivic,
+  hasCountryFlag,
+  isAtWar,
+  not,
+  vanilla,
+} from "@pdx-ts/sdk/stellaris";
 import { isFallenEmpire } from "@pdx-ts/stellaris-ids/triggers";
 
 const mod = createMod({
@@ -33,7 +40,7 @@ const resonanceTheory = mod.technology("resonance_theory", {
     modifiers: [
       { factor: 2, when: hasCivic("civic_technocracy") },
       { factor: 0.5, when: isAtWar() },
-      { factor: 0, when: not(hasCountryFlag(flags.hello_galaxy_heard_the_hum)) }
+      { factor: 0, when: not(hasCountryFlag(flags.hello_galaxy_heard_the_hum)) },
     ],
   },
   modifier: (m) => m.country.unity.produces.mult(0.5),
@@ -174,10 +181,12 @@ scripted trigger and effect signatures, sprite names, sounds, resources, and
 localization keys.
 
 ```ts
-vanilla.technology("tech_lasers_1"); // checked at compile time
-vanilla.technology("tech_lazers_1"); // type error
+// type error
 
 import { isFallenEmpire } from "@pdx-ts/stellaris-ids/triggers";
+
+vanilla.technology("tech_lasers_1"); // checked at compile time
+vanilla.technology("tech_lazers_1");
 
 potential: isFallenEmpire(); // Trigger<"country">
 ```
@@ -235,15 +244,16 @@ localization, on-action hooks, and assets; the compiler sorts each Item into the
 engine path it requires.
 
 ```text
-src/content/resonance.ts
+src/features/resonance.ts
   -> common/technology/hello_galaxy_resonance.txt
   -> events/hello_galaxy_resonance.txt
   -> common/on_actions/hello_galaxy_resonance.txt
   -> localisation/english/hello_galaxy_resonance_l_english.yml
 ```
 
-Source filenames do not define content identity. Moving a Feature does not
-rename its ids.
+`src/features.ts` names the Features the mod ships, one line each; nothing
+walks the filesystem. Source filenames do not define content identity. Moving
+a Feature does not rename its ids.
 
 ### Solar-system validation and SVG previews
 
@@ -382,17 +392,17 @@ and serializer below both paths.
 
 ## Packages
 
-| Package | Role |
-| --- | --- |
-| [create-stellaris-mod](packages/create-stellaris-mod/README.md) | Scaffolds a working mod project and generates curated Feature starters. |
-| [@pdx-ts/sdk](packages/sdk/README.md) | Main authoring, compilation, rendering, inspection, and installation API. |
-| [@pdx-ts/sdk-testing](packages/sdk-testing/README.md) | Audited interpreter and Vitest matchers for recorded mod logic. |
-| [@pdx-ts/pdxscript](packages/pdxscript/README.md) | Standalone PDXScript parser and canonical serializer. |
-| [@pdx-ts/stellaris-ids](packages/stellaris-ids/README.md) | Install-derived, game-versioned vanilla identifiers and scripted bindings. |
-| [@pdx-ts/codegen-cwt](packages/codegen-cwt/README.md) | Private rules-derived generator for the SDK TypeScript surface. |
-| [@pdx-ts/codegen-vanilla](packages/codegen-vanilla/README.md) | Private install-derived generator for `stellaris-ids`. |
-| [@pdx-ts/corpus](packages/corpus/README.md) | Private install-derived corpus fixtures, their commands, ledgers, conformance gate, and coverage report. |
-| [@pdx-ts/docs-site](packages/docs-site/README.md) | Next.js and Fumadocs documentation site with executable examples. |
+| Package                                                         | Role                                                                                                     |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| [create-stellaris-mod](packages/create-stellaris-mod/README.md) | Scaffolds a working mod project and generates curated Feature starters.                                  |
+| [@pdx-ts/sdk](packages/sdk/README.md)                           | Main authoring, compilation, rendering, inspection, and installation API.                                |
+| [@pdx-ts/sdk-testing](packages/sdk-testing/README.md)           | Audited interpreter and Vitest matchers for recorded mod logic.                                          |
+| [@pdx-ts/pdxscript](packages/pdxscript/README.md)               | Standalone PDXScript parser and canonical serializer.                                                    |
+| [@pdx-ts/stellaris-ids](packages/stellaris-ids/README.md)       | Install-derived, game-versioned vanilla identifiers and scripted bindings.                               |
+| [@pdx-ts/codegen-cwt](packages/codegen-cwt/README.md)           | Private rules-derived generator for the SDK TypeScript surface.                                          |
+| [@pdx-ts/codegen-vanilla](packages/codegen-vanilla/README.md)   | Private install-derived generator for `stellaris-ids`.                                                   |
+| [@pdx-ts/corpus](packages/corpus/README.md)                     | Private install-derived corpus fixtures, their commands, ledgers, conformance gate, and coverage report. |
+| [@pdx-ts/docs-site](packages/docs-site/README.md)               | Next.js and Fumadocs documentation site with executable examples.                                        |
 
 [CONTEXT-MAP.md](CONTEXT-MAP.md) describes the six bounded contexts and the
 terms that change meaning between them.

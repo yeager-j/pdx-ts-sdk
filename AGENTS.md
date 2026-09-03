@@ -127,8 +127,9 @@ ADRs are located in `docs/adr`.
 What remains here are working rules rather than definitions:
 
 - Diagnostics are throws or `mod.warnings` data — never console output.
-- `discoverFeatures(dir)` (`packages/sdk/src/authoring/discover.ts`) is the impure shell, and
-  it reads only a feature module's named `feature` export. Source layout is not identity.
+- `src/features.ts` declares a project's module tree: it re-exports each feature module's
+  `feature`, and `mod.feature`, `mod.compile`, and `project.build` take arrays or module
+  namespaces (ADR-0008). Nothing walks the filesystem for Features. Source layout is not identity.
 - Cross-content references should remain branded objects where the generated rules know the
   registry. Use raw strings only for intentional vanilla or third-party references supported by
   the API.

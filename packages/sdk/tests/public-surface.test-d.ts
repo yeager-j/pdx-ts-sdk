@@ -1,7 +1,7 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import * as sdk from "../src/index.ts";
-import { createMod, DEFAULT_CONTENT_PATTERN, discoverFeatures } from "../src/index.ts";
+import { createMod } from "../src/index.ts";
 import * as installation from "../src/installation/index.ts";
 import * as internals from "../src/internals.ts";
 import * as reference from "../src/reference.ts";
@@ -31,12 +31,15 @@ describe("the pipeline entry point", () => {
       tier: 1,
       category: "particles",
     });
-    const features = discoverFeatures<"public_surface">("./features");
 
     expectTypeOf(mod.compile).toBeFunction();
     expectTypeOf(technology.type).toEqualTypeOf<"technology">();
-    expectTypeOf(features).toMatchTypeOf<Promise<unknown>>();
-    expectTypeOf(DEFAULT_CONTENT_PATTERN).toEqualTypeOf<RegExp>();
+    // Features are declared from src/features.ts, never walked off the disk
+    // (docs/adr/0008).
+    // @ts-expect-error — discovery is gone.
+    void sdk.discoverFeatures;
+    // @ts-expect-error — and so is its file pattern.
+    void sdk.DEFAULT_CONTENT_PATTERN;
 
     // A handle is a value an author holds and annotates, so its types are
     // public; the constructor behind it is internal, like every `defineX`.
@@ -61,19 +64,22 @@ describe("the pipeline entry point", () => {
             supportedVersion: "4.4.*",
           },
         },
-        contentDirectory: "src/content",
+        assetsDirectory: "assets",
       } as const,
       { projectRoot: "/tmp/public-project" }
     );
 
     expectTypeOf(project.config.prefix).toEqualTypeOf<"public_project">();
     expectTypeOf(project.mod.config.prefix).toEqualTypeOf<"public_project">();
-    expectTypeOf(project.build()).toEqualTypeOf<Promise<sdk.PureMod>>();
     const extra = project.mod.feature("extra", []);
-    expectTypeOf(project.build({ additionalFeatures: [extra] })).toEqualTypeOf<
-      Promise<sdk.PureMod>
-    >();
     expectTypeOf(project.build([extra])).toEqualTypeOf<sdk.PureMod>();
+    expectTypeOf(project.build({ extra })).toEqualTypeOf<sdk.PureMod>();
+    // @ts-expect-error — the build takes the declared Features; there is no options-only form.
+    project.build();
+    // @ts-expect-error — nor a form that appends Features to something else.
+    project.build({ additionalFeatures: [extra] });
+    // @ts-expect-error — its options type went with the discovery form.
+    expectTypeOf<sdk.ModProjectBuildOptions<"public_project">>();
     expectTypeOf<sdk.FeaturesModule<"public_project">[string]>().toEqualTypeOf<
       sdk.CapabilityFeature<"public_project">
     >();
@@ -89,7 +95,9 @@ describe("the pipeline entry point", () => {
     >();
     expectTypeOf<sdk.CompileInputs["vanilla"]>().toEqualTypeOf<sdk.CompiledVanillaInput>();
     expectTypeOf(sdk.runInspect).toBeFunction();
-    expectTypeOf(reference.PROJECT_LAYOUT_FIELDS.contentDirectory.pattern).toEqualTypeOf<RegExp>();
+    expectTypeOf(reference.PROJECT_LAYOUT_FIELDS.assetsDirectory.pattern).toEqualTypeOf<RegExp>();
+    // @ts-expect-error — the manifest no longer names a Feature directory.
+    expectTypeOf(reference.PROJECT_LAYOUT_FIELDS.contentDirectory);
     // @ts-expect-error — Project Layout parsing is an implementation detail.
     expectTypeOf(sdk.parseProjectLayout);
     // @ts-expect-error — parser-only types are not part of the root authoring API.
@@ -263,7 +271,7 @@ describe("the pipeline entry point", () => {
     void sdk.assertNamespace;
     // @ts-expect-error — the raw stem pattern is package-internal fold machinery.
     void sdk.FILE_STEM_PATTERN;
-    // @ts-expect-error — feature discovery replaces every-export discovery.
+    // @ts-expect-error — a declared feature list replaces every-export discovery.
     void sdk.discoverContent;
     // @ts-expect-error — event namespaces are capability-owned.
     void sdk.namespace;

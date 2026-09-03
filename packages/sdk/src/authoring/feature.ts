@@ -103,8 +103,8 @@ export function isItem(value: unknown): value is { readonly itemKind: string } {
 
 /**
  * Whether the value is a Feature: a placed list of Items, as `mod.feature`
- * returns. Structural on purpose, because discovery and bag reading both meet
- * Features as unknown module exports and have only their shape to go on.
+ * returns. Structural on purpose, because bag reading meets Features as
+ * unknown module exports and has only their shape to go on.
  */
 export function isFeature(value: unknown): value is Feature {
   return isItem(value) && value.itemKind === "feature";
