@@ -19,9 +19,10 @@ The decision: a project declares its module tree the way a Rust crate does
 with `lib.rs` and its `mod` lines. `src/features.ts` re-exports each feature
 module's `feature`; `project.build(features)` and `mod.compile(features)` take
 that module namespace, or an explicit array, and every export of it must be a
-Feature. `mod.feature(stem, bag)` takes a namespace too and keeps only its
-Item-valued exports, so a feature module can be the root of its own private
-tree. `contentDirectory`, `discoverFeatures`, `DEFAULT_CONTENT_PATTERN`, and
+Feature. `mod.feature(stem, input)` takes a namespace or a shallow array of
+Items and namespaces, and keeps only each namespace's Item-valued exports, so
+a feature module can compose the roots of its own private tree.
+`contentDirectory`, `discoverFeatures`, `DEFAULT_CONTENT_PATTERN`, and
 the `discover` and `additionalFeatures` build options are deleted; a manifest
 still carrying `contentDirectory` is refused with the fix rather than ignored.
 

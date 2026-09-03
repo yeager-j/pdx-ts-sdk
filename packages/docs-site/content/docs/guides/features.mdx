@@ -123,23 +123,26 @@ directly. `mod.compile` accepts the same features module or array.
 ### The private tree under a feature module
 
 A feature module can be one file or the root of its own tree. `mod.feature`
-accepts a module namespace in place of an array: every Item-valued export is
-placed, a nested `export * as` namespace is walked the same way, and every
-other export (a string, a function, a plain object) is module API and is left
-alone. One Item reached under two names is placed once.
+accepts one module namespace, or a shallow array that mixes individual Items
+and module namespaces. Every Item-valued export of a namespace is placed, a
+nested `export * as` namespace is walked the same way, and every other export
+(a string, a function, a plain object) is module API and is left alone. One
+Item reached under two names in one namespace is placed once.
 
 ```ts
 // src/features/resonance.ts
 import { mod } from "#mod";
 
-import * as items from "./resonance/items.ts";
+import * as events from "./resonance/events.ts";
+import * as technologies from "./resonance/technologies.ts";
 
-export const feature = mod.feature("resonance", items);
+export const feature = mod.feature("resonance", [technologies, events]);
 ```
 
 A bag that holds no Items is refused, and a Feature among them is refused
 rather than dropped or placed twice. `mod.feature("empty", [])` stays legal,
-because an explicit empty list is a decision.
+because an explicit empty list is a decision. The array is deliberately
+shallow: use module exports for deeper organization rather than nested arrays.
 
 ### One namespace per Feature
 
