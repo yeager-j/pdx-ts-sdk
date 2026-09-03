@@ -70,10 +70,6 @@ describe("runInspect", () => {
     const first = captureTerminal();
     const second = captureTerminal();
     const options = {
-      manifest: {
-        mod: { inspection_probe: compiled.config },
-        assetsDirectory: "assets",
-      },
       projectRoot,
     } as const;
 
@@ -163,9 +159,6 @@ describe("runInspect", () => {
     const captured = captureTerminal();
 
     await runInspect(compiled, {
-      manifest: {
-        mod: { repeated_stem_probe: compiled.config },
-      },
       projectRoot,
       output: captured.output,
     });
@@ -206,9 +199,6 @@ describe("runInspect", () => {
     const captured = captureTerminal();
 
     await runInspect(compiled, {
-      manifest: {
-        mod: { patch_origin_probe: compiled.config },
-      },
       projectRoot,
       output: captured.output,
     });
@@ -234,9 +224,6 @@ describe("runInspect", () => {
     const captured = captureTerminal();
 
     await runInspect(mod, {
-      manifest: {
-        mod: { dependency_section_probe: mod.config },
-      },
       projectRoot,
       output: captured.output,
     });
@@ -257,9 +244,6 @@ describe("runInspect", () => {
     }).compile([]);
 
     await runInspect(mod, {
-      manifest: {
-        mod: { inspection_failure: mod.config },
-      },
       projectRoot: temporaryDirectory("pdx-inspection-missing-"),
       output: output.output,
       errorOutput: errors.output,

@@ -1,0 +1,40 @@
+out| would write <project>/src/features/resonance_theory.ts
+out| /**
+out|  * One technology, and the feature that places it.
+out|  *
+out|  * Generated once by the `technology` recipe, and yours from here. Nothing reads
+out|  * this file back: there is no marker in it, no version, and no upgrade — so
+out|  * rename it, add to it, or delete it as the mod grows.
+out|  *
+out|  * `#mod` is the project's own alias for `src/mod.ts` (see `package.json#imports`),
+out|  * so this import never changes when the file moves. The filename decides
+out|  * nothing either: the `mod.feature(...)` call at the bottom is what names the
+out|  * emitted files, and what puts it in the mod is its line in `src/features.ts`.
+out|  */
+out|
+out| import { mod } from "#mod";
+out|
+out| export const resonanceTheory = mod.technology("resonance_theory", {
+out|   name: "Resonance Theory",
+out|   desc: "PLACEHOLDER: what researching this unlocks, in a sentence or two.",
+out|   area: "physics",
+out|   category: "particles",
+out|   tier: 2,
+out|   cost: 2000,
+out|
+out|   // Technologies that must be researched first. A vanilla technology is a plain
+out|   // string, taken as given — nothing checks a bare literal;
+out|   // `vanilla.technology(...)` from @pdx-ts/sdk/stellaris is the checked form, against the
+out|   // real id set when @pdx-ts/stellaris-ids is installed. One of your own is the
+out|   // binding another feature file exports, imported as usual.
+out|   // prerequisites: ["tech_basic_science_lab_1"],
+out|
+out|   // How likely the game is to offer this as a research option next to the
+out|   // others in its category. 100 is the conventional starting weight, and the
+out|   // rules require one on every technology that is not a starting technology.
+out|   weight: 100,
+out| });
+out|
+out| export const feature = mod.feature("resonance_theory", [resonanceTheory]);
+err| already declared in <project>/src/features.ts on line 15
+exit 0

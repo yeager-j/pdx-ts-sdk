@@ -67,6 +67,7 @@ export function featuresTs(resolved: Resolved): string {
  * \`src/build.ts\` hands this module to \`project.build\`, so a feature module is
  * in the mod exactly when its line is here. A module under \`src/features/\` that
  * no line names is dead code, and \`${runScript(resolved.packageManager, "lint")}\` reports it by path.
+ * A Feature the mod created that no line names fails the build by name.
  * \`generate\` appends a line for each module it writes and never creates or
  * rewrites this file.
  *
@@ -139,12 +140,10 @@ export function inspectTs(resolved: Resolved): string {
  */
 
 import { runInspect } from "@pdx-ts/sdk";
-import manifest from "../stellaris-mod.json" with { type: "json" };
 
 import { buildTheMod } from "./build.ts";
 
 await runInspect(buildTheMod(), {
-  manifest,
   projectRoot: new URL("../", import.meta.url),
 });
 `;

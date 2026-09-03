@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { render } from "../src/index.ts";
+import { createModProject, render } from "../src/index.ts";
 import * as aliasedItems from "./fixtures/bags/aliased-items.ts";
 import * as cycleA from "./fixtures/bags/cycle-a.ts";
 import * as emptyFeatures from "./fixtures/bags/empty-features.ts";
@@ -140,17 +140,55 @@ describe("project.build with a features module", () => {
     expect(built.compileInputs.features).toEqual([
       { stem: "assets", itemCount: 1, itemIds: [] },
       { stem: "declared", itemCount: 1, itemIds: ["bag_project_tech_declared"] },
+      { stem: "helper", itemCount: 1, itemIds: ["bag_project_tech_helper"] },
     ]);
   });
 
   it("reads a plain object typed as the features module the same way", () => {
     // The type admits `{ declared: feature }`, so the runtime must too: a
     // build script may assemble the list rather than import it (PR 336).
-    const built = project.build({ declared: projectFeatures.declared });
+    const built = project.build({
+      declared: projectFeatures.declared,
+      helper: projectFeatures.helper,
+    });
 
     expect(built.compileInputs.features).toEqual([
       { stem: "assets", itemCount: 1, itemIds: [] },
       { stem: "declared", itemCount: 1, itemIds: ["bag_project_tech_declared"] },
+      { stem: "helper", itemCount: 1, itemIds: ["bag_project_tech_helper"] },
     ]);
+  });
+
+  it("refuses a Feature the project's mod minted that the list does not declare", () => {
+    // `project-feature.ts` imports a helper from `project-helper.ts`, so that
+    // module is reachable and knip has nothing to say; its own Feature is in
+    // the mod only if the list names it. Leaving it out is the case the build
+    // owns: content the author wrote would otherwise be dropped silently.
+    expect(() => project.build({ declared: projectFeatures.declared })).toThrow(
+      'Feature "helper" was created by this project\'s mod but was not passed to ' +
+        "project.build. Declare it in src/features.ts (export { feature as <name> } from " +
+        '"./features/<file>.ts"), or drop the mod.feature call if that module is a helper.'
+    );
+    // Declaring it is the fix, and the project's own assets Feature is exempt.
+    expect(() => project.build(projectFeatures)).not.toThrow();
+    // `mod.compile` has no list to compare against and stays a plain Fold.
+    expect(() => project.mod.compile([projectFeatures.declared])).not.toThrow();
+  });
+
+  it("names every undeclared Feature in stem order, a stemless one last", () => {
+    const bare = createModProject(
+      { mod: { bare_project: { name: "Bare project", supportedVersion: "4.4.*" } } },
+      { projectRoot: new URL("./fixtures/bags/", import.meta.url) }
+    );
+    bare.mod.feature(undefined, []);
+    bare.mod.feature("zeta", []);
+    bare.mod.feature("alpha", []);
+
+    expect(() => bare.build([])).toThrow(
+      'Feature "alpha", Feature "zeta", Feature (no stem) were created by this project\'s mod ' +
+        "but were not passed to project.build. Declare each in src/features.ts (export { feature " +
+        'as <name> } from "./features/<file>.ts"), or drop the mod.feature call if that module ' +
+        "is a helper."
+    );
   });
 });

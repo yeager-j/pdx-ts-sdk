@@ -292,6 +292,7 @@ describe("--cwd", () => {
     symlinkSync(path.join(project, "src/features"), alias);
 
     const { code, out, err } = await generate(root, ["--cwd", alias]);
+    // The CLI prints native separators, so the list's path is `src\features.ts` on Windows.
     expect(err).toMatch(
       /^declared in .*src[\\/]features\.ts: export \{ feature as resonanceTheory \}/
     );

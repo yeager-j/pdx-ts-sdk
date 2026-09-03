@@ -7,9 +7,10 @@
  * trailing newline gets one first, an empty file takes the line alone, a
  * missing or symlinked list is refused rather than created or followed, a file
  * swapped between the preflight and the append is refused by identity, and an
- * append that fails removes the module `generate` had just published. The last
- * test runs the real command and then the real build, which is the only proof
- * that the appended line is the one the build reads.
+ * append that fails before writing removes the module `generate` had just
+ * published (`feature-list-written.test.ts` holds the other side of that
+ * boundary). The last test runs the real command and then the real build,
+ * which is the only proof that the appended line is the one the build reads.
  */
 
 import {
@@ -30,6 +31,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import {
   appendedBytes,
+  appendedLineNumber,
   featureDeclaration,
   findDeclarationConflict,
 } from "../src/catalog/declaration.ts";
@@ -94,6 +96,18 @@ describe("the declaration line", () => {
   ])("appends to %s on its own line ending", (_case, contents, expected) => {
     expect(appendedBytes(contents, LINE)).toBe(expected);
   });
+
+  it.each([
+    ["an empty file", "", 1],
+    ["a one-line file", "// a\n", 2],
+    ["a file with no trailing newline", "// a", 2],
+    ["a two-line CRLF file", "// a\r\n// b\r\n", 3],
+  ])("counts the line the declaration lands on in %s", (_case, contents, line) => {
+    // The same number an editor shows for the appended line.
+    const appended = `${contents}${appendedBytes(contents, LINE)}`;
+    expect(appended.split(/\r?\n/)[line - 1]).toBe(LINE);
+    expect(appendedLineNumber(contents)).toBe(line);
+  });
 });
 
 describe("appending to a real feature list", () => {
@@ -146,10 +160,15 @@ describe("appending to a real feature list", () => {
     expect(readFileSync(elsewhere, "utf8")).toBe("// elsewhere\n");
   });
 
-  it("refuses a declaration the list already carries", async () => {
-    const { root } = listOf(`${LINE}\n`);
-    await expect(preflightFeatureList(root, NAMES, LINE)).rejects.toThrow(DeclarationConflictError);
-    await expect(preflightFeatureList(root, NAMES, LINE)).rejects.toThrow("on line 1");
+  it("reports a declaration the list already carries, and refuses to append it", async () => {
+    const { root, list } = listOf(`${LINE}\n`);
+    const preflight = await preflightFeatureList(root, NAMES, LINE);
+    expect(preflight.conflict).toEqual({ kind: "path", line: 1 });
+
+    // The command decides what a conflict means; the append never repeats one.
+    await expect(appendFeatureDeclaration(preflight)).rejects.toThrow(DeclarationConflictError);
+    await expect(appendFeatureDeclaration(preflight)).rejects.toThrow("on line 1");
+    expect(readFileSync(list, "utf8")).toBe(`${LINE}\n`);
   });
 
   it("refuses a list swapped for another file after the preflight", async () => {

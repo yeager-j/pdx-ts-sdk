@@ -107,8 +107,12 @@ accepted in the same position.
 A module under `src/features/` that no line names is dead code that still
 compiles and passes its tests. TypeScript's import graph is the module tree, so
 the scaffold's `npm run lint` runs [knip](https://knip.dev) and reports such a
-module by path. A wrong export is a type error: `project.build` accepts only
-Features created by this project's `mod`.
+module by path. knip checks that a file is reached, not that it is declared: a
+module a declared feature imports for a helper is reached, so if that module
+also calls `mod.feature`, `project.build` refuses the build and names the
+Feature, because content you wrote would otherwise be dropped. A wrong export
+is a type error: `project.build` accepts only Features created by this
+project's `mod`.
 
 `src/mod.ts` imports nothing else of the project. Feature modules import `mod`,
 so `mod.ts` cannot import `features.ts` back without evaluating them before

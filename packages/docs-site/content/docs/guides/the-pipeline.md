@@ -87,8 +87,8 @@ await runBuild(buildTheMod(), {
 `runBuild` and `runInstall` accept the `PureMod` or its promise, run the same
 low-level operations shown above, display warnings and structured failures with
 Clack, and return the write or install report on success. `runInspect` instead
-prints one deterministic YAML document from the Fold and Project Manifest. It
-does not render or write the mod. The three runners set the command exit code
+prints one deterministic YAML document from the Fold and the project's
+`package.json`. It does not render or write the mod. The three runners set the command exit code
 after a reported failure, which prevents Node from printing the same raw stack
 a second time. Advanced build scripts can continue to call `render`, `write`,
 and `install` directly.

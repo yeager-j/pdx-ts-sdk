@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { featuresOfInput } from "./authoring/bag.ts";
 import {
-  createMod,
+  createCapability,
   type CapabilityFeature,
   type FeaturesInput,
   type ModCapability,
@@ -42,6 +42,10 @@ export interface ModProject<P extends string> {
    *
    * `features` is the project's features module, or an explicit array of this
    * capability's Features. Every export of the module must be a Feature.
+   *
+   * @throws Error - When this project's `mod` minted a Feature that `features`
+   * does not include. Such a Feature was authored and would otherwise be
+   * dropped without a word; the message names it and the line to add.
    */
   readonly build: (features: FeaturesInput<P>, options?: BuildOptions) => PureMod;
 }
@@ -86,7 +90,16 @@ export function createModProject<const Manifest extends ModProjectManifest>(
     tags: manifestConfig.tags === undefined ? undefined : [...manifestConfig.tags],
     prefix,
   };
-  const mod = createMod(config);
+  // Every `mod.feature` call runs when its module is evaluated, so by the time
+  // `build` runs, this holds every Feature an author minted from this project's
+  // mod, whether or not the features module reached it. That is what makes a
+  // module that a declared feature imports for a helper, and that mints a
+  // Feature of its own, visible here and nowhere else: knip sees it reached,
+  // and the features module never names it.
+  const minted = new Set<CapabilityFeature<Prefix>>();
+  const mod = createCapability(config, DEFAULT_ID_PROFILE, {
+    onFeature: (feature) => minted.add(feature),
+  });
   const layout = parseProjectLayout(parsed.layout as ProjectLayoutInput);
   const projectRoot = resolveProjectRootPath(options.projectRoot);
   const assetsDirectory =
@@ -99,13 +112,58 @@ export function createModProject<const Manifest extends ModProjectManifest>(
       return [];
     }
     const assets = mod.assetTree({ source: assetsDirectory, allowMissing: true, allowEmpty: true });
-    return assets.length === 0 ? [] : [mod.feature("assets", assets)];
+    if (assets.length === 0) {
+      return [];
+    }
+    const feature = mod.feature("assets", assets);
+    // The project minted this one itself, so the list is not expected to name it.
+    minted.delete(feature);
+    return [feature];
   };
 
   const build = (features: FeaturesInput<Prefix>, buildOptions: BuildOptions = {}): PureMod => {
     const declared = featuresOfInput<CapabilityFeature<Prefix>>(features);
+    const undeclared = undeclaredFeatures(minted, declared);
+    if (undeclared.length > 0) {
+      throw new Error(undeclaredFeaturesMessage(undeclared));
+    }
     return mod.compile([...declared, ...assetFeatures()], { vanilla: buildOptions.vanilla });
   };
 
   return Object.freeze({ config: mod.config, mod, build });
+}
+
+/** The minted Features the declared list leaves out, in stem order with stemless ones last. */
+function undeclaredFeatures<F extends CapabilityFeature<string>>(
+  minted: ReadonlySet<F>,
+  declared: readonly F[]
+): readonly F[] {
+  const listed = new Set(declared);
+  return [...minted].filter((feature) => !listed.has(feature)).sort(byStem);
+}
+
+function byStem(a: CapabilityFeature<string>, b: CapabilityFeature<string>): number {
+  if (a.stem === b.stem) {
+    return 0;
+  }
+  if (a.stem === undefined) {
+    return 1;
+  }
+  if (b.stem === undefined) {
+    return -1;
+  }
+  return a.stem < b.stem ? -1 : 1;
+}
+
+function undeclaredFeaturesMessage(features: readonly CapabilityFeature<string>[]): string {
+  const named = features.map((feature) =>
+    feature.stem === undefined ? "Feature (no stem)" : `Feature ${JSON.stringify(feature.stem)}`
+  );
+  const [was, it] = named.length === 1 ? ["was", "it"] : ["were", "each"];
+  return (
+    `${named.join(", ")} ${was} created by this project's mod but ${was} not passed to ` +
+    `project.build. Declare ${it} in src/features.ts ` +
+    `(export { feature as <name> } from "./features/<file>.ts"), or drop the mod.feature ` +
+    `call if that module is a helper.`
+  );
 }

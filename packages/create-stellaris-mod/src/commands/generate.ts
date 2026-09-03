@@ -25,10 +25,12 @@
  * somebody's time; one that creates directories before the confirmation has
  * changed a project the author then declined to change.
  *
- * The module is published before its declaration is appended, and an append
- * that fails removes the module again. A module the list does not name is dead
- * code the build never sees, so the two writes succeed together or leave the
- * project as it was.
+ * The module is published before its declaration is appended. An append that
+ * fails before any byte reaches the list removes the module again: a module
+ * the list does not name is dead code the build never sees, so the two writes
+ * succeed together or leave the project as it was. An append that fails after
+ * the declaration reached the list keeps the module and names the line to
+ * check, because a declaration pointing at nothing is the worse state.
  *
  * stdout carries exactly one thing on a successful run: the path that was
  * written, plus a newline. Previews, echoes, prompts and confirmations are all
@@ -44,7 +46,13 @@ import { FEATURE_LIST_PATH, FEATURE_MODULE_SEGMENTS } from "../catalog/declarati
 import { CATALOG } from "../catalog/index.ts";
 import { deriveNames, NameError } from "../catalog/names.ts";
 import type { ChoiceQuestion, DerivedNames, RecipeView } from "../catalog/types.ts";
-import { appendFeatureDeclaration, preflightFeatureList } from "../feature-list.ts";
+import {
+  appendFeatureDeclaration,
+  declarationConflictMessage,
+  DeclarationWrittenError,
+  preflightFeatureList,
+  type FeatureListPreflight,
+} from "../feature-list.ts";
 import { formatWithProjectPrettier } from "../format-project.ts";
 import type { CliIo } from "../io.ts";
 import { parseJsonFile } from "../json.ts";
@@ -239,13 +247,16 @@ export async function runGenerate(
       return fail(collisionMessage(preflight.targetPath));
     }
     const list = await preflightFeatureList(rootDir, names, generated.declaration);
+    if (!parsed.dryRun && list.conflict !== undefined) {
+      return fail(declarationConflictMessage(list.listPath, list.conflict, list.names));
+    }
 
     if (parsed.dryRun) {
       // 10 (dry). No confirmation: a dry run changes nothing, so there is
       //     nothing to ask permission for.
       io.stdout.write(`would write ${preflight.targetPath}\n`);
       io.stdout.write(generated.contents);
-      io.stderr.write(`would append to ${list.listPath}: ${generated.declaration}\n`);
+      io.stderr.write(`${dryRunDeclarationLine(list, generated.declaration)}\n`);
       if (preflight.target !== "absent") {
         io.stderr.write(`A real run would refuse: ${collisionMessage(preflight.targetPath)}\n`);
       }
@@ -269,6 +280,9 @@ export async function runGenerate(
     try {
       await appendFeatureDeclaration(list);
     } catch (error) {
+      if (error instanceof DeclarationWrittenError) {
+        throw keptWithDeclaration(written, list.listPath, error);
+      }
       throw await rolledBack(written, error);
     }
     io.stderr.write(`declared in ${list.listPath}: ${generated.declaration}\n`);
@@ -303,8 +317,41 @@ export async function runGenerate(
 }
 
 /**
- * The error to report when the declaration could not be appended, after the
- * just-published module has been removed again.
+ * What the dry run says about the list, on stderr. A conflict is a warning
+ * here rather than a refusal, as the target collision is: a dry run exists to
+ * show the file, and an author previewing a name the list already carries
+ * still wants to see it.
+ */
+function dryRunDeclarationLine(list: FeatureListPreflight, declaration: string): string {
+  if (list.conflict === undefined) {
+    return `would append to ${list.listPath}: ${declaration}`;
+  }
+  return list.conflict.kind === "path"
+    ? `already declared in ${list.listPath} on line ${list.conflict.line}`
+    : `already exports ${list.names.identifier} in ${list.listPath} on line ${list.conflict.line}`;
+}
+
+/**
+ * The error to report when the declaration reached the list and the append
+ * still failed. The module stays: its line is in the list, possibly cut short,
+ * and removing the module would leave that line pointing at nothing, which is
+ * worse than a line to check.
+ */
+function keptWithDeclaration(
+  written: string,
+  listPath: string,
+  error: DeclarationWrittenError
+): PublishError {
+  return new PublishError(
+    `${error.message}\n\nThe module ${written} was kept: its declaration is in ${listPath} and ` +
+      `may be incomplete. Check line ${error.line} of ${listPath} before building.`
+  );
+}
+
+/**
+ * The error to report when the declaration could not be appended and no byte
+ * of it reached the list, after the just-published module has been removed
+ * again.
  *
  * The module without its line would be dead code the build never sees, which
  * is a worse state than the one the author started in: it looks generated and
