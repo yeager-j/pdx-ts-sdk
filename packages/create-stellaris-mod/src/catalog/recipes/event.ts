@@ -36,7 +36,7 @@
  * The difference is what each binding is for. The item is what another file
  * imports, so it is worth naming after the thing the author asked for — and it
  * is what `generate`'s own preview tells them the binding will be. The handle is
- * local, unexported, and one per file, so it has nothing to be named after.
+ * local, unexported, and one per Feature, so it has nothing to be named after.
  * `adversarial-names.test.ts` proves that derivation against reserved words,
  * leading digits and injection attempts once, centrally.
  *
@@ -209,17 +209,17 @@ function header(visibility: Visibility, kind: EventKind): string {
 ${window}
  *
  * \`#mod\` is the project's own alias for \`src/mod.ts\` (see \`package.json#imports\`),
- * so moving this file deeper inside the content directory never rewrites the
- * import. The filename decides nothing either: the \`mod.feature(...)\` call at the
- * bottom is what names the emitted files.
+ * so this import never changes when the file moves. The filename decides
+ * nothing either: the \`mod.feature(...)\` call at the bottom is what names the
+ * emitted files, and what puts it in the mod is its line in \`src/features.ts\`.
  */`;
 }
 
 function namespaceLines(names: DerivedNames): string {
   return [
-    "// One event namespace per feature file; the event below is",
-    `// \`<prefix>_${names.stem}.1\` from birth. The handle stays local — a namespace`,
-    "// belongs to exactly one file and must not be exported.",
+    "// A namespace belongs to exactly one Feature; the event below is",
+    `// \`<prefix>_${names.stem}.1\` from birth. Keep the handle inside this Feature's`,
+    "// own files, and never export it.",
     `const events = mod.namespace(${quoteTs(names.stem)});`,
   ].join("\n");
 }

@@ -2,9 +2,10 @@ out| building — Building
 out|
 out|   One constructible planet building, plus the feature file that places it.
 out|
-out|   Kind     Item recipe — one feature file holding one item
-out|   Creates  building
-out|   Writes   <contentDirectory>/<derived_name>.ts
+out|   Kind      Item recipe — one feature file holding one item
+out|   Creates   building
+out|   Writes    src/features/<derived_name>.ts
+out|   Declares  export { feature as <binding> } from "./features/<derived_name>.ts";
 out|
 out| Questions:
 out|

@@ -50,11 +50,10 @@ function json(value: unknown): string {
 /** The smallest accepted manifest, as a starting point for the invalid ones. */
 const MINIMAL = {
   mod: { my_mod: { name: "My Mod", supportedVersion: "v4.4.*" } },
-  contentDirectory: "src/content",
 };
 
 function withMod(config: unknown, prefix = "my_mod"): string {
-  return json({ mod: { [prefix]: config }, contentDirectory: "src/content" });
+  return json({ mod: { [prefix]: config } });
 }
 
 interface Case {
@@ -82,7 +81,6 @@ const CORPUS: readonly Case[] = [
           acceptGameVersion: "4.4.7",
         },
       },
-      contentDirectory: "src/content",
       assetsDirectory: "assets",
     }),
     valid: true,
@@ -90,11 +88,6 @@ const CORPUS: readonly Case[] = [
   {
     name: "a prefix with digits and underscores",
     bytes: withMod(MINIMAL.mod.my_mod, "a_1_b"),
-    valid: true,
-  },
-  {
-    name: "a nested content directory",
-    bytes: json({ ...MINIMAL, contentDirectory: "src/features/content" }),
     valid: true,
   },
   {
@@ -113,8 +106,7 @@ const CORPUS: readonly Case[] = [
   { name: "a JSON array", bytes: "[]", valid: false },
   { name: "JSON null", bytes: "null", valid: false },
   { name: "a JSON string", bytes: '"my_mod"', valid: false },
-  { name: "no mod key", bytes: json({ contentDirectory: "src/content" }), valid: false },
-  { name: "no contentDirectory key", bytes: json({ mod: MINIMAL.mod }), valid: true },
+  { name: "no mod key", bytes: json({ assetsDirectory: "assets" }), valid: false },
   {
     name: "an unknown top-level key",
     bytes: json({ ...MINIMAL, recipes: ["technology"] }),
@@ -218,45 +210,6 @@ const CORPUS: readonly Case[] = [
     valid,
   })),
   {
-    name: "a numeric contentDirectory",
-    bytes: json({ ...MINIMAL, contentDirectory: 7 }),
-    valid: false,
-  },
-  {
-    name: "an empty contentDirectory",
-    bytes: json({ ...MINIMAL, contentDirectory: "" }),
-    valid: false,
-  },
-  {
-    name: "a content directory outside src",
-    bytes: json({ ...MINIMAL, contentDirectory: "content" }),
-    valid: false,
-  },
-  ...["src/content#fragment", "src/content?query", "src/%2e%2e/outside"].map(
-    (contentDirectory) => ({
-      name: `URL-reinterpreted contentDirectory ${JSON.stringify(contentDirectory)}`,
-      bytes: json({ ...MINIMAL, contentDirectory }),
-      valid: false,
-    })
-  ),
-  ...[
-    "src/content.",
-    "src/content ",
-    "src/ content",
-    "src/CON",
-    "src/con.txt",
-    "src/COM1",
-    "src/lpt9.log",
-    "src/foo:bar",
-    'src/foo"bar',
-    "src/foo|bar",
-    "src/foo*bar",
-  ].map((contentDirectory) => ({
-    name: `non-portable contentDirectory ${JSON.stringify(contentDirectory)}`,
-    bytes: json({ ...MINIMAL, contentDirectory }),
-    valid: false,
-  })),
-  {
     name: "a numeric assetsDirectory",
     bytes: json({ ...MINIMAL, assetsDirectory: 7 }),
     valid: false,
@@ -308,7 +261,6 @@ describe("parseManifest", () => {
   it("recovers the prefix and the config the SDK needs", () => {
     const manifest = parseManifest(CORPUS[1]!.bytes, SOURCE);
     expect(manifest.prefix).toBe("my_mod");
-    expect(manifest.contentDirectory).toBe("src/content");
     expect(manifest.assetsDirectory).toBe("assets");
     expect(manifest.layout.assetsSegments).toEqual(["assets"]);
     expect(manifest.sourcePath).toBe(SOURCE);
@@ -329,7 +281,7 @@ describe("parseManifest", () => {
     const manifest = parseManifest(json(MINIMAL), SOURCE);
     expect(Object.keys(manifest.config)).toEqual(["name", "supportedVersion"]);
     expect(manifest.assetsDirectory).toBeUndefined();
-    expect(Object.keys(manifest.layout)).toEqual(["contentDirectory", "contentSegments"]);
+    expect(Object.keys(manifest.layout)).toEqual([]);
   });
 
   it("copies tags rather than aliasing the parsed array", () => {
@@ -357,8 +309,8 @@ describe("parseManifest", () => {
         /supportedVersion "banana" is not a launcher version pattern/,
       ],
       [
-        json({ ...MINIMAL, contentDirectory: 7 }),
-        /"contentDirectory" must be a string, and is a number/,
+        json({ ...MINIMAL, assetsDirectory: 7 }),
+        /"assetsDirectory" must be a string, and is a number/,
       ],
     ];
     for (const [bytes, pattern] of faults) {
@@ -449,7 +401,7 @@ describe("findManifest", () => {
   /** `false` writes no manifest at all, which is the not-a-project case. */
   function project(manifest: string | false = json(MINIMAL)): string {
     root = realpathSync(mkdtempSync(path.join(tmpdir(), "pdx-find-manifest-")));
-    mkdirSync(path.join(root, "project/src/content"), { recursive: true });
+    mkdirSync(path.join(root, "project/src/features"), { recursive: true });
     if (manifest !== false) {
       writeFileSync(path.join(root, "project/stellaris-mod.json"), manifest);
     }
@@ -465,13 +417,13 @@ describe("findManifest", () => {
 
   it("finds one above the directory it starts from", async () => {
     const base = project();
-    const found = await findManifest(path.join(base, "project/src/content"));
+    const found = await findManifest(path.join(base, "project/src/features"));
     expect(found?.rootDir).toBe(path.join(base, "project"));
   });
 
   it("returns nothing when there is none all the way up", async () => {
     const base = project(false);
-    expect(await findManifest(path.join(base, "project/src/content"))).toBeUndefined();
+    expect(await findManifest(path.join(base, "project/src/features"))).toBeUndefined();
   });
 
   it("throws on a manifest it cannot read rather than searching past it", async () => {
@@ -479,7 +431,7 @@ describe("findManifest", () => {
     // The parent has a perfectly good manifest, and finding it would be worse
     // than failing: the author is standing in the broken project.
     writeFileSync(path.join(base, "stellaris-mod.json"), json(MINIMAL));
-    await expect(findManifest(path.join(base, "project/src/content"))).rejects.toThrow(
+    await expect(findManifest(path.join(base, "project/src/features"))).rejects.toThrow(
       ManifestError
     );
   });
@@ -601,7 +553,7 @@ describe("the manifest init writes", () => {
       supportedVersion: "v4.4.*",
       tags: ["Technologies"],
     });
-    expect(manifest.contentDirectory).toBe("src/content");
+    expect(manifest.contentDirectory).toBeUndefined();
     expect(manifest.assetsDirectory).toBe("assets");
   });
 

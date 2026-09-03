@@ -13,33 +13,68 @@ export function modTs(): string {
   return `/**
  * The mod project declared by \`stellaris-mod.json\`.
  *
- * \`createModProject\` validates the manifest and owns the conventional pipeline:
- * discover Feature modules, capture the optional Asset tree, then perform one
- * capability-owned Fold. Pass \`discover\` or \`additionalFeatures\` to
- * \`project.build()\` for a pre-compile customization. For a different pipeline,
- * compose \`discoverFeatures\`, \`mod.assetTree\`, and \`mod.compile\` directly.
- * Project declaration reads no source files; only \`buildTheMod()\` starts work.
- *
- * \`buildTheMod\` is \`async\` so that a refusal from \`loadVanilla()\` becomes a
- * rejected promise rather than a synchronous throw. The entry points call it as
- * \`runBuild(buildTheMod(), ...)\`, and a synchronous throw there would escape
- * the runner that exists to present failures.
+ * \`createModProject\` validates the manifest and binds \`mod\`, the authoring
+ * capability every feature module imports as \`#mod\`. Project declaration reads
+ * no source files and imports nothing else of this project. That is a rule
+ * rather than a tidiness: feature modules import this module, so this module
+ * cannot import \`./features.ts\` back without evaluating them before \`mod\`
+ * exists. The Fold starts in \`./build.ts\`, which imports both sides.
  */
 
 import { createModProject } from "@pdx-ts/sdk";
 import manifest from "../stellaris-mod.json" with { type: "json" };
-import { loadVanilla } from "./vanilla.ts";
 
-const project = createModProject(manifest, {
+export const project = createModProject(manifest, {
   projectRoot: new URL("../", import.meta.url),
 });
 
 export const { config, mod } = project;
-
-export async function buildTheMod() {
-  return project.build({ vanilla: loadVanilla() });
+`;
 }
 
+export function buildTs(): string {
+  return `/**
+ * \`buildTheMod()\`: the one Fold every command shares.
+ *
+ * \`src/features.ts\` is the feature list, imported here as a namespace whose
+ * every export is one Feature. \`project.build\` compiles exactly those, plus
+ * the optional Asset tree, so a feature module is in the mod when its line is
+ * in that list and not otherwise. For a different pipeline, compose
+ * \`mod.assetTree\` and \`mod.compile\` directly.
+ *
+ * \`buildTheMod\` is \`async\` so that a refusal from \`loadVanilla()\` or from the
+ * Fold becomes a rejected promise rather than a synchronous throw. The entry
+ * points call it as \`runBuild(buildTheMod(), ...)\`, and a synchronous throw
+ * there would escape the runner that exists to present failures.
+ */
+
+import { project } from "#mod";
+
+import * as features from "./features.ts";
+import { loadVanilla } from "./vanilla.ts";
+
+// eslint-disable-next-line @typescript-eslint/require-await -- async on purpose; see above.
+export async function buildTheMod() {
+  return project.build(features, { vanilla: loadVanilla() });
+}
+`;
+}
+
+export function featuresTs(resolved: Resolved): string {
+  return `/**
+ * The feature list: every Feature this mod ships, one line each.
+ *
+ * \`src/build.ts\` hands this module to \`project.build\`, so a feature module is
+ * in the mod exactly when its line is here. A module under \`src/features/\` that
+ * no line names is dead code, and \`${runScript(resolved.packageManager, "lint")}\` reports it by path.
+ * \`generate\` appends a line for each module it writes and never creates or
+ * rewrites this file.
+ *
+ * Only Feature exports belong here. Shared values are imported where they are
+ * used, and a namespace handle is never exported from a Feature.
+ */
+
+export { feature as example } from "./features/example.ts";
 `;
 }
 
@@ -55,7 +90,7 @@ export function indexTs(resolved: Resolved): string {
 
 import { runBuild } from "@pdx-ts/sdk";
 
-import { buildTheMod } from "#mod";
+import { buildTheMod } from "./build.ts";
 
 export const outDir = new URL("../out/", import.meta.url);
 export const previewsDir = new URL("../previews/", import.meta.url);
@@ -89,7 +124,7 @@ export function installTs(resolved: Resolved): string {
 
 import { runInstall } from "@pdx-ts/sdk";
 
-import { buildTheMod } from "#mod";
+import { buildTheMod } from "./build.ts";
 
 await runInstall(buildTheMod());
 `;
@@ -106,7 +141,7 @@ export function inspectTs(resolved: Resolved): string {
 import { runInspect } from "@pdx-ts/sdk";
 import manifest from "../stellaris-mod.json" with { type: "json" };
 
-import { buildTheMod } from "#mod";
+import { buildTheMod } from "./build.ts";
 
 await runInspect(buildTheMod(), {
   manifest,
@@ -183,9 +218,9 @@ export function flagsTs(resolved: Resolved): string {
   return `/**
  * Flags this mod sets and reads.
  *
- * This module sits *outside* \`src/content/\` so content modules can import
- * shared values without giving them feature-placement responsibilities. Only a
- * module's named \`feature\` export is discovered; every other export is ordinary
+ * This module sits *outside* \`src/features/\` so feature modules can import
+ * shared values without the sharer becoming a Feature. A module is in the mod
+ * only through its line in \`src/features.ts\`; every other export is ordinary
  * ESM API.
  *
  * Declaring flag names by kind is what makes them checkable: \`hasCountryFlag\`
@@ -199,7 +234,7 @@ export const flags = countryFlags("${resolved.prefix}_welcomed");
 `;
 }
 
-export function contentExampleTs(resolved: Resolved): string {
+export function featureExampleTs(resolved: Resolved): string {
   const p = resolved.prefix;
   return `/**
  * One feature, one module.
@@ -213,8 +248,9 @@ export function contentExampleTs(resolved: Resolved): string {
  *
  * Rename or move this file and the emitted paths stay the same while the
  * Feature stem and Items stay the same. Change the stem to change its
- * per-Feature filenames; add another module with its own named Feature to make
- * another output group.
+ * per-Feature filenames; add another module with its own named Feature, and a
+ * line for it in \`src/features.ts\`, to make another output group. That line
+ * is what puts a module in the mod; a module without one is dead code.
  *
  * \`#mod\` is the project's own import alias for \`src/mod.ts\` (see
  * \`package.json#imports\`), so moving this module deeper never rewrites it.
@@ -236,8 +272,9 @@ export const firstSteps = mod.technology("first_steps", {
   weight: 100,
 });
 
-// A namespace belongs to exactly one feature file, so the handle stays local.
-// This root namespace preserves the scaffold's stable <prefix>.<number> ids.
+// A namespace belongs to exactly one Feature, so the handle stays inside this
+// Feature's own files and is never exported. This root namespace preserves the
+// scaffold's stable <prefix>.<number> ids.
 const events = mod.namespace();
 
 export const welcome = events.country(1, {
@@ -264,15 +301,14 @@ export const feature = mod.feature("example", [firstSteps, welcome, gameStart]);
 `;
 }
 
-export function contentExampleTestTs(resolved: Resolved): string {
+export function featureExampleTestTs(resolved: Resolved): string {
   const p = resolved.prefix;
   return `/**
  * Tests, colocated with the feature they test.
  *
- * \`discoverFeatures\` imports selected modules under \`src/content/\` and reads
- * their named \`feature\` exports. It skips \`*.test.ts\`, so this file can live
- * beside the feature it tests; see \`DEFAULT_CONTENT_PATTERN\` in the SDK if you
- * want to change what counts.
+ * The build reads \`src/features.ts\` and nothing else, so this file can live
+ * beside the feature it tests without ever being mistaken for content: nothing
+ * declares it, and \`knip.json\` leaves test files out of the dead-file check.
  *
  * \`fixture\` is not the game. It interprets the triggers and effects you
  * recorded, so it runs in milliseconds and needs no launcher — but it models

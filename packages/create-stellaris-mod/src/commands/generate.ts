@@ -6,17 +6,18 @@
  *
  *   1. resolve the command and the recipe;
  *   2. discover and validate the Project Manifest;
- *   3. validate `#mod`, `contentDirectory` and SDK compatibility;
+ *   3. validate `#mod` and SDK compatibility;
  *   4. resolve or prompt for the name, and derive every name once;
  *   5. show the target and the derived facts (interactive only);
  *   6. resolve each question — a flag wins, `--yes` and non-TTY take Defaults,
  *      otherwise prompt;
  *   7. call the pure catalog once;
- *   8. preflight the target without touching anything;
+ *   8. preflight the target and the feature list without touching anything;
  *   9. confirm the exact path (interactive only);
- *  10. print the dry run, or create the directories, publish exclusively, and
- *      hand the written file to the project's own Prettier when one is
- *      installed (`../format-project.ts`).
+ *  10. print the dry run, or create the directories, publish exclusively,
+ *      append the declaration to `src/features.ts`, and hand the written file
+ *      to the project's own Prettier when one is installed
+ *      (`../format-project.ts`).
  *
  * Everything that can refuse comes before anything an author has to answer, and
  * everything an author answers comes before anything is created. A command that
@@ -24,19 +25,26 @@
  * somebody's time; one that creates directories before the confirmation has
  * changed a project the author then declined to change.
  *
+ * The module is published before its declaration is appended, and an append
+ * that fails removes the module again. A module the list does not name is dead
+ * code the build never sees, so the two writes succeed together or leave the
+ * project as it was.
+ *
  * stdout carries exactly one thing on a successful run: the path that was
  * written, plus a newline. Previews, echoes, prompts and confirmations are all
  * stderr, so `generate ... | xargs code` opens the file rather than a page of
  * prose.
  */
 
-import { readFile, realpath } from "node:fs/promises";
+import { readFile, realpath, unlink } from "node:fs/promises";
 import path from "node:path";
 
 import { UnknownRecipeError } from "../catalog/catalog.ts";
+import { FEATURE_LIST_PATH, FEATURE_MODULE_SEGMENTS } from "../catalog/declaration.ts";
 import { CATALOG } from "../catalog/index.ts";
 import { deriveNames, NameError } from "../catalog/names.ts";
 import type { ChoiceQuestion, DerivedNames, RecipeView } from "../catalog/types.ts";
+import { appendFeatureDeclaration, preflightFeatureList } from "../feature-list.ts";
 import { formatWithProjectPrettier } from "../format-project.ts";
 import type { CliIo } from "../io.ts";
 import { parseJsonFile } from "../json.ts";
@@ -151,28 +159,18 @@ export async function runGenerate(
       return fail(
         `There is no ${MANIFEST_BASENAME} in ${startDir}, or in any directory above it.\n\n` +
           "`generate` writes into a project that already exists: the manifest is what names the " +
-          "mod prefix\nand says where feature source goes. Scaffold one with " +
-          "`npx create-stellaris-mod init`, or run\nthis inside a project — `--cwd <path>` " +
-          "starts the search somewhere else."
+          "mod prefix.\nScaffold one with `npx create-stellaris-mod init`, or run this inside a " +
+          "project — `--cwd <path>`\nstarts the search somewhere else."
       );
     }
 
-    // 3. `#mod`, `contentDirectory`, and the SDK range.
+    // 3. `#mod` and the SDK range.
     const project = await readProjectPackage(found.rootDir);
     if (typeof project.modImport !== "string") {
       return fail(
         `${path.join(found.rootDir, "package.json")} does not map "#mod" to a module, and every ` +
           `generated feature file imports\n\`{ mod } from "#mod"\`. Add it:\n\n` +
           `  "imports": {\n    "#mod": "./src/mod.ts"\n  }`
-      );
-    }
-
-    const segments = found.manifest.layout.contentSegments;
-    if (segments === undefined) {
-      return fail(
-        `${found.manifest.sourcePath} has no "contentDirectory", and \`generate\` writes each ` +
-          "feature file into that directory. Add one, for example " +
-          '`"contentDirectory": "src/content"`.'
       );
     }
 
@@ -196,13 +194,14 @@ export async function runGenerate(
     const names = await resolveNames(parsed.name, interactive, terminal);
 
     // 5. What is about to happen, for somebody watching it happen.
-    const targetPath = path.join(found.rootDir, ...segments, names.basename);
+    const targetPath = path.join(found.rootDir, ...FEATURE_MODULE_SEGMENTS, names.basename);
     if (interactive) {
       terminal.note(
         [
           `Recipe    ${view.summary.id} — ${kindLabel(view.summary)}`,
           `Name      ${names.title}`,
           `File      ${path.relative(found.rootDir, targetPath)}`,
+          `List      ${FEATURE_LIST_PATH} as ${names.identifier}`,
           `Ids       from "${names.logicalName}", under the ${found.manifest.prefix} prefix`,
           // Only an Item recipe has one binding to name. A Feature recipe's file
           // exports several items under recipe-chosen role words, so there is no
@@ -230,39 +229,49 @@ export async function runGenerate(
     //    derivations that happen to agree.
     const generated = CATALOG.generate({ recipeId, names, answers });
 
-    // 8. A look at the target, which creates nothing.
-    const preflight = await preflightTarget(
-      await realpath(found.rootDir),
-      segments,
-      generated.basename
-    );
+    // 8. A look at the target and at the feature list, which creates nothing.
+    //    A taken target is said here, before the confirmation, rather than
+    //    discovered by the publisher, so nobody is asked to approve a write
+    //    that cannot happen. The dry run says it too, after the preview.
+    const rootDir = await realpath(found.rootDir);
+    const preflight = await preflightTarget(rootDir, FEATURE_MODULE_SEGMENTS, generated.basename);
+    if (!parsed.dryRun && preflight.target !== "absent") {
+      return fail(collisionMessage(preflight.targetPath));
+    }
+    const list = await preflightFeatureList(rootDir, names, generated.declaration);
 
     if (parsed.dryRun) {
       // 10 (dry). No confirmation: a dry run changes nothing, so there is
       //     nothing to ask permission for.
       io.stdout.write(`would write ${preflight.targetPath}\n`);
       io.stdout.write(generated.contents);
+      io.stderr.write(`would append to ${list.listPath}: ${generated.declaration}\n`);
       if (preflight.target !== "absent") {
         io.stderr.write(`A real run would refuse: ${collisionMessage(preflight.targetPath)}\n`);
       }
       return 0;
     }
 
-    if (preflight.target !== "absent") {
-      // Said before the confirmation rather than discovered by the publisher,
-      // so nobody is asked to approve a write that cannot happen.
-      return fail(collisionMessage(preflight.targetPath));
-    }
-
     // 9. The exact path, confirmed.
-    if (interactive && !(await terminal.confirm({ message: `Write ${preflight.targetPath}?` }))) {
+    if (
+      interactive &&
+      !(await terminal.confirm({
+        message: `Write ${preflight.targetPath} and declare it in ${FEATURE_LIST_PATH}?`,
+      }))
+    ) {
       throw new CancelledError();
     }
 
-    // 10. Directories, then the bytes, then the project's own formatter, then
-    //     the one line stdout carries. Formatting failure is a warning rather
-    //     than a failure: the file is already the author's.
+    // 10. Directories, then the bytes, then the declaration, then the project's
+    //     own formatter, then the one line stdout carries. Formatting failure
+    //     is a warning rather than a failure: the file is already the author's.
     const written = await publishExclusive(preflight, generated.contents);
+    try {
+      await appendFeatureDeclaration(list);
+    } catch (error) {
+      throw await rolledBack(written, error);
+    }
+    io.stderr.write(`declared in ${list.listPath}: ${generated.declaration}\n`);
     const formatWarning = await formatWithProjectPrettier(found.rootDir, written, io);
     if (formatWarning !== undefined) {
       io.stderr.write(`warning: ${formatWarning}\n`);
@@ -279,7 +288,7 @@ export async function runGenerate(
     }
     // A refused stat, a read-only directory, a full disk. These are ordinary
     // facts about a machine rather than defects in this program, and a stack
-    // trace is the wrong way to tell somebody their content directory is not
+    // trace is the wrong way to tell somebody their feature directory is not
     // writable. Node's own message already names the code, the call and the
     // path, so it is quoted rather than paraphrased.
     const code = (error as NodeJS.ErrnoException | undefined)?.code;
@@ -291,6 +300,32 @@ export async function runGenerate(
     }
     throw error;
   }
+}
+
+/**
+ * The error to report when the declaration could not be appended, after the
+ * just-published module has been removed again.
+ *
+ * The module without its line would be dead code the build never sees, which
+ * is a worse state than the one the author started in: it looks generated and
+ * is not in the mod. So the failure is reported with the rollback, and an
+ * unlink that fails is said too, since the author then has a file to delete.
+ */
+async function rolledBack(written: string, error: unknown): Promise<PublishError> {
+  const reason = error instanceof Error ? error.message : String(error);
+  try {
+    await unlink(written);
+  } catch (unlinkError) {
+    const code = (unlinkError as NodeJS.ErrnoException | undefined)?.code ?? "unknown error";
+    return new PublishError(
+      `${reason}\n\nThe module was written before the declaration failed, and removing it again ` +
+        `also failed (${code}), so delete ${written} by hand.`
+    );
+  }
+  return new PublishError(
+    `${reason}\n\nThe module was written before the declaration failed, so the module was ` +
+      `removed again and nothing changed.`
+  );
 }
 
 /** Bare `generate`, with a terminal: the catalog as a filterable list. */

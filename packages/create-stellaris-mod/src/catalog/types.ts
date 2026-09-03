@@ -67,10 +67,12 @@ export interface RecipeView {
   /** In the order `generate` asks them. */
   readonly questions: readonly ChoiceQuestion[];
   /**
-   * Where the file lands, stated generically: `view` requires no project, so it
-   * cannot name a real `contentDirectory`.
+   * Where the file lands, with the derived name left as a placeholder: `view`
+   * requires no name, so it cannot spell the real one.
    */
   readonly outputPattern: string;
+  /** The line `generate` appends to `src/features.ts`, with the same placeholders. */
+  readonly declarationPattern: string;
   /** A non-interactive command an author can paste. */
   readonly command: string;
 }
@@ -103,6 +105,8 @@ export interface GeneratedFeatureSource {
   readonly stem: string;
   readonly basename: `${string}.ts`;
   readonly contents: string;
+  /** The line that declares the module in `src/features.ts`. */
+  readonly declaration: string;
 }
 
 /** One validated derivation of everything a renderer needs to name things. */

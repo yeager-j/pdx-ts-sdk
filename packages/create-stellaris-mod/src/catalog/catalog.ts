@@ -23,6 +23,7 @@
  */
 
 import { COMMON_GENERATE_FLAGS } from "../options.ts";
+import { FEATURE_MODULE_SEGMENTS, featureDeclaration } from "./declaration.ts";
 import type {
   AnswersOf,
   ChoiceQuestion,
@@ -38,6 +39,12 @@ import type {
  * survives being typed into a shell and written after `--`.
  */
 const KEBAB_PATTERN = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
+
+/** What `view` shows in place of the names `generate` derives from a real one. */
+const PLACEHOLDER_NAMES = {
+  identifier: "<binding>",
+  basename: "<derived_name>.ts",
+} as const;
 
 export class CatalogError extends Error {
   constructor(message: string) {
@@ -133,10 +140,11 @@ export function createCatalog(recipes: readonly AnyRecipe[]): RecipeCatalog {
       return {
         summary: recipe.summary,
         questions: recipe.questions,
-        // `view` needs no project, so it cannot name a real directory — and
-        // saying `<contentDirectory>` is more use than naming this release's
-        // default, which the author's manifest is free to disagree with.
-        outputPattern: "<contentDirectory>/<derived_name>.ts",
+        // `view` needs no name, so the two derived names stay placeholders. The
+        // declaration comes from the same function `generate` uses, so what
+        // `view` shows and what `generate` appends cannot drift apart.
+        outputPattern: `${FEATURE_MODULE_SEGMENTS.join("/")}/${PLACEHOLDER_NAMES.basename}`,
+        declarationPattern: featureDeclaration(PLACEHOLDER_NAMES),
         command: nonInteractiveCommand(recipe),
       };
     },
@@ -149,6 +157,7 @@ export function createCatalog(recipes: readonly AnyRecipe[]): RecipeCatalog {
         stem: names.stem,
         basename: names.basename,
         contents: recipe.render({ names, answers }),
+        declaration: featureDeclaration(names),
       };
     },
   };

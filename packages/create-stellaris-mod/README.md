@@ -38,8 +38,8 @@ typechecks, tests, and builds after installation.
 
 1. Edit the mod name, version, tags, or supported game version in
    `stellaris-mod.json`.
-2. Open `src/content/example.ts` to see a technology, event, and on-action hook
-   in one Feature.
+2. Open `src/features/example.ts` to see a technology, event, and on-action hook
+   in one Feature, and `src/features.ts` to see the line that puts it in the mod.
 3. Run `npm run inspect` to review Feature stems, Item ids, dependency versions,
    vanilla evidence, patch plans, and warnings as deterministic YAML.
 4. Run `npm test` to execute the example event chain without launching the game.
@@ -85,19 +85,30 @@ npx create-stellaris-mod view technology
 
 ### `generate`
 
-Write one Feature source file into an existing project:
+Write one Feature source file into an existing project and declare it in the
+Feature list:
 
 ```bash
 npx create-stellaris-mod generate technology "Resonance Theory"
 ```
 
-`generate` searches upward for `stellaris-mod.json`, reads the manifest's
-`contentDirectory`, checks for a string `package.json#imports.#mod` mapping and
-a supported SDK range, then writes `<contentDirectory>/resonance_theory.ts`.
+`generate` searches upward for `stellaris-mod.json`, checks for a string
+`package.json#imports.#mod` mapping and a supported SDK range, writes
+`src/features/resonance_theory.ts`, and appends one line to `src/features.ts`:
 
-It never overwrites an existing file, directory, or symlink. `--dry-run` prints
-the exact source without creating directories or files. A successful normal run
-writes only the created path to stdout.
+```ts
+export { feature as resonanceTheory } from "./features/resonance_theory.ts";
+```
+
+It never overwrites an existing file, directory, or symlink, and it never
+creates or rewrites `src/features.ts`: the list must already exist as a regular
+file, and a list that already declares the module's path or already exports the
+binding is refused with the line number. The module is written first; if the
+append then fails, the module is removed again, so the project never holds a
+feature module its list does not name. `--dry-run` prints the exact source and
+the line it would append without creating directories or files. A successful
+normal run writes only the created path to stdout; the appended line is reported
+on stderr.
 
 Publication holds the destination directory and temporary file open while it
 checks their identity before and after creating the final hard link. Node does
@@ -115,17 +126,20 @@ my-mod/
 |-- package.json
 |-- tsconfig.json
 |-- vitest.config.ts
+|-- knip.json                  the dead-file check behind `npm run lint`
 |-- eslint.config.js           omitted with --no-eslint
 |-- .prettierrc                omitted with --no-prettier
 |-- assets/                    create when the first Asset is needed
 `-- src/
-    |-- mod.ts                 createModProject and buildTheMod
+    |-- mod.ts                 createModProject: project, config, and mod
+    |-- build.ts               buildTheMod, the one Fold every command shares
+    |-- features.ts            the Feature list: one line per Feature
     |-- index.ts               render and write out/
     |-- inspect.ts             Fold and print deterministic YAML
     |-- install.ts             build and install for the launcher
     |-- vanilla.ts             parsed install, when one was found
     |-- flags.ts               shared typed values
-    `-- content/
+    `-- features/
         |-- example.ts         named Feature export
         `-- example.test.ts    colocated mod-logic test
 ```
@@ -136,8 +150,8 @@ below.
 ## Project Manifest and build pipeline
 
 `stellaris-mod.json` is the single author-owned source of truth for mod identity,
-launcher metadata, Feature source, and the Asset tree. Its `mod` object contains
-exactly one key, the mod prefix:
+launcher metadata, and the Asset tree. Its `mod` object contains exactly one
+key, the mod prefix:
 
 ```json
 {
@@ -150,34 +164,43 @@ exactly one key, the mod prefix:
       "tags": []
     }
   },
-  "contentDirectory": "src/content",
   "assetsDirectory": "assets"
 }
 ```
 
-The object key preserves the prefix as a TypeScript literal. The manifest's
-`contentDirectory` is shared by SDK discovery and recipe generation, so moving
-it changes both consumers. `assetsDirectory` mirrors opaque files into the
-built mod root.
+The object key preserves the prefix as a TypeScript literal. `assetsDirectory`
+mirrors opaque files into the built mod root. Feature source is not in the
+manifest: `src/features.ts`, the Feature list, declares it.
 
 The generated package maps `#mod` to `./src/mod.ts`. Feature modules import the
 capability through that stable alias instead of computing relative paths.
 
-Importing `mod.ts` does not compile or touch disk. Its bound `buildTheMod()` owns
-the conventional sequence:
+Importing `mod.ts` does not compile or touch disk, and it imports nothing else
+of the project: feature modules import it, so a static import of the Feature
+list from `mod.ts` would evaluate them before `mod` exists. `src/build.ts` is
+the module that imports both sides, and its `buildTheMod()` owns the
+conventional sequence:
 
 ```text
 validate manifest
   -> create immutable capability
-  -> discover named Feature exports
-  -> capture Assets
+  -> import the Feature list as a namespace
   -> load vanilla view when configured
-  -> Fold once
+  -> capture Assets
+  -> Fold once, over exactly the declared Features
 ```
 
 The build, inspect, and install commands call that same sequence and then add
-their one final operation. A custom project can pass discovery hooks or compose
-the SDK's lower-level interfaces directly.
+their one final operation. A custom project can compose the SDK's lower-level
+interfaces directly.
+
+The Feature list is the only thing that puts a module in the mod, so a module
+under `src/features/` that no line names is dead code that still compiles and
+passes its tests. `npm run lint` runs [knip](https://knip.dev) with only two
+reports on, unused files and unresolved imports, and reports such a module by
+path. Every other knip report is off in `knip.json`: unused exports are the
+norm in a feature module, and the vitest plugin is disabled so a module
+reachable only through its own test does not pass the check.
 
 `src/vanilla.ts` returns no view in exactly two cases: `PDX_NO_VANILLA=1`, and
 the SDK finding no install on its own. Every other failure — an unreadable game
@@ -356,8 +379,9 @@ npm run build
 ```
 
 The end-to-end scaffold test creates a temporary project and runs its real
-typecheck, build, and tests. This is the main guard against invalid TypeScript
-inside string templates. Unit tests cover pure plans, option parsing, command
+typecheck, lint, build, and tests. This is the main guard against invalid
+TypeScript inside string templates, and it proves knip resolves `#mod` and the
+`.ts` imports the way Node and TypeScript do. Unit tests cover pure plans, option parsing, command
 routing, Recipe variants, safety refusals, and cross-platform publication.
 
 See the [Scaffolding glossary](./CONTEXT.md) for Recipe and Project Manifest

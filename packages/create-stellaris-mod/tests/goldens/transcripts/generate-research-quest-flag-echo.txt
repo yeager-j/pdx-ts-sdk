@@ -1,9 +1,11 @@
 err| note: About to generate
 err|   Recipe    research-quest — Feature recipe
 err|   Name      Resonance Theory
-err|   File      src/content/resonance_theory.ts
+err|   File      src/features/resonance_theory.ts
+err|   List      src/features.ts as resonanceTheory
 err|   Ids       from "resonance_theory", under the golden_mod prefix
 err| info: projects: two — from --projects
-err| ? Write <project>/src/content/resonance_theory.ts? › yes
-out| <project>/src/content/resonance_theory.ts
+err| ? Write <project>/src/features/resonance_theory.ts and declare it in src/features.ts? › yes
+err| declared in <project>/src/features.ts: export { feature as resonanceTheory } from "./features/resonance_theory.ts";
+out| <project>/src/features/resonance_theory.ts
 exit 0

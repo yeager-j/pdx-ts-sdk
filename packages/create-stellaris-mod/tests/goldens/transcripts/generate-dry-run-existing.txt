@@ -1,4 +1,4 @@
-out| would write <project>/src/content/resonance_theory.ts
+out| would write <project>/src/features/resonance_theory.ts
 out| /**
 out|  * One technology, and the feature that places it.
 out|  *
@@ -7,9 +7,9 @@ out|  * this file back: there is no marker in it, no version, and no upgrade —
 out|  * rename it, add to it, or delete it as the mod grows.
 out|  *
 out|  * `#mod` is the project's own alias for `src/mod.ts` (see `package.json#imports`),
-out|  * so moving this file deeper inside the content directory never rewrites the
-out|  * import. The filename decides nothing either: the `mod.feature(...)` call at the
-out|  * bottom is what names the emitted files.
+out|  * so this import never changes when the file moves. The filename decides
+out|  * nothing either: the `mod.feature(...)` call at the bottom is what names the
+out|  * emitted files, and what puts it in the mod is its line in `src/features.ts`.
 out|  */
 out|
 out| import { mod } from "#mod";
@@ -36,5 +36,6 @@ out|   weight: 100,
 out| });
 out|
 out| export const feature = mod.feature("resonance_theory", [resonanceTheory]);
-err| A real run would refuse: <project>/src/content/resonance_theory.ts already exists, and nothing here replaces a file that is already yours. Generate under a different name, or move the existing file first.
+err| would append to <project>/src/features.ts: export { feature as resonanceTheory } from "./features/resonance_theory.ts";
+err| A real run would refuse: <project>/src/features/resonance_theory.ts already exists, and nothing here replaces a file that is already yours. Generate under a different name, or move the existing file first.
 exit 0

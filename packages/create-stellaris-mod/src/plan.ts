@@ -26,6 +26,7 @@ import {
 import {
   eslintConfig,
   gitignore,
+  knipConfig,
   packageJson,
   prettierrc,
   tsconfigJson,
@@ -33,8 +34,10 @@ import {
 } from "./templates/project.ts";
 import { readme } from "./templates/readme.ts";
 import {
-  contentExampleTestTs,
-  contentExampleTs,
+  buildTs,
+  featureExampleTestTs,
+  featureExampleTs,
+  featuresTs,
   flagsTs,
   indexTs,
   inspectTs,
@@ -68,6 +71,7 @@ export function planProject(resolved: Resolved, packageName?: string): Map<strin
   file(MANIFEST_SCHEMA_FILE, manifestSchema());
   file("tsconfig.json", tsconfigJson());
   file("vitest.config.ts", vitestConfig());
+  file("knip.json", knipConfig());
   file(".gitignore", gitignore());
   file("README.md", readme(resolved));
 
@@ -79,12 +83,16 @@ export function planProject(resolved: Resolved, packageName?: string): Map<strin
   }
 
   file("src/mod.ts", modTs());
+  file("src/build.ts", buildTs());
   file("src/index.ts", indexTs(resolved));
   file("src/inspect.ts", inspectTs(resolved));
   file("src/install.ts", installTs(resolved));
   file("src/flags.ts", flagsTs(resolved));
-  file("src/content/example.ts", contentExampleTs(resolved));
-  file("src/content/example.test.ts", contentExampleTestTs(resolved));
+  // The feature list and the one module it declares. Both are the author's
+  // from here: `generate` appends to the list and never rewrites it.
+  file("src/features.ts", featuresTs(resolved));
+  file("src/features/example.ts", featureExampleTs(resolved));
+  file("src/features/example.test.ts", featureExampleTestTs(resolved));
 
   file("src/vanilla.ts", vanillaTs(resolved));
 

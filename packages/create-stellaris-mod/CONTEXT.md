@@ -11,16 +11,23 @@ and authored source cross this context's boundaries.
 ## Language
 
 **Project Manifest**:
-The author-owned source of truth for one project's mod identity, launcher metadata, Feature source
-location, and mirrored Asset source tree. It is project configuration, not scaffolder installation
-state.
+The author-owned source of truth for one project's mod identity, launcher metadata, and mirrored
+Asset source tree. It is project configuration, not scaffolder installation state, and it does not
+name Feature source; the Feature list does.
 _Avoid_: scaffolding config, mod config file, installation record
 
 **Project Layout**:
-The parsed, normalized placement contract derived from the Project Manifest. Its validation rules
-live in the SDK project pipeline because generated builds enforce them too. Feature source lives
-below `src/`, while the Asset source tree mirrors the mod root; recipe publication, manifest schema,
-and TypeScript project coverage all consume that same interpretation.
+The parsed, normalized placement contract for Assets, derived from the Project Manifest. Its
+validation rules live in the SDK project pipeline because generated builds enforce them too. The
+Asset source tree mirrors the mod root; manifest schema and the SDK build consume that same
+interpretation.
+
+**Feature list**:
+The author-owned `src/features.ts` module that re-exports each feature module's `feature` under
+a unique name. The build hands it to `project.build` as a namespace, so a feature module is in the
+mod exactly when its line is there. `generate` appends one line per module it writes and never
+creates or rewrites the file; `knip` reports a module under `src/features/` that no line reaches.
+_Avoid_: index file, barrel, feature registry, discovery
 
 **Recipe Catalog**:
 The built-in, discoverable set of parameterized recipes available to the

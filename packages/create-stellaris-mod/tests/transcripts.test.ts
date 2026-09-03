@@ -154,8 +154,15 @@ describe("generate", () => {
   }
 
   function written(target: TempProject): string {
-    return readFileSync(path.join(target.dir, "src/content/resonance_theory.ts"), "utf8");
+    return readFileSync(path.join(target.dir, "src/features/resonance_theory.ts"), "utf8");
   }
+
+  function featureList(target: TempProject): string {
+    return readFileSync(path.join(target.dir, "src/features.ts"), "utf8");
+  }
+
+  const DECLARATION =
+    'export { feature as resonanceTheory } from "./features/resonance_theory.ts";';
 
   it("writes the file, and puts nothing but its path on stdout", async () => {
     const target = open();
@@ -168,8 +175,12 @@ describe("generate", () => {
     expectGolden("transcripts/generate-flags-noninteractive.txt", transcript);
     // The transcript freezes stdout's shape; this is the same promise stated
     // where a reader of the source can see it.
-    expect(transcript).toContain("out| <project>/src/content/resonance_theory.ts");
+    expect(transcript).toContain("out| <project>/src/features/resonance_theory.ts");
     expect(written(target)).toBe(readFileSync(GOLDEN_SOURCE, "utf8"));
+    // The declaration is the one other thing a run changes, and it lands on
+    // the fixture's own line ending after the fixture's last line.
+    expect(featureList(target).endsWith(`\n${DECLARATION}\n`)).toBe(true);
+    expect(transcript).toContain(`err| declared in <project>/src/features.ts: ${DECLARATION}`);
   });
 
   it("picks a recipe, asks for a name, and confirms the path", async () => {
@@ -204,12 +215,13 @@ describe("generate", () => {
 
     expect(code).toBe(0);
     expectGolden("transcripts/generate-dry-run.txt", transcript);
-    expect(existsSync(path.join(target.dir, "src/content/resonance_theory.ts"))).toBe(false);
+    expect(existsSync(path.join(target.dir, "src/features/resonance_theory.ts"))).toBe(false);
+    expect(featureList(target)).not.toContain("resonance_theory");
   });
 
   it("says a real run would refuse an existing target, and still exits zero", async () => {
     const target = open();
-    writeFileSync(path.join(target.dir, "src/content/resonance_theory.ts"), "// mine\n");
+    writeFileSync(path.join(target.dir, "src/features/resonance_theory.ts"), "// mine\n");
     const { transcript, code } = await run(
       ["generate", "technology", "Resonance Theory", "--yes", "--dry-run"],
       { cwd: target.dir, project: target }
@@ -289,7 +301,7 @@ describe("generate", () => {
     const target = open();
     writeFileSync(
       path.join(target.dir, "stellaris-mod.json"),
-      JSON.stringify({ mod: {}, contentDirectory: "src/content" }, null, 2)
+      JSON.stringify({ mod: {} }, null, 2)
     );
     const { transcript, code } = await run(
       ["generate", "technology", "Resonance Theory", "--yes"],
@@ -314,7 +326,7 @@ describe("generate", () => {
     );
     expect(code).toBe(1);
     expectGolden("transcripts/generate-sdk-range-not-subset.txt", transcript);
-    expect(existsSync(path.join(target.dir, "src/content/resonance_theory.ts"))).toBe(false);
+    expect(existsSync(path.join(target.dir, "src/features/resonance_theory.ts"))).toBe(false);
   });
 
   it("generates anyway when told to, and says so on stderr", async () => {
@@ -481,7 +493,7 @@ describe("generate", () => {
 
     expect(code).toBe(1);
     expectGolden("transcripts/generate-event-invalid-answer.txt", transcript);
-    expect(existsSync(path.join(target.dir, "src/content/resonance_theory.ts"))).toBe(false);
+    expect(existsSync(path.join(target.dir, "src/features/resonance_theory.ts"))).toBe(false);
   });
 
   const CANCELLATIONS: readonly (readonly [
@@ -498,9 +510,9 @@ describe("generate", () => {
     "leaves the project alone when cancelled at the %s",
     async (where, argv, answers) => {
       const target = open();
-      // The content directory is removed first, so "cancellation creates nothing"
+      // The feature directory is removed first, so "cancellation creates nothing"
       // is a claim about directories as well as about the file.
-      rmSync(path.join(target.dir, "src/content"), { recursive: true, force: true });
+      rmSync(path.join(target.dir, "src/features"), { recursive: true, force: true });
 
       const { transcript, code } = await run(argv, {
         cwd: target.dir,
@@ -510,7 +522,8 @@ describe("generate", () => {
 
       expect(code).toBe(130);
       expectGolden(`transcripts/generate-cancel-at-${where}.txt`, transcript);
-      expect(existsSync(path.join(target.dir, "src/content"))).toBe(false);
+      expect(existsSync(path.join(target.dir, "src/features"))).toBe(false);
+      expect(featureList(target)).not.toContain("resonance_theory");
     }
   );
 });

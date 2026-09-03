@@ -39,17 +39,15 @@ import {
   CollisionError,
   ContainmentError,
   preflightTarget,
-  ProjectLayoutError,
   publishExclusive,
   UnsupportedPublicationError,
-  validateContentDirectory,
 } from "../src/publish.ts";
 import { capture } from "./helpers/capture.ts";
 import { createTempProject, type TempProject } from "./helpers/golden-project.ts";
 import { CANCEL, fakeTerminal } from "./helpers/terminal.ts";
 
 const CONTENTS = 'import { mod } from "#mod";\n';
-const SEGMENTS = ["src", "content"] as const;
+const SEGMENTS = ["src", "features"] as const;
 const BASENAME = "resonance_theory.ts";
 
 let roots: string[] = [];
@@ -83,49 +81,16 @@ async function preflight(root: string, segments: readonly string[] = SEGMENTS) {
   return preflightTarget(root, segments, BASENAME);
 }
 
-describe("validateContentDirectory", () => {
-  it("takes an ordinary project-relative path", () => {
-    expect(validateContentDirectory("src/content")).toEqual(["src", "content"]);
-    expect(validateContentDirectory("src/features/content")).toEqual([
-      "src",
-      "features",
-      "content",
-    ]);
-  });
-
-  it.each([
-    ["", "empty"],
-    ["/etc", "absolute"],
-    ["/", "the root"],
-    ["C:/mods", "a drive letter"],
-    ["src\\content", "a backslash"],
-    ["src/con\0tent", "a NUL byte"],
-    ["..", "the parent"],
-    ["../outside", "traversal"],
-    ["src/../../outside", "traversal through a segment"],
-    [".", "the current directory"],
-    ["./src/content", "a leading dot"],
-    ["src//content", "an empty segment"],
-    ["src/content/", "a trailing slash"],
-    ["content", "outside the TypeScript source root"],
-    ["src/content#fragment", "a URL fragment"],
-    ["src/content?query", "a URL query"],
-    ["src/%2e%2e/outside", "a percent-encoded dot segment"],
-  ])("refuses %o, which is %s", (raw) => {
-    expect(() => validateContentDirectory(raw)).toThrow(ProjectLayoutError);
-  });
-});
-
 describe("preflight", () => {
   it("records the missing suffix and creates nothing", async () => {
     const root = makeRoot();
     mkdirSync(path.join(root, "src"));
 
     const result = await preflight(root);
-    expect(result.missingSegments).toEqual(["content"]);
+    expect(result.missingSegments).toEqual(["features"]);
     expect(result.existingDir).toBe(path.join(root, "src"));
     expect(result.target).toBe("absent");
-    expect(existsSync(path.join(root, "src/content"))).toBe(false);
+    expect(existsSync(path.join(root, "src/features"))).toBe(false);
   });
 
   it("stops at the first missing segment rather than stating past it", async () => {
@@ -141,10 +106,10 @@ describe("preflight", () => {
     ["escaping the project entirely", false],
   ])("refuses a symlinked segment %s", async (_case, inside) => {
     const root = makeRoot();
-    const elsewhere = inside ? path.join(root, "real-content") : makeRoot();
+    const elsewhere = inside ? path.join(root, "real-features") : makeRoot();
     mkdirSync(path.join(root, "src"));
     mkdirSync(elsewhere, { recursive: true });
-    symlinkSync(elsewhere, path.join(root, "src/content"));
+    symlinkSync(elsewhere, path.join(root, "src/features"));
 
     await expect(preflight(root)).rejects.toThrow(ContainmentError);
   });
@@ -152,7 +117,7 @@ describe("preflight", () => {
   it("refuses a symlinked ancestor", async () => {
     const root = makeRoot();
     const elsewhere = makeRoot();
-    mkdirSync(path.join(elsewhere, "content"));
+    mkdirSync(path.join(elsewhere, "features"));
     symlinkSync(elsewhere, path.join(root, "src"));
 
     await expect(preflight(root)).rejects.toThrow(ContainmentError);
@@ -183,13 +148,13 @@ describe("preflight", () => {
     const links = makeRoot();
     const alias = path.join(links, "project");
     symlinkSync(real, alias);
-    mkdirSync(path.join(real, "src/content"), { recursive: true });
+    mkdirSync(path.join(real, "src/features"), { recursive: true });
 
     const result = await preflight(realpathSync.native(alias));
-    expect(result.existingDir).toBe(path.join(real, "src/content"));
+    expect(result.existingDir).toBe(path.join(real, "src/features"));
 
     const written = await publishExclusive(result, CONTENTS);
-    expect(written).toBe(path.join(real, "src/content", BASENAME));
+    expect(written).toBe(path.join(real, "src/features", BASENAME));
     expect(readFileSync(written, "utf8")).toBe(CONTENTS);
   });
 
@@ -286,7 +251,7 @@ describe("publishing", () => {
     const result = await preflight(root);
     const elsewhere = makeRoot();
     mkdirSync(path.join(root, "src"));
-    symlinkSync(elsewhere, path.join(root, "src/content"));
+    symlinkSync(elsewhere, path.join(root, "src/features"));
 
     await expect(publishExclusive(result, CONTENTS)).rejects.toThrow(ContainmentError);
     expect(readdirSync(elsewhere)).toEqual([]);
@@ -324,7 +289,7 @@ describe("publishing", () => {
       mkdirSync(dir, { recursive: true });
       const result = await preflight(root);
       const elsewhere = makeRoot();
-      const moved = path.join(elsewhere, "moved-content");
+      const moved = path.join(elsewhere, "moved-features");
 
       await expect(
         publishExclusive(result, CONTENTS, {
@@ -391,23 +356,23 @@ describe("publishing", () => {
 describe("what generate leaves behind", () => {
   it("creates no directory during a dry run", async () => {
     const project = openProject();
-    rmSync(path.join(project.dir, "src/content"), { recursive: true, force: true });
+    rmSync(path.join(project.dir, "src/features"), { recursive: true, force: true });
 
     const { io } = capture(project.dir);
     expect(
       await main(["generate", "technology", "Resonance Theory", "--yes", "--dry-run"], io)
     ).toBe(0);
-    expect(existsSync(path.join(project.dir, "src/content"))).toBe(false);
+    expect(existsSync(path.join(project.dir, "src/features"))).toBe(false);
   });
 
   it("creates no directory when the confirmation is declined", async () => {
     const project = openProject();
-    rmSync(path.join(project.dir, "src/content"), { recursive: true, force: true });
+    rmSync(path.join(project.dir, "src/features"), { recursive: true, force: true });
 
     const { io } = capture(project.dir, true);
     const terminal = fakeTerminal(io, [CANCEL]);
     expect(await main(["generate", "technology", "Resonance Theory"], io, terminal)).toBe(130);
-    expect(existsSync(path.join(project.dir, "src/content"))).toBe(false);
+    expect(existsSync(path.join(project.dir, "src/features"))).toBe(false);
   });
 });
 

@@ -96,9 +96,9 @@ const HEADER = `/**
  * rename it, add to it, or delete it as the mod grows.
  *
  * \`#mod\` is the project's own alias for \`src/mod.ts\` (see \`package.json#imports\`),
- * so moving this file deeper inside the content directory never rewrites the
- * import. The filename decides nothing either: the \`mod.feature(...)\` call at the
- * bottom is what names the emitted files.
+ * so this import never changes when the file moves. The filename decides
+ * nothing either: the \`mod.feature(...)\` call at the bottom is what names the
+ * emitted files, and what puts it in the mod is its line in \`src/features.ts\`.
  */`;
 
 /**
