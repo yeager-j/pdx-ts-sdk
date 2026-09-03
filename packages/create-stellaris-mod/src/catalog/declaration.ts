@@ -78,8 +78,23 @@ export function findDeclarationConflict(
  */
 export function appendedBytes(contents: string, line: string): string {
   const eol = contents.includes("\r\n") ? "\r\n" : "\n";
-  const separator = contents === "" || contents.endsWith("\n") ? "" : eol;
+  const separator = endsALine(contents) ? "" : eol;
   return `${separator}${line}${eol}`;
+}
+
+/**
+ * The one-based line that `appendedBytes` puts the declaration on, as an
+ * editor would count it: the line after the last one `contents` holds, or the
+ * first line of an empty file.
+ */
+export function appendedLineNumber(contents: string): number {
+  const newlines = contents.split("\n").length - 1;
+  return newlines + (endsALine(contents) ? 1 : 2);
+}
+
+/** Whether appending starts a fresh line: the file is empty or its last line is terminated. */
+function endsALine(contents: string): boolean {
+  return contents === "" || contents.endsWith("\n");
 }
 
 function isCommentLine(line: string): boolean {

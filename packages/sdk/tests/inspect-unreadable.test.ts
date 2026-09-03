@@ -47,9 +47,6 @@ describe("runInspect with unreadable identifier metadata", () => {
     const errors = captureTerminal();
 
     await runInspect(mod, {
-      manifest: {
-        mod: { inspection_unreadable: mod.config },
-      },
       projectRoot,
       output: output.output,
       errorOutput: errors.output,

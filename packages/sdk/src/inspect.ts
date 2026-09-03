@@ -8,12 +8,9 @@ import { VanillaPackageUnreadableError } from "./errors.ts";
 import { installedVanillaPackagePin } from "./identifiers/package-pin.ts";
 import { vanillaPackageGameVersion } from "./identifiers/version-scheme.ts";
 import { resolveProjectRootPath } from "./project-root.ts";
-import type { ModProjectManifest } from "./project.ts";
 
 /** Configuration for the YAML project inspection command. */
 export interface RunInspectOptions {
-  /** Project Manifest used by the build. */
-  readonly manifest: ModProjectManifest;
   /** Absolute project directory containing `package.json`. */
   readonly projectRoot: string | URL;
   /** Destination for the YAML report. Defaults to `process.stdout`. */
@@ -54,7 +51,6 @@ interface PackageJson {
  * @example
  * ```ts
  * await runInspect(buildTheMod(), {
- *   manifest,
  *   projectRoot: new URL("../", import.meta.url),
  * });
  * ```

@@ -538,6 +538,16 @@ function resolveIdProfile<I extends IdProfile>(profile: I): Readonly<I> {
   return Object.freeze({ ...profile });
 }
 
+/**
+ * What a capability reports to the code that created it. A project listens so
+ * it can compare the Features its `mod` minted against the ones it was asked
+ * to build; `createMod` alone has nobody to tell.
+ */
+export interface CapabilityHooks<P extends string> {
+  /** Called with every Feature `feature()` mints, in the order they are minted. */
+  readonly onFeature?: (feature: CapabilityFeature<P>) => void;
+}
+
 /** Creates an immutable capability using the reviewed default id profile. */
 export function createMod<const P extends string>(
   config: ModConfig<P>
@@ -551,27 +561,40 @@ export function createMod<const P extends string, const I extends IdProfile>(
   configInput: ModConfig<P>,
   options?: { readonly ids: I }
 ): ModCapability<P, I | typeof DEFAULT_ID_PROFILE> {
+  return createCapability(configInput, options?.ids ?? DEFAULT_ID_PROFILE);
+}
+
+/**
+ * The capability behind `createMod` and `createModProject`. Internal: the
+ * public entry points fix the id profile and the hooks, and this is the one
+ * place the capability's methods are assembled.
+ */
+export function createCapability<const P extends string, const I extends IdProfile>(
+  configInput: ModConfig<P>,
+  idProfile: I,
+  hooks: CapabilityHooks<P> = {}
+): ModCapability<P, I> {
   const config = resolveConfig(configInput);
-  const ids = resolveIdProfile(options?.ids ?? DEFAULT_ID_PROFILE);
+  const ids = resolveIdProfile(idProfile);
   const capabilityOwner: CapabilityFeatureOwner<P> = Object.freeze({
     prefix: config.prefix,
     assetCapability: Symbol("asset capability"),
   });
   const mintId = mintContentId(config.prefix, ids);
   const assertNestedDefinitionId = createNestedDefinitionIdAssertion(config.prefix);
-  const contentMethods = contentCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
+  const contentMethods = contentCapabilityMethods<P, I>(
     mintId,
     assertNestedDefinitionId,
     config.prefix,
     assertLogicalName,
     capabilityOwner
   );
-  const situationTypeMethods = situationTypeCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
+  const situationTypeMethods = situationTypeCapabilityMethods<P, I>(
     mintId,
     assertNestedDefinitionId,
     assertLogicalName
   );
-  const eventChainMethods = eventChainCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(mintId);
+  const eventChainMethods = eventChainCapabilityMethods<P, I>(mintId);
 
   return Object.freeze({
     config,
@@ -590,10 +613,12 @@ export function createMod<const P extends string, const I extends IdProfile>(
         ? (items as readonly ModItem[])
         : itemsOfBag(stem, items as ItemBag);
       placed.forEach((item) => assertCapabilityItem(item, capabilityOwner));
-      return Object.freeze({
+      const feature = Object.freeze({
         ...createFeature(stem, placed),
         [capabilityFeatureOwner]: capabilityOwner,
       }) as CapabilityFeature<P>;
+      hooks.onFeature?.(feature);
+      return feature;
     },
     compile: (features: FeaturesInput<P>, buildOptions: BuildOptions = {}) => {
       const compiled = featuresOfInput<CapabilityFeature<P>>(features);
@@ -608,5 +633,5 @@ export function createMod<const P extends string, const I extends IdProfile>(
     localization: localizationFor(config.prefix),
     replaceLocalization: <const Key extends string>(key: Key, text: LocalizationReplacementText) =>
       createReplacementLocalizationItem(config.prefix, key, text),
-  }) as ModCapability<P, I | typeof DEFAULT_ID_PROFILE>;
+  }) as ModCapability<P, I>;
 }

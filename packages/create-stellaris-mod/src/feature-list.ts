@@ -9,10 +9,13 @@
  * itself, and whether the list already says it, are decided by the pure
  * `./catalog/declaration.ts`.
  *
- * `preflightFeatureList` looks and refuses; `appendFeatureDeclaration` runs only
- * after the module has been published, and the command that calls it removes
- * that module again when the append fails, so the project never holds a
- * feature module its list does not name.
+ * `preflightFeatureList` looks and reports; `appendFeatureDeclaration` runs only
+ * after the module has been published. Its failures come in two kinds, and the
+ * command that calls it acts on the difference: before any byte reaches the
+ * list, the module is removed again, so the project never holds a feature
+ * module its list does not name; after, the declaration is in the list and
+ * the module stays, because a declaration pointing at nothing is the worse
+ * state. `DeclarationWrittenError` is the second kind.
  */
 
 import type { Stats } from "node:fs";
@@ -21,6 +24,7 @@ import path from "node:path";
 
 import {
   appendedBytes,
+  appendedLineNumber,
   FEATURE_LIST_PATH,
   findDeclarationConflict,
   type DeclarationConflict,
@@ -44,6 +48,22 @@ export class DeclarationConflictError extends PublishError {
   }
 }
 
+/**
+ * The declaration reached the list, and then the append failed: a short write,
+ * or a flush that did not complete. The line is in the list, possibly cut
+ * short, so the module it declares must be kept.
+ */
+export class DeclarationWrittenError extends PublishError {
+  /** One-based line of the list the declaration starts on. */
+  readonly line: number;
+
+  constructor(message: string, line: number) {
+    super(message);
+    this.name = "DeclarationWrittenError";
+    this.line = line;
+  }
+}
+
 /** What the preflight saw, and what the append will therefore check against. */
 export interface FeatureListPreflight {
   /** Absolute path of the feature list. */
@@ -55,6 +75,11 @@ export interface FeatureListPreflight {
   readonly declaration: string;
   /** The bytes a run would append, given the contents seen at preflight. */
   readonly bytes: string;
+  /**
+   * The existing line the declaration would repeat, when there is one. The
+   * command decides what that means: a real run refuses, a dry run says so.
+   */
+  readonly conflict: DeclarationConflict | undefined;
 }
 
 /**
@@ -62,8 +87,6 @@ export interface FeatureListPreflight {
  *
  * @throws FeatureListError - When the list is missing, a symbolic link, or
  * not a regular file.
- * @throws DeclarationConflictError - When it already declares the module or
- * exports the binding.
  */
 export async function preflightFeatureList(
   rootDir: string,
@@ -73,13 +96,13 @@ export async function preflightFeatureList(
   const listPath = path.join(rootDir, ...FEATURE_LIST_PATH.split("/"));
   const identity = await requireRegularFile(listPath);
   const contents = await readFile(listPath, "utf8");
-  requireNoConflict(listPath, contents, names);
   return {
     listPath,
     identity,
     names,
     declaration,
     bytes: appendedBytes(contents, declaration),
+    conflict: findDeclarationConflict(contents, names),
   };
 }
 
@@ -89,10 +112,21 @@ export async function preflightFeatureList(
  * The file is re-read through the append handle and re-checked before the
  * write, so a declaration that arrived between the preflight and now is
  * refused rather than duplicated.
+ *
+ * @throws FeatureListError - When the file is not the one the preflight saw.
+ * @throws DeclarationConflictError - When the list gained the declaration
+ * since the preflight. Nothing was written.
+ * @throws DeclarationWrittenError - When the write was short, or the flush or
+ * the close failed after it. The declaration is in the list, possibly cut short.
  */
 export async function appendFeatureDeclaration(preflight: FeatureListPreflight): Promise<void> {
   const { listPath } = preflight;
   const handle = await open(listPath, "a+");
+  // Set the moment `write` returns: from then on the list holds some or all of
+  // the declaration, and every later failure, the flush and the close
+  // included, is one the module has to survive.
+  let written: { readonly line: number } | undefined;
+  let failure: unknown;
   try {
     const observed = await handle.stat();
     if (observed.dev !== preflight.identity.dev || observed.ino !== preflight.identity.ino) {
@@ -105,17 +139,52 @@ export async function appendFeatureDeclaration(preflight: FeatureListPreflight):
     requireNoConflict(listPath, contents, preflight.names);
 
     const bytes = appendedBytes(contents, preflight.declaration);
+    const line = appendedLineNumber(contents);
+    const expected = Buffer.byteLength(bytes, "utf8");
     const { bytesWritten } = await handle.write(bytes, null, "utf8");
-    if (bytesWritten !== Buffer.byteLength(bytes, "utf8")) {
-      throw new FeatureListError(
-        `${listPath} took ${bytesWritten} of the ${Buffer.byteLength(bytes, "utf8")} bytes of ` +
-          `the declaration, so it may now end mid-line. Check its last line.`
+    written = { line };
+    if (bytesWritten !== expected) {
+      throw new DeclarationWrittenError(
+        `${listPath} took ${bytesWritten} of the ${expected} bytes of the declaration, so ` +
+          `line ${line} may end early.`,
+        line
       );
     }
-    await handle.sync();
-  } finally {
-    await handle.close();
+    try {
+      await handle.sync();
+    } catch (error) {
+      throw new DeclarationWrittenError(
+        `${listPath} took the declaration on line ${line}, but flushing it to disk failed ` +
+          `(${errnoCode(error)}), so the line may not have reached the disk in full.`,
+        line
+      );
+    }
+  } catch (error) {
+    failure = error;
   }
+
+  // The close is not in a `finally`, because a `finally` that throws would
+  // replace the error above, and a close that fails after the write is itself
+  // a post-write failure rather than a reason to remove the module.
+  try {
+    await handle.close();
+  } catch (error) {
+    failure ??=
+      written === undefined
+        ? error
+        : new DeclarationWrittenError(
+            `${listPath} took the declaration on line ${written.line}, but closing the file ` +
+              `failed (${errnoCode(error)}), so the line may not have reached the disk in full.`,
+            written.line
+          );
+  }
+  if (failure !== undefined) {
+    throw failure;
+  }
+}
+
+function errnoCode(error: unknown): string {
+  return (error as NodeJS.ErrnoException | undefined)?.code ?? "unknown error";
 }
 
 async function requireRegularFile(listPath: string): Promise<Stats> {
@@ -151,11 +220,12 @@ async function requireRegularFile(listPath: string): Promise<Stats> {
 function requireNoConflict(listPath: string, contents: string, names: DeclarationNames): void {
   const conflict = findDeclarationConflict(contents, names);
   if (conflict !== undefined) {
-    throw new DeclarationConflictError(conflictMessage(listPath, conflict, names));
+    throw new DeclarationConflictError(declarationConflictMessage(listPath, conflict, names));
   }
 }
 
-function conflictMessage(
+/** Why a real run refuses the declaration, naming the line and the fix. */
+export function declarationConflictMessage(
   listPath: string,
   conflict: DeclarationConflict,
   names: DeclarationNames

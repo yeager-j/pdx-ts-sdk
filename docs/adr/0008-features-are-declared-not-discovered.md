@@ -28,8 +28,14 @@ still carrying `contentDirectory` is refused with the fix rather than ignored.
 The consequences. A wrong export in the list is a type error, because `build`
 accepts only this capability's Features. TypeScript's import graph is now the
 module tree, so a file no line reaches is a lint finding rather than silently
-absent content; scaffolded projects run knip for exactly that. The fold keeps
-refusing an Item that is referenced but placed nowhere. The order of the list's
+absent content; scaffolded projects run knip for exactly that. knip checks
+reachability, not declaration: a module a declared feature imports for a
+helper is reached, and if it mints a Feature of its own that Feature is
+nowhere in the list. `project.build` owns that case, since every
+`mod.feature` call runs at module evaluation: a Feature this project's `mod`
+minted that the list does not include is refused by name, as content the
+author wrote that the build would otherwise drop. The fold keeps refusing an
+Item that is referenced but placed nowhere. The order of the list's
 exports is irrelevant, because the fold owns emission order (ADR-0005). The
 scaffold and the docs follow: `src/build.ts` is the one module that imports
 both `mod` and the list, since feature modules import `mod` and `mod.ts` cannot

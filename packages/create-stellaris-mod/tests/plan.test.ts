@@ -524,7 +524,9 @@ describe("the Project Manifest", () => {
     expect(inspect).toContain('import { runInspect } from "@pdx-ts/sdk"');
     expect(inspect).toContain('import { buildTheMod } from "./build.ts"');
     expect(inspect).toContain("await runInspect(buildTheMod(), {");
-    expect(inspect).toContain("manifest,");
+    expect(inspect).toContain('projectRoot: new URL("../", import.meta.url)');
+    // The Fold already carries the mod's config; the report needs no second copy.
+    expect(inspect).not.toContain("stellaris-mod.json");
     expect(install).toContain('import { runInstall } from "@pdx-ts/sdk"');
     expect(install).toContain('import { buildTheMod } from "./build.ts"');
     expect(install).toContain("await runInstall(buildTheMod())");

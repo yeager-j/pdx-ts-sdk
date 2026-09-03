@@ -232,6 +232,24 @@ describe("generate", () => {
     expect(written(target)).toBe("// mine\n");
   });
 
+  it("previews a feature the list already declares in a dry run, and says so", async () => {
+    // A real run refuses this; a dry run exists to show the file, so the
+    // conflict is a warning beside the preview, as the target collision is.
+    const target = open();
+    writeFileSync(
+      path.join(target.dir, "src/features.ts"),
+      `${featureList(target)}${DECLARATION}\n`
+    );
+    const { transcript, code } = await run(
+      ["generate", "technology", "Resonance Theory", "--yes", "--dry-run"],
+      { cwd: target.dir, project: target }
+    );
+
+    expect(code).toBe(0);
+    expectGolden("transcripts/generate-dry-run-declared.txt", transcript);
+    expect(existsSync(path.join(target.dir, "src/features/resonance_theory.ts"))).toBe(false);
+  });
+
   it("refuses to replace a file that is already the author's", async () => {
     const target = open();
     expect(

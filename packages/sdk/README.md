@@ -414,9 +414,8 @@ whole-object replacement and load order. The generated authoring method and the
 ## Inspection, diagnostics, and materialization
 
 `runInspect` prints deterministic YAML for a compiled project without rendering
-or writing it. The report includes the content directory, project package and
-mod metadata, vanilla status, Feature counts and Item ids, patch assertions,
-and warnings.
+or writing it. The report includes the project package and mod metadata,
+vanilla status, Feature counts and Item ids, patch assertions, and warnings.
 
 Diagnostics are thrown errors or entries in `mod.warnings`; runtime APIs do not
 write console diagnostics. Common Fold failures include duplicate ids, missing
