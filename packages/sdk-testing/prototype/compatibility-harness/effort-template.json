@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "adapterRevision": null,
+  "sharedRevision": null,
+  "rows": [
+    {
+      "category": "discovery",
+      "activity": "",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "unknown",
+      "recurrence": "unknown",
+      "evidence": []
+    },
+    {
+      "category": "implementation",
+      "activity": "",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "unknown",
+      "recurrence": "unknown",
+      "evidence": []
+    },
+    {
+      "category": "debugging",
+      "activity": "",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "unknown",
+      "recurrence": "unknown",
+      "evidence": []
+    },
+    {
+      "category": "verification",
+      "activity": "",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "unknown",
+      "recurrence": "unknown",
+      "evidence": []
+    },
+    {
+      "category": "environment-setup",
+      "activity": "",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "unknown",
+      "recurrence": "unknown",
+      "evidence": []
+    },
+    {
+      "category": "reusable-tools",
+      "activity": "",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "unknown",
+      "recurrence": "unknown",
+      "evidence": []
+    }
+  ],
+  "notes": [
+    "Measure active work with start/stop timestamps. Do not count parallel work twice.",
+    "Reuse: new or reused. Recurrence: shared-one-time, per-platform, per-build, or unknown.",
+    "Unknown historical probe effort stays unavailable, never zero. Estimates do not replace measurements."
+  ]
+}

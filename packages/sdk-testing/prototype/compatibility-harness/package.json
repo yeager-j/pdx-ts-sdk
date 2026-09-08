@@ -1,0 +1,1 @@
+{"name":"sdk-446-throwaway-harness","private":true,"type":"module","scripts":{"demo":"node cli.ts mock-adapter.ts mock-config.json runs/demo","check":"tsc -p tsconfig.json"}}

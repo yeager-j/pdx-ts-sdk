@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "adapterRevision": "sdk446-mock/v1",
+  "sharedRevision": "1042c9ec4ab83ef6ccde8bc367cde31ba88116591c5069a4231a36f94c629819",
+  "rows": [
+    {
+      "category": "discovery",
+      "activity": "Session work was not timed per category; previous native investigations were reused without remeasuring their original effort",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "unknown",
+      "recurrence": "unknown",
+      "evidence": []
+    },
+    {
+      "category": "implementation",
+      "activity": "Session work was not timed per category; previous native investigations were reused without remeasuring their original effort",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "unknown",
+      "recurrence": "unknown",
+      "evidence": []
+    },
+    {
+      "category": "debugging",
+      "activity": "Session work was not timed per category; previous native investigations were reused without remeasuring their original effort",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "unknown",
+      "recurrence": "unknown",
+      "evidence": []
+    },
+    {
+      "category": "verification",
+      "activity": "Final nine-command mechanics matrix; subprocess wall time only",
+      "measurement": "measured",
+      "measuredSeconds": 5.454,
+      "estimatedSeconds": null,
+      "reuse": "new",
+      "recurrence": "shared-one-time",
+      "evidence": [
+        "runs/capture-verification.json"
+      ]
+    },
+    {
+      "category": "environment-setup",
+      "activity": "Session work was not timed per category; previous native investigations were reused without remeasuring their original effort",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "unknown",
+      "recurrence": "unknown",
+      "evidence": []
+    },
+    {
+      "category": "reusable-tools",
+      "activity": "Session work was not timed per category; previous native investigations were reused without remeasuring their original effort",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "unknown",
+      "recurrence": "unknown",
+      "evidence": []
+    }
+  ],
+  "notes": [
+    "Measure active work with start/stop timestamps. Do not count parallel work twice.",
+    "Reuse: new or reused. Recurrence: shared-one-time, per-platform, per-build, or unknown.",
+    "Unknown historical probe effort stays unavailable, never zero. Estimates do not replace measurements."
+  ]
+}
