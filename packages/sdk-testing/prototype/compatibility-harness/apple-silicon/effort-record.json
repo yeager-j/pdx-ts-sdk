@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "adapterRevision": "968868181bb254752b46f0693140589da559499e",
+  "sharedRevision": "b822716a950dbaa1a17a6ccc5b4c5c93e24bb4d1",
+  "rows": [
+    {
+      "category": "discovery",
+      "activity": "Read current completed native investigations and locate reusable seams; initial interval was not timed.",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "reused",
+      "recurrence": "per-platform",
+      "evidence": [
+        "provenance/native-reuse.json"
+      ]
+    },
+    {
+      "category": "implementation",
+      "activity": "Initial adapter assembly was not timed. The later verifier, fixture-repeat and native-fault integration phase was timed.",
+      "measurement": "measured-phase-wall-time",
+      "measuredSeconds": 178.471085,
+      "estimatedSeconds": null,
+      "reuse": "new",
+      "recurrence": "per-platform",
+      "evidence": [
+        "effort-spans.json"
+      ],
+      "startedAt": "2026-09-08T23:27:02.949792+00:00",
+      "endedAt": "2026-09-08T23:30:01.420877+00:00"
+    },
+    {
+      "category": "debugging",
+      "activity": "Inspect first native runs and correct invalid adapter-fixture log localization expressions.",
+      "measurement": "measured-phase-wall-time",
+      "measuredSeconds": 170.237346,
+      "estimatedSeconds": null,
+      "reuse": "new",
+      "recurrence": "per-platform",
+      "evidence": [
+        "effort-spans.json"
+      ],
+      "startedAt": "2026-09-08T23:24:12.712446+00:00",
+      "endedAt": "2026-09-08T23:27:02.949792+00:00"
+    },
+    {
+      "category": "verification",
+      "activity": "Supervise native repetition, fault controls, independent evidence checks and repository gates. Includes interleaved gate setup and waiting.",
+      "measurement": "measured-phase-wall-time",
+      "measuredSeconds": 652.414771,
+      "estimatedSeconds": null,
+      "reuse": "new",
+      "recurrence": "per-platform",
+      "evidence": [
+        "effort-spans.json"
+      ],
+      "startedAt": "2026-09-08T23:30:01.420877+00:00",
+      "endedAt": "2026-09-08T23:40:53.835648+00:00"
+    },
+    {
+      "category": "environment-setup",
+      "activity": "Existing game/toolchain reused; initialized the prescribed CWT submodule and compiled native artifacts. Separate active setup duration unavailable.",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "reused",
+      "recurrence": "unknown",
+      "evidence": [
+        "setup.log",
+        "submodule-setup.log",
+        "environment.json"
+      ]
+    },
+    {
+      "category": "reusable-tools",
+      "activity": "Reuse completed lifecycle, locator, script/context and stockpile native sources; prior construction cost unavailable.",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "reused",
+      "recurrence": "unknown",
+      "evidence": [
+        "provenance/native-reuse.json"
+      ]
+    }
+  ],
+  "notes": [
+    "These are measured coordinator phase wall intervals, not exclusive active engineering/person time. They include tool execution and waits.",
+    "Instrumentation began after initial source discovery and adapter assembly. Those current-task intervals, and all historical probe work, are unavailable rather than zero.",
+    "The verification interval includes parallel repository/native commands and interleaved setup. Do not sum command durations or add them to the encompassing interval.",
+    "Environment setup and reusable-tool creation costs cannot be separated retrospectively; their categories remain unavailable.",
+    "This record cannot establish total adapter engineering cost or a fair full-effort Windows comparison. No estimates replace missing measurements.",
+    "No new native mechanism was rediscovered; retained source differences and primary evidence links document reuse."
+  ],
+  "sharedSha256": "1042c9ec4ab83ef6ccde8bc367cde31ba88116591c5069a4231a36f94c629819",
+  "nativeCommandTimings": [
+    {
+      "label": "missing-end",
+      "startedEpoch": 1788910524.113812,
+      "elapsedSeconds": 30.078564167022705,
+      "exitCode": 1,
+      "command": [
+        "node",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/packages/sdk-testing/prototype/compatibility-harness/cli.ts",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/packages/sdk-testing/prototype/compatibility-harness/apple-silicon/adapter.ts",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/.scratch/sdk-447/configs/missing-end.json",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/.scratch/sdk-447/runs/missing-end"
+      ]
+    },
+    {
+      "label": "stale-invocation",
+      "startedEpoch": 1788910554.416367,
+      "elapsedSeconds": 44.901110887527466,
+      "exitCode": 1,
+      "command": [
+        "node",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/packages/sdk-testing/prototype/compatibility-harness/cli.ts",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/packages/sdk-testing/prototype/compatibility-harness/apple-silicon/adapter.ts",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/.scratch/sdk-447/configs/stale-invocation.json",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/.scratch/sdk-447/runs/stale-invocation"
+      ]
+    },
+    {
+      "label": "hang",
+      "startedEpoch": 1788910600.1814091,
+      "elapsedSeconds": 51.52137494087219,
+      "exitCode": 1,
+      "command": [
+        "node",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/packages/sdk-testing/prototype/compatibility-harness/cli.ts",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/packages/sdk-testing/prototype/compatibility-harness/apple-silicon/adapter.ts",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/.scratch/sdk-447/configs/hang.json",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/.scratch/sdk-447/runs/hang",
+        "150"
+      ]
+    },
+    {
+      "label": "native2",
+      "startedEpoch": 1788910652.1272252,
+      "elapsedSeconds": 126.57807469367981,
+      "exitCode": 0,
+      "command": [
+        "node",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/packages/sdk-testing/prototype/compatibility-harness/cli.ts",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/packages/sdk-testing/prototype/compatibility-harness/apple-silicon/adapter.ts",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/packages/sdk-testing/prototype/compatibility-harness/apple-silicon/local-config.json",
+        "/Users/jackson/.codex/worktrees/7d2d/pdx-sdk/.scratch/sdk-447/runs/native2"
+      ]
+    }
+  ]
+}
