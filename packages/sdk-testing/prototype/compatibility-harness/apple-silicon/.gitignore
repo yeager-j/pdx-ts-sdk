@@ -1,0 +1,5 @@
+native/target/
+native/*.dylib
+native/process-observer
+local-config.json
+inputs/
