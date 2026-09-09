@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "adapterRevision": "c022ccc7bb8b530e140113d9baeb8af1c31c43a91f1adcc80ed24f47c6111789",
+  "sharedRevision": "1042c9ec4ab83ef6ccde8bc367cde31ba88116591c5069a4231a36f94c629819",
+  "rows": [
+    {
+      "category": "discovery",
+      "activity": "Compare retained 4.5 disassembly with the current 4.4.6 PE, rebuild address/layout candidates and observe the main-loop boundary.",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "new",
+      "recurrence": "per-build",
+      "evidence": [
+        "discovery/",
+        "bootstrap5/",
+        "bootstrap6/"
+      ]
+    },
+    {
+      "category": "implementation",
+      "activity": "Copy the Windows adapter, update addresses/pins/layout and fixture scope, repair hook initialization and add failure evidence.",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "new",
+      "recurrence": "per-build",
+      "evidence": [
+        "adapter-diff-ignore-eol.patch",
+        "initial-build.log",
+        "execution-build.log"
+      ]
+    },
+    {
+      "category": "debugging",
+      "activity": "Six retained unsuccessful readiness/diagnostic attempts; includes fixture mismatch, unresolved boundary and hook failures.",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "new",
+      "recurrence": "per-build",
+      "evidence": [
+        "bootstrap1/",
+        "bootstrap2/",
+        "bootstrap3/",
+        "bootstrap4/",
+        "bootstrap5/",
+        "bootstrap6/",
+        "owner-timings.json"
+      ]
+    },
+    {
+      "category": "verification",
+      "activity": "Game-produced fixture bootstrap, frozen-fixture common scenario, four fault controls, independent verifier and repository gates.",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "new",
+      "recurrence": "per-build",
+      "evidence": [
+        "bootstrap7/",
+        "matrix.json",
+        "gates.json",
+        "final-audit.json"
+      ]
+    },
+    {
+      "category": "environment-setup",
+      "activity": "Already installed 4.4.6 game and existing MSVC/Windows SDK/Node/Python; user created a save during a requested pause. New isolated capstone/pefile install.",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "reused",
+      "recurrence": "per-platform",
+      "evidence": [
+        "discovery/identity.json",
+        "inputs/original-446.meta.txt"
+      ]
+    },
+    {
+      "category": "reusable-tools",
+      "activity": "Reuse frozen common harness, Windows owner/Job Object/desktop/junction/injector/verifier, pinned MinHook/json, LLVM and retained RE artifacts. New masked-candidate and PE inspection helpers.",
+      "measurement": "unavailable",
+      "measuredSeconds": null,
+      "estimatedSeconds": null,
+      "reuse": "reused",
+      "recurrence": "shared-one-time",
+      "evidence": [
+        "discovery/match.py",
+        "discovery/decode.py"
+      ]
+    }
+  ],
+  "notes": [
+    "Measure active work with start/stop timestamps. Do not count parallel work twice.",
+    "Reuse: new or reused. Recurrence: shared-one-time, per-platform, per-build, or unknown.",
+    "Unknown historical probe effort stays unavailable, never zero. Estimates do not replace measurements.",
+    "Active category stopwatches were not maintained. Their measuredSeconds remain null; no estimated person-hours are fabricated.",
+    "The observations below are artifact windows and machine occupancy, not additive active engineering time. Discovery, implementation and debugging interleaved.",
+    "Initial claim was 2026-09-09T19:07:49Z. User pause approximately 19:26-19:29 UTC; original save timestamp 19:27:49 UTC. Reporting/publication after the matrix is excluded from its clock.",
+    "The earlier Windows 4.5 report also has partial artifact timing, so no reliable active-effort ratio can be calculated.",
+    "Root build overlapped the beginning of native1 by about 14 seconds. These are not clean performance benchmark times."
+  ],
+  "observations": [
+    {
+      "category": "discovery",
+      "kind": "artifact-window",
+      "startedAt": "2026-09-09T19:12:24Z",
+      "finishedAt": "2026-09-09T19:19:08Z",
+      "seconds": 404,
+      "scope": "first matching-script artifact through initial mechanical port; omits earlier reading and later discovery"
+    },
+    {
+      "category": "implementation",
+      "kind": "artifact-window",
+      "startedAt": "2026-09-09T19:19:09Z",
+      "finishedAt": "2026-09-09T19:19:10Z",
+      "seconds": 1,
+      "scope": "initial native build only, timestamps rounded; not source authoring time"
+    },
+    {
+      "category": "environment-setup",
+      "kind": "tool-command-duration",
+      "seconds": 4.675,
+      "scope": "isolated capstone 5.0.9 and pefile 2024.8.26 pip install only"
+    },
+    {
+      "category": "verification",
+      "kind": "sequential-matrix-wall-clock",
+      "startedAt": "2026-09-09T19:43:54.088Z",
+      "finishedAt": "2026-09-09T19:49:19.559Z",
+      "seconds": 325.471
+    },
+    {
+      "category": "debugging",
+      "kind": "machine-occupancy",
+      "runs": [
+        {
+          "case": "bootstrap1/baseline",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 170.26600000000326
+        },
+        {
+          "case": "bootstrap2/baseline",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 180.03100000000268
+        },
+        {
+          "case": "bootstrap3/baseline",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 155.17199999999866
+        },
+        {
+          "case": "bootstrap4/baseline",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 9.390999999995984
+        },
+        {
+          "case": "bootstrap5/baseline",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 164.48399999999674
+        },
+        {
+          "case": "bootstrap6/baseline",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 163.45300000000134
+        }
+      ]
+    },
+    {
+      "category": "verification",
+      "kind": "machine-occupancy",
+      "runs": [
+        {
+          "case": "bootstrap7/baseline",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 46.34399999999732
+        },
+        {
+          "case": "bootstrap7/failed-condition",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 42.2809999999954
+        },
+        {
+          "case": "bootstrap7/fresh-world",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 47.14100000000326
+        },
+        {
+          "case": "bootstrap7/worker-loss",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 40.63999999999942
+        },
+        {
+          "case": "fault-hang/baseline",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 40.70299999999406
+        },
+        {
+          "case": "fault-missing-end/baseline",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 41.96800000000076
+        },
+        {
+          "case": "fault-partial-launch/baseline",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 0.5309999999954016
+        },
+        {
+          "case": "fault-stale-invocation/baseline",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 41.95300000000134
+        },
+        {
+          "case": "native1/baseline",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 47.59300000000076
+        },
+        {
+          "case": "native1/failed-condition",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 41.88999999999942
+        },
+        {
+          "case": "native1/fresh-world",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 47.26499999999942
+        },
+        {
+          "case": "native1/worker-loss",
+          "finished": true,
+          "aliasRemoved": true,
+          "elapsedSeconds": 40.65600000000268
+        }
+      ]
+    },
+    {
+      "category": "verification",
+      "kind": "repository-gate-wall-clocks",
+      "runs": [
+        {
+          "finishedAt": "2026-09-09T19:42:42.5587371Z",
+          "exitCode": 0,
+          "startedAt": "2026-09-09T19:42:12.7350177Z",
+          "gate": "typecheck"
+        },
+        {
+          "finishedAt": "2026-09-09T19:43:22.1855475Z",
+          "exitCode": 1,
+          "startedAt": "2026-09-09T19:42:42.5677584Z",
+          "gate": "test"
+        },
+        {
+          "finishedAt": "2026-09-09T19:44:08.4622709Z",
+          "exitCode": 1,
+          "startedAt": "2026-09-09T19:43:22.1879352Z",
+          "gate": "build"
+        }
+      ]
+    }
+  ]
+}

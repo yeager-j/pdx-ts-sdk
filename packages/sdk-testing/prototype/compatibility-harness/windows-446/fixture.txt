@@ -1,0 +1,49 @@
+namespace = sdk447_fixture
+event = {
+ id = sdk447_fixture.1
+ hide_window = yes
+ is_triggered_only = yes
+ immediate = {
+  if = {
+   limit = { NOT = { has_global_flag = sdk447_fixture_built } }
+   every_country = {
+    limit = { is_ai = no }
+    remove_country_flag = sdk446_effect
+    remove_country_flag = sdk446_absent
+    capital_scope.planet = {
+     save_global_event_target_as = sdk446_colony
+     set_planet_flag = sdk446_duplicate
+     solar_system = {
+      spawn_planet = {
+       class = pc_barren size = 10 orbit_distance = 160 orbit_angle = 120
+       init_effect = {
+        save_global_event_target_as = sdk446_planet
+        set_planet_flag = sdk446_duplicate
+       }
+      }
+     }
+    }
+    create_country = {
+     type = global_event
+     effect = { save_global_event_target_as = sdk446_country }
+    }
+   }
+   set_global_flag = sdk447_fixture_built
+  }
+  every_country = {
+   limit = { is_ai = no }
+   log = "SDK447:fixture:human:[GetDate]"
+   if = { limit = { has_country_flag = sdk446_effect } log = "SDK447:fixture:unexpected-effect" }
+  }
+  event_target:sdk446_colony = {
+   if = { limit = { is_colony = yes } log = "SDK447:fixture:colony:yes" }
+  }
+  event_target:sdk446_planet = {
+   if = { limit = { is_colony = no } log = "SDK447:fixture:uncolonized:yes" }
+  }
+  event_target:sdk446_country = {
+   if = { limit = { is_country_type = global_event } log = "SDK447:fixture:disposable-country" }
+  }
+  log = "SDK447:fixture:loaded"
+ }
+}
