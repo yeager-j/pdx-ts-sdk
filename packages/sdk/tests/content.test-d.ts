@@ -2693,6 +2693,7 @@ describe("generated content authoring types", () => {
 
   it("preserves a specimen's id and brands its references", () => {
     const specimen = contentMod.specimen("archive_core", {
+      name: "Archive Core",
       icon: "GFX_specimen_archive_core",
       type: "historical_item",
       rarity: "rare",

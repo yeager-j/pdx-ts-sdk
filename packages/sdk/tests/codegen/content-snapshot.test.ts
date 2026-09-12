@@ -1692,7 +1692,14 @@ describe("content-type codegen", () => {
     const specimen = emissions.get("specimen");
 
     expect(specimen?.code).toContain("export interface SpecimenDef");
+    expect(specimen?.code).toContain("name: LocalizedText;");
     expect(specimen?.code).toContain("icon: SpriteRef | string;");
+    expect(specimen?.code).toContain(
+      "/** Whether other empires can trade the specimen. Defaults to yes when omitted. */"
+    );
+    expect(specimen?.code).toContain(
+      "/** Country modifiers applied while the specimen is exhibited and their potential is true. */"
+    );
     expect(specimen?.code).toContain("isTradable?: boolean;");
     expect(specimen?.code).toContain("isSellable?: boolean;");
     expect(specimen?.code).toContain("resources?: EconomicResourceBlock<ScopeName>[];");

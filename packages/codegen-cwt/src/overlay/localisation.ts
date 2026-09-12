@@ -61,6 +61,7 @@ export const REQUIRED_LOCALISATION = new Map<string, string>([
   ],
   ["bombardment_stance.name", "13 of 13 resolve `bombardment_$`."],
   ["archaeological_site_type.name", "124 of 124 resolve `$`."],
+  ["specimen.name", "258 of 258 resolve `$`."],
   [
     "megastructure.name",
     "164 of 164 resolve `$`. The game shows the name in the construction menu and the " +
