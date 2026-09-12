@@ -57,6 +57,7 @@ const COMPLETE_PROFILE = {
   solarSystemInitializer: "solar_system_initializer",
   eventChain: "event_chain",
   specialProject: "special_project",
+  specimen: "specimen",
   megastructure: "megastructure",
   // No GFX registries: `spriteType`, `pdxmesh` and `pdxparticle` mint
   // segmentless names (SDK-121), so they are not `IdProfile` members and a

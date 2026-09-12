@@ -1,0 +1,473 @@
+{
+  "registry": "specimen",
+  "definitions": 258,
+  "files": 1,
+  "fingerprint": "678518a66cd79ae76ee2538295bbbec47cf36c6589f37ac5bf1920cf620b9a85",
+  "fields": {
+    "icon": {
+      "definitions": 258,
+      "repeated": 0,
+      "scalars": 258,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "GFX_specimen_acidic_spores",
+        "GFX_specimen_adakkaria_propaganda_poster",
+        "GFX_specimen_advisor_core",
+        "GFX_specimen_alien_brain_scans",
+        "GFX_specimen_alien_dining_set",
+        "GFX_specimen_alien_jewelry",
+        "GFX_specimen_alien_toy",
+        "GFX_specimen_altar_to_the_elder_one",
+        "GFX_specimen_aluminium_plaque",
+        "GFX_specimen_ammoniaphytus",
+        "GFX_specimen_amoeba_flagella_gland",
+        "GFX_specimen_ancient_bust",
+        "GFX_specimen_ancient_kinetic_launcher",
+        "GFX_specimen_ancient_laser_pointer",
+        "GFX_specimen_ancient_nanites",
+        "GFX_specimen_ancient_nuclear_armament",
+        "GFX_specimen_ancient_political_memoir",
+        "GFX_specimen_ancient_rift_sphere",
+        "GFX_specimen_ancient_satellite",
+        "GFX_specimen_ancient_sensor",
+        "GFX_specimen_asteroid_fossils",
+        "GFX_specimen_ballad_of_the_sable_knight",
+        "GFX_specimen_beauty_of_planet",
+        "GFX_specimen_black_hole_chromatic_anomaly",
+        "GFX_specimen_black_needle_ceremonial_sword",
+        "GFX_specimen_black_needle_ledger",
+        "GFX_specimen_burnt_migratory_trees",
+        "GFX_specimen_captain_ness_body",
+        "GFX_specimen_captain_ness_logbook",
+        "GFX_specimen_carnivorous_megaflora",
+        "GFX_specimen_castaway_robot",
+        "GFX_specimen_cenotaph_display",
+        "GFX_specimen_centrifugal_container",
+        "GFX_specimen_cetana_love",
+        "GFX_specimen_chambered_clay_pot",
+        "GFX_specimen_claw_of_the_trickster",
+        "GFX_specimen_confessions_benefactors",
+        "GFX_specimen_coprolite",
+        "GFX_specimen_cosmic_diamond_fragment",
+        "GFX_specimen_crimson_nimkips",
+        "GFX_specimen_crystal_core",
+        "GFX_specimen_crystal_nest_fragments",
+        "GFX_specimen_crystal_sphere_fragments",
+        "GFX_specimen_crystallized_cutholoid_eye",
+        "GFX_specimen_cult_pendant",
+        "GFX_specimen_cunning_flora",
+        "GFX_specimen_curator_survey",
+        "GFX_specimen_cutholoid_digestive_acids",
+        "GFX_specimen_cybrex_mining_column",
+        "GFX_specimen_data_on_infinity",
+        "GFX_specimen_datacore_of_sinople",
+        "GFX_specimen_dathnak_gas",
+        "GFX_specimen_dead_god_mantle",
+        "GFX_specimen_decayed_megathrusters",
+        "GFX_specimen_decayed_satellite",
+        "GFX_specimen_declaration_of_animosity",
+        "GFX_specimen_declaration_of_friendship",
+        "GFX_specimen_derelict_cybrex_warform",
+        "GFX_specimen_desiccated_brain_slug",
+        "GFX_specimen_destroyed_mascot_of_colony",
+        "GFX_specimen_devolved_baol_drones",
+        "GFX_specimen_dimensional_endothelial_lining",
+        "GFX_specimen_dna_archive",
+        "GFX_specimen_doomsday_scrolls"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "inline_script": {
+      "definitions": 258,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 258,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "RARITY",
+        "script"
+      ],
+      "keysByDefinition": [
+        [
+          "RARITY",
+          "script"
+        ]
+      ]
+    },
+    "is_sellable": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_tradable": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "resources": {
+      "definitions": 64,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 64,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "produces"
+      ],
+      "keysByDefinition": [
+        [
+          "category",
+          "produces"
+        ]
+      ]
+    },
+    "triggered_country_modifier": {
+      "definitions": 194,
+      "repeated": 35,
+      "scalars": 0,
+      "blocks": 194,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "army_damage_mult",
+        "bonus_pop_growth_mult",
+        "command_limit_add",
+        "country_astral_rift_speed_mult",
+        "country_astral_threads_produces_mult",
+        "country_edict_fund_add",
+        "country_exotic_gases_produces_mult",
+        "country_rare_crystals_produces_mult",
+        "country_unity_produces_mult",
+        "country_vivarium_max_capacity_add",
+        "country_volatile_motes_produces_mult",
+        "leaders_upkeep_mult",
+        "logistic_growth_mult",
+        "mult",
+        "planet_amenities_add",
+        "planet_building_build_speed_mult",
+        "planet_crime_no_happiness_add",
+        "planet_jobs_alloys_produces_mult",
+        "planet_jobs_consumer_goods_produces_mult",
+        "planet_jobs_energy_produces_mult",
+        "planet_jobs_food_produces_mult",
+        "planet_jobs_minerals_produces_mult",
+        "planet_jobs_trade_produces_mult",
+        "planet_jobs_unity_produces_mult",
+        "planet_jobs_worker_produces_mult",
+        "planet_pop_assembly_mult",
+        "planet_researchers_produces_mult",
+        "planet_stability_add",
+        "pop_environment_tolerance",
+        "pop_factions_produces_mult",
+        "pop_government_ethic_attraction",
+        "pop_happiness",
+        "potential",
+        "ship_damage_against_space_fauna_mult",
+        "ship_friendly_territory_shield_mult",
+        "ship_hull_mult",
+        "ship_orbital_bombardment_mult",
+        "ship_sensor_range_add",
+        "ship_speed_mult",
+        "ship_weapon_damage",
+        "space_fauna_growth_rate_mult",
+        "space_fauna_ship_damage_mult",
+        "space_fauna_ship_hull_mult",
+        "space_fauna_ship_speed_mult",
+        "species_leader_exp_gain",
+        "starbase_shipyard_space_fauna_build_cost_mult",
+        "starbase_shipyard_space_fauna_build_speed_mult",
+        "terraform_speed_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "army_damage_mult",
+          "mult"
+        ],
+        [
+          "bonus_pop_growth_mult",
+          "mult"
+        ],
+        [
+          "command_limit_add",
+          "mult"
+        ],
+        [
+          "country_astral_rift_speed_mult",
+          "mult"
+        ],
+        [
+          "country_astral_threads_produces_mult",
+          "mult"
+        ],
+        [
+          "country_edict_fund_add",
+          "mult"
+        ],
+        [
+          "country_exotic_gases_produces_mult",
+          "mult"
+        ],
+        [
+          "country_rare_crystals_produces_mult",
+          "mult"
+        ],
+        [
+          "country_unity_produces_mult",
+          "mult"
+        ],
+        [
+          "country_vivarium_max_capacity_add",
+          "mult"
+        ],
+        [
+          "country_volatile_motes_produces_mult",
+          "mult"
+        ],
+        [
+          "leaders_upkeep_mult",
+          "mult"
+        ],
+        [
+          "logistic_growth_mult",
+          "mult"
+        ],
+        [
+          "mult",
+          "planet_amenities_add"
+        ],
+        [
+          "mult",
+          "planet_amenities_add",
+          "planet_jobs_trade_produces_mult",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_building_build_speed_mult"
+        ],
+        [
+          "mult",
+          "planet_crime_no_happiness_add",
+          "pop_factions_produces_mult",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_jobs_alloys_produces_mult"
+        ],
+        [
+          "mult",
+          "planet_jobs_alloys_produces_mult",
+          "planet_jobs_food_produces_mult",
+          "planet_jobs_minerals_produces_mult",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_jobs_consumer_goods_produces_mult",
+          "planet_jobs_energy_produces_mult",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_jobs_energy_produces_mult"
+        ],
+        [
+          "mult",
+          "planet_jobs_energy_produces_mult",
+          "planet_jobs_trade_produces_mult",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_jobs_energy_produces_mult",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_jobs_minerals_produces_mult"
+        ],
+        [
+          "mult",
+          "planet_jobs_unity_produces_mult"
+        ],
+        [
+          "mult",
+          "planet_jobs_worker_produces_mult"
+        ],
+        [
+          "mult",
+          "planet_pop_assembly_mult"
+        ],
+        [
+          "mult",
+          "planet_researchers_produces_mult"
+        ],
+        [
+          "mult",
+          "planet_stability_add"
+        ],
+        [
+          "mult",
+          "pop_environment_tolerance"
+        ],
+        [
+          "mult",
+          "pop_government_ethic_attraction"
+        ],
+        [
+          "mult",
+          "pop_happiness"
+        ],
+        [
+          "mult",
+          "ship_damage_against_space_fauna_mult"
+        ],
+        [
+          "mult",
+          "ship_friendly_territory_shield_mult"
+        ],
+        [
+          "mult",
+          "ship_hull_mult"
+        ],
+        [
+          "mult",
+          "ship_orbital_bombardment_mult"
+        ],
+        [
+          "mult",
+          "ship_sensor_range_add"
+        ],
+        [
+          "mult",
+          "ship_speed_mult"
+        ],
+        [
+          "mult",
+          "ship_weapon_damage"
+        ],
+        [
+          "mult",
+          "space_fauna_growth_rate_mult"
+        ],
+        [
+          "mult",
+          "space_fauna_ship_damage_mult"
+        ],
+        [
+          "mult",
+          "space_fauna_ship_hull_mult"
+        ],
+        [
+          "mult",
+          "space_fauna_ship_speed_mult"
+        ],
+        [
+          "mult",
+          "species_leader_exp_gain"
+        ],
+        [
+          "mult",
+          "starbase_shipyard_space_fauna_build_cost_mult"
+        ],
+        [
+          "mult",
+          "starbase_shipyard_space_fauna_build_speed_mult"
+        ],
+        [
+          "mult",
+          "terraform_speed_mult"
+        ]
+      ]
+    },
+    "triggered_country_modifier.potential": {
+      "definitions": 35,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 35,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "country_uses_consumer_goods",
+        "has_country_flag",
+        "is_gestalt",
+        "is_infernal",
+        "is_lithoid"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "has_country_flag"
+        ],
+        [
+          "country_uses_consumer_goods"
+        ],
+        [
+          "is_gestalt"
+        ],
+        [
+          "is_infernal",
+          "is_lithoid"
+        ]
+      ]
+    },
+    "type": {
+      "definitions": 258,
+      "repeated": 0,
+      "scalars": 258,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "aesthetic_wonder",
+        "historical_item",
+        "xeno_geology"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

@@ -41,8 +41,8 @@ deliberate escape).
 
 ### Revisions
 
-The stamped version is the game version plus a `-r.<n>` revision — `4.4.6-r.1`,
-`4.4.6-r.2`, `4.4.6-r.3`, `4.4.6-r.4`, `4.4.6-r.5` — and a bare `4.4.6` is never
+The stamped version is the game version plus a `-r.<n>` revision — `4.4.6-r.1`
+through `4.4.6-r.6` — and a bare `4.4.6` is never
 published. npm can never reuse a version number, so numbering by game version
 alone allows exactly one publish per game release, and this package can need a
 second long before Paradox ships anything: a widened peer range, a regenerated

@@ -1218,6 +1218,24 @@ function defineContentExample(): PureMod {
     sameOptionGroupAs: [surveyProject],
   });
 
+  const specimen = mod.specimen("archive_core", {
+    name: "Synthetic Archive Core",
+    descShort: "A memory lattice recovered from a silent machine world.",
+    descDetails: "Its records preserve the rise and fall of an unknown synthetic civilization.",
+    icon: "GFX_specimen_archive_core",
+    type: "historical_item",
+    rarity: "rare",
+    isTradable: true,
+    isSellable: false,
+    resources: [{ category: "specimens", produces: { amounts: { unity: 5 } } }],
+    triggeredCountryModifier: [
+      {
+        when: hasAuthority("auth_machine_intelligence"),
+        modifiers: (m) => m.country.unity.produces.mult(0.05),
+      },
+    ],
+  });
+
   // The three `.gfx` registries. Every other registry in this example writes
   // `.txt` under `common/`; these carry a `path_extension` and a
   // `skip_root_key`, so their goldens are what witnesses the layout half of the
@@ -1307,6 +1325,7 @@ function defineContentExample(): PureMod {
       chain,
       surveyProject,
       recoveryProject,
+      specimen,
     ]),
     mod.feature("events", digEvents),
   ]);
@@ -1680,6 +1699,27 @@ describe("generated content registries", () => {
     );
     expect(localisation).toContain(
       'content_test_special_project_crystal_survey:0 "Survey the Crystal Signal"'
+    );
+  });
+
+  it("writes specimens with resources, country modifiers, and localization", () => {
+    const rendered = files.get("common/specimens/content_test_specimens.txt")!;
+    expect(rendered).toContain("content_test_specimen_archive_core = {");
+    expect(rendered).toContain("\tresources = {\n\t\tcategory = specimens");
+    expect(rendered).toContain("\t\tproduces = {\n\t\t\tunity = 5");
+    expect(rendered).toContain(
+      "\ttriggered_country_modifier = {\n" +
+        "\t\tpotential = {\n\t\t\thas_authority = auth_machine_intelligence"
+    );
+    expect(rendered).toContain("\t\tcountry_unity_produces_mult = 0.05");
+
+    const localisation = files.get("localisation/english/content_test_l_english.yml")!;
+    expect(localisation).toContain('content_test_specimen_archive_core:0 "Synthetic Archive Core"');
+    expect(localisation).toContain(
+      'content_test_specimen_archive_core_desc_short:0 "A memory lattice recovered from a silent machine world."'
+    );
+    expect(localisation).toContain(
+      'content_test_specimen_archive_core_desc_details:0 "Its records preserve the rise and fall of an unknown synthetic civilization."'
     );
   });
 

@@ -5660,21 +5660,6 @@
         "species_9": 1
       }
     },
-    "specimen": {
-      "path": "common/specimens",
-      "definitions": 258,
-      "files": 1,
-      "fingerprint": "678518a66cd79ae76ee2538295bbbec47cf36c6589f37ac5bf1920cf620b9a85",
-      "fields": {
-        "icon": 258,
-        "inline_script": 258,
-        "is_sellable": 1,
-        "is_tradable": 1,
-        "resources": 64,
-        "triggered_country_modifier": 194,
-        "type": 258
-      }
-    },
     "sprite_configuration": {
       "path": "gfx/portraits/sprite_configurations",
       "definitions": 1,
@@ -6420,5 +6405,5 @@
       "files": 1
     }
   },
-  "fingerprint": "248cbc3b54be67059318b0320e500bc18025a77b0078c2c35aabe4a11c0156e4"
+  "fingerprint": "11a765322f3c75359b1e722757dd9b095093d3e1ecaf443676e6d23f7cc3d2bd"
 }
