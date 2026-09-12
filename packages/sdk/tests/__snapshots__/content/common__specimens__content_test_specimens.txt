@@ -1,0 +1,19 @@
+content_test_specimen_archive_core = {
+	icon = GFX_specimen_archive_core
+	type = historical_item
+	rarity = rare
+	is_tradable = yes
+	is_sellable = no
+	resources = {
+		category = specimens
+		produces = {
+			unity = 5
+		}
+	}
+	triggered_country_modifier = {
+		potential = {
+			has_authority = auth_machine_intelligence
+		}
+		country_unity_produces_mult = 0.05
+	}
+}

@@ -23,6 +23,7 @@ import {
   hasModifier,
   hasPlanetFlag,
   hasShipFlag,
+  hasSpecimen,
   hasStageModifier,
   isAtWar,
   isCapital,
@@ -106,6 +107,7 @@ import {
   type SituationStageFields,
   type SituationTypeFields,
   type SpecialProjectRef,
+  type SpecimenRef,
   type SpriteRef,
   type StaticModifierItem,
   type StrikeCraftComponentTemplateFields,
@@ -2687,6 +2689,26 @@ describe("generated content authoring types", () => {
       // @ts-expect-error — `upgrades` names buildings, not megastructures.
       upgrades: [gateway],
     });
+  });
+
+  it("preserves a specimen's id and brands its references", () => {
+    const specimen = contentMod.specimen("archive_core", {
+      icon: "GFX_specimen_archive_core",
+      type: "historical_item",
+      rarity: "rare",
+    });
+    expectTypeOf(specimen.id).toEqualTypeOf<"content_types_specimen_archive_core">();
+
+    const specimenRef: SpecimenRef = specimen;
+    void specimenRef;
+    hasSpecimen(specimen);
+
+    const building = defineBuilding({ id: "content_types_building_archive", name: "Archive" });
+    // @ts-expect-error — a building is not a specimen reference.
+    const wrongRegistry: SpecimenRef = building;
+    void wrongRegistry;
+    // @ts-expect-error — specimen-aware script fields reject another registry's item.
+    hasSpecimen(building);
   });
 
   it("takes a megastructure's triggered country modifiers as a list", () => {

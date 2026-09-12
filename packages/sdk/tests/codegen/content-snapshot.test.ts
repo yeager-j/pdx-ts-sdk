@@ -1688,6 +1688,26 @@ describe("content-type codegen", () => {
     expect(specialProject?.code).toContain('shape: "dual"');
   });
 
+  it("lowers specimens with country-scoped conditions and repeatable blocks", () => {
+    const specimen = emissions.get("specimen");
+
+    expect(specimen?.code).toContain("export interface SpecimenDef");
+    expect(specimen?.code).toContain("icon: SpriteRef | string;");
+    expect(specimen?.code).toContain("isTradable?: boolean;");
+    expect(specimen?.code).toContain("isSellable?: boolean;");
+    expect(specimen?.code).toContain("resources?: EconomicResourceBlock<ScopeName>[];");
+    expect(specimen?.code).toContain('triggeredCountryModifier?: TriggeredModifier<"country">[];');
+    expect(specimen?.nestedEmittedFields).toContainEqual({
+      field: "specimen.triggered_country_modifier.potential",
+      authoredPath: ["triggeredCountryModifier"],
+      shape: "trigger",
+      repeated: false,
+      clause: "trigger",
+      scope: ["country"],
+    });
+    expect(specimen?.unsupported).toEqual([]);
+  });
+
   it("lowers megastructure's economic, modifier, and mixed trigger-struct fields", () => {
     const megastructure = emissions.get("megastructure");
     expect(megastructure?.code).toContain("export type MegastructureDef<");

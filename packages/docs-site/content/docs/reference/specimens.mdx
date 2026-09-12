@@ -1,0 +1,45 @@
+---
+title: Specimens
+description: Define Grand Archive specimens with rarity, collection type, resources, and country modifiers.
+registries: [specimen]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+A **specimen** is an object a country can collect and display in the Grand
+Archive. Its definition selects an icon, collection type, rarity, resource
+production, and passive country modifiers. The SDK writes specimens under
+`common/specimens/`.
+
+<PairedExample name="specimens" />
+
+`type` accepts `aesthetic_wonder`, `historical_item`, or `xeno_geology`.
+`rarity` accepts `common`, `rare`, `epic`, or `exceptional`. `isTradable` and
+`isSellable` are optional; set either field only when the specimen must override
+the game's default behavior.
+
+Each `triggeredCountryModifier` condition and modifier runs in country scope.
+The returned item is also a `SpecimenRef`, so country effects such as
+`giveSpecimen` and specimen-aware triggers accept it directly. Use
+`vanilla.specimen(...)` for a checked vanilla id.
+
+<Callout type="warn" title="Inline scripts are not an authoring field">
+  Vanilla uses an inline script to expand each specimen's rarity and upkeep. The SDK does not emit
+  `inline_script`; supply `rarity` directly and describe any required upkeep in `resources`.
+</Callout>
+
+Specimens have no patch surface. `mod.patchSpecimen` does not exist.
+
+## API and vanilla references
+
+- [`SpecimenDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/specimen.ts)
+  is the generated definition used by `mod.specimen`.
+- [`vanilla.specimen(...)`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  checks ids against the install-derived vanilla specimen ids.
+
+## Field reference
+
+<FieldTable registry="specimen" />

@@ -172,6 +172,7 @@ export const CONTENT_MANIFEST = [
     source: "common/special_projects.cwt",
     keyword: "special_project",
   },
+  { type: "specimen", source: "common/specimens.cwt" },
   { type: "megastructure", source: "common/megastructures.cwt" },
   // The three GFX registries. Each writes `.gfx` rather than `.txt` and sits
   // inside a root envelope its CWT type declares (`spriteTypes`, `objectTypes`),

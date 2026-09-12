@@ -94,6 +94,7 @@ export type { VanillaSoundId } from "./registries/sound.ts";
 export type { VanillaSoundTrie } from "./registries/sound/index.ts";
 export type { VanillaSpecialProjectId } from "./registries/special-project.ts";
 export type { VanillaSpeciesClassId } from "./registries/species-class.ts";
+export type { VanillaSpecimenId } from "./registries/specimen.ts";
 export type { VanillaSpriteTypeId } from "./registries/sprite-type.ts";
 export type { VanillaSpriteTypeTrie } from "./registries/sprite-type/index.ts";
 export type { VanillaStarClassId } from "./registries/star-class.ts";

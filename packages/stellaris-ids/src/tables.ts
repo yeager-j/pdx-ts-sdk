@@ -86,6 +86,7 @@ import type { VanillaSoundId } from "./registries/sound.ts";
 import type { VanillaSoundTrie } from "./registries/sound/index.ts";
 import type { VanillaSpecialProjectId } from "./registries/special-project.ts";
 import type { VanillaSpeciesClassId } from "./registries/species-class.ts";
+import type { VanillaSpecimenId } from "./registries/specimen.ts";
 import type { VanillaSpriteTypeId } from "./registries/sprite-type.ts";
 import type { VanillaSpriteTypeTrie } from "./registries/sprite-type/index.ts";
 import type { VanillaStarClassId } from "./registries/star-class.ts";
@@ -151,6 +152,7 @@ export interface VanillaIds {
   readonly solar_system_initializer: VanillaSolarSystemInitializerId;
   readonly event_chain: VanillaEventChainId;
   readonly special_project: VanillaSpecialProjectId;
+  readonly specimen: VanillaSpecimenId;
   readonly megastructure: VanillaMegastructureId;
   readonly spriteType: VanillaSpriteTypeId;
   readonly pdxmesh: VanillaPdxmeshId;

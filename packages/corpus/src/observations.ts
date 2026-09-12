@@ -512,6 +512,15 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     rationale: resourceRows(),
   },
   {
+    registry: "specimen",
+    field: "resources",
+    kind: "arity",
+    evidence: [],
+    classification: "rules-wider-than-vanilla",
+    declaration: "common/specimens.cwt:28 — ## cardinality = 0..inf",
+    rationale: resourceRows(),
+  },
+  {
     registry: "strike_craft_component_template",
     field: "resources",
     kind: "arity",
