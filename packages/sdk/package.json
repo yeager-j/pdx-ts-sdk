@@ -39,7 +39,7 @@
     }
   },
   "dependencies": {
-    "@clack/prompts": "^1.7.0",
+    "@clack/prompts": "^1.8.0",
     "@pdx-ts/pdxscript": "^0.8.0",
     "yaml": "^2.9.0"
   },
