@@ -37,7 +37,7 @@
     "prepack": "npm run build"
   },
   "dependencies": {
-    "@clack/prompts": "^1.7.0",
+    "@clack/prompts": "^1.8.0",
     "@pdx-ts/sdk": "^0.8.0",
     "semver": "^7.8.5"
   },
@@ -45,10 +45,10 @@
     "@eslint/js": "^10.0.1",
     "@types/semver": "^7.8.0",
     "ajv": "^8.17.1",
-    "eslint": "^10.9.1",
-    "knip": "^6.34.0",
+    "eslint": "^10.10.0",
+    "knip": "^6.35.1",
     "smol-toml": "^1.8.0",
-    "typescript-eslint": "^8.68.0",
+    "typescript-eslint": "^8.70.0",
     "yaml": "^2.9.0"
   },
   "repository": {
