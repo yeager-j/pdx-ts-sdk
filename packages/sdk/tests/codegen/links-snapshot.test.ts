@@ -151,7 +151,7 @@ describe("emitted scope links", () => {
         | ScopeValue<"country"> {
         return "path" in arg
           ? navigateScope<"country">(arg, "owner")
-          : trigger([block("owner", [...arg.entries])], [...arg.refs]);
+          : trigger([scopeTransitionBlock("owner", [...arg.entries], "push")], [...arg.refs]);
       }"
     `);
   });
@@ -174,7 +174,7 @@ describe("emitted scope links", () => {
       ): Trigger<"country"> | ScopeValue<"country"> {
         return "path" in arg
           ? navigateScope<"country">(arg, "overlord")
-          : trigger([block("overlord", [...arg.entries])], [...arg.refs]);
+          : trigger([scopeTransitionBlock("overlord", [...arg.entries], "push")], [...arg.refs]);
       }"
     `);
   });
@@ -197,14 +197,19 @@ describe("emitted scope links", () => {
       ): Trigger<ScopeName> | ScopeValue<"country"> {
         return "path" in arg
           ? navigateScope<"country">(arg, "last_created_country")
-          : trigger([block("last_created_country", [...arg.entries])], [...arg.refs]);
+          : trigger(
+              [scopeTransitionBlock("last_created_country", [...arg.entries], "push")],
+              [...arg.refs]
+            );
       }"
     `);
   });
 
   it("system_star: links.cwt's capitalized 'Planet' output canonicalizes", () => {
     expect(declaration("systemStar")).toContain('condition: Trigger<"planet">');
-    expect(declaration("systemStar")).toContain('block("system_star"');
+    expect(declaration("systemStar")).toContain(
+      'scopeTransitionBlock("system_star", [...arg.entries], "push")'
+    );
     // The same canonical output on the value side, where it is the result
     // rather than the condition's scope.
     expect(declaration("systemStar")).toContain('): ScopeRef<"planet">');
@@ -234,7 +239,7 @@ describe("emitted scope links", () => {
       ): Trigger<"country"> | ScopeValue<"colony"> {
         return "path" in arg
           ? navigateScope<"colony">(arg, "capital_scope")
-          : trigger([block("capital_scope", [...arg.entries])], [...arg.refs]);
+          : trigger([scopeTransitionBlock("capital_scope", [...arg.entries], "push")], [...arg.refs]);
       }"
     `);
   });
@@ -257,7 +262,7 @@ describe("emitted scope links", () => {
       ): Trigger<ScopeName> | ScopeValue<"no_scope"> {
         return "path" in arg
           ? navigateScope<"no_scope">(arg, "no_scope")
-          : trigger([block("no_scope", [...arg.entries])], [...arg.refs]);
+          : trigger([scopeTransitionBlock("no_scope", [...arg.entries], "push")], [...arg.refs]);
       }"
     `);
   });

@@ -23,6 +23,7 @@ import {
   type ArgField,
   type ArgValue,
   type ClauseCategory,
+  type ScopeTransition,
   type SkippedRule,
   type SkipReason,
 } from "../../lower/script-shape.ts";
@@ -100,7 +101,11 @@ type Shape =
    * rule pushes; `null` means the nested trigger stays in the enclosing scope,
    * which only an `ENCLOSING_SCOPE_TRIGGER_WRAPPERS` row permits.
    */
-  | { readonly kind: "wrapper"; readonly scope: readonly string[] | null }
+  | {
+      readonly kind: "wrapper";
+      readonly scope: readonly string[] | null;
+      readonly transition: ScopeTransition;
+    }
   | { readonly kind: "fields"; readonly fields: readonly ArgField[] };
 
 function shapeOf(emitter: Emitter, key: string, rule: LoweredRule): Shape | SkipReason {
@@ -149,7 +154,7 @@ function shapeOf(emitter: Emitter, key: string, rule: LoweredRule): Shape | Skip
   }
   const splices = block.splices;
   const named = block.named;
-  const pushedRaw = block.inheritedScope;
+  const pushed = block.inheritedScope;
 
   if (splices.length > 0) {
     const categories = new Set(
@@ -162,14 +167,15 @@ function shapeOf(emitter: Emitter, key: string, rule: LoweredRule): Shape | Skip
       );
     }
     if (named.length === 0) {
-      if (pushedRaw === null) {
+      if (pushed.scope === null) {
         return ENCLOSING_SCOPE_TRIGGER_WRAPPERS.has(key)
-          ? { kind: "wrapper", scope: null }
+          ? { kind: "wrapper", scope: null, transition: pushed.transition }
           : skipReason("missing-push-scope", "scope change with no push_scope annotation");
       }
       return {
         kind: "wrapper",
-        scope: canonicalThisScope(emitter.lowerer, pushedRaw, `${key}: trigger wrapper`),
+        scope: canonicalThisScope(emitter.lowerer, pushed.scope, `${key}: trigger wrapper`),
+        transition: pushed.transition,
       };
     }
   }
@@ -409,7 +415,8 @@ function emitWrapper(
   key: string,
   scope: string,
   docs: string[],
-  inner: readonly string[] | null
+  inner: readonly string[] | null,
+  transition: ScopeTransition
 ): EmittedTriggerBuilder {
   const type = emitter.use("Trigger");
   const signature =
@@ -421,8 +428,9 @@ function emitWrapper(
     code:
       docComment(docs) +
       `export function ${signature} {\n` +
-      `  return ${emitter.use("trigger")}([${emitter.use("block")}(${JSON.stringify(key)}, ` +
-      `[...condition.entries])], [...condition.refs]);\n}\n`,
+      `  return ${emitter.use("trigger")}([${emitter.use("scopeTransitionBlock")}(` +
+      `${JSON.stringify(key)}, [...condition.entries], ${JSON.stringify(transition)})], ` +
+      `[...condition.refs]);\n}\n`,
   };
 }
 
@@ -675,7 +683,7 @@ function emitOne(
     case "scalarOrFields":
       return emitScalarOrFields(emitter, fn, key, scope, docs, shape.scalar, shape.fields);
     case "wrapper":
-      return emitWrapper(emitter, fn, key, scope, docs, shape.scope);
+      return emitWrapper(emitter, fn, key, scope, docs, shape.scope, shape.transition);
     case "fields":
       return emitFields(emitter, fn, key, scope, docs, shape.fields);
   }

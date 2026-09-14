@@ -722,10 +722,9 @@ async function writeScriptModules(input: ScriptModuleInput): Promise<void> {
   await output.write(
     "links.ts",
     header(commit, ["links.cwt", "script-docs/v4.4.1/scopes.log"]) +
-      'import { block } from "@pdx-ts/pdxscript";\n' +
       'import { navigateScope } from "../script/effects/recorder.ts";\n' +
       'import type { ScopeRef, ScopeValue } from "../script/effects/types.ts";\n' +
-      'import { trigger, type Trigger } from "../script/trigger-core.ts";\n' +
+      'import { scopeTransitionBlock, trigger, type Trigger } from "../script/trigger-core.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       scopeLinks.code
   );

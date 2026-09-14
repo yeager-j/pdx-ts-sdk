@@ -238,6 +238,8 @@ export type ArgValue =
       readonly category: ClauseCategory;
       /** The canonical pushed scopes, or `null` for the enclosing scope. */
       readonly scope: readonly string[] | null;
+      /** How entering one case changes the live game scope identity. */
+      readonly transition: ScopeTransition;
       /** The case count the declarations admit together. */
       readonly cardinality: Cardinality;
       /** The block's own keys, which a case key may not repeat. */

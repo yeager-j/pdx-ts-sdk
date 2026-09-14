@@ -28,6 +28,8 @@ import {
   scopeValueScalar,
 } from "../script/scalar.ts";
 import {
+  scopeTransitionBlock,
+  scopeTransitionEntry,
   scriptValueScalar,
   trigger,
   type ScriptValue,
@@ -326,7 +328,10 @@ export function always(value: boolean = true): Trigger<ScopeName> {
  * ```
  */
 export function anyActiveFirstContact(condition: Trigger<"first_contact">): Trigger<"country"> {
-  return trigger([block("any_active_first_contact", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_active_first_contact", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -336,7 +341,10 @@ export function anyActiveFirstContact(condition: Trigger<"first_contact">): Trig
  * ```
  */
 export function anyAgreement(condition: Trigger<"agreement">): Trigger<"country" | "no_scope"> {
-  return trigger([block("any_agreement", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_agreement", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -346,7 +354,10 @@ export function anyAgreement(condition: Trigger<"agreement">): Trigger<"country"
  * ```
  */
 export function anyAmbientObject(condition: Trigger<"ambient_object">): Trigger<ScopeName> {
-  return trigger([block("any_ambient_object", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_ambient_object", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -358,7 +369,10 @@ export function anyAmbientObject(condition: Trigger<"ambient_object">): Trigger<
 export function anyArchaeologicalSite(
   condition: Trigger<"archaeological_site">
 ): Trigger<ScopeName> {
-  return trigger([block("any_archaeological_site", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_archaeological_site", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -368,7 +382,10 @@ export function anyArchaeologicalSite(
  * ```
  */
 export function anyAssociate(condition: Trigger<"country">): Trigger<"federation"> {
-  return trigger([block("any_associate", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_associate", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -378,7 +395,10 @@ export function anyAssociate(condition: Trigger<"country">): Trigger<"federation
  * ```
  */
 export function anyAstralRift(condition: Trigger<"astral_rift">): Trigger<ScopeName> {
-  return trigger([block("any_astral_rift", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_astral_rift", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -388,7 +408,10 @@ export function anyAstralRift(condition: Trigger<"astral_rift">): Trigger<ScopeN
  * ```
  */
 export function anyAttacker(condition: Trigger<"country">): Trigger<"war"> {
-  return trigger([block("any_attacker", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_attacker", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -398,7 +421,10 @@ export function anyAttacker(condition: Trigger<"country">): Trigger<"war"> {
  * ```
  */
 export function anyAvailableDebris(condition: Trigger<"debris">): Trigger<"country"> {
-  return trigger([block("any_available_debris", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_available_debris", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -408,7 +434,10 @@ export function anyAvailableDebris(condition: Trigger<"debris">): Trigger<"count
  * ```
  */
 export function anyBypass(condition: Trigger<"bypass">): Trigger<ScopeName> {
-  return trigger([block("any_bypass", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_bypass", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -418,7 +447,10 @@ export function anyBypass(condition: Trigger<"bypass">): Trigger<ScopeName> {
  * ```
  */
 export function anyBypassInSystem(condition: Trigger<"bypass">): Trigger<"system"> {
-  return trigger([block("any_bypass_in_system", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_bypass_in_system", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -428,7 +460,10 @@ export function anyBypassInSystem(condition: Trigger<"bypass">): Trigger<"system
  * ```
  */
 export function anyCombatantFleet(condition: Trigger<"fleet">): Trigger<"fleet"> {
-  return trigger([block("any_combatant_fleet", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_combatant_fleet", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -438,7 +473,10 @@ export function anyCombatantFleet(condition: Trigger<"fleet">): Trigger<"fleet">
  * ```
  */
 export function anyControlledColony(condition: Trigger<"colony">): Trigger<"country"> {
-  return trigger([block("any_controlled_colony", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_controlled_colony", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -448,7 +486,10 @@ export function anyControlledColony(condition: Trigger<"colony">): Trigger<"coun
  * ```
  */
 export function anyControlledFleet(condition: Trigger<"fleet">): Trigger<"country"> {
-  return trigger([block("any_controlled_fleet", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_controlled_fleet", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -458,7 +499,10 @@ export function anyControlledFleet(condition: Trigger<"fleet">): Trigger<"countr
  * ```
  */
 export function anyControlledPlanet(condition: Trigger<"planet">): Trigger<"country"> {
-  return trigger([block("any_controlled_planet", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_controlled_planet", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -468,7 +512,10 @@ export function anyControlledPlanet(condition: Trigger<"planet">): Trigger<"coun
  * ```
  */
 export function anyControlledShip(condition: Trigger<"ship">): Trigger<"country" | "fleet"> {
-  return trigger([block("any_controlled_ship", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_controlled_ship", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -478,7 +525,10 @@ export function anyControlledShip(condition: Trigger<"ship">): Trigger<"country"
  * ```
  */
 export function anyCosmicStorm(condition: Trigger<"storm">): Trigger<ScopeName> {
-  return trigger([block("any_cosmic_storm", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_cosmic_storm", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -489,7 +539,7 @@ export function anyCosmicStorm(condition: Trigger<"storm">): Trigger<ScopeName> 
  */
 export function anyCosmicStormEndPosition(condition: Trigger<"system">): Trigger<ScopeName> {
   return trigger(
-    [block("any_cosmic_storm_end_position", [...condition.entries])],
+    [scopeTransitionBlock("any_cosmic_storm_end_position", [...condition.entries], "push")],
     [...condition.refs]
   );
 }
@@ -502,7 +552,7 @@ export function anyCosmicStormEndPosition(condition: Trigger<"system">): Trigger
  */
 export function anyCosmicStormStartPosition(condition: Trigger<"system">): Trigger<ScopeName> {
   return trigger(
-    [block("any_cosmic_storm_start_position", [...condition.entries])],
+    [scopeTransitionBlock("any_cosmic_storm_start_position", [...condition.entries], "push")],
     [...condition.refs]
   );
 }
@@ -514,7 +564,10 @@ export function anyCosmicStormStartPosition(condition: Trigger<"system">): Trigg
  * ```
  */
 export function anyCouncilMember(condition: Trigger<"country">): Trigger<ScopeName> {
-  return trigger([block("any_council_member", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_council_member", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -524,7 +577,10 @@ export function anyCouncilMember(condition: Trigger<"country">): Trigger<ScopeNa
  * ```
  */
 export function anyCountry(condition: Trigger<"country">): Trigger<ScopeName> {
-  return trigger([block("any_country", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_country", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -535,7 +591,7 @@ export function anyCountry(condition: Trigger<"country">): Trigger<ScopeName> {
  */
 export function anyCountryNeighborToSystem(condition: Trigger<"country">): Trigger<"system"> {
   return trigger(
-    [block("any_country_neighbor_to_system", [...condition.entries])],
+    [scopeTransitionBlock("any_country_neighbor_to_system", [...condition.entries], "push")],
     [...condition.refs]
   );
 }
@@ -547,7 +603,10 @@ export function anyCountryNeighborToSystem(condition: Trigger<"country">): Trigg
  * ```
  */
 export function anyDefender(condition: Trigger<"country">): Trigger<"war"> {
-  return trigger([block("any_defender", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_defender", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -559,7 +618,10 @@ export function anyDefender(condition: Trigger<"country">): Trigger<"war"> {
 export function anyDeposit(
   condition: Trigger<"deposit">
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("any_deposit", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_deposit", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -571,7 +633,10 @@ export function anyDeposit(
 export function anyEnslavedSpecies(
   condition: Trigger<"species">
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
-  return trigger([block("any_enslaved_species", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_enslaved_species", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -581,7 +646,10 @@ export function anyEnslavedSpecies(
  * ```
  */
 export function anyEnvoy(condition: Trigger<"leader">): Trigger<"country"> {
-  return trigger([block("any_envoy", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_envoy", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -593,7 +661,10 @@ export function anyEnvoy(condition: Trigger<"leader">): Trigger<"country"> {
 export function anyEspionageAsset(
   condition: Trigger<"espionage_asset">
 ): Trigger<"espionage_operation" | "no_scope" | "spy_network"> {
-  return trigger([block("any_espionage_asset", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_espionage_asset", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -605,7 +676,10 @@ export function anyEspionageAsset(
 export function anyEspionageOperation(
   condition: Trigger<"espionage_operation">
 ): Trigger<"country" | "no_scope" | "spy_network"> {
-  return trigger([block("any_espionage_operation", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_espionage_operation", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -615,7 +689,10 @@ export function anyEspionageOperation(
  * ```
  */
 export function anyExhibit(condition: Trigger<"exhibit">): Trigger<"country"> {
-  return trigger([block("any_exhibit", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_exhibit", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -626,7 +703,7 @@ export function anyExhibit(condition: Trigger<"exhibit">): Trigger<"country"> {
  */
 export function anyExistingSpeciesTraits(condition: Trigger<"species_trait">): Trigger<ScopeName> {
   return trigger(
-    [block("any_existing_species_traits", [...condition.entries])],
+    [scopeTransitionBlock("any_existing_species_traits", [...condition.entries], "push")],
     [...condition.refs]
   );
 }
@@ -638,7 +715,10 @@ export function anyExistingSpeciesTraits(condition: Trigger<"species_trait">): T
  * ```
  */
 export function anyFederation(condition: Trigger<"federation">): Trigger<ScopeName> {
-  return trigger([block("any_federation", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_federation", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -648,7 +728,10 @@ export function anyFederation(condition: Trigger<"federation">): Trigger<ScopeNa
  * ```
  */
 export function anyFederationAlly(condition: Trigger<"country">): Trigger<"country"> {
-  return trigger([block("any_federation_ally", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_federation_ally", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -658,7 +741,10 @@ export function anyFederationAlly(condition: Trigger<"country">): Trigger<"count
  * ```
  */
 export function anyFirstContact(condition: Trigger<"first_contact">): Trigger<"country"> {
-  return trigger([block("any_first_contact", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_first_contact", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -670,7 +756,10 @@ export function anyFirstContact(condition: Trigger<"first_contact">): Trigger<"c
 export function anyFleetInOrbit(
   condition: Trigger<"fleet">
 ): Trigger<"carrier" | "megastructure" | "planet" | "ship" | "starbase"> {
-  return trigger([block("any_fleet_in_orbit", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_fleet_in_orbit", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -680,7 +769,10 @@ export function anyFleetInOrbit(
  * ```
  */
 export function anyFleetInSystem(condition: Trigger<"fleet">): Trigger<"system"> {
-  return trigger([block("any_fleet_in_system", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_fleet_in_system", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -690,7 +782,10 @@ export function anyFleetInSystem(condition: Trigger<"fleet">): Trigger<"system">
  * ```
  */
 export function anyGalaxyFleet(condition: Trigger<"fleet">): Trigger<ScopeName> {
-  return trigger([block("any_galaxy_fleet", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_galaxy_fleet", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -700,7 +795,10 @@ export function anyGalaxyFleet(condition: Trigger<"fleet">): Trigger<ScopeName> 
  * ```
  */
 export function anyGalaxyPlanet(condition: Trigger<"planet">): Trigger<ScopeName> {
-  return trigger([block("any_galaxy_planet", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_galaxy_planet", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -710,7 +808,10 @@ export function anyGalaxyPlanet(condition: Trigger<"planet">): Trigger<ScopeName
  * ```
  */
 export function anyGalaxySector(condition: Trigger<"sector">): Trigger<ScopeName> {
-  return trigger([block("any_galaxy_sector", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_galaxy_sector", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -720,7 +821,10 @@ export function anyGalaxySector(condition: Trigger<"sector">): Trigger<ScopeName
  * ```
  */
 export function anyGalaxySpecies(condition: Trigger<"species">): Trigger<ScopeName> {
-  return trigger([block("any_galaxy_species", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_galaxy_species", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -730,7 +834,10 @@ export function anyGalaxySpecies(condition: Trigger<"species">): Trigger<ScopeNa
  * ```
  */
 export function anyGalcomMember(condition: Trigger<"country">): Trigger<ScopeName> {
-  return trigger([block("any_galcom_member", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_galcom_member", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -743,7 +850,7 @@ export function anyGroundCombatAttacker(
   condition: Trigger<"army">
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   return trigger(
-    [block("any_ground_combat_attacker", [...condition.entries])],
+    [scopeTransitionBlock("any_ground_combat_attacker", [...condition.entries], "push")],
     [...condition.refs]
   );
 }
@@ -758,7 +865,7 @@ export function anyGroundCombatDefender(
   condition: Trigger<"army">
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   return trigger(
-    [block("any_ground_combat_defender", [...condition.entries])],
+    [scopeTransitionBlock("any_ground_combat_defender", [...condition.entries], "push")],
     [...condition.refs]
   );
 }
@@ -770,7 +877,10 @@ export function anyGroundCombatDefender(
  * ```
  */
 export function anyIssuedMission(condition: Trigger<"mission">): Trigger<"country"> {
-  return trigger([block("any_issued_mission", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_issued_mission", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -780,7 +890,10 @@ export function anyIssuedMission(condition: Trigger<"mission">): Trigger<"countr
  * ```
  */
 export function anyJobPopGroup(condition: Trigger<"pop_group">): Trigger<"pop_job"> {
-  return trigger([block("any_job_pop_group", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_job_pop_group", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -790,7 +903,10 @@ export function anyJobPopGroup(condition: Trigger<"pop_group">): Trigger<"pop_jo
  * ```
  */
 export function anyMegastructure(condition: Trigger<"megastructure">): Trigger<ScopeName> {
-  return trigger([block("any_megastructure", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_megastructure", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -800,7 +916,10 @@ export function anyMegastructure(condition: Trigger<"megastructure">): Trigger<S
  * ```
  */
 export function anyMember(condition: Trigger<"country">): Trigger<"federation"> {
-  return trigger([block("any_member", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_member", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -812,7 +931,10 @@ export function anyMember(condition: Trigger<"country">): Trigger<"federation"> 
 export function anyMoon(
   condition: Trigger<"planet">
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("any_moon", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_moon", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -822,7 +944,10 @@ export function anyMoon(
  * ```
  */
 export function anyNeighborCountry(condition: Trigger<"country">): Trigger<"country"> {
-  return trigger([block("any_neighbor_country", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_neighbor_country", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -832,7 +957,10 @@ export function anyNeighborCountry(condition: Trigger<"country">): Trigger<"coun
  * ```
  */
 export function anyNeighborSystem(condition: Trigger<"system">): Trigger<"system"> {
-  return trigger([block("any_neighbor_system", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_neighbor_system", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -843,7 +971,7 @@ export function anyNeighborSystem(condition: Trigger<"system">): Trigger<"system
  */
 export function anyNeighborSystemEuclidean(condition: Trigger<"system">): Trigger<"system"> {
   return trigger(
-    [block("any_neighbor_system_euclidean", [...condition.entries])],
+    [scopeTransitionBlock("any_neighbor_system_euclidean", [...condition.entries], "push")],
     [...condition.refs]
   );
 }
@@ -858,7 +986,7 @@ export function anyObservedPreFtlWithinBorder(
   condition: Trigger<"country">
 ): Trigger<"country" | "sector"> {
   return trigger(
-    [block("any_observed_pre_ftl_within_border", [...condition.entries])],
+    [scopeTransitionBlock("any_observed_pre_ftl_within_border", [...condition.entries], "push")],
     [...condition.refs]
   );
 }
@@ -870,7 +998,10 @@ export function anyObservedPreFtlWithinBorder(
  * ```
  */
 export function anyOrbitalStation(condition: Trigger<"fleet">): Trigger<"country" | "system"> {
-  return trigger([block("any_orbital_station", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_orbital_station", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -880,7 +1011,10 @@ export function anyOrbitalStation(condition: Trigger<"fleet">): Trigger<"country
  * ```
  */
 export function anyOwnedArmy(condition: Trigger<"army">): Trigger<"country"> {
-  return trigger([block("any_owned_army", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_army", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -890,7 +1024,10 @@ export function anyOwnedArmy(condition: Trigger<"army">): Trigger<"country"> {
  * ```
  */
 export function anyOwnedColony(condition: Trigger<"colony">): Trigger<"country" | "sector"> {
-  return trigger([block("any_owned_colony", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_colony", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -900,7 +1037,10 @@ export function anyOwnedColony(condition: Trigger<"colony">): Trigger<"country" 
  * ```
  */
 export function anyOwnedContract(condition: Trigger<"mission">): Trigger<"country"> {
-  return trigger([block("any_owned_contract", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_contract", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -910,7 +1050,10 @@ export function anyOwnedContract(condition: Trigger<"mission">): Trigger<"countr
  * ```
  */
 export function anyOwnedDesign(condition: Trigger<"design">): Trigger<"country"> {
-  return trigger([block("any_owned_design", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_design", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -920,7 +1063,10 @@ export function anyOwnedDesign(condition: Trigger<"design">): Trigger<"country">
  * ```
  */
 export function anyOwnedFleet(condition: Trigger<"fleet">): Trigger<"country"> {
-  return trigger([block("any_owned_fleet", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_fleet", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -930,7 +1076,10 @@ export function anyOwnedFleet(condition: Trigger<"fleet">): Trigger<"country"> {
  * ```
  */
 export function anyOwnedLeader(condition: Trigger<"leader">): Trigger<"country"> {
-  return trigger([block("any_owned_leader", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_leader", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -940,7 +1089,10 @@ export function anyOwnedLeader(condition: Trigger<"leader">): Trigger<"country">
  * ```
  */
 export function anyOwnedMegastructure(condition: Trigger<"megastructure">): Trigger<"country"> {
-  return trigger([block("any_owned_megastructure", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_megastructure", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -950,7 +1102,10 @@ export function anyOwnedMegastructure(condition: Trigger<"megastructure">): Trig
  * ```
  */
 export function anyOwnedMission(condition: Trigger<"mission">): Trigger<"country"> {
-  return trigger([block("any_owned_mission", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_mission", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -961,7 +1116,7 @@ export function anyOwnedMission(condition: Trigger<"mission">): Trigger<"country
  */
 export function anyOwnedNonprimaryStarbase(condition: Trigger<"starbase">): Trigger<"country"> {
   return trigger(
-    [block("any_owned_nonprimary_starbase", [...condition.entries])],
+    [scopeTransitionBlock("any_owned_nonprimary_starbase", [...condition.entries], "push")],
     [...condition.refs]
   );
 }
@@ -973,7 +1128,10 @@ export function anyOwnedNonprimaryStarbase(condition: Trigger<"starbase">): Trig
  * ```
  */
 export function anyOwnedPlanet(condition: Trigger<"planet">): Trigger<"country" | "sector"> {
-  return trigger([block("any_owned_planet", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_planet", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -987,7 +1145,10 @@ export function anyOwnedPopGroup(
 ): Trigger<
   "carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship" | "system"
 > {
-  return trigger([block("any_owned_pop_group", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_pop_group", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -999,7 +1160,10 @@ export function anyOwnedPopGroup(
 export function anyOwnedPopJob(
   condition: Trigger<"pop_job">
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "sector" | "ship" | "system"> {
-  return trigger([block("any_owned_pop_job", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_pop_job", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1009,7 +1173,10 @@ export function anyOwnedPopJob(
  * ```
  */
 export function anyOwnedPopSpecies(condition: Trigger<"species">): Trigger<"country"> {
-  return trigger([block("any_owned_pop_species", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_pop_species", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1019,7 +1186,10 @@ export function anyOwnedPopSpecies(condition: Trigger<"species">): Trigger<"coun
  * ```
  */
 export function anyOwnedSector(condition: Trigger<"sector">): Trigger<"country"> {
-  return trigger([block("any_owned_sector", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_sector", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1029,7 +1199,10 @@ export function anyOwnedSector(condition: Trigger<"sector">): Trigger<"country">
  * ```
  */
 export function anyOwnedShip(condition: Trigger<"ship">): Trigger<"country" | "fleet"> {
-  return trigger([block("any_owned_ship", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_ship", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1041,7 +1214,10 @@ export function anyOwnedShip(condition: Trigger<"ship">): Trigger<"country" | "f
 export function anyOwnedSpecies(
   condition: Trigger<"species">
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
-  return trigger([block("any_owned_species", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_species", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1051,7 +1227,10 @@ export function anyOwnedSpecies(
  * ```
  */
 export function anyOwnedStarbase(condition: Trigger<"starbase">): Trigger<"country"> {
-  return trigger([block("any_owned_starbase", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_owned_starbase", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1064,7 +1243,7 @@ export function anyOwnedStormInfluenceField(
   condition: Trigger<"cosmic_storm_influence_field">
 ): Trigger<"country"> {
   return trigger(
-    [block("any_owned_storm_influence_field", [...condition.entries])],
+    [scopeTransitionBlock("any_owned_storm_influence_field", [...condition.entries], "push")],
     [...condition.refs]
   );
 }
@@ -1078,7 +1257,10 @@ export function anyOwnedStormInfluenceField(
 export function anyPlanetArmy(
   condition: Trigger<"army">
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("any_planet_army", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_planet_army", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1088,7 +1270,10 @@ export function anyPlanetArmy(
  * ```
  */
 export function anyPlanetWithinBorder(condition: Trigger<"planet">): Trigger<"country"> {
-  return trigger([block("any_planet_within_border", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_planet_within_border", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1098,7 +1283,10 @@ export function anyPlanetWithinBorder(condition: Trigger<"planet">): Trigger<"co
  * ```
  */
 export function anyPlayableCountry(condition: Trigger<"country">): Trigger<ScopeName> {
-  return trigger([block("any_playable_country", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_playable_country", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1108,7 +1296,10 @@ export function anyPlayableCountry(condition: Trigger<"country">): Trigger<Scope
  * ```
  */
 export function anyPoolLeader(condition: Trigger<"leader">): Trigger<"country"> {
-  return trigger([block("any_pool_leader", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_pool_leader", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1118,7 +1309,10 @@ export function anyPoolLeader(condition: Trigger<"leader">): Trigger<"country"> 
  * ```
  */
 export function anyPopFaction(condition: Trigger<"pop_faction">): Trigger<"country"> {
-  return trigger([block("any_pop_faction", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_pop_faction", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1130,7 +1324,10 @@ export function anyPopFaction(condition: Trigger<"pop_faction">): Trigger<"count
 export function anyPreFtlWithinBorder(
   condition: Trigger<"country">
 ): Trigger<"country" | "sector"> {
-  return trigger([block("any_pre_ftl_within_border", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_pre_ftl_within_border", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1140,7 +1337,10 @@ export function anyPreFtlWithinBorder(
  * ```
  */
 export function anyRelation(condition: Trigger<"country">): Trigger<"country"> {
-  return trigger([block("any_relation", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_relation", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1150,7 +1350,10 @@ export function anyRelation(condition: Trigger<"country">): Trigger<"country"> {
  * ```
  */
 export function anyRimSystem(condition: Trigger<"system">): Trigger<ScopeName> {
-  return trigger([block("any_rim_system", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_rim_system", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1160,7 +1363,10 @@ export function anyRimSystem(condition: Trigger<"system">): Trigger<ScopeName> {
  * ```
  */
 export function anyRivalCountry(condition: Trigger<"country">): Trigger<"country"> {
-  return trigger([block("any_rival_country", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_rival_country", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1170,7 +1376,10 @@ export function anyRivalCountry(condition: Trigger<"country">): Trigger<"country
  * ```
  */
 export function anyShipInSystem(condition: Trigger<"ship">): Trigger<"system"> {
-  return trigger([block("any_ship_in_system", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_ship_in_system", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1180,7 +1389,10 @@ export function anyShipInSystem(condition: Trigger<"ship">): Trigger<"system"> {
  * ```
  */
 export function anySituation(condition: Trigger<"situation">): Trigger<"country"> {
-  return trigger([block("any_situation", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_situation", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1190,7 +1402,10 @@ export function anySituation(condition: Trigger<"situation">): Trigger<"country"
  * ```
  */
 export function anySpeciesPopGroup(condition: Trigger<"pop_group">): Trigger<"species"> {
-  return trigger([block("any_species_pop_group", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_species_pop_group", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1200,7 +1415,10 @@ export function anySpeciesPopGroup(condition: Trigger<"pop_group">): Trigger<"sp
  * ```
  */
 export function anySpynetwork(condition: Trigger<"spy_network">): Trigger<"country" | "no_scope"> {
-  return trigger([block("any_spynetwork", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_spynetwork", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1210,7 +1428,10 @@ export function anySpynetwork(condition: Trigger<"spy_network">): Trigger<"count
  * ```
  */
 export function anyStarbaseInNetwork(condition: Trigger<"starbase">): Trigger<"starbase"> {
-  return trigger([block("any_starbase_in_network", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_starbase_in_network", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1220,7 +1441,10 @@ export function anyStarbaseInNetwork(condition: Trigger<"starbase">): Trigger<"s
  * ```
  */
 export function anyStarbaseInSystem(condition: Trigger<"starbase">): Trigger<"system"> {
-  return trigger([block("any_starbase_in_system", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_starbase_in_system", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1230,7 +1454,10 @@ export function anyStarbaseInSystem(condition: Trigger<"starbase">): Trigger<"sy
  * ```
  */
 export function anySubject(condition: Trigger<"country">): Trigger<"country"> {
-  return trigger([block("any_subject", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_subject", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1240,7 +1467,10 @@ export function anySubject(condition: Trigger<"country">): Trigger<"country"> {
  * ```
  */
 export function anySystem(condition: Trigger<"system">): Trigger<ScopeName> {
-  return trigger([block("any_system", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_system", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1250,7 +1480,10 @@ export function anySystem(condition: Trigger<"system">): Trigger<ScopeName> {
  * ```
  */
 export function anySystemAddedToStorm(condition: Trigger<"system">): Trigger<"storm"> {
-  return trigger([block("any_system_added_to_storm", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_system_added_to_storm", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1260,7 +1493,10 @@ export function anySystemAddedToStorm(condition: Trigger<"system">): Trigger<"st
  * ```
  */
 export function anySystemAmbientObject(condition: Trigger<"ambient_object">): Trigger<"system"> {
-  return trigger([block("any_system_ambient_object", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_system_ambient_object", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1273,7 +1509,13 @@ export function anySystemInCosmicStormInfluenceField(
   condition: Trigger<"system">
 ): Trigger<"cosmic_storm_influence_field"> {
   return trigger(
-    [block("any_system_in_cosmic_storm_influence_field", [...condition.entries])],
+    [
+      scopeTransitionBlock(
+        "any_system_in_cosmic_storm_influence_field",
+        [...condition.entries],
+        "push"
+      ),
+    ],
     [...condition.refs]
   );
 }
@@ -1285,7 +1527,10 @@ export function anySystemInCosmicStormInfluenceField(
  * ```
  */
 export function anySystemMegastructure(condition: Trigger<"megastructure">): Trigger<"system"> {
-  return trigger([block("any_system_megastructure", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_system_megastructure", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1295,7 +1540,10 @@ export function anySystemMegastructure(condition: Trigger<"megastructure">): Tri
  * ```
  */
 export function anySystemPlanet(condition: Trigger<"planet">): Trigger<"system"> {
-  return trigger([block("any_system_planet", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_system_planet", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1305,7 +1553,10 @@ export function anySystemPlanet(condition: Trigger<"planet">): Trigger<"system">
  * ```
  */
 export function anySystemPlanetColony(condition: Trigger<"colony">): Trigger<"system"> {
-  return trigger([block("any_system_planet_colony", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_system_planet_colony", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1316,7 +1567,7 @@ export function anySystemPlanetColony(condition: Trigger<"colony">): Trigger<"sy
  */
 export function anySystemRemovedFromStorm(condition: Trigger<"system">): Trigger<"storm"> {
   return trigger(
-    [block("any_system_removed_from_storm", [...condition.entries])],
+    [scopeTransitionBlock("any_system_removed_from_storm", [...condition.entries], "push")],
     [...condition.refs]
   );
 }
@@ -1328,7 +1579,10 @@ export function anySystemRemovedFromStorm(condition: Trigger<"system">): Trigger
  * ```
  */
 export function anySystemShipColony(condition: Trigger<"colony">): Trigger<"system"> {
-  return trigger([block("any_system_ship_colony", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_system_ship_colony", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1338,7 +1592,10 @@ export function anySystemShipColony(condition: Trigger<"colony">): Trigger<"syst
  * ```
  */
 export function anySystemWithAura(condition: Trigger<"system">): Trigger<"country"> {
-  return trigger([block("any_system_with_aura", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_system_with_aura", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1348,7 +1605,10 @@ export function anySystemWithAura(condition: Trigger<"system">): Trigger<"countr
  * ```
  */
 export function anySystemWithinBorder(condition: Trigger<"system">): Trigger<"country" | "sector"> {
-  return trigger([block("any_system_within_border", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_system_within_border", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1358,7 +1618,10 @@ export function anySystemWithinBorder(condition: Trigger<"system">): Trigger<"co
  * ```
  */
 export function anySystemWithinStorm(condition: Trigger<"system">): Trigger<"storm"> {
-  return trigger([block("any_system_within_storm", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_system_within_storm", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1370,7 +1633,10 @@ export function anySystemWithinStorm(condition: Trigger<"system">): Trigger<"sto
 export function anyTargetingSituation(
   condition: Trigger<"situation">
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("any_targeting_situation", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_targeting_situation", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1384,7 +1650,7 @@ export function anyTraitAvailableForSpecies(
   condition: Trigger<"species_trait">
 ): Trigger<"leader" | "pop_group" | "species"> {
   return trigger(
-    [block("any_trait_available_for_species", [...condition.entries])],
+    [scopeTransitionBlock("any_trait_available_for_species", [...condition.entries], "push")],
     [...condition.refs]
   );
 }
@@ -1399,7 +1665,10 @@ export function anyTraitAvailableForSpecies(
 export function anyTraitOfSpecies(
   condition: Trigger<"species_trait">
 ): Trigger<"leader" | "pop_group" | "species"> {
-  return trigger([block("any_trait_of_species", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_trait_of_species", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1409,7 +1678,10 @@ export function anyTraitOfSpecies(
  * ```
  */
 export function anyWar(condition: Trigger<"war">): Trigger<"country"> {
-  return trigger([block("any_war", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_war", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1419,7 +1691,10 @@ export function anyWar(condition: Trigger<"war">): Trigger<"country"> {
  * ```
  */
 export function anyWarParticipant(condition: Trigger<"country">): Trigger<"war"> {
-  return trigger([block("any_war_participant", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("any_war_participant", [...condition.entries], "push")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1586,7 +1861,7 @@ export function calcTrueIf<S extends ScopeName = ScopeName>(args: CalcTrueIfArgs
       ? cmp("amount", args.amount[0], scriptValueScalar(args.amount[1]))
       : kv("amount", scriptValueScalar(args.amount))
   );
-  entries.push(...args.conditions.entries);
+  entries.push(...args.conditions.entries.map((entry) => scopeTransitionEntry(entry, "same")));
   refs.push(...args.conditions.refs);
   return trigger([block("calc_true_if", entries)], refs);
 }
@@ -2522,10 +2797,10 @@ export function closestSystem(args: ClosestSystemArgs): Trigger<ScopeName> {
     entries.push(kv("use_bypasses", args.useBypasses));
   }
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
-  entries.push(...args.conditions.entries);
+  entries.push(...args.conditions.entries.map((entry) => scopeTransitionEntry(entry, "push")));
   refs.push(...args.conditions.refs);
   return trigger([block("closest_system", entries)], refs);
 }
@@ -2676,9 +2951,9 @@ export function conditionalTooltip<S extends ScopeName = ScopeName>(
 ): Trigger<S> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
-  entries.push(block("trigger", [...args.trigger.entries]));
+  entries.push(scopeTransitionBlock("trigger", [...args.trigger.entries], "same"));
   refs.push(...args.trigger.refs);
-  entries.push(...args.conditions.entries);
+  entries.push(...args.conditions.entries.map((entry) => scopeTransitionEntry(entry, "same")));
   refs.push(...args.conditions.refs);
   return trigger([block("conditional_tooltip", entries)], refs);
 }
@@ -2762,7 +3037,7 @@ export function countActiveFirstContact(args: CountActiveFirstContactArgs): Trig
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -2792,7 +3067,7 @@ export function countAgreement(args: CountAgreementArgs): Trigger<"country" | "n
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -2822,7 +3097,7 @@ export function countAmbientObject(args: CountAmbientObjectArgs): Trigger<ScopeN
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -2852,7 +3127,7 @@ export function countArchaeologicalSite(args: CountArchaeologicalSiteArgs): Trig
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -2882,7 +3157,7 @@ export function countAssociate(args: CountAssociateArgs): Trigger<"federation"> 
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -2912,7 +3187,7 @@ export function countAstralRift(args: CountAstralRiftArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -2942,7 +3217,7 @@ export function countAttacker(args: CountAttackerArgs): Trigger<"war"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -2982,7 +3257,7 @@ export function countAvailableDebris(args: CountAvailableDebrisArgs): Trigger<"c
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3012,7 +3287,7 @@ export function countBypass(args: CountBypassArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3042,7 +3317,7 @@ export function countBypassInSystem(args: CountBypassInSystemArgs): Trigger<"sys
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3072,7 +3347,7 @@ export function countCombatantFleet(args: CountCombatantFleetArgs): Trigger<"fle
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3113,7 +3388,7 @@ export function countControlledColony(args: CountControlledColonyArgs): Trigger<
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3143,7 +3418,7 @@ export function countControlledFleet(args: CountControlledFleetArgs): Trigger<"c
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3173,7 +3448,7 @@ export function countControlledPlanet(args: CountControlledPlanetArgs): Trigger<
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3203,7 +3478,7 @@ export function countControlledShip(args: CountControlledShipArgs): Trigger<"cou
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3233,7 +3508,7 @@ export function countCosmicStorm(args: CountCosmicStormArgs): Trigger<ScopeName>
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3265,7 +3540,7 @@ export function countCosmicStormEndPosition(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3297,7 +3572,7 @@ export function countCosmicStormStartPosition(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3327,7 +3602,7 @@ export function countCouncilMember(args: CountCouncilMemberArgs): Trigger<ScopeN
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3357,7 +3632,7 @@ export function countCountry(args: CountCountryArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3389,7 +3664,7 @@ export function countCountryNeighborToSystem(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3419,7 +3694,7 @@ export function countDefender(args: CountDefenderArgs): Trigger<"war"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3451,7 +3726,7 @@ export function countDeposit(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3530,7 +3805,7 @@ export function countEnslavedSpecies(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3560,7 +3835,7 @@ export function countEnvoy(args: CountEnvoyArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3592,7 +3867,7 @@ export function countEspionageAsset(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3624,7 +3899,7 @@ export function countEspionageOperation(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3653,7 +3928,7 @@ export function countExactSpecies(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3683,7 +3958,7 @@ export function countExhibit(args: CountExhibitArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3715,7 +3990,7 @@ export function countExistingSpeciesTraits(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3745,7 +4020,7 @@ export function countFederation(args: CountFederationArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3775,7 +4050,7 @@ export function countFederationAlly(args: CountFederationAllyArgs): Trigger<"cou
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3805,7 +4080,7 @@ export function countFirstContact(args: CountFirstContactArgs): Trigger<"country
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3837,7 +4112,7 @@ export function countFleetInOrbit(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3867,7 +4142,7 @@ export function countFleetInSystem(args: CountFleetInSystemArgs): Trigger<"syste
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3897,7 +4172,7 @@ export function countGalaxyFleet(args: CountGalaxyFleetArgs): Trigger<ScopeName>
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3927,7 +4202,7 @@ export function countGalaxyPlanet(args: CountGalaxyPlanetArgs): Trigger<ScopeNam
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3957,7 +4232,7 @@ export function countGalaxySector(args: CountGalaxySectorArgs): Trigger<ScopeNam
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -3987,7 +4262,7 @@ export function countGalaxySpecies(args: CountGalaxySpeciesArgs): Trigger<ScopeN
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4017,7 +4292,7 @@ export function countGalcomMember(args: CountGalcomMemberArgs): Trigger<ScopeNam
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4049,7 +4324,7 @@ export function countGroundCombatAttacker(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4081,7 +4356,7 @@ export function countGroundCombatDefender(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4121,7 +4396,7 @@ export function countIssuedMission(args: CountIssuedMissionArgs): Trigger<"count
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4151,7 +4426,7 @@ export function countJobPopGroup(args: CountJobPopGroupArgs): Trigger<"pop_job">
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4181,7 +4456,7 @@ export function countMegastructure(args: CountMegastructureArgs): Trigger<ScopeN
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4211,7 +4486,7 @@ export function countMember(args: CountMemberArgs): Trigger<"federation"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4241,7 +4516,7 @@ export function countMoon(args: CountMoonArgs): Trigger<"carrier" | "colony" | "
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4271,7 +4546,7 @@ export function countNeighborCountry(args: CountNeighborCountryArgs): Trigger<"c
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4301,7 +4576,7 @@ export function countNeighborSystem(args: CountNeighborSystemArgs): Trigger<"sys
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4333,7 +4608,7 @@ export function countNeighborSystemEuclidean(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4365,7 +4640,7 @@ export function countObservedPreFtlWithinBorder(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4395,7 +4670,7 @@ export function countOrbitalStation(args: CountOrbitalStationArgs): Trigger<"cou
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4425,7 +4700,7 @@ export function countOwnedArmy(args: CountOwnedArmyArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4455,7 +4730,7 @@ export function countOwnedColony(args: CountOwnedColonyArgs): Trigger<"country" 
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4485,7 +4760,7 @@ export function countOwnedContract(args: CountOwnedContractArgs): Trigger<"count
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4515,7 +4790,7 @@ export function countOwnedDesign(args: CountOwnedDesignArgs): Trigger<"country">
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4545,7 +4820,7 @@ export function countOwnedFleet(args: CountOwnedFleetArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4575,7 +4850,7 @@ export function countOwnedLeader(args: CountOwnedLeaderArgs): Trigger<"country">
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4605,7 +4880,7 @@ export function countOwnedMegastructure(args: CountOwnedMegastructureArgs): Trig
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4635,7 +4910,7 @@ export function countOwnedMission(args: CountOwnedMissionArgs): Trigger<"country
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4667,7 +4942,7 @@ export function countOwnedNonprimaryStarbase(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4697,7 +4972,7 @@ export function countOwnedPlanet(args: CountOwnedPlanetArgs): Trigger<"country" 
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4731,7 +5006,7 @@ export function countOwnedPopAmount(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4765,7 +5040,7 @@ export function countOwnedPopGroup(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4797,7 +5072,7 @@ export function countOwnedPopJob(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4827,7 +5102,7 @@ export function countOwnedPopSpecies(args: CountOwnedPopSpeciesArgs): Trigger<"c
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4857,7 +5132,7 @@ export function countOwnedSector(args: CountOwnedSectorArgs): Trigger<"country">
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4887,7 +5162,7 @@ export function countOwnedShip(args: CountOwnedShipArgs): Trigger<"country" | "f
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4919,7 +5194,7 @@ export function countOwnedSpecies(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4949,7 +5224,7 @@ export function countOwnedStarbase(args: CountOwnedStarbaseArgs): Trigger<"count
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -4981,7 +5256,7 @@ export function countOwnedStormInfluenceField(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5013,7 +5288,7 @@ export function countOwnedWorkforce(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5045,7 +5320,7 @@ export function countPlanetArmy(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5075,7 +5350,7 @@ export function countPlanetWithinBorder(args: CountPlanetWithinBorderArgs): Trig
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5105,7 +5380,7 @@ export function countPlayableCountry(args: CountPlayableCountryArgs): Trigger<Sc
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5135,7 +5410,7 @@ export function countPoolLeader(args: CountPoolLeaderArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5165,7 +5440,7 @@ export function countPopFaction(args: CountPopFactionArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5197,7 +5472,7 @@ export function countPotentialWarParticipants(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(kv("attacker", scopeValueScalar(args.attacker)));
@@ -5232,7 +5507,7 @@ export function countPreFtlWithinBorder(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5262,7 +5537,7 @@ export function countRelation(args: CountRelationArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5292,7 +5567,7 @@ export function countRimSystem(args: CountRimSystemArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5322,7 +5597,7 @@ export function countRivalCountry(args: CountRivalCountryArgs): Trigger<"country
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5352,7 +5627,7 @@ export function countShipInSystem(args: CountShipInSystemArgs): Trigger<"system"
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5383,7 +5658,7 @@ export function countShipSizeInSystem(args: CountShipSizeInSystemArgs): Trigger<
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5413,7 +5688,7 @@ export function countSituation(args: CountSituationArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5442,7 +5717,7 @@ export function countSpecies(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5472,7 +5747,7 @@ export function countSpeciesPopGroup(args: CountSpeciesPopGroupArgs): Trigger<"s
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5501,7 +5776,7 @@ export function countSpeciesTraits(args: CountSpeciesTraitsArgs): Trigger<"pop_g
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   if (args.category !== undefined) {
@@ -5541,7 +5816,7 @@ export function countSpynetwork(args: CountSpynetworkArgs): Trigger<"country" | 
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5605,7 +5880,7 @@ export function countStarbaseInNetwork(args: CountStarbaseInNetworkArgs): Trigge
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5635,7 +5910,7 @@ export function countStarbaseInSystem(args: CountStarbaseInSystemArgs): Trigger<
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5732,7 +6007,7 @@ export function countSubject(args: CountSubjectArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5762,7 +6037,7 @@ export function countSystem(args: CountSystemArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5792,7 +6067,7 @@ export function countSystemAddedToStorm(args: CountSystemAddedToStormArgs): Trig
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5822,7 +6097,7 @@ export function countSystemAmbientObject(args: CountSystemAmbientObjectArgs): Tr
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5854,7 +6129,7 @@ export function countSystemInCosmicStormInfluenceField(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5884,7 +6159,7 @@ export function countSystemMegastructure(args: CountSystemMegastructureArgs): Tr
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5914,7 +6189,7 @@ export function countSystemPlanet(args: CountSystemPlanetArgs): Trigger<"system"
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5944,7 +6219,7 @@ export function countSystemPlanetColony(args: CountSystemPlanetColonyArgs): Trig
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -5976,7 +6251,7 @@ export function countSystemRemovedFromStorm(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -6006,7 +6281,7 @@ export function countSystemShipColony(args: CountSystemShipColonyArgs): Trigger<
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -6036,7 +6311,7 @@ export function countSystemWithAura(args: CountSystemWithAuraArgs): Trigger<"cou
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -6068,7 +6343,7 @@ export function countSystemWithinBorder(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -6098,7 +6373,7 @@ export function countSystemWithinStorm(args: CountSystemWithinStormArgs): Trigge
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -6140,7 +6415,7 @@ export function countTargetingSituation(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -6196,7 +6471,7 @@ export function countTraitAvailableForSpecies(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -6229,7 +6504,7 @@ export function countTraitOfSpecies(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -6268,7 +6543,7 @@ export function countUsedNavalCap(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -6308,7 +6583,7 @@ export function countWar(args: CountWarArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -6338,7 +6613,7 @@ export function countWarParticipant(args: CountWarParticipantArgs): Trigger<"war
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -6366,7 +6641,7 @@ export function countWarParticipants(args: CountWarParticipantsArgs): Trigger<"w
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(kv("side", scopeValueScalar(args.side)));
@@ -6434,7 +6709,7 @@ export function customProgress<S extends ScopeName = ScopeName>(
   if (args.mode !== undefined) {
     entries.push(kv("mode", args.mode));
   }
-  entries.push(...args.conditions.entries);
+  entries.push(...args.conditions.entries.map((entry) => scopeTransitionEntry(entry, "same")));
   refs.push(...args.conditions.refs);
   return trigger([block("custom_progress", entries)], refs);
 }
@@ -6488,7 +6763,7 @@ export function customTooltip<S extends ScopeName>(
       );
       recordLocalization(refs, args.successText, "custom_tooltip.success_text");
     }
-    entries.push(...args.conditions.entries);
+    entries.push(...args.conditions.entries.map((entry) => scopeTransitionEntry(entry, "same")));
     refs.push(...args.conditions.refs);
     return trigger([block("custom_tooltip", entries)], refs);
   }
@@ -6521,7 +6796,7 @@ export function customTooltipFail<S extends ScopeName = ScopeName>(
   const refs: RecordedRefUse[] = [];
   entries.push(kv("text", localizationScalar(args.text, "custom_tooltip_fail.text")));
   recordLocalization(refs, args.text, "custom_tooltip_fail.text");
-  entries.push(...args.conditions.entries);
+  entries.push(...args.conditions.entries.map((entry) => scopeTransitionEntry(entry, "same")));
   refs.push(...args.conditions.refs);
   return trigger([block("custom_tooltip_fail", entries)], refs);
 }
@@ -6550,7 +6825,7 @@ export function customTooltipSuccess<S extends ScopeName = ScopeName>(
   const refs: RecordedRefUse[] = [];
   entries.push(kv("text", localizationScalar(args.text, "custom_tooltip_success.text")));
   recordLocalization(refs, args.text, "custom_tooltip_success.text");
-  entries.push(...args.conditions.entries);
+  entries.push(...args.conditions.entries.map((entry) => scopeTransitionEntry(entry, "same")));
   refs.push(...args.conditions.refs);
   return trigger([block("custom_tooltip_success", entries)], refs);
 }
@@ -6849,10 +7124,10 @@ export function else_<S extends ScopeName = ScopeName>(args: ElseArgs<S>): Trigg
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "same"));
     refs.push(...args.limit.refs);
   }
-  entries.push(...args.conditions.entries);
+  entries.push(...args.conditions.entries.map((entry) => scopeTransitionEntry(entry, "same")));
   refs.push(...args.conditions.refs);
   return trigger([block("else", entries)], refs);
 }
@@ -6874,9 +7149,9 @@ export interface ElseIfArgs<S extends ScopeName = ScopeName> {
 export function elseIf<S extends ScopeName = ScopeName>(args: ElseIfArgs<S>): Trigger<S> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
-  entries.push(block("limit", [...args.limit.entries]));
+  entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "same"));
   refs.push(...args.limit.refs);
-  entries.push(...args.conditions.entries);
+  entries.push(...args.conditions.entries.map((entry) => scopeTransitionEntry(entry, "same")));
   refs.push(...args.conditions.refs);
   return trigger([block("else_if", entries)], refs);
 }
@@ -7067,7 +7342,7 @@ export function failText<S extends ScopeName>(
     const refs: RecordedRefUse[] = [];
     entries.push(kv("text", localizationScalar(args.text, "fail_text.text")));
     recordLocalization(refs, args.text, "fail_text.text");
-    entries.push(...args.conditions.entries);
+    entries.push(...args.conditions.entries.map((entry) => scopeTransitionEntry(entry, "same")));
     refs.push(...args.conditions.refs);
     return trigger([block("fail_text", entries)], refs);
   }
@@ -11591,7 +11866,10 @@ export function hasWaystationPact(value: ScopeValue<"country">): Trigger<"countr
  * ```
  */
 export function hiddenProgress<S extends ScopeName>(condition: Trigger<S>): Trigger<S> {
-  return trigger([block("hidden_progress", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("hidden_progress", [...condition.entries], "same")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -11678,9 +11956,9 @@ export interface IfArgs<S extends ScopeName = ScopeName> {
 export function if_<S extends ScopeName = ScopeName>(args: IfArgs<S>): Trigger<S> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
-  entries.push(block("limit", [...args.limit.entries]));
+  entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "same"));
   refs.push(...args.limit.refs);
-  entries.push(...args.conditions.entries);
+  entries.push(...args.conditions.entries.map((entry) => scopeTransitionEntry(entry, "same")));
   refs.push(...args.conditions.refs);
   return trigger([block("if", entries)], refs);
 }
@@ -11842,10 +12120,10 @@ export function invertedSwitch<S extends ScopeName = ScopeName>(
     "trigger",
     "default",
   ])) {
-    entries.push(block(key1, [...condition1.entries]));
+    entries.push(scopeTransitionBlock(key1, [...condition1.entries], "same"));
     refs.push(...condition1.refs);
   }
-  entries.push(block("default", [...args.default.entries]));
+  entries.push(scopeTransitionBlock("default", [...args.default.entries], "same"));
   refs.push(...args.default.refs);
   return trigger([block("inverted_switch", entries)], refs);
 }
@@ -17097,7 +17375,7 @@ export function numNeighborSystems(args: NumNeighborSystemsArgs): Trigger<ScopeN
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   if (args.minDistance !== undefined) {
@@ -17879,7 +18157,7 @@ export function planetHappinessAboveThreshold(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   entries.push(
@@ -17981,10 +18259,10 @@ export function popAmountPercentage(
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship"> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
-  entries.push(block("limit", [...args.limit.entries]));
+  entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
   refs.push(...args.limit.refs);
   if (args.exclude !== undefined) {
-    entries.push(block("exclude", [...args.exclude.entries]));
+    entries.push(scopeTransitionBlock("exclude", [...args.exclude.entries], "push"));
     refs.push(...args.exclude.refs);
   }
   entries.push(
@@ -18545,7 +18823,10 @@ export function shipSizeMultiplier(
  * ```
  */
 export function simpleProgress<S extends ScopeName>(condition: Trigger<S>): Trigger<S> {
-  return trigger([block("simple_progress", [...condition.entries])], [...condition.refs]);
+  return trigger(
+    [scopeTransitionBlock("simple_progress", [...condition.entries], "same")],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -18801,7 +19082,7 @@ export function successText<S extends ScopeName>(
     entries.push(kv("text", localizationScalar(args.text, "success_text.text")));
     recordLocalization(refs, args.text, "success_text.text");
     if (args.conditions !== undefined) {
-      entries.push(...args.conditions.entries);
+      entries.push(...args.conditions.entries.map((entry) => scopeTransitionEntry(entry, "same")));
       refs.push(...args.conditions.refs);
     }
     return trigger([block("success_text", entries)], refs);
@@ -18852,11 +19133,11 @@ export function switch_<S extends ScopeName = ScopeName>(args: SwitchArgs<S>): T
     "trigger",
     "default",
   ])) {
-    entries.push(block(key1, [...condition1.entries]));
+    entries.push(scopeTransitionBlock(key1, [...condition1.entries], "same"));
     refs.push(...condition1.refs);
   }
   if (args.default !== undefined) {
-    entries.push(block("default", [...args.default.entries]));
+    entries.push(scopeTransitionBlock("default", [...args.default.entries], "same"));
     refs.push(...args.default.refs);
   }
   return trigger([block("switch", entries)], refs);
@@ -19125,7 +19406,7 @@ export function totalSystemWorkforceWithJobTag(
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
-    entries.push(block("limit", [...args.limit.entries]));
+    entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
     refs.push(...args.limit.refs);
   }
   const items1: PdxItem[] = [];

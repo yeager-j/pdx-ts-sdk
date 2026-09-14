@@ -47,8 +47,8 @@ export interface LoweredRuleBlock {
     /** Identifies the declaration as the block variant of `RuleType`. */
     readonly kind: "block";
   };
-  /** The raw scope inherited by fields without their own scope annotation. */
-  readonly inheritedScope: string | null;
+  /** The scope and identity transition inherited by fields without their own annotation. */
+  readonly inheritedScope: ClauseScope;
   /** All fields that are not unkeyed alias splices. */
   readonly named: readonly RuleField[];
   /** Unkeyed alias-splice fields. */
@@ -141,7 +141,6 @@ export function lowerRule(
       scalars.push(declaration);
       continue;
     }
-    const inheritedScope = declaration.scope?.this ?? null;
     const inheritedClause = clauseScopeContext(declaration.scope);
     const named: RuleField[] = [];
     const splices: RuleField[] = [];
@@ -170,7 +169,13 @@ export function lowerRule(
         clauseCandidates.set(name, candidates);
       }
     }
-    blocks.push({ declaration, type: declaration.type, inheritedScope, named, splices });
+    blocks.push({
+      declaration,
+      type: declaration.type,
+      inheritedScope: inheritedClause,
+      named,
+      splices,
+    });
   }
 
   const conflicts: LoweredRuleConflict[] = [];
