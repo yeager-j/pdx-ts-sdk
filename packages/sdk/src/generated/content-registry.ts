@@ -36,6 +36,7 @@
 // From: common/event_chains.cwt
 // From: common/special_projects.cwt
 // From: common/specimens.cwt
+// From: common/storm_types.cwt
 // From: common/megastructures.cwt
 // From: interface/sprites.cwt
 // From: gfx/model_entities.cwt
@@ -104,6 +105,7 @@ import { SPECIMEN_FIELDS, SPECIMEN_LOCALISATION } from "./specimen.ts";
 import { SPRITE_TYPE_FIELDS, SPRITE_TYPE_LOCALISATION } from "./sprite-type.ts";
 import { STARBASE_LEVEL_FIELDS, STARBASE_LEVEL_LOCALISATION } from "./starbase-level.ts";
 import { STATIC_MODIFIER_FIELDS, STATIC_MODIFIER_LOCALISATION } from "./static-modifier.ts";
+import { STORM_TYPE_FIELDS, STORM_TYPE_LOCALISATION } from "./storm-type.ts";
 import {
   STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS,
   STRIKE_CRAFT_COMPONENT_TEMPLATE_LOCALISATION,
@@ -561,6 +563,15 @@ export const CONTENT_REGISTRIES = [
     fileExtension: ".txt",
     fields: SPECIMEN_FIELDS,
     localisation: SPECIMEN_LOCALISATION,
+  },
+  {
+    type: "storm_type",
+    referenceName: "storm_types",
+    outputDir: "common/storm_types",
+    fileStem: "storm_types",
+    fileExtension: ".txt",
+    fields: STORM_TYPE_FIELDS,
+    localisation: STORM_TYPE_LOCALISATION,
   },
   {
     type: "megastructure",

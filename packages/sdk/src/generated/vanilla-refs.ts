@@ -36,6 +36,7 @@
 // From: common/event_chains.cwt
 // From: common/special_projects.cwt
 // From: common/specimens.cwt
+// From: common/storm_types.cwt
 // From: common/megastructures.cwt
 // From: interface/sprites.cwt
 // From: gfx/model_entities.cwt
@@ -104,6 +105,7 @@ import type {
   StarbaseLevelRef,
   StarClassRef,
   StaticModifierRef,
+  StormTypesRef,
   TechnologyRef,
   TraditionCategoryRef,
   TraditionRef,
@@ -672,6 +674,18 @@ export function specimen<const Id extends VanillaId<"specimen">>(
   id: Id
 ): SpecimenRef & { readonly id: Id } {
   return makeVanillaRef(id) as SpecimenRef & { readonly id: Id };
+}
+
+/**
+ * A checked reference to a vanilla storm type id.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
+ */
+export function stormType<const Id extends VanillaId<"storm_type">>(
+  id: Id
+): StormTypesRef & { readonly id: Id } {
+  return makeVanillaRef(id) as StormTypesRef & { readonly id: Id };
 }
 
 /**

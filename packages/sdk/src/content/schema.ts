@@ -111,7 +111,7 @@ export interface ContentValueField extends ContentFieldBase, ContentRefTypes {
 
 interface ContentValueListField extends ContentFieldBase, ContentRefTypes {
   readonly shape: "valueList";
-  readonly conversion: "identity" | "ref";
+  readonly conversion: "identity" | "ref" | "assetPath";
   readonly quoted?: boolean;
   /**
    * The rules type this list's elements as localisation keys — CWT's

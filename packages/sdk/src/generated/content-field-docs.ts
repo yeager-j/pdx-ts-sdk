@@ -36,6 +36,7 @@
 // From: common/event_chains.cwt
 // From: common/special_projects.cwt
 // From: common/specimens.cwt
+// From: common/storm_types.cwt
 // From: common/megastructures.cwt
 // From: interface/sprites.cwt
 // From: gfx/model_entities.cwt
@@ -235,6 +236,7 @@ import {
 } from "./sprite-type.ts";
 import { STARBASE_LEVEL_FIELDS, STARBASE_LEVEL_PICTURE_FIELDS } from "./starbase-level.ts";
 import { STATIC_MODIFIER_FIELDS } from "./static-modifier.ts";
+import { STORM_TYPE_FIELDS } from "./storm-type.ts";
 import {
   STRIKE_CRAFT_COMPONENT_TEMPLATE_CUSTOM_TOOLTIP_FIELDS,
   STRIKE_CRAFT_COMPONENT_TEMPLATE_DAMAGE_FIELDS,
@@ -5743,6 +5745,111 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     },
   ],
   [
+    STORM_TYPE_FIELDS,
+    {
+      stormMinRadius: { optional: false, docs: [], memberType: "WeightBlock<never>" },
+      stormMaxRadius: { optional: false, docs: [], memberType: "WeightBlock<never>" },
+      stormMinSteps: { optional: false, docs: [], memberType: "WeightBlock<never>" },
+      stormMaxSteps: { optional: false, docs: [], memberType: "WeightBlock<never>" },
+      stormSpeed: { optional: false, docs: [], memberType: "WeightBlock<never>" },
+      stormActivationPeriodInMonths: {
+        optional: false,
+        docs: [],
+        memberType: "WeightBlock<never>",
+      },
+      stormMonthlyAddedDevastation: { optional: false, docs: [], memberType: "WeightBlock<never>" },
+      affectHpRegen: { optional: true, docs: [], memberType: "boolean" },
+      affectArmorRegen: { optional: true, docs: [], memberType: "boolean" },
+      affectShieldRegen: { optional: true, docs: [], memberType: "boolean" },
+      occludeSystem: { optional: true, docs: [], memberType: "boolean" },
+      spawnWeight: { optional: false, docs: [], memberType: "number | WeightBlock<never>" },
+      description: {
+        optional: true,
+        docs: [
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
+        ],
+        memberType: "LocalizationInput",
+      },
+      customTooltip: {
+        optional: true,
+        docs: [
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
+        ],
+        memberType: "LocalizationInput",
+      },
+      triggeredFleetModifier: {
+        optional: true,
+        docs: [],
+        memberType: 'TriggeredModifier<"fleet">[]',
+      },
+      triggeredPlanetModifier: {
+        optional: true,
+        docs: [],
+        memberType: 'TriggeredModifier<"planet">[]',
+      },
+      triggeredShipModifier: {
+        optional: true,
+        docs: [],
+        memberType: 'TriggeredModifier<"ship">[]',
+      },
+      triggeredSystemModifier: {
+        optional: true,
+        docs: [],
+        memberType: 'TriggeredModifier<"system", "leader">[]',
+      },
+      onStart: {
+        optional: true,
+        docs: [],
+        memberType: 'EffectBlock<"storm", { readonly root: "storm" }>',
+      },
+      onMoved: {
+        optional: true,
+        docs: [],
+        memberType: 'EffectBlock<"storm", { readonly root: "storm" }>',
+      },
+      onFinished: {
+        optional: true,
+        docs: [],
+        memberType: 'EffectBlock<"storm", { readonly root: "storm" }>',
+      },
+      cosmicStormTexturePath: {
+        optional: false,
+        docs: [
+          "A path from the mod root. An Asset file placed in a Feature lowers to its declared",
+          "logical path; a plain string is written as it stands and checked at build time against",
+          "the paths this mod captures and the vanilla file inventory, as a warning rather than an",
+          "error — a DLC or third-party path is legitimate here.",
+        ],
+        memberType: "AssetFileItem | string",
+      },
+      cosmicStormTextureColorPath: {
+        optional: false,
+        docs: [
+          "A path from the mod root. An Asset file placed in a Feature lowers to its declared",
+          "logical path; a plain string is written as it stands and checked at build time against",
+          "the paths this mod captures and the vanilla file inventory, as a warning rather than an",
+          "error — a DLC or third-party path is legitimate here.",
+        ],
+        memberType: "AssetFileItem | string",
+      },
+      cosmicStormEventSprite: { optional: false, docs: [], memberType: "SpriteRef | string" },
+      icon: { optional: false, docs: [], memberType: "SpriteRef | string" },
+      cosmicStormTextureLightningPaths: {
+        optional: true,
+        docs: [
+          "Paths from the mod root. Asset files placed in a Feature lower to their declared",
+          "logical paths; plain strings are written as they stand and checked at build time",
+          "against the paths this mod captures and the vanilla file inventory, as warnings rather",
+          "than errors — DLC or third-party paths are legitimate here.",
+        ],
+        memberType: "(AssetFileItem | string)[]",
+      },
+      cosmicStormGalaxyLightningTime: { optional: true, docs: [], memberType: "number" },
+      cosmicStormGalaxyMaxOpacity: { optional: true, docs: [], memberType: "number" },
+      showNotification: { optional: true, docs: [], memberType: 'Trigger<"country">' },
+    },
+  ],
+  [
     MEGASTRUCTURE_FIELDS,
     {
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
@@ -7153,6 +7260,13 @@ export const CONTENT_FIELD_OMISSIONS: Readonly<
   event_chain: [],
   special_project: [],
   specimen: [],
+  storm_type: [
+    {
+      path: "storm_type.localisation.description",
+      kind: "collapsed",
+      reason: "(description) has no `$` id placeholder — not a static <id>-keyed slot, excluded",
+    },
+  ],
   megastructure: [],
   spriteType: [],
   pdxmesh: [],

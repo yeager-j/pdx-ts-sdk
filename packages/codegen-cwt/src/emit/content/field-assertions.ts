@@ -8,6 +8,7 @@
  */
 
 import type { RuleField, RuleType } from "../../cwt/model.ts";
+import { bareValuesOf } from "../../lower/rule-shapes.ts";
 import { ASSET_PATH_FIELDS, type ContentFieldOverride } from "../../overlay/index.ts";
 import type { Emitter } from "../typescript.ts";
 import { arrayType, metadata, repeatsSiblings } from "./field-metadata.ts";
@@ -79,9 +80,10 @@ export function assertedUncheckedString(
 }
 
 /**
- * Widens an asserted asset-path scalar to accept a captured asset item or a
- * string, and marks its runtime conversion as `assetPath`. It rejects non-path,
- * non-scalar, or separately widened fields before changing the projection.
+ * Widens an asserted asset path to accept a captured asset item or a string,
+ * and marks its runtime conversion as `assetPath`. It accepts one filepath or
+ * a brace list containing only filepaths, and rejects every other shape before
+ * changing the projection.
  */
 export function assertedAssetPath(
   emitter: Emitter,
@@ -96,30 +98,40 @@ export function assertedAssetPath(
   }
   emitter.overlayAudit.applied("ASSET_PATH_FIELDS", path);
   const spelled = group.map((field) => field.type.kind).join(", ");
-  if (
-    projected === null ||
-    projected.admits.shape !== "value" ||
-    widening !== undefined ||
-    !group.every((field) => field.type.kind === "filepath")
-  ) {
+  const shape = projected?.admits.shape;
+  const isScalarPath = shape === "value" && group.every((field) => field.type.kind === "filepath");
+  const isPathList =
+    shape === "valueList" &&
+    group.every((field) => bareValuesOf(field.type)?.every((type) => type.kind === "filepath"));
+  if (projected === null || widening !== undefined || (!isScalarPath && !isPathList)) {
     throw new Error(
       `The overlay marks ${path} an asset path, but it does not lower as one (shape: ` +
         `${projected?.admits.shape ?? "none"}, declarations: ${spelled}, widening: ` +
-        `${widening ?? "none"}). The row asserts the value is one mod-root path scalar.`
+        `${widening ?? "none"}). The row asserts the value is a mod-root path or path list.`
     );
   }
   const base = `${emitter.use("AssetFileItem")} | string`;
   const field = group[0]!;
+  const assetShape = isPathList ? "valueList" : "value";
+  const docs =
+    assetShape === "valueList"
+      ? [
+          "Paths from the mod root. Asset files placed in a Feature lower to their declared",
+          "logical paths; plain strings are written as they stand and checked at build time",
+          "against the paths this mod captures and the vanilla file inventory, as warnings rather",
+          "than errors — DLC or third-party paths are legitimate here.",
+        ]
+      : [
+          "A path from the mod root. An Asset file placed in a Feature lowers to its declared",
+          "logical path; a plain string is written as it stands and checked at build time against",
+          "the paths this mod captures and the vanilla file inventory, as a warning rather than an",
+          "error — a DLC or third-party path is legitimate here.",
+        ];
   return {
     ...projected,
-    memberType: repeatsSiblings(field, "value") ? arrayType(base) : base,
-    metadata: metadata(field, name, "value", ['conversion: "assetPath"']),
-    docs: [
-      ...(projected.docs ?? []),
-      "A path from the mod root. An Asset file placed in a Feature lowers to its declared",
-      "logical path; a plain string is written as it stands and checked at build time against",
-      "the paths this mod captures and the vanilla file inventory, as a warning rather than an",
-      "error — a DLC or third-party path is legitimate here.",
-    ],
+    memberType:
+      assetShape === "valueList" || repeatsSiblings(field, "value") ? arrayType(base) : base,
+    metadata: metadata(field, name, assetShape, ['conversion: "assetPath"']),
+    docs: [...(projected.docs ?? []), ...docs],
   };
 }

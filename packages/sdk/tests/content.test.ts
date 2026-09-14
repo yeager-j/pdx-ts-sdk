@@ -33,12 +33,15 @@ import {
   hasPlanetFlag,
   hasShipFlag,
   hasSituationFlag,
+  hasStormFlag,
   hasTechnology,
   isBottleneckSystem,
   isCapital,
   isScopeValid,
   isSiteLocked,
+  isStormType,
   scriptedTriggerModifier,
+  stormFlags,
   type Modifier,
   type ScopeName,
   type SpriteRef,
@@ -1366,6 +1369,120 @@ describe("ascension perk category authoring", () => {
       files.get("common/ascension_perk_categories/category_test_archive_paths.txt")
     ).toMatchFileSnapshot(
       "__snapshots__/content/common__ascension_perk_categories__category_test_archive_paths.txt"
+    );
+  });
+});
+
+function defineStormTypeExample(): PureMod {
+  const mod = createMod({
+    name: "Toxic Restoration Storm",
+    prefix: "storm_test",
+    supportedVersion: "4.4.*",
+  });
+  const flags = stormFlags("storm_test_toxic_restoration");
+  const stormPicture = mod.spriteType("toxic_storm_event", {
+    textureFile: "gfx/event_pictures/celestial_storm.dds",
+  });
+  const stormIcon = mod.spriteType("toxic_storm_icon", {
+    textureFile: "gfx/interface/icons/modifiers/mod_ship_sublight_speed.dds",
+  });
+  const toxicStorm = mod.stormType("toxic_restoration", {
+    name: "Toxic Restoration Storm",
+    desc: "A corrosive storm bound to the poisoned world.",
+    colorTooltip: "The storm ends when restoration is complete.",
+    description: "Toxic clouds churn around the restoration site.",
+    customTooltip: "This storm cannot move while the world remains poisoned.",
+    stormMinRadius: { base: 15 },
+    stormMaxRadius: { base: 30 },
+    stormMinSteps: { base: 2 },
+    stormMaxSteps: { base: 5 },
+    stormSpeed: { base: 0.6 },
+    stormActivationPeriodInMonths: { base: 12 },
+    stormMonthlyAddedDevastation: { base: 1 },
+    affectHpRegen: true,
+    affectArmorRegen: true,
+    affectShieldRegen: true,
+    occludeSystem: true,
+    spawnWeight: { base: 0 },
+    triggeredFleetModifier: [
+      { when: always(), modifiers: (m) => m.unchecked("ship_speed_mult", -0.25) },
+    ],
+    triggeredPlanetModifier: [
+      { when: always(), modifiers: (m) => m.planet.storm.devastation.mult(0.5) },
+    ],
+    triggeredShipModifier: [
+      { when: always(), modifiers: (m) => m.unchecked("ship_shield_regen_add", -0.5) },
+    ],
+    triggeredSystemModifier: [
+      { when: always(), modifiers: (m) => m.system.storm.influence.add(1) },
+    ],
+    onStart: (storm) => storm.setStormFlag(flags.storm_test_toxic_restoration),
+    onMoved: (storm) => storm.log("storm_test_toxic_restoration_moved"),
+    onFinished: (storm) => storm.log("storm_test_toxic_restoration_finished"),
+    cosmicStormTexturePath: "gfx/map/storms/NebulaOpacity.dds",
+    cosmicStormTextureColorPath: "gfx/map/storms/celestial_storm_color.dds",
+    cosmicStormTextureLightningPaths: [
+      "gfx/map/storms/lightning/lightning_big_storm_01.dds",
+      "gfx/map/storms/lightning/lightning_small_storm_01.dds",
+    ],
+    cosmicStormGalaxyLightningTime: 5,
+    cosmicStormGalaxyMaxOpacity: 0.5,
+    cosmicStormEventSprite: stormPicture,
+    icon: stormIcon,
+    showNotification: hasCountryFlag("storm_test_knows_toxic_world"),
+  });
+  const events = mod.namespace("restoration");
+  const spawnStationaryStorm = events.country(1, {
+    hideWindow: true,
+    isTriggeredOnly: true,
+    immediate: (country) => {
+      country.createCosmicStorm({
+        type: toxicStorm,
+        cosmicStormStartPosition: "random",
+        immediate: true,
+      });
+      country.lastCreatedCosmicStorm.effects((storm) => {
+        storm.setStormFlag(flags.storm_test_toxic_restoration);
+        storm.lockStormInPlace();
+      });
+    },
+  });
+  const endStationaryStorm = events.country(2, {
+    hideWindow: true,
+    isTriggeredOnly: true,
+    immediate: (country) =>
+      country.everyCosmicStorm(
+        {
+          limit: and(isStormType(toxicStorm), hasStormFlag(flags.storm_test_toxic_restoration)),
+        },
+        (storm) => storm.destroyCosmicStorm()
+      ),
+  });
+
+  return mod.compile([
+    mod.feature("toxic_restoration", [stormPicture, stormIcon, toxicStorm]),
+    mod.feature("restoration_events", [spawnStationaryStorm, endStationaryStorm]),
+  ]);
+}
+
+describe("storm type authoring and lifecycle", () => {
+  const files = render(defineStormTypeExample());
+
+  it("writes the custom type and the two-event stationary lifecycle example", async () => {
+    expect([...files.keys()]).toEqual([
+      "common/storm_types/storm_test_toxic_restoration.txt",
+      "descriptor.mod",
+      "events/storm_test_restoration_events.txt",
+      "interface/storm_test_toxic_restoration.gfx",
+      "localisation/english/storm_test_toxic_restoration_l_english.yml",
+    ]);
+    await expect(
+      files.get("common/storm_types/storm_test_toxic_restoration.txt")
+    ).toMatchFileSnapshot(
+      "__snapshots__/storm-type/common__storm_types__storm_test_toxic_restoration.txt"
+    );
+    await expect(files.get("events/storm_test_restoration_events.txt")).toMatchFileSnapshot(
+      "__snapshots__/storm-type/events__storm_test_restoration_events.txt"
     );
   });
 });

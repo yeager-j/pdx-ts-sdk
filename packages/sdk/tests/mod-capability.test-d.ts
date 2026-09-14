@@ -66,6 +66,7 @@ const profile = {
   eventChain: "event_chain",
   specialProject: "special_project",
   specimen: "specimen",
+  stormType: "storm_type",
   megastructure: "megastructure",
   // No GFX registries: `spriteType`, `pdxmesh` and `pdxparticle` mint
   // segmentless names (SDK-121), so they are not `IdProfile` members and a

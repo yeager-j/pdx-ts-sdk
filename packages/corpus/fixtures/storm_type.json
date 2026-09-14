@@ -1,0 +1,665 @@
+{
+  "registry": "storm_type",
+  "definitions": 8,
+  "files": 1,
+  "fingerprint": "f3ac9b6011a7bdda421a0d55a1bd656ed6c9bbf9e9852f38caf2f93b69c87892",
+  "fields": {
+    "affect_armor_regen": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "affect_hp_regen": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "affect_shield_regen": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "cosmic_storm_event_sprite": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "GFX_celestial_storm",
+        "GFX_electric_storm",
+        "GFX_gravity_storm",
+        "GFX_magnetic_storm",
+        "GFX_nexus_storm",
+        "GFX_particle_storm",
+        "GFX_shroud_storm",
+        "GFX_solar_storm"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "cosmic_storm_galaxy_lightning_time": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "10",
+        "5",
+        "7"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "cosmic_storm_galaxy_max_opacity": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "0.4",
+        "0.5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "cosmic_storm_texture_color_path": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "gfx/map/storms/celestial_storm_color.dds",
+        "gfx/map/storms/electric_storm_color.dds",
+        "gfx/map/storms/gravity_storm_color.dds",
+        "gfx/map/storms/magnetic_storm_color.dds",
+        "gfx/map/storms/nexus_storm_color.dds",
+        "gfx/map/storms/particle_storm_color.dds",
+        "gfx/map/storms/shroud_storm_color.dds",
+        "gfx/map/storms/solar_storm_color.dds"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "cosmic_storm_texture_lightning_paths": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 8,
+      "bareValues": 8,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "gfx/map/storms/lightning/lightning_big_storm_01.dds",
+        "gfx/map/storms/lightning/lightning_big_storm_02.dds",
+        "gfx/map/storms/lightning/lightning_mid_storm_01.dds",
+        "gfx/map/storms/lightning/lightning_mid_storm_02.dds",
+        "gfx/map/storms/lightning/lightning_small_storm_01.dds",
+        "gfx/map/storms/lightning/lightning_small_storm_02.dds"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "cosmic_storm_texture_path": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "gfx/map/storms/NebulaOpacity.dds"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "custom_tooltip": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "celestial_storm_tt",
+        "solar_storm_tt"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "description": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "celestial_storm_lore_description",
+        "electric_storm_lore_description",
+        "gravity_storm_lore_description",
+        "magnetic_storm_lore_description",
+        "nexus_storm_lore_description",
+        "particle_storm_lore_description",
+        "shroud_storm_lore_description",
+        "solar_storm_lore_description"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "GFX_planetview_storm_celestial_modifier_frame",
+        "GFX_planetview_storm_electric_modifier_frame",
+        "GFX_planetview_storm_gravity_modifier_frame",
+        "GFX_planetview_storm_magnetic_modifier_frame",
+        "GFX_planetview_storm_nexus_modifier_frame",
+        "GFX_planetview_storm_particle_modifier_frame",
+        "GFX_planetview_storm_shroud_modifier_frame",
+        "GFX_planetview_storm_solar_modifier_frame"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "inline_script": {
+      "definitions": 8,
+      "repeated": 7,
+      "scalars": 7,
+      "blocks": 8,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "cosmic_storms/BaseModifier"
+      ],
+      "keys": [
+        "ACTIVATION_PERIOD_IN_MONTHS",
+        "MAX_RADIUS",
+        "MAX_RANGE",
+        "MIN_RADIUS",
+        "MIN_RANGE",
+        "MONTHLY_ADDED_DEVASTATION",
+        "STORM_SPEED",
+        "script"
+      ],
+      "keysByDefinition": [
+        [
+          "ACTIVATION_PERIOD_IN_MONTHS",
+          "MAX_RADIUS",
+          "MAX_RANGE",
+          "MIN_RADIUS",
+          "MIN_RANGE",
+          "MONTHLY_ADDED_DEVASTATION",
+          "STORM_SPEED",
+          "script"
+        ]
+      ]
+    },
+    "occlude_system": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "on_finished": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 8,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "every_system_within_storm"
+      ],
+      "keysByDefinition": [
+        [
+          "every_system_within_storm"
+        ]
+      ]
+    },
+    "on_moved": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 8,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "every_system_added_to_storm",
+        "every_system_removed_from_storm"
+      ],
+      "keysByDefinition": [
+        [
+          "every_system_added_to_storm",
+          "every_system_removed_from_storm"
+        ]
+      ]
+    },
+    "on_start": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 8,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "every_system_within_storm"
+      ],
+      "keysByDefinition": [
+        [
+          "every_system_within_storm"
+        ]
+      ]
+    },
+    "show_notification": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
+        ]
+      ]
+    },
+    "spawn_weight": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 6,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [
+        "base",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "base",
+          "modifier"
+        ]
+      ]
+    },
+    "spawn_weight.modifier": {
+      "definitions": 2,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "any_country",
+        "from?",
+        "mid_game_years_passed"
+      ],
+      "keysByDefinition": [
+        [
+          "any_country",
+          "from?"
+        ],
+        [
+          "mid_game_years_passed"
+        ]
+      ]
+    },
+    "triggered_fleet_modifier": {
+      "definitions": 6,
+      "repeated": 2,
+      "scalars": 0,
+      "blocks": 6,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "custom_tooltip",
+        "modifier",
+        "nexus_storm_modifier",
+        "potential",
+        "show_only_custom_tooltip"
+      ],
+      "keysByDefinition": [
+        [
+          "custom_tooltip",
+          "nexus_storm_modifier",
+          "potential",
+          "show_only_custom_tooltip"
+        ],
+        [
+          "modifier",
+          "potential"
+        ]
+      ]
+    },
+    "triggered_fleet_modifier.potential": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 6,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "always",
+        "owner?"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "always",
+          "owner?"
+        ]
+      ]
+    },
+    "triggered_planet_modifier": {
+      "definitions": 5,
+      "repeated": 4,
+      "scalars": 0,
+      "blocks": 5,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "custom_tooltip",
+        "modifier",
+        "mult",
+        "planet_building_build_speed_mult",
+        "planet_bureaucrats_upkeep_mult",
+        "planet_enforcers_upkeep_mult",
+        "planet_entertainers_upkeep_mult",
+        "planet_farmers_consumer_goods_upkeep_add",
+        "planet_farmers_energy_upkeep_add",
+        "planet_jobs_produces_mult",
+        "planet_miners_consumer_goods_upkeep_add",
+        "planet_miners_energy_upkeep_add",
+        "planet_stability_mult",
+        "planet_technician_consumer_goods_upkeep_add",
+        "planet_technician_energy_upkeep_add",
+        "potential"
+      ],
+      "keysByDefinition": [
+        [
+          "custom_tooltip",
+          "modifier",
+          "mult",
+          "planet_farmers_consumer_goods_upkeep_add",
+          "planet_farmers_energy_upkeep_add",
+          "planet_miners_consumer_goods_upkeep_add",
+          "planet_miners_energy_upkeep_add",
+          "planet_technician_consumer_goods_upkeep_add",
+          "planet_technician_energy_upkeep_add",
+          "potential"
+        ],
+        [
+          "modifier",
+          "mult",
+          "planet_building_build_speed_mult",
+          "potential"
+        ],
+        [
+          "modifier",
+          "mult",
+          "planet_bureaucrats_upkeep_mult",
+          "planet_enforcers_upkeep_mult",
+          "planet_entertainers_upkeep_mult",
+          "potential"
+        ],
+        [
+          "modifier",
+          "mult",
+          "planet_stability_mult",
+          "potential"
+        ],
+        [
+          "planet_jobs_produces_mult",
+          "potential"
+        ]
+      ]
+    },
+    "triggered_planet_modifier.potential": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 5,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOR",
+        "OR",
+        "exists",
+        "is_colony",
+        "owner",
+        "system_has_negating_storm_building"
+      ],
+      "keysByDefinition": [
+        [
+          "NOR",
+          "OR",
+          "exists",
+          "is_colony",
+          "owner",
+          "system_has_negating_storm_building"
+        ],
+        [
+          "OR",
+          "exists",
+          "owner",
+          "system_has_negating_storm_building"
+        ],
+        [
+          "OR",
+          "is_colony",
+          "system_has_negating_storm_building"
+        ],
+        [
+          "is_colony"
+        ],
+        [
+          "is_colony",
+          "system_has_negating_storm_building"
+        ]
+      ]
+    },
+    "triggered_ship_modifier": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "custom_tooltip",
+        "mult",
+        "potential",
+        "ship_weapon_damage"
+      ],
+      "keysByDefinition": [
+        [
+          "custom_tooltip",
+          "mult",
+          "potential",
+          "ship_weapon_damage"
+        ]
+      ]
+    },
+    "triggered_ship_modifier.potential": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "exists"
+      ],
+      "keysByDefinition": [
+        [
+          "OR",
+          "exists"
+        ]
+      ]
+    },
+    "triggered_system_modifier": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "modifier",
+        "potential",
+        "station_gatherers_produces_mult",
+        "station_researchers_produces_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "modifier",
+          "potential"
+        ],
+        [
+          "potential",
+          "station_gatherers_produces_mult",
+          "station_researchers_produces_mult"
+        ]
+      ]
+    },
+    "triggered_system_modifier.potential": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "always",
+        "system_has_negating_storm_building"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "system_has_negating_storm_building"
+        ]
+      ]
+    }
+  }
+}

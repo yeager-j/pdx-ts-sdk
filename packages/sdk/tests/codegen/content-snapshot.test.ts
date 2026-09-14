@@ -1715,6 +1715,32 @@ describe("content-type codegen", () => {
     expect(specimen?.unsupported).toEqual([]);
   });
 
+  it("lowers storm types with scoped lifecycle blocks and Asset-backed map textures", () => {
+    const stormType = emissions.get("storm_type");
+
+    expect(stormType?.code).toContain("export interface StormTypeFields");
+    expect(stormType?.code).toContain("  name: LocalizedText;");
+    expect(stormType?.code).toContain("stormMinRadius: WeightBlock<never>;");
+    expect(stormType?.code).toContain("spawnWeight: number | WeightBlock<never>;");
+    expect(stormType?.code).toContain('triggeredFleetModifier?: TriggeredModifier<"fleet">[];');
+    expect(stormType?.code).toContain(
+      'triggeredSystemModifier?: TriggeredModifier<"system", "leader">[];'
+    );
+    expect(stormType?.code).toContain(
+      'onStart?: EffectBlock<"storm", { readonly root: "storm" }>;'
+    );
+    expect(stormType?.code).toContain('showNotification?: Trigger<"country">;');
+    expect(stormType?.code).toContain("cosmicStormTexturePath: AssetFileItem | string;");
+    expect(stormType?.code).toContain(
+      "cosmicStormTextureLightningPaths?: (AssetFileItem | string)[];"
+    );
+    expect(stormType?.code).toContain(
+      '{ key: "cosmic_storm_texture_lightning_paths", member: "cosmicStormTextureLightningPaths", ' +
+        'shape: "valueList", form: "list", conversion: "assetPath" }'
+    );
+    expect(stormType?.unsupported).toEqual([]);
+  });
+
   it("lowers megastructure's economic, modifier, and mixed trigger-struct fields", () => {
     const megastructure = emissions.get("megastructure");
     expect(megastructure?.code).toContain("export type MegastructureDef<");

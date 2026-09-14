@@ -36,6 +36,7 @@
 // From: common/event_chains.cwt
 // From: common/special_projects.cwt
 // From: common/specimens.cwt
+// From: common/storm_types.cwt
 // From: common/megastructures.cwt
 // From: interface/sprites.cwt
 // From: gfx/model_entities.cwt
@@ -124,6 +125,7 @@ import {
   defineSpriteType,
   defineStarbaseLevel,
   defineStaticModifier,
+  defineStormType,
   defineStrikeCraftComponentTemplate,
   defineTechnology,
   defineTradition,
@@ -189,6 +191,7 @@ import type {
   StaticModifierFields,
   StaticModifierScope,
 } from "./static-modifier.ts";
+import type { StormTypeDef } from "./storm-type.ts";
 import type { StrikeCraftComponentTemplateDef } from "./strike-craft-component-template.ts";
 import type {
   TechnologyDef,
@@ -501,6 +504,11 @@ export interface IdProfile {
    */
   readonly specimen: string;
   /**
+   * The segment inserted between the mod prefix and a storm type's logical name.
+   * Override it when this registry needs a different id convention.
+   */
+  readonly stormType: string;
+  /**
    * The segment inserted between the mod prefix and a megastructure's logical name.
    * Override it when this registry needs a different id convention.
    */
@@ -556,6 +564,7 @@ export const DEFAULT_ID_PROFILE = Object.freeze({
   eventChain: "event_chain",
   specialProject: "special_project",
   specimen: "specimen",
+  stormType: "storm_type",
   megastructure: "megastructure",
 }) satisfies IdProfile;
 
@@ -1863,6 +1872,24 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
   specimenHandle<const Name extends string>(
     name: Name
   ): ContentHandle<"specimen", SpecimenDef<MintedContentId<P, I, "specimen", Name>>>;
+  /**
+   * Defines a storm type from its logical name.
+   * The capability mints and owns the full id; the returned branded reference
+   * flows into matching content-reference fields.
+   */
+  stormType<const Name extends string>(
+    name: Name,
+    def: Omit<StormTypeDef<MintedContentId<P, I, "stormType", Name>>, "id">
+  ): ContentItem<"storm_type", StormTypeDef<MintedContentId<P, I, "stormType", Name>>>;
+  /**
+   * Mints a storm type id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a storm type that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  stormTypeHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"storm_type", StormTypeDef<MintedContentId<P, I, "stormType", Name>>>;
   /**
    * Defines a megastructure from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -3190,6 +3217,29 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
           return defineSpecimen(def);
         }
       ).define(def as unknown as Omit<SpecimenDef<MintedContentId<P, I, "specimen", Name>>, "id">);
+    },
+    stormTypeHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "storm_type",
+        mint("stormType", name),
+        (def: StormTypeDef<MintedContentId<P, I, "stormType", Name>>) => {
+          return defineStormType(def);
+        }
+      );
+    },
+    stormType: <const Name extends string>(
+      name: Name,
+      def: Omit<StormTypeDef<MintedContentId<P, I, "stormType", Name>>, "id">
+    ) => {
+      return createContentHandle(
+        "storm_type",
+        mint("stormType", name),
+        (def: StormTypeDef<MintedContentId<P, I, "stormType", Name>>) => {
+          return defineStormType(def);
+        }
+      ).define(
+        def as unknown as Omit<StormTypeDef<MintedContentId<P, I, "stormType", Name>>, "id">
+      );
     },
     megastructureHandle: <const Name extends string>(name: Name) => {
       return createContentHandle(
