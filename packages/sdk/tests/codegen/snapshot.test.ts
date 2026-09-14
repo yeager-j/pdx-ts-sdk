@@ -72,9 +72,18 @@ describe("emitted trigger signatures", () => {
   it("scope change: takes the condition, typed to the pushed scope", () => {
     expect(declaration("anyCountry")).toMatchInlineSnapshot(`
       "export function anyCountry(condition: Trigger<"country">): Trigger<ScopeName> {
-        return trigger([block("any_country", [...condition.entries])], [...condition.refs]);
+        return trigger(
+          [scopeTransitionBlock("any_country", [...condition.entries], "push")],
+          [...condition.refs]
+        );
       }"
     `);
+  });
+
+  it("scope-preserving wrappers retain their neutral transition", () => {
+    expect(declaration("hiddenProgress")).toContain(
+      'scopeTransitionBlock("hidden_progress", [...condition.entries], "same")'
+    );
   });
 
   it("clause + comparison fields: a nested trigger hole and an operator-or-literal count", () => {
@@ -93,7 +102,7 @@ describe("emitted trigger signatures", () => {
         const entries: PdxEntry[] = [];
         const refs: RecordedRefUse[] = [];
         if (args.limit !== undefined) {
-          entries.push(block("limit", [...args.limit.entries]));
+          entries.push(scopeTransitionBlock("limit", [...args.limit.entries], "push"));
           refs.push(...args.limit.refs);
         }
         entries.push(
@@ -123,7 +132,7 @@ describe("emitted trigger signatures", () => {
             ? cmp("amount", args.amount[0], scriptValueScalar(args.amount[1]))
             : kv("amount", scriptValueScalar(args.amount))
         );
-        entries.push(...args.conditions.entries);
+        entries.push(...args.conditions.entries.map((entry) => scopeTransitionEntry(entry, "same")));
         refs.push(...args.conditions.refs);
         return trigger([block("calc_true_if", entries)], refs);
       }"
@@ -255,7 +264,7 @@ describe("emitted trigger signatures", () => {
             );
             recordLocalization(refs, args.successText, "custom_tooltip.success_text");
           }
-          entries.push(...args.conditions.entries);
+          entries.push(...args.conditions.entries.map((entry) => scopeTransitionEntry(entry, "same")));
           refs.push(...args.conditions.refs);
           return trigger([block("custom_tooltip", entries)], refs);
         }

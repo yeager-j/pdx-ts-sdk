@@ -1,10 +1,47 @@
-import { varRef, type PdxEntry, type PdxScalar } from "@pdx-ts/pdxscript";
+import { block, varRef, type PdxEntry, type PdxScalar } from "@pdx-ts/pdxscript";
 
 import type { ScopeName } from "../generated/scopes.ts";
 import type { RecordedRefUse } from "../references.ts";
 
 declare const scopeBrand: unique symbol;
 declare const scriptValueBrand: unique symbol;
+const nestedScopeTransition = Symbol("nestedScopeTransition");
+
+/** How entering a nested trigger block changes the current game object. */
+export type TriggerScopeTransition = "same" | "push" | "replace" | "unknown";
+
+type ScopeTransitionEntry = PdxEntry & {
+  readonly [nestedScopeTransition]?: readonly TriggerScopeTransition[];
+};
+
+/** SDK-internal annotation for an existing entry consumed under a scope transition. */
+export function scopeTransitionEntry(
+  entry: PdxEntry,
+  transition: TriggerScopeTransition
+): PdxEntry {
+  const innerTransitions = (entry as ScopeTransitionEntry)[nestedScopeTransition] ?? [];
+  return {
+    ...entry,
+    [nestedScopeTransition]: [transition, ...innerTransitions],
+  } as ScopeTransitionEntry;
+}
+
+/**
+ * SDK-internal block constructor that retains a nested trigger's scope transition.
+ * Deferred scope values use this evidence when the trigger is consumed later.
+ */
+export function scopeTransitionBlock(
+  key: string,
+  entries: readonly PdxEntry[],
+  transition: TriggerScopeTransition
+): PdxEntry {
+  return scopeTransitionEntry(block(key, entries), transition);
+}
+
+/** SDK-internal accessor for ordered scope-transition evidence on a trigger entry. */
+export function scopeTransitionsOf(entry: PdxEntry): readonly TriggerScopeTransition[] {
+  return (entry as ScopeTransitionEntry)[nestedScopeTransition] ?? [];
+}
 
 /**
  * A numeric expression the game evaluates rather than a literal this build

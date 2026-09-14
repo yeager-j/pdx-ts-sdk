@@ -257,7 +257,8 @@ function keyedClausesCode(
     `${value.cardinality.min}, ${JSON.stringify(value.reservedKeys)})`;
   return (
     `for (const [${caseKey}, ${condition}] of ${checked}) {\n` +
-    `${sink}.push(${emitter.use("block")}(${caseKey}, [...${condition}.entries]));\n` +
+    `${sink}.push(${emitter.use("scopeTransitionBlock")}(${caseKey}, ` +
+    `[...${condition}.entries], ${JSON.stringify(value.transition)}));\n` +
     `refs.push(...${condition}.refs);\n}`
   );
 }
@@ -337,8 +338,10 @@ function pushValueCode(
     case "clause":
       return (
         (field.value.splice
-          ? `${sink}.push(...${access}.entries);\n`
-          : `${sink}.push(block(${key}, [...${access}.entries]));\n`) +
+          ? `${sink}.push(...${access}.entries.map((entry) => ` +
+            `${emitter.use("scopeTransitionEntry")}(entry, ${JSON.stringify(field.value.transition)})));\n`
+          : `${sink}.push(${emitter.use("scopeTransitionBlock")}(${key}, ` +
+            `[...${access}.entries], ${JSON.stringify(field.value.transition)}));\n`) +
         `    refs.push(...${access}.refs);`
       );
     case "keyedClauses":

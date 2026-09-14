@@ -24,15 +24,23 @@ import {
 import type { StaticModifierHostContract } from "../src/script/effects/static-modifiers.ts";
 import type { IfChain, ScopeRef, ScopeValue, ScriptCtx } from "../src/script/effects/types.ts";
 import { isEffectBlockValue, mapEntries } from "../src/script/scalar.ts";
+import { scopeTransitionBlock } from "../src/script/trigger-core.ts";
 import {
+  and,
+  anyCountry,
+  calcTrueIf,
+  countCountry,
   exists,
   hasCountryFlag,
   hasOwner,
   hasPlanetFlag,
+  hasRelationFlag,
   hasStarFlag,
   isAtWar,
   isPlanetClass,
+  not,
   owner,
+  trigger,
 } from "../src/script/triggers.ts";
 import { external, literalText, vanilla } from "../src/stellaris.ts";
 
@@ -1006,6 +1014,186 @@ tooltip = {
 	}
 }
 `);
+  });
+
+  it("rebases a captured reference inside a scope-changing trigger", () => {
+    const sink = recordEffects<"country">([], (hunter) => {
+      hunter.if(not(anyCountry(hasRelationFlag({ who: hunter.ref, flag: "probe" }))), () =>
+        hunter.log("missing")
+      );
+    });
+
+    expect(serialize(sink)).toBe(`if = {
+	limit = {
+		NOT = {
+			any_country = {
+				has_relation_flag = {
+					who = prev
+					flag = probe
+				}
+			}
+		}
+	}
+	log = missing
+}
+`);
+  });
+
+  it("composes trigger scope transitions inside an effect iterator limit", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      country.everyOwnedPlanet(
+        {
+          limit: owner(hasRelationFlag({ who: country.ref, flag: "probe" })),
+        },
+        () => undefined
+      );
+    });
+
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	limit = {
+		owner = {
+			has_relation_flag = {
+				who = prevprev
+				flag = probe
+			}
+		}
+	}
+}
+`);
+  });
+
+  it("rebases through a scope-changing clause in a structured trigger", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      country.if(
+        countCountry({
+          limit: hasRelationFlag({ who: country.ref, flag: "probe" }),
+          count: 1,
+        }),
+        () => undefined
+      );
+    });
+
+    expect(serialize(sink)).toBe(`if = {
+	limit = {
+		count_country = {
+			limit = {
+				has_relation_flag = {
+					who = prev
+					flag = probe
+				}
+			}
+			count = 1
+		}
+	}
+}
+`);
+  });
+
+  it("preserves inner transitions when a trigger is spliced through a neutral wrapper", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      const relation = hasRelationFlag({ who: country.ref, flag: "probe" });
+      country.if(calcTrueIf({ amount: 1, conditions: anyCountry(relation) }), () => undefined);
+    });
+
+    expect(serialize(sink)).toBe(`if = {
+	limit = {
+		calc_true_if = {
+			amount = 1
+			any_country = {
+				has_relation_flag = {
+					who = prev
+					flag = probe
+				}
+			}
+		}
+	}
+}
+`);
+  });
+
+  it("keeps explicit ambient and event-target references absolute", () => {
+    const ally = eventTarget<"country">("ally");
+    const sink = withScriptCtx<
+      "country",
+      { readonly root: "country"; readonly from: "country" },
+      PdxEntry[]
+    >({}, (ctx) =>
+      recordEffects<"country">([], (country) => {
+        country.if(
+          anyCountry(
+            and(
+              hasRelationFlag({ who: ctx.root, flag: "root_probe" }),
+              hasRelationFlag({ who: ctx.from, flag: "from_probe" }),
+              hasRelationFlag({ who: ally, flag: "target_probe" })
+            )
+          ),
+          () => undefined
+        );
+      })
+    );
+
+    expect(serialize(sink)).toBe(`if = {
+	limit = {
+		any_country = {
+			has_relation_flag = {
+				who = root
+				flag = root_probe
+			}
+			has_relation_flag = {
+				who = from
+				flag = from_probe
+			}
+			has_relation_flag = {
+				who = event_target:ally
+				flag = target_probe
+			}
+		}
+	}
+}
+`);
+  });
+
+  it("resolves multiple trigger transitions and reuse from each consuming context", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      const relation = hasRelationFlag({ who: country.ref, flag: "probe" });
+      country.if(relation, () => undefined);
+      country.if(anyCountry(owner(relation)), () => undefined);
+    });
+
+    expect(serialize(sink)).toBe(`if = {
+	limit = {
+		has_relation_flag = {
+			who = this
+			flag = probe
+		}
+	}
+}
+
+if = {
+	limit = {
+		any_country = {
+			owner = {
+				has_relation_flag = {
+					who = prevprev
+					flag = probe
+				}
+			}
+		}
+	}
+}
+`);
+  });
+
+  it("rejects captured references across unsupported trigger transitions", () => {
+    expect(() =>
+      recordEffects<"country">([], (country) => {
+        const relation = hasRelationFlag({ who: country.ref, flag: "probe" });
+        const unsupported = trigger<"country">([
+          scopeTransitionBlock("sdk_unknown", relation.entries, "unknown"),
+        ]);
+        country.if(unsupported, () => undefined);
+      })
+    ).toThrow(/replacement or unknown scope transition/);
   });
 
   it("resolves composed lexical scope links where their value is consumed", () => {

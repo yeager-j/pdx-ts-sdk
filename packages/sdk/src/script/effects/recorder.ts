@@ -42,7 +42,12 @@ import {
   type DeferredScopePathResolver,
 } from "../scalar.ts";
 import type { ScriptedEffectCall } from "../scripted.ts";
-import { trigger, type Trigger } from "../trigger-core.ts";
+import {
+  scopeTransitionsOf,
+  trigger,
+  type Trigger,
+  type TriggerScopeTransition,
+} from "../trigger-core.ts";
 import { modifierEntry } from "./modifiers.ts";
 
 import "./event-chains.ts";
@@ -69,7 +74,7 @@ const lexicalScope = Symbol("lexicalScope");
 const scopeLease = Symbol("scopeLease");
 const contextPrevDepth = Symbol("contextPrevDepth");
 const contextPrevEntry = Symbol("contextPrevEntry");
-type ScopeTransition = "same" | "push" | "replace" | "unknown";
+type ScopeTransition = TriggerScopeTransition;
 type ScopeIdentity = symbol;
 interface RuntimeScopeValue {
   readonly [cannotWitnessNaturalFrom]?: true;
@@ -293,9 +298,32 @@ function resolveRecordingEntry(entry: PdxEntry, recording: Recording): PdxEntry 
     kind: "entry",
     key,
     op: entry.op,
-    value: resolveRecordingValue(entry.value, recording),
+    value: resolveRecordingValue(
+      entry.value,
+      transitionedRecording(recording, scopeTransitionsOf(entry))
+    ),
     ...(entry.line === undefined ? {} : { line: entry.line }),
   };
+}
+
+function transitionedRecording(
+  recording: Recording,
+  transitions: readonly ScopeTransition[] | undefined
+): Recording {
+  return (transitions ?? []).reduce<Recording>((consumer, transition) => {
+    if (transition === "same") {
+      return consumer;
+    }
+    const resetsScope = transition === "replace" || transition === "unknown";
+    return {
+      ...consumer,
+      scope: Symbol("triggerScope"),
+      ancestors: resetsScope ? [] : [consumer.scope, ...consumer.ancestors],
+      blockedAncestors: resetsScope
+        ? [consumer.scope, ...consumer.ancestors, ...consumer.blockedAncestors]
+        : consumer.blockedAncestors,
+    };
+  }, recording);
 }
 
 function resolveRecordingValue(value: PdxValue, recording: Recording): PdxValue {
@@ -366,17 +394,17 @@ function lexicalScopePath(
   recording: Recording | undefined,
   consumer: Recording | undefined = RECORDINGS.at(-1)
 ): string {
-  // A recording resolves its own deferred values immediately after its body
-  // returns. It is already closed to author code at that point, but it is
-  // still the valid consumer of references authored inside that body.
-  if (recording !== consumer) {
-    assertLive(recording, "ref");
-  }
+  // Deferred values resolve after the authoring body has returned. A nested
+  // trigger consumer may therefore outlive the target recording, but its
+  // retained scope identity still proves that it is the target or a verified
+  // descendant. An absent or unrelated consumer has no such proof and must
+  // still pass the ordinary liveness guard.
   if (recording === undefined) {
     return "this";
   }
   const active = consumer;
   if (active === undefined) {
+    assertLive(recording, "ref");
     return "this";
   }
   const route = lexicalRoute(active, recording);
@@ -391,6 +419,7 @@ function lexicalScopePath(
     );
   }
   if (route.kind === "unrelated") {
+    assertLive(recording, "ref");
     throw new Error(
       "A lexical scope reference was consumed in a recording that is not its scope or a " +
         "verified descendant. The recorder cannot prove a relative path between those blocks; " +

@@ -3,11 +3,9 @@
 // From: links.cwt
 // From: script-docs/v4.4.1/scopes.log
 
-import { block } from "@pdx-ts/pdxscript";
-
 import { navigateScope } from "../script/effects/recorder.ts";
 import type { ScopeRef, ScopeValue } from "../script/effects/types.ts";
-import { trigger, type Trigger } from "../script/trigger-core.ts";
+import { scopeTransitionBlock, trigger, type Trigger } from "../script/trigger-core.ts";
 import type { ScopeName } from "./scopes.ts";
 
 /** Scopes from a country to the federation it is a member of. */
@@ -27,7 +25,7 @@ export function alliance(
 ): Trigger<"country"> | ScopeValue<"federation"> {
   return "path" in arg
     ? navigateScope<"federation">(arg, "alliance")
-    : trigger([block("alliance", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("alliance", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an object (e.g. planet) in star system view to the arc site in the same location. */
@@ -103,7 +101,10 @@ export function archaeologicalSite(
   | ScopeValue<"archaeological_site"> {
   return "path" in arg
     ? navigateScope<"archaeological_site">(arg, "archaeological_site")
-    : trigger([block("archaeological_site", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("archaeological_site", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes from an object to its army leader, e.g. planet->general */
@@ -123,7 +124,7 @@ export function armyLeader(
 ): Trigger<"planet"> | ScopeValue<"leader"> {
   return "path" in arg
     ? navigateScope<"leader">(arg, "army_leader")
-    : trigger([block("army_leader", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("army_leader", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a planet to the species currently being assembled on it. */
@@ -149,7 +150,10 @@ export function assemblingSpecies(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"species"> {
   return "path" in arg
     ? navigateScope<"species">(arg, "assembling_species")
-    : trigger([block("assembling_species", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("assembling_species", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes from a country to the federation it is an associate of. */
@@ -169,7 +173,10 @@ export function associatedFederation(
 ): Trigger<"country"> | ScopeValue<"federation"> {
   return "path" in arg
     ? navigateScope<"federation">(arg, "associated_federation")
-    : trigger([block("associated_federation", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("associated_federation", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes to the astral rift in the same system. */
@@ -189,7 +196,7 @@ export function astralRift(
 ): Trigger<"leader" | "system"> | ScopeValue<"astral_rift"> {
   return "path" in arg
     ? navigateScope<"astral_rift">(arg, "astral_rift")
-    : trigger([block("astral_rift", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("astral_rift", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a war to its main attacker. */
@@ -209,7 +216,7 @@ export function attacker(
 ): Trigger<"war"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "attacker")
-    : trigger([block("attacker", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("attacker", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** If scoped system contains a Psionic Aura, scopes to the country who generated the aura (can be different from the system owner). */
@@ -229,7 +236,7 @@ export function auraOwner(
 ): Trigger<"system"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "aura_owner")
-    : trigger([block("aura_owner", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("aura_owner", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a leader to their background planet. */
@@ -249,7 +256,7 @@ export function backgroundPlanet(
 ): Trigger<"leader"> | ScopeValue<"planet"> {
   return "path" in arg
     ? navigateScope<"planet">(arg, "background_planet")
-    : trigger([block("background_planet", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("background_planet", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a planet to the owner of a branch office. */
@@ -275,7 +282,10 @@ export function branchOfficeOwner(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "branch_office_owner")
-    : trigger([block("branch_office_owner", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("branch_office_owner", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes from a country to its built species. */
@@ -295,7 +305,7 @@ export function builtSpecies(
 ): Trigger<"country"> | ScopeValue<"species"> {
   return "path" in arg
     ? navigateScope<"species">(arg, "built_species")
-    : trigger([block("built_species", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("built_species", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an empire to its capital colony. */
@@ -315,7 +325,7 @@ export function capitalScope(
 ): Trigger<"country"> | ScopeValue<"colony"> {
   return "path" in arg
     ? navigateScope<"colony">(arg, "capital_scope")
-    : trigger([block("capital_scope", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("capital_scope", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an empire to the primary star (planet scope) of its capital's system. */
@@ -335,7 +345,7 @@ export function capitalStar(
 ): Trigger<"country"> | ScopeValue<"planet"> {
   return "path" in arg
     ? navigateScope<"planet">(arg, "capital_star")
-    : trigger([block("capital_star", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("capital_star", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a colony to its carrier. */
@@ -355,7 +365,7 @@ export function carrier(
 ): Trigger<"colony"> | ScopeValue<"carrier"> {
   return "path" in arg
     ? navigateScope<"carrier">(arg, "carrier")
-    : trigger([block("carrier", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("carrier", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an object to its colony. */
@@ -435,7 +445,7 @@ export function colony(
   | ScopeValue<"colony"> {
   return "path" in arg
     ? navigateScope<"colony">(arg, "colony")
-    : trigger([block("colony", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("colony", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a first contact site to the country that the owner of the site is seeking to establish communications with. */
@@ -455,7 +465,7 @@ export function contactCountry(
 ): Trigger<"first_contact"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "contact_country")
-    : trigger([block("contact_country", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("contact_country", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an object to the empire controlling it (not necessarily the owner: a country occupying a planet is its controller). */
@@ -483,7 +493,7 @@ export function controller(
   | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "controller")
-    : trigger([block("controller", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("controller", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes to the leader's country of origin */
@@ -503,7 +513,7 @@ export function creator(
 ): Trigger<"leader"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "creator")
-    : trigger([block("creator", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("creator", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a planet to the species currently declining on it. */
@@ -529,7 +539,7 @@ export function decliningSpecies(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"species"> {
   return "path" in arg
     ? navigateScope<"species">(arg, "declining_species")
-    : trigger([block("declining_species", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("declining_species", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a war to its main defender. */
@@ -549,7 +559,7 @@ export function defender(
 ): Trigger<"war"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "defender")
-    : trigger([block("defender", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("defender", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes to the ship's design */
@@ -569,7 +579,7 @@ export function design(
 ): Trigger<"ship"> | ScopeValue<"design"> {
   return "path" in arg
     ? navigateScope<"design">(arg, "design")
-    : trigger([block("design", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("design", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an envoy to the empire it is appointed to. */
@@ -589,7 +599,10 @@ export function envoyLocationCountry(
 ): Trigger<"leader"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "envoy_location_country")
-    : trigger([block("envoy_location_country", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("envoy_location_country", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes from an arc site to the fleet whose leader is currently investigating it. */
@@ -609,7 +622,7 @@ export function excavatorFleet(
 ): Trigger<"archaeological_site"> | ScopeValue<"fleet"> {
   return "path" in arg
     ? navigateScope<"fleet">(arg, "excavator_fleet")
-    : trigger([block("excavator_fleet", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("excavator_fleet", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an astral rift to the country whose leader is exploring, or has explored it. */
@@ -629,7 +642,7 @@ export function explorer(
 ): Trigger<"astral_rift"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "explorer")
-    : trigger([block("explorer", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("explorer", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a country to the federation it is a member of. */
@@ -649,7 +662,7 @@ export function federation(
 ): Trigger<"country"> | ScopeValue<"federation"> {
   return "path" in arg
     ? navigateScope<"federation">(arg, "federation")
-    : trigger([block("federation", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("federation", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a federation to the empire leading it. */
@@ -669,7 +682,7 @@ export function federationLeader(
 ): Trigger<"federation"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "federation_leader")
-    : trigger([block("federation_leader", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("federation_leader", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes to the country that dealt the corresponding ranked damage to the fleet. Can be null. Use the record_damaging_country = yes setting to make the fleet record */
@@ -689,7 +702,10 @@ export function firstDamagingCountry(
 ): Trigger<"fleet"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "first_damaging_country")
-    : trigger([block("first_damaging_country", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("first_damaging_country", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes from a ship, starbase, astral rift or leader to its fleet, or from an army to the fleet its army transport is part of. */
@@ -717,7 +733,7 @@ export function fleet(
   | ScopeValue<"fleet"> {
   return "path" in arg
     ? navigateScope<"fleet">(arg, "fleet")
-    : trigger([block("fleet", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("fleet", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a country to its founding species. */
@@ -737,7 +753,7 @@ export function founderSpecies(
 ): Trigger<"country"> | ScopeValue<"species"> {
   return "path" in arg
     ? navigateScope<"species">(arg, "founder_species")
-    : trigger([block("founder_species", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("founder_species", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes to the Custodian empire of the Galactic Community. */
@@ -757,7 +773,10 @@ export function galacticCustodian(
 ): Trigger<ScopeName> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "galactic_custodian")
-    : trigger([block("galactic_custodian", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("galactic_custodian", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes to the ruling empire of the Galactic Imperium. */
@@ -777,7 +796,7 @@ export function galacticEmperor(
 ): Trigger<ScopeName> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "galactic_emperor")
-    : trigger([block("galactic_emperor", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("galactic_emperor", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a planet to the species currently growing (not assembling) on it. */
@@ -803,7 +822,7 @@ export function growingSpecies(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"species"> {
   return "path" in arg
     ? navigateScope<"species">(arg, "growing_species")
-    : trigger([block("growing_species", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("growing_species", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes to the heir of a country (or the heir of the object's owner). */
@@ -935,7 +954,7 @@ export function heir(
   | ScopeValue<"leader"> {
   return "path" in arg
     ? navigateScope<"leader">(arg, "heir")
-    : trigger([block("heir", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("heir", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes to a species' home planet. */
@@ -961,7 +980,7 @@ export function homePlanet(
 ): Trigger<"country" | "leader" | "pop_group" | "species"> | ScopeValue<"planet"> {
   return "path" in arg
     ? navigateScope<"planet">(arg, "home_planet")
-    : trigger([block("home_planet", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("home_planet", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** If scoped war was generated from a proxy war, scopes to the country who started the proxy war. */
@@ -981,7 +1000,7 @@ export function instigator(
 ): Trigger<"war"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "instigator")
-    : trigger([block("instigator", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("instigator", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a mission to its issuer. */
@@ -1001,7 +1020,7 @@ export function issuer(
 ): Trigger<"mission"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "issuer")
-    : trigger([block("issuer", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("issuer", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes to the last deposit added to the current planet */
@@ -1027,7 +1046,10 @@ export function lastAddedDeposit(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"deposit"> {
   return "path" in arg
     ? navigateScope<"deposit">(arg, "last_added_deposit")
-    : trigger([block("last_added_deposit", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("last_added_deposit", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes to the last ambient object that was created anywhere in the game. */
@@ -1047,7 +1069,10 @@ export function lastCreatedAmbientObject(
 ): Trigger<ScopeName> | ScopeValue<"ambient_object"> {
   return "path" in arg
     ? navigateScope<"ambient_object">(arg, "last_created_ambient_object")
-    : trigger([block("last_created_ambient_object", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("last_created_ambient_object", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes to the last army that was created anywhere in the game. */
@@ -1067,7 +1092,7 @@ export function lastCreatedArmy(
 ): Trigger<ScopeName> | ScopeValue<"army"> {
   return "path" in arg
     ? navigateScope<"army">(arg, "last_created_army")
-    : trigger([block("last_created_army", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("last_created_army", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes to the last storm that was created anywhere in the game. */
@@ -1087,7 +1112,10 @@ export function lastCreatedCosmicStorm(
 ): Trigger<ScopeName> | ScopeValue<"storm"> {
   return "path" in arg
     ? navigateScope<"storm">(arg, "last_created_cosmic_storm")
-    : trigger([block("last_created_cosmic_storm", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("last_created_cosmic_storm", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes to the last storm influence field that was created anywhere in the game. */
@@ -1117,7 +1145,13 @@ export function lastCreatedCosmicStormInfluenceField(
         "last_created_cosmic_storm_influence_field"
       )
     : trigger(
-        [block("last_created_cosmic_storm_influence_field", [...arg.entries])],
+        [
+          scopeTransitionBlock(
+            "last_created_cosmic_storm_influence_field",
+            [...arg.entries],
+            "push"
+          ),
+        ],
         [...arg.refs]
       );
 }
@@ -1139,7 +1173,10 @@ export function lastCreatedCountry(
 ): Trigger<ScopeName> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "last_created_country")
-    : trigger([block("last_created_country", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("last_created_country", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes to the last created ship design */
@@ -1159,7 +1196,10 @@ export function lastCreatedDesign(
 ): Trigger<ScopeName> | ScopeValue<"design"> {
   return "path" in arg
     ? navigateScope<"design">(arg, "last_created_design")
-    : trigger([block("last_created_design", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("last_created_design", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes to the last fleet that was created anywhere in the game. */
@@ -1179,7 +1219,10 @@ export function lastCreatedFleet(
 ): Trigger<ScopeName> | ScopeValue<"fleet"> {
   return "path" in arg
     ? navigateScope<"fleet">(arg, "last_created_fleet")
-    : trigger([block("last_created_fleet", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("last_created_fleet", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes to the last leader that was created anywhere in the game. */
@@ -1199,7 +1242,10 @@ export function lastCreatedLeader(
 ): Trigger<ScopeName> | ScopeValue<"leader"> {
   return "path" in arg
     ? navigateScope<"leader">(arg, "last_created_leader")
-    : trigger([block("last_created_leader", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("last_created_leader", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes to the last pop_group faction that was created anywhere in the game. */
@@ -1219,7 +1265,10 @@ export function lastCreatedPopFaction(
 ): Trigger<ScopeName> | ScopeValue<"pop_faction"> {
   return "path" in arg
     ? navigateScope<"pop_faction">(arg, "last_created_pop_faction")
-    : trigger([block("last_created_pop_faction", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("last_created_pop_faction", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes to the last ship that was created anywhere in the game. */
@@ -1239,7 +1288,7 @@ export function lastCreatedShip(
 ): Trigger<ScopeName> | ScopeValue<"ship"> {
   return "path" in arg
     ? navigateScope<"ship">(arg, "last_created_ship")
-    : trigger([block("last_created_ship", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("last_created_ship", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes to the last species that was created anywhere in the game. */
@@ -1259,7 +1308,10 @@ export function lastCreatedSpecies(
 ): Trigger<ScopeName> | ScopeValue<"species"> {
   return "path" in arg
     ? navigateScope<"species">(arg, "last_created_species")
-    : trigger([block("last_created_species", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("last_created_species", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes to the last fleet that was created anywhere in the game. */
@@ -1279,7 +1331,10 @@ export function lastCreatedSystem(
 ): Trigger<ScopeName> | ScopeValue<"system"> {
   return "path" in arg
     ? navigateScope<"system">(arg, "last_created_system")
-    : trigger([block("last_created_system", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("last_created_system", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes from an object to its leader, e.g. country->ruler, fleet->admiral/scientist, sector->governor, army->general, arc site->scientist... */
@@ -1371,7 +1426,7 @@ export function leader(
   | ScopeValue<"leader"> {
   return "path" in arg
     ? navigateScope<"leader">(arg, "leader")
-    : trigger([block("leader", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("leader", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a bypass to the country who locked it. */
@@ -1391,7 +1446,7 @@ export function lockCountry(
 ): Trigger<"bypass"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "lock_country")
-    : trigger([block("lock_country", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("lock_country", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a planet to the mining station in orbit of it. */
@@ -1417,7 +1472,7 @@ export function miningStation(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"fleet"> {
   return "path" in arg
     ? navigateScope<"fleet">(arg, "mining_station")
-    : trigger([block("mining_station", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("mining_station", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Sets the scope to no scope (empty scope used for certain generalized behavior). */
@@ -1437,7 +1492,7 @@ export function noScope(
 ): Trigger<ScopeName> | ScopeValue<"no_scope"> {
   return "path" in arg
     ? navigateScope<"no_scope">(arg, "no_scope")
-    : trigger([block("no_scope", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("no_scope", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a planet to the observation outpost in orbit of it. */
@@ -1463,7 +1518,10 @@ export function observationOutpost(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"fleet"> {
   return "path" in arg
     ? navigateScope<"fleet">(arg, "observation_outpost")
-    : trigger([block("observation_outpost", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("observation_outpost", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes from a planet to the owner of the observation outpost in orbit of it. */
@@ -1489,7 +1547,10 @@ export function observationOutpostOwner(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "observation_outpost_owner")
-    : trigger([block("observation_outpost_owner", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("observation_outpost_owner", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes to the planet the current object is in orbit of. */
@@ -1517,7 +1578,7 @@ export function orbit(
   | ScopeValue<"planet"> {
   return "path" in arg
     ? navigateScope<"planet">(arg, "orbit")
-    : trigger([block("orbit", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("orbit", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a planet to the orbital defence station (orbital ring, starbase) orbiting the planet */
@@ -1543,7 +1604,7 @@ export function orbitalDefence(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"fleet"> {
   return "path" in arg
     ? navigateScope<"fleet">(arg, "orbital_defence")
-    : trigger([block("orbital_defence", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("orbital_defence", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a planet to the station (mining station, research station, observation outpost) orbiting it. */
@@ -1569,7 +1630,7 @@ export function orbitalStation(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"fleet"> {
   return "path" in arg
     ? navigateScope<"fleet">(arg, "orbital_station")
-    : trigger([block("orbital_station", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("orbital_station", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a country to its overlord. */
@@ -1589,7 +1650,7 @@ export function overlord(
 ): Trigger<"country"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "overlord")
-    : trigger([block("overlord", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("overlord", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes to the owner of the current object. */
@@ -1721,7 +1782,7 @@ export function owner(
   | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "owner")
-    : trigger([block("owner", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("owner", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes to the main species of the owner of the current object. Works in every scope that 'owner' would work in. */
@@ -1857,7 +1918,10 @@ export function ownerMainSpecies(
   | ScopeValue<"species"> {
   return "path" in arg
     ? navigateScope<"species">(arg, "owner_main_species")
-    : trigger([block("owner_main_species", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("owner_main_species", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes from an object to its owner if it exists, or to the owner of the space it is in otherwise. Works on all objects visible in star system view that can have an owner */
@@ -1941,7 +2005,10 @@ export function ownerOrSpaceOwner(
   | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "owner_or_space_owner")
-    : trigger([block("owner_or_space_owner", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("owner_or_space_owner", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes to the main species of the owner of the current object. Works in every scope that 'owner' would work in. */
@@ -2069,7 +2136,7 @@ export function ownerSpecies(
   | ScopeValue<"species"> {
   return "path" in arg
     ? navigateScope<"species">(arg, "owner_species")
-    : trigger([block("owner_species", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("owner_species", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an object to the planet it is on. */
@@ -2149,7 +2216,7 @@ export function planet(
   | ScopeValue<"planet"> {
   return "path" in arg
     ? navigateScope<"planet">(arg, "planet")
-    : trigger([block("planet", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("planet", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an object to the owner of the planet it is on. */
@@ -2229,7 +2296,7 @@ export function planetOwner(
   | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "planet_owner")
-    : trigger([block("planet_owner", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("planet_owner", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an object to its pop faction. */
@@ -2255,7 +2322,7 @@ export function popFaction(
 ): Trigger<"leader" | "pop_faction" | "pop_group"> | ScopeValue<"pop_faction"> {
   return "path" in arg
     ? navigateScope<"pop_faction">(arg, "pop_faction")
-    : trigger([block("pop_faction", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("pop_faction", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an army to the pop_group that spawned it. */
@@ -2275,7 +2342,7 @@ export function popGroup(
 ): Trigger<"army" | "pop_group"> | ScopeValue<"pop_group"> {
   return "path" in arg
     ? navigateScope<"pop_group">(arg, "pop_group")
-    : trigger([block("pop_group", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("pop_group", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a planet to the research station in orbit of it. */
@@ -2301,7 +2368,7 @@ export function researchStation(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"fleet"> {
   return "path" in arg
     ? navigateScope<"fleet">(arg, "research_station")
-    : trigger([block("research_station", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("research_station", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a first contact site to the equivalent one that the contact_country has on the site's owner. */
@@ -2321,7 +2388,10 @@ export function reverseFirstContact(
 ): Trigger<"first_contact"> | ScopeValue<"first_contact"> {
   return "path" in arg
     ? navigateScope<"first_contact">(arg, "reverse_first_contact")
-    : trigger([block("reverse_first_contact", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("reverse_first_contact", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes to the ruler of a country (or the ruler of the object's owner). */
@@ -2453,7 +2523,7 @@ export function ruler(
   | ScopeValue<"leader"> {
   return "path" in arg
     ? navigateScope<"leader">(arg, "ruler")
-    : trigger([block("ruler", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("ruler", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes to the country that dealt the corresponding ranked damage to the fleet. Can be null. Use the record_damaging_country = yes setting to make the fleet record */
@@ -2473,7 +2543,10 @@ export function secondDamagingCountry(
 ): Trigger<"fleet"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "second_damaging_country")
-    : trigger([block("second_damaging_country", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("second_damaging_country", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes from an object to the sector it is in. For leaders, scopes to the sector the leader is currently located in, not necessarily the one they are assigned to as a governor. */
@@ -2577,7 +2650,7 @@ export function sector(
   | ScopeValue<"sector"> {
   return "path" in arg
     ? navigateScope<"sector">(arg, "sector")
-    : trigger([block("sector", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("sector", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a sector to its capital colony. */
@@ -2597,7 +2670,7 @@ export function sectorCapital(
 ): Trigger<"sector"> | ScopeValue<"colony"> {
   return "path" in arg
     ? navigateScope<"colony">(arg, "sector_capital")
-    : trigger([block("sector_capital", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("sector_capital", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a starbase to its station ship or from a colony to its carrier ship. */
@@ -2623,7 +2696,7 @@ export function ship(
 ): Trigger<"carrier" | "colony" | "planet" | "ship" | "starbase"> | ScopeValue<"ship"> {
   return "path" in arg
     ? navigateScope<"ship">(arg, "ship")
-    : trigger([block("ship", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("ship", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes to the ship's current growth stage inside the ship's design */
@@ -2643,7 +2716,7 @@ export function shipGrowthStage(
 ): Trigger<"ship"> | ScopeValue<"ship_growth_stage"> {
   return "path" in arg
     ? navigateScope<"ship_growth_stage">(arg, "ship_growth_stage")
-    : trigger([block("ship_growth_stage", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("ship_growth_stage", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an object to the solar system it is in. */
@@ -2751,7 +2824,7 @@ export function solarSystem(
   | ScopeValue<"system"> {
   return "path" in arg
     ? navigateScope<"system">(arg, "solar_system")
-    : trigger([block("solar_system", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("solar_system", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an object to the owner of the space it is in. Works on all objects visible in star system view. */
@@ -2839,7 +2912,7 @@ export function spaceOwner(
   | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "space_owner")
-    : trigger([block("space_owner", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("space_owner", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an army to the planet that spawned it. */
@@ -2859,7 +2932,7 @@ export function spawnerPlanet(
 ): Trigger<"army"> | ScopeValue<"planet"> {
   return "path" in arg
     ? navigateScope<"planet">(arg, "spawner_planet")
-    : trigger([block("spawner_planet", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("spawner_planet", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an object to its species. */
@@ -2887,7 +2960,7 @@ export function species(
   | ScopeValue<"species"> {
   return "path" in arg
     ? navigateScope<"species">(arg, "species")
-    : trigger([block("species", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("species", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an espionage operation or spymaster envoy to its spy network. */
@@ -2913,7 +2986,7 @@ export function spynetwork(
 ): Trigger<"espionage_operation" | "leader"> | ScopeValue<"spy_network"> {
   return "path" in arg
     ? navigateScope<"spy_network">(arg, "spynetwork")
-    : trigger([block("spynetwork", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("spynetwork", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from an object to the primary star (planet scope) of the system it is in. */
@@ -3001,7 +3074,7 @@ export function star(
   | ScopeValue<"planet"> {
   return "path" in arg
     ? navigateScope<"planet">(arg, "star")
-    : trigger([block("star", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("star", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a solar system or planet to that system's starbase. Alternatively, scopes from a fleet or ship that is a starbase to its matching starbase scope. */
@@ -3029,7 +3102,7 @@ export function starbase(
   | ScopeValue<"starbase"> {
   return "path" in arg
     ? navigateScope<"starbase">(arg, "starbase")
-    : trigger([block("starbase", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("starbase", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a galactic object to an influence field with the galactic object as center */
@@ -3055,7 +3128,10 @@ export function stormInfluenceField(
 ): Trigger<"system"> | ScopeValue<"cosmic_storm_influence_field"> {
   return "path" in arg
     ? navigateScope<"cosmic_storm_influence_field">(arg, "storm_influence_field")
-    : trigger([block("storm_influence_field", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("storm_influence_field", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes from an object to the primary star (planet scope) of the system it is in. */
@@ -3163,7 +3239,7 @@ export function systemStar(
   | ScopeValue<"planet"> {
   return "path" in arg
     ? navigateScope<"planet">(arg, "system_star")
-    : trigger([block("system_star", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("system_star", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes from a cosmic storm to the galactic object that it is heading towards. */
@@ -3183,7 +3259,7 @@ export function targetSystem(
 ): Trigger<"storm"> | ScopeValue<"system"> {
   return "path" in arg
     ? navigateScope<"system">(arg, "target_system")
-    : trigger([block("target_system", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("target_system", [...arg.entries], "push")], [...arg.refs]);
 }
 
 /** Scopes to the country that dealt the corresponding ranked damage to the fleet. Can be null. Use the record_damaging_country = yes setting to make the fleet record */
@@ -3203,7 +3279,10 @@ export function thirdDamagingCountry(
 ): Trigger<"fleet"> | ScopeValue<"country"> {
   return "path" in arg
     ? navigateScope<"country">(arg, "third_damaging_country")
-    : trigger([block("third_damaging_country", [...arg.entries])], [...arg.refs]);
+    : trigger(
+        [scopeTransitionBlock("third_damaging_country", [...arg.entries], "push")],
+        [...arg.refs]
+      );
 }
 
 /** Scopes from an object to its unhappiest pop group. */
@@ -3229,5 +3308,5 @@ export function unhappiestPop(
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> | ScopeValue<"pop_group"> {
   return "path" in arg
     ? navigateScope<"pop_group">(arg, "unhappiest_pop")
-    : trigger([block("unhappiest_pop", [...arg.entries])], [...arg.refs]);
+    : trigger([scopeTransitionBlock("unhappiest_pop", [...arg.entries], "push")], [...arg.refs]);
 }

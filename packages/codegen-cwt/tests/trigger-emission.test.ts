@@ -284,7 +284,7 @@ describe("trigger emission", () => {
     expect(emission.code).toContain(
       'for (const [key1, condition1] of caseEntries(args.cases, "switch.cases", 1, ' +
         '["trigger","default"])) {\n' +
-        "entries.push(block(key1, [...condition1.entries]));\n" +
+        'entries.push(scopeTransitionBlock(key1, [...condition1.entries], "same"));\n' +
         "refs.push(...condition1.refs);\n" +
         "}"
     );
@@ -369,6 +369,9 @@ describe("trigger emission", () => {
     expect(emission.code).toContain(
       'export function anySystemWithinStorm(condition: Trigger<"system">): Trigger<"storm"> {'
     );
+    expect(emission.code).toContain(
+      'scopeTransitionBlock("any_country", [...condition.entries], "push")'
+    );
   });
 
   it("makes a wrapper that pushes no scope generic over the enclosing scope", () => {
@@ -377,6 +380,20 @@ describe("trigger emission", () => {
         `export function ${fn}<S extends ScopeName>(condition: Trigger<S>): Trigger<S> {`
       );
     }
+    expect(emission.code).toContain(
+      'scopeTransitionBlock("hidden_progress", [...condition.entries], "same")'
+    );
+  });
+
+  it("retains a replacement transition on a generated wrapper", () => {
+    const replacement = pureSplice("replacement_wrapper", [
+      "## replace_scopes = { this = country }",
+    ]);
+    const emitted = emitInlineTriggers([BOTH_WRAPPER_ROWS, replacement].join("\n\n"));
+
+    expect(emitted.code).toContain(
+      'scopeTransitionBlock("replacement_wrapper", [...condition.entries], "replace")'
+    );
   });
 
   it("skips a wrapper that pushes no scope and has no overlay row", () => {

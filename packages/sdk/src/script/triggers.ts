@@ -24,7 +24,7 @@ import { scopeValue } from "./effects/recorder.ts";
 import type { StaticModifierHostContract } from "./effects/static-modifiers.ts";
 import type { ScopeValue } from "./effects/types.ts";
 import { refId, type TypedRef } from "./scalar.ts";
-import { conjoin, trigger, type Trigger } from "./trigger-core.ts";
+import { conjoin, scopeTransitionBlock, trigger, type Trigger } from "./trigger-core.ts";
 
 export type { ScopeName } from "../generated/scopes.ts";
 export { trigger, type ScriptValue, type Trigger } from "./trigger-core.ts";
@@ -375,5 +375,8 @@ export function target<S extends ScopeName>(
 ): Trigger<"agreement" | "espionage_operation" | "situation" | "spy_network"> | ScopeValue<S> {
   return condition === undefined
     ? scopeValue<S>("target")
-    : trigger([block("target", [...condition.entries])], [...condition.refs]);
+    : trigger(
+        [scopeTransitionBlock("target", [...condition.entries], "push")],
+        [...condition.refs]
+      );
 }

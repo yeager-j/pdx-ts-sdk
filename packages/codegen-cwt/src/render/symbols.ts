@@ -101,7 +101,7 @@ const SYMBOL_MODULES: readonly ModuleSymbols[] = [
   {
     module: "../script/trigger-core.ts",
     types: ["ScriptValue", "Trigger"],
-    values: ["scriptValueScalar", "trigger"],
+    values: ["scopeTransitionBlock", "scopeTransitionEntry", "scriptValueScalar", "trigger"],
   },
   {
     module: "../installation/vanilla/patch.ts",
