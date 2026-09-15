@@ -2,8 +2,10 @@ import { createMod } from "@pdx-ts/sdk";
 import {
   always,
   and,
+  anyCosmicStorm,
   hasStormFlag,
   isStormType,
+  not,
   starFlags,
   stormFlags,
   vanilla,
@@ -35,7 +37,7 @@ const auroraWake = mod.stormType("aurora_wake", {
   occludeSystem: true,
   spawnWeight: { base: 0 },
   triggeredFleetModifier: [
-    { when: always(), modifiers: (modifier) => modifier.unchecked("ship_speed_mult", -0.2) },
+    { when: always(), modifiers: (modifier) => modifier.ship.speed.mult(-0.2) },
   ],
   triggeredPlanetModifier: [
     { when: always(), modifiers: (modifier) => modifier.planet.storm.devastation.mult(0.5) },
@@ -79,6 +81,9 @@ const events = mod.namespace("control");
 const createAuroraWake = events.country(1, {
   hideWindow: true,
   isTriggeredOnly: true,
+  trigger: not(
+    anyCosmicStorm(and(isStormType(auroraWake), hasStormFlag(stormState.aurora_wake_tracked)))
+  ),
   immediate: (country) => {
     country.createCosmicStorm({
       type: auroraWake,

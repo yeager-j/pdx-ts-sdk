@@ -26,8 +26,11 @@ tracked storm.
 ## Configure size, travel, and devastation
 
 The seven core configuration fields are weight blocks. Use `{ base: value }`
-for a fixed value, as both examples do. Add `modifiers` when a value must change
-under global conditions.
+for a fixed value, as both examples do. The generated type is
+`WeightBlock<never>`: `never` marks an unpinned evaluation scope, not a global
+scope. Prefer scope-independent modifier conditions. If a condition depends on
+a specific scope, verify that scope in game because the SDK cannot prove which
+object the engine supplies here.
 
 | Fields                                            | Responsibility                                      |
 | ------------------------------------------------- | --------------------------------------------------- |
@@ -37,11 +40,12 @@ under global conditions.
 | `stormActivationPeriodInMonths`                   | Sets the activation period in months.               |
 | `stormMonthlyAddedDevastation`                    | Sets devastation added each month to affected worlds. |
 
-`spawnWeight` is separate and accepts either a number or a weight block.
-Vanilla definitions set this field, and Vanilla scripts also call the untyped
-`spawn_random_storm` effect. The examples use zero because their storms are
-intended for scripted creation; test zero and relative weights in game before
-relying on exact selection behavior.
+`spawnWeight` is separate and accepts either a number or a weight block. The
+typed `spawnRandomStorm(...)` effect accepts an authored storm item in its
+`type` field when script must select that type. Omit `type` to leave selection
+to the game; Vanilla's weighted spawning path uses that form. The examples use
+zero because their storms are intended for explicit selection, but the SDK
+does not simulate zero or relative weight behavior, so verify it in game.
 
 The SDK exposes the engine's `affect_hp_regen`, `affect_armor_regen`,
 `affect_shield_regen`, and `occlude_system` booleans directly. These flags do
@@ -58,16 +62,18 @@ their exact effects in the running game.
 Triggered modifiers are evaluated on the object they affect. Each entry has a
 `when` trigger and a modifier body:
 
-| Field                     | Trigger and modifier scope |
-| ------------------------- | -------------------------- |
-| `triggeredFleetModifier`  | Fleet                      |
-| `triggeredPlanetModifier` | Planet                     |
-| `triggeredShipModifier`   | Ship                       |
-| `triggeredSystemModifier` | System                     |
+| Field                     | `when` trigger scope | Modifier scope |
+| ------------------------- | -------------------- | -------------- |
+| `triggeredFleetModifier`  | Fleet                | Fleet          |
+| `triggeredPlanetModifier` | Planet               | Planet         |
+| `triggeredShipModifier`   | Ship                 | Ship           |
+| `triggeredSystemModifier` | Leader               | System         |
 
 Use separate entries when conditions or displayed effects differ. The SDK
 checks the trigger scope and exposes the matching modifier builder, but it does
 not calculate how several storm modifiers combine in the running game.
+`triggeredSystemModifier` is the unusual case: its condition runs in leader
+scope while its modifier body targets the system.
 
 ## Keep lifecycle state balanced
 
@@ -86,7 +92,8 @@ modifier, remove it both when a system leaves and when the storm finishes.
 
 This example declares system and storm flags, applies scoped modifiers, updates
 system flags through the full movement lifecycle, and uses two hidden events as
-script entry points:
+script entry points. The create event refuses to run while another tracked
+instance exists, so the removal event can match at most one storm:
 
 <PairedExample name="storm-types-lifecycle" />
 
