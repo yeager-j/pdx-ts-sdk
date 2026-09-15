@@ -1,0 +1,161 @@
+---
+title: Cosmic Storm Types
+description: Define cosmic storm movement, effects, lifecycle callbacks, and visual assets.
+registries: [storm_type]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+A **cosmic storm type** defines one kind of moving galactic storm. Its fields
+control the storm's size and travel, random spawn weight, effects on objects in
+its area, lifecycle callbacks, map textures, event picture, and icon. The SDK
+writes storm types under `common/storm_types/`.
+
+This minimal definition uses checked Vanilla sprites and visual assets. It sets
+`spawnWeight` to zero and leaves creation to script:
+
+<PairedExample name="storm-types-basic" />
+
+The complete example later on adds scoped modifiers, keeps per-system state in
+sync as the storm moves, and provides events that create and destroy one
+tracked storm.
+
+## Configure size, travel, and devastation
+
+The seven core configuration fields are weight blocks. Use `{ base: value }`
+for a fixed value, as both examples do. Add `modifiers` when a value must change
+under global conditions.
+
+| Fields                                            | Responsibility                                      |
+| ------------------------------------------------- | --------------------------------------------------- |
+| `stormMinRadius`, `stormMaxRadius`                 | Set the lower and upper radius bounds.              |
+| `stormMinSteps`, `stormMaxSteps`                   | Set the lower and upper travel-step bounds.         |
+| `stormSpeed`                                      | Sets movement speed.                                |
+| `stormActivationPeriodInMonths`                   | Sets the activation period in months.               |
+| `stormMonthlyAddedDevastation`                    | Sets devastation added each month to affected worlds. |
+
+`spawnWeight` is separate and accepts either a number or a weight block.
+Vanilla definitions set this field, and Vanilla scripts also call the untyped
+`spawn_random_storm` effect. The examples use zero because their storms are
+intended for scripted creation; test zero and relative weights in game before
+relying on exact selection behavior.
+
+The SDK exposes the engine's `affect_hp_regen`, `affect_armor_regen`,
+`affect_shield_regen`, and `occlude_system` booleans directly. These flags do
+not replace the triggered modifiers used for other gameplay effects. Verify
+their exact effects in the running game.
+
+<Callout type="warn" title="Author the expanded configuration fields">
+  Vanilla storm definitions use inline scripts to fill several core fields. `inlineScript` is not
+  part of `StormTypeDef`; give every required size, travel, and devastation field directly.
+</Callout>
+
+## Apply modifiers at the correct scope
+
+Triggered modifiers are evaluated on the object they affect. Each entry has a
+`when` trigger and a modifier body:
+
+| Field                     | Trigger and modifier scope |
+| ------------------------- | -------------------------- |
+| `triggeredFleetModifier`  | Fleet                      |
+| `triggeredPlanetModifier` | Planet                     |
+| `triggeredShipModifier`   | Ship                       |
+| `triggeredSystemModifier` | System                     |
+
+Use separate entries when conditions or displayed effects differ. The SDK
+checks the trigger scope and exposes the matching modifier builder, but it does
+not calculate how several storm modifiers combine in the running game.
+
+## Keep lifecycle state balanced
+
+`onStart`, `onMoved`, and `onFinished` run in cosmic-storm scope. Move from the
+storm to affected systems with these iterators:
+
+| Callback     | Pattern used by Vanilla                                                |
+| ------------ | ------------------------------------------------------------------------ |
+| `onStart`    | Apply state through `everySystemWithinStorm`.                           |
+| `onMoved`    | Handle entry and exit through `everySystemAddedToStorm` and `everySystemRemovedFromStorm`. |
+| `onFinished` | Remove state through `everySystemWithinStorm`.                          |
+
+The SDK types these transitions, but cleanup remains the author's
+responsibility. If `onStart` or the added-system branch applies a flag or
+modifier, remove it both when a system leaves and when the storm finishes.
+
+This example declares system and storm flags, applies scoped modifiers, updates
+system flags through the full movement lifecycle, and uses two hidden events as
+script entry points:
+
+<PairedExample name="storm-types-lifecycle" />
+
+The create event passes the authored `auroraWake` item directly to
+`createCosmicStorm`. `auroraWake`, returned by `mod.stormType`, is a typed storm
+reference, so a different registry item cannot be used by mistake. After the
+creation effect, `lastCreatedCosmicStorm` enters the new storm's scope and
+marks that exact instance. The removal event combines `isStormType` with the
+instance flag before calling `destroyCosmicStorm`.
+
+A definition does not create a live storm by itself. Fire the create event from
+an on-action, another event, or another effect when the game flow should start
+it. The two events in the example are intentionally only entry points.
+
+## Provide textures and sprites
+
+The visual fields use two different reference systems:
+
+| Fields                                | Accepted values             |
+| ------------------------------------- | --------------------------- |
+| `cosmicStormTexturePath`              | Asset path or `AssetFileItem` |
+| `cosmicStormTextureColorPath`         | Asset path or `AssetFileItem` |
+| `cosmicStormTextureLightningPaths`    | List of asset paths or items |
+| `cosmicStormEventSprite`, `icon`      | Sprite reference or string  |
+
+The base texture, color texture, event sprite, and icon are required. Lightning
+textures and the galaxy lightning time and opacity are optional.
+
+Use `vanilla.spriteType(...)` for checked Vanilla sprite ids, as the examples
+do. For custom sprites, define them with `mod.spriteType(...)` and pass the
+returned items. Asset strings name paths from the mod root. A plain string is
+written as supplied and checked against captured and Vanilla assets as a build
+warning. An `AssetFileItem` must be placed in a Feature and lowers to its
+declared path. See [Assets](/concepts/assets/) and [Sprite Types](/reference/sprite-types/).
+
+## Localization and notifications
+
+`name`, `desc`, and `colorTooltip` emit the `<id>`, `<id>_desc`, and
+`<id>_color_tooltip` keys. `description` and `customTooltip` also accept display
+text that the SDK keys and emits, or an existing localization reference.
+
+`showNotification` accepts a country-scoped trigger. Vanilla uses it on the
+Nexus Storm definition. Test notification recipients and timing in the running
+game.
+
+## Current limits and testing advice
+
+- Storm types have no patch surface. `mod.patchStormType` does not exist.
+- The SDK checks field shapes, scopes, owned references, and known assets, but
+  it does not simulate movement, random spawning, overlapping effects, visual
+  opacity, or notification delivery.
+- When several storms can overlap, make cleanup state safe for more than one
+  active instance; one storm must not remove state another storm still needs.
+
+Test random and scripted creation, every movement transition, natural and
+scripted destruction, overlapping storms, all affected object types, map and
+event visuals, notifications, and save/load in the running game.
+
+## API and Vanilla references
+
+- [`StormTypeDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/storm-type.ts)
+  is the generated definition used by `mod.stormType`.
+- [`vanilla.stormType(...)`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to Vanilla storm-type ids.
+- [`VanillaStormTypeId`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/stellaris-ids/src/registries/storm-type.ts)
+  lists the ids present in the supported Stellaris install.
+- [Cosmic storm scope](/scopes-and-effects/scopes/storm/) lists the effects and
+  transitions available inside lifecycle callbacks.
+
+## Field reference
+
+<FieldTable registry="storm_type" />
