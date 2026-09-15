@@ -104,6 +104,7 @@ export type { VanillaStaticModifierId } from "./registries/static-modifier.ts";
 export type { VanillaStaticModifierTrie } from "./registries/static-modifier/index.ts";
 export type { VanillaStrikeCraftComponentTemplateId } from "./registries/strike-craft-component-template.ts";
 export type { VanillaTechnologyId } from "./registries/technology.ts";
+export type { VanillaTerraformLinkId } from "./registries/terraform-link.ts";
 export type { VanillaTraditionCategoryId } from "./registries/tradition-category.ts";
 export type { VanillaTraditionId } from "./registries/tradition.ts";
 export type { VanillaTraitTagMember } from "./enums/trait-tag.ts";

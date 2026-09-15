@@ -588,6 +588,15 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
       "describes one.",
   },
   {
+    registry: "terraform_link",
+    field: "resources",
+    kind: "arity",
+    evidence: [],
+    classification: "rules-wider-than-vanilla",
+    declaration: "common/terraform.cwt:13 — ## cardinality = 0..inf",
+    rationale: resourceRows(),
+  },
+  {
     registry: "tradition",
     field: "ai_weight.modifier",
     kind: "arity",

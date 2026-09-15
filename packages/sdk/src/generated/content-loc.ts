@@ -37,6 +37,7 @@
 // From: common/special_projects.cwt
 // From: common/specimens.cwt
 // From: common/megastructures.cwt
+// From: common/terraform.cwt
 // From: interface/sprites.cwt
 // From: gfx/model_entities.cwt
 // From: gfx/particles.cwt
@@ -187,6 +188,8 @@ export interface ContentLocByType {
   readonly specimen: SpecimenLoc;
   /** The localization keys one `megastructure` mints, as references. */
   readonly megastructure: MegastructureLoc;
+  /** A `terraform_link` declares no localisation slots, so it mints no keys. */
+  readonly terraform_link: NoLocalizationRefs;
   /** A `spriteType` declares no localisation slots, so it mints no keys. */
   readonly spriteType: NoLocalizationRefs;
   /** A `pdxmesh` declares no localisation slots, so it mints no keys. */

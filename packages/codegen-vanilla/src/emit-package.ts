@@ -91,6 +91,8 @@ export interface TrieReport {
 
 export interface RegistryReport {
   readonly registry: string;
+  /** Definitions use a repeated root keyword and expose no vanilla identifier. */
+  readonly anonymous: boolean;
   readonly ids: number;
   readonly files: number;
   readonly diagnostics: number;
@@ -361,6 +363,7 @@ export function emitVanillaPackage(
     }
     registries.push({
       registry: spec.registry,
+      anonymous: spec.anonymous,
       ids: read.ids.length,
       files: read.files,
       diagnostics: read.diagnostics,
@@ -377,6 +380,7 @@ export function emitVanillaPackage(
       plan.ids.push({ registry: projection.registry, file: projectionFile });
       registries.push({
         registry: projection.registry,
+        anonymous: false,
         ids: projection.ids.length,
         files: read.files,
         diagnostics: 0,
