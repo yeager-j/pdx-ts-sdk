@@ -623,7 +623,7 @@ export type WeaponComponentTemplateLoc = {
 
 /** A weapon_component_template registered with a mod, usable as a typed cross-reference. */
 export type DefinedWeaponComponentTemplate<Id extends string = string> = DefinedContent<
-  "weapon_component_template",
+  "component_template.weapon_component_template",
   WeaponComponentTemplateDef<Id>
 >;
 

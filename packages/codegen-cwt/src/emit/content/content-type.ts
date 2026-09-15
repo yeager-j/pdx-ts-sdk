@@ -11,7 +11,11 @@ import type { RuleField } from "../../cwt/model.ts";
 import type { ContentBody, ContentType } from "../../cwt/rules.ts";
 import { Emitter } from "../../emit/typescript.ts";
 import type { EmittedField } from "../../lower/content-model.ts";
-import { subtypeReferenceRefinements } from "../../lower/content-reference.ts";
+import {
+  referenceNameOf,
+  subtypeReferenceRefinements,
+  typesReferencedBySubtype,
+} from "../../lower/content-reference.ts";
 import type { AliasNameField } from "../../lower/rule-shapes.ts";
 import { partitionSubtypeFields } from "../../lower/subtype-partition.ts";
 import {
@@ -1103,6 +1107,7 @@ function contentTypeCode(
   emitter: Emitter,
   type: ContentType,
   cwtType: ContentType,
+  referenceName: string,
   names: ContentTypeNames,
   parameter: ScopeParameter | null,
   surface: ScopeParameterSurface,
@@ -1189,7 +1194,7 @@ function contentTypeCode(
     ]) +
     `export type Defined${typeName}<Id extends string = string> = ` +
     `${emitter.use("DefinedContent")}<\n` +
-    `  ${JSON.stringify(type.name)},\n` +
+    `  ${JSON.stringify(referenceName)},\n` +
     `  ${typeName}Def<Id>\n` +
     ">;\n\n" +
     patch.code +
@@ -1405,10 +1410,12 @@ export function emitContentType(
       )
     : { code: "", exportedNames: [] };
   const locTypeName = localisationPlan.entries.length === 0 ? null : `${names.typeName}Loc`;
+  const referenceName = referenceNameOf(cwtType, subtype, typesReferencedBySubtype(emitter.rules));
   const module = contentTypeCode(
     emitter,
     type,
     cwtType,
+    referenceName,
     names,
     parameter,
     surface,

@@ -33,6 +33,7 @@ import {
   isCapital,
   isMissionType,
   isSiteLocked,
+  isStormType,
   not,
   or,
   vanilla,
@@ -69,6 +70,7 @@ import {
   type CrisisPathItem,
   type CrisisPathRef,
   type DecisionRef,
+  type DefinedStormType,
   type EconomicResourceBlock,
   type EconomicResourceBlockNoProduce,
   type EconomicResourceOperation,
@@ -116,6 +118,8 @@ import {
   type SpecimenRef,
   type SpriteRef,
   type StaticModifierItem,
+  type StormTypeItem,
+  type StormTypesRef,
   type StrikeCraftComponentTemplateFields,
   type TechnologyDef,
   type TechnologyFields,
@@ -186,6 +190,45 @@ const sdk45Mod = createMod(SDK45_CONFIG, {
 });
 
 describe("generated content authoring types", () => {
+  it("brands a storm type for the lifecycle APIs and preserves its literal id", () => {
+    const storm = contentMod.stormType("toxic", {
+      name: "Toxic Storm",
+      stormMinRadius: { base: 10 },
+      stormMaxRadius: { base: 20 },
+      stormMinSteps: { base: 1 },
+      stormMaxSteps: { base: 3 },
+      stormSpeed: { base: 0.5 },
+      stormActivationPeriodInMonths: { base: 12 },
+      stormMonthlyAddedDevastation: { base: 1 },
+      spawnWeight: 0,
+      cosmicStormTexturePath: "gfx/map/storms/NebulaOpacity.dds",
+      cosmicStormTextureColorPath: "gfx/map/storms/celestial_storm_color.dds",
+      cosmicStormEventSprite: "GFX_celestial_storm",
+      icon: "GFX_planetview_storm_celestial_modifier_frame",
+    });
+    const building = contentMod.building("not_a_storm", { name: "Not a storm" });
+    const country = makeScope<"country">([]);
+    const acceptsStorm = (_storm: StormTypesRef): void => {};
+    const acceptsDefinedStorm = (definedStorm: DefinedStormType<typeof storm.id>): void => {
+      acceptsStorm(definedStorm);
+      country.createCosmicStorm({ type: definedStorm, cosmicStormStartPosition: "random" });
+      isStormType(definedStorm);
+    };
+
+    expectTypeOf(storm.id).toEqualTypeOf<"content_types_storm_type_toxic">();
+    expectTypeOf(storm).toMatchTypeOf<StormTypeItem>();
+    expectTypeOf(acceptsDefinedStorm).toBeFunction();
+    acceptsStorm(storm);
+    country.createCosmicStorm({ type: storm, cosmicStormStartPosition: "random" });
+    isStormType(storm);
+    // @ts-expect-error — a building is not a storm-type reference.
+    acceptsStorm(building);
+    // @ts-expect-error — storm creation keeps the same reference contract.
+    country.createCosmicStorm({ type: building });
+    // @ts-expect-error — storm predicates reject other content registries too.
+    isStormType(building);
+  });
+
   it("keeps root-only declarative fields as plain values", () => {
     expectTypeOf<
       WithFrom<Trigger<"country">, "country", { readonly root: "country" }>

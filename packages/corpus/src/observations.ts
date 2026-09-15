@@ -521,6 +521,28 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     rationale: resourceRows(),
   },
   {
+    registry: "storm_type",
+    field: "triggered_ship_modifier",
+    kind: "arity",
+    evidence: [],
+    classification: "rules-wider-than-vanilla",
+    declaration: "common/storm_types.cwt:79 — ## cardinality = 0..inf",
+    rationale:
+      "Each entry carries one condition and modifier set, so repetition expresses several " +
+      "independent ship cases. The one shipped storm type using this field writes one case.",
+  },
+  {
+    registry: "storm_type",
+    field: "triggered_system_modifier",
+    kind: "arity",
+    evidence: [],
+    classification: "rules-wider-than-vanilla",
+    declaration: "common/storm_types.cwt:83 — ## cardinality = 0..inf",
+    rationale:
+      "The system-scoped sibling above uses the leader-aware triggered-modifier clause, but each " +
+      "entry is still one independent case. The two shipped storm types using it write one each.",
+  },
+  {
     registry: "strike_craft_component_template",
     field: "resources",
     kind: "arity",

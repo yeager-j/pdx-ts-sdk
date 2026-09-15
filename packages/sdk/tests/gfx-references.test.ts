@@ -211,6 +211,41 @@ describe("asset paths", () => {
     expect(assetPathWarnings(pure.warnings)).toEqual([]);
   });
 
+  it("lowers scalar and list Asset paths from a storm type", () => {
+    const mod = gfxMod("storm_assets");
+    const texture = assetAt(mod, "gfx/map/storms/toxic.dds");
+    const color = assetAt(mod, "gfx/map/storms/toxic_color.dds");
+    const lightningA = assetAt(mod, "gfx/map/storms/lightning/toxic_a.dds");
+    const lightningB = assetAt(mod, "gfx/map/storms/lightning/toxic_b.dds");
+    const storm = mod.stormType("toxic", {
+      name: "Toxic Storm",
+      stormMinRadius: { base: 10 },
+      stormMaxRadius: { base: 20 },
+      stormMinSteps: { base: 1 },
+      stormMaxSteps: { base: 3 },
+      stormSpeed: { base: 0.5 },
+      stormActivationPeriodInMonths: { base: 12 },
+      stormMonthlyAddedDevastation: { base: 1 },
+      spawnWeight: 0,
+      cosmicStormTexturePath: texture,
+      cosmicStormTextureColorPath: color,
+      cosmicStormTextureLightningPaths: [lightningA, lightningB],
+      cosmicStormEventSprite: "GFX_celestial_storm",
+      icon: "GFX_planetview_storm_celestial_modifier_frame",
+    });
+    const pure = mod.compile([
+      mod.feature(undefined, [texture, color, lightningA, lightningB, storm]),
+    ]);
+    const emitted = render(pure).get("common/storm_types/storm_assets_storm_types.txt")!;
+
+    expect(emitted).toContain("cosmic_storm_texture_path = gfx/map/storms/toxic.dds");
+    expect(emitted).toContain(
+      "cosmic_storm_texture_lightning_paths = { gfx/map/storms/lightning/toxic_a.dds " +
+        "gfx/map/storms/lightning/toxic_b.dds }"
+    );
+    expect(assetPathWarnings(pure.warnings)).toEqual([]);
+  });
+
   it("refuses an Asset that no Feature places", () => {
     // The one asset-path failure that is provable: the file will not be in the
     // mod, and the definition names it anyway.

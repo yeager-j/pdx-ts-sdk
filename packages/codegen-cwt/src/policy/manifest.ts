@@ -181,6 +181,11 @@ export const CONTENT_MANIFEST = [
     keyword: "special_project",
   },
   { type: "specimen", source: "common/specimens.cwt" },
+  {
+    type: "storm_types",
+    source: "common/storm_types.cwt",
+    name: "storm_type",
+  },
   { type: "megastructure", source: "common/megastructures.cwt" },
   {
     type: "terraform_link",

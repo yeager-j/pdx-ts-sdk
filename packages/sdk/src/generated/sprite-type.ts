@@ -267,7 +267,7 @@ export interface SpriteTypeDef<Id extends string = string> extends SpriteTypeFie
 
 /** A spriteType registered with a mod, usable as a typed cross-reference. */
 export type DefinedSpriteType<Id extends string = string> = DefinedContent<
-  "spriteType",
+  "sprite",
   SpriteTypeDef<Id>
 >;
 

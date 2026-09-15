@@ -1,0 +1,75 @@
+storm_test_storm_type_toxic_restoration = {
+	storm_min_radius = {
+		base = 15
+	}
+	storm_max_radius = {
+		base = 30
+	}
+	storm_min_steps = {
+		base = 2
+	}
+	storm_max_steps = {
+		base = 5
+	}
+	storm_speed = {
+		base = 0.6
+	}
+	storm_activation_period_in_months = {
+		base = 12
+	}
+	storm_monthly_added_devastation = {
+		base = 1
+	}
+	affect_hp_regen = yes
+	affect_armor_regen = yes
+	affect_shield_regen = yes
+	occlude_system = yes
+	spawn_weight = {
+		base = 0
+	}
+	description = storm_test_storm_type_toxic_restoration_description
+	custom_tooltip = storm_test_storm_type_toxic_restoration_custom_tooltip
+	triggered_fleet_modifier = {
+		potential = {
+			always = yes
+		}
+		ship_speed_mult = -0.25
+	}
+	triggered_planet_modifier = {
+		potential = {
+			always = yes
+		}
+		planet_storm_devastation_mult = 0.5
+	}
+	triggered_ship_modifier = {
+		potential = {
+			always = yes
+		}
+		ship_shield_regen_add = -0.5
+	}
+	triggered_system_modifier = {
+		potential = {
+			always = yes
+		}
+		system_storm_influence_add = 1
+	}
+	on_start = {
+		set_storm_flag = storm_test_toxic_restoration
+	}
+	on_moved = {
+		log = storm_test_toxic_restoration_moved
+	}
+	on_finished = {
+		log = storm_test_toxic_restoration_finished
+	}
+	cosmic_storm_texture_path = gfx/map/storms/NebulaOpacity.dds
+	cosmic_storm_texture_color_path = gfx/map/storms/celestial_storm_color.dds
+	cosmic_storm_event_sprite = GFX_storm_test_toxic_storm_event
+	icon = GFX_storm_test_toxic_storm_icon
+	cosmic_storm_texture_lightning_paths = { gfx/map/storms/lightning/lightning_big_storm_01.dds gfx/map/storms/lightning/lightning_small_storm_01.dds }
+	cosmic_storm_galaxy_lightning_time = 5
+	cosmic_storm_galaxy_max_opacity = 0.5
+	show_notification = {
+		has_country_flag = storm_test_knows_toxic_world
+	}
+}

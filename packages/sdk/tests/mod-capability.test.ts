@@ -58,6 +58,7 @@ const COMPLETE_PROFILE = {
   eventChain: "event_chain",
   specialProject: "special_project",
   specimen: "specimen",
+  stormType: "storm_type",
   megastructure: "megastructure",
   terraformLink: "terraform_link",
   // No GFX registries: `spriteType`, `pdxmesh` and `pdxparticle` mint

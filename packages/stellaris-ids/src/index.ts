@@ -102,6 +102,7 @@ export type { VanillaStarbaseLevelId } from "./registries/starbase-level.ts";
 export type { VanillaStarbaseModuleCategoryMember } from "./enums/starbase-module-category.ts";
 export type { VanillaStaticModifierId } from "./registries/static-modifier.ts";
 export type { VanillaStaticModifierTrie } from "./registries/static-modifier/index.ts";
+export type { VanillaStormTypeId } from "./registries/storm-type.ts";
 export type { VanillaStrikeCraftComponentTemplateId } from "./registries/strike-craft-component-template.ts";
 export type { VanillaTechnologyId } from "./registries/technology.ts";
 export type { VanillaTerraformLinkId } from "./registries/terraform-link.ts";

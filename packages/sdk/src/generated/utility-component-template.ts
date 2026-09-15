@@ -501,7 +501,7 @@ export type UtilityComponentTemplateLoc = {
 
 /** An utility_component_template registered with a mod, usable as a typed cross-reference. */
 export type DefinedUtilityComponentTemplate<Id extends string = string> = DefinedContent<
-  "utility_component_template",
+  "component_template.utility_component_template",
   UtilityComponentTemplateDef<Id>
 >;
 

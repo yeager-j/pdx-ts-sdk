@@ -5847,37 +5847,6 @@
         "trigger": 170
       }
     },
-    "storm_types": {
-      "path": "common/storm_types",
-      "definitions": 8,
-      "files": 1,
-      "fingerprint": "f3ac9b6011a7bdda421a0d55a1bd656ed6c9bbf9e9852f38caf2f93b69c87892",
-      "fields": {
-        "affect_armor_regen": 2,
-        "affect_hp_regen": 2,
-        "affect_shield_regen": 3,
-        "cosmic_storm_event_sprite": 8,
-        "cosmic_storm_galaxy_lightning_time": 8,
-        "cosmic_storm_galaxy_max_opacity": 8,
-        "cosmic_storm_texture_color_path": 8,
-        "cosmic_storm_texture_lightning_paths": 8,
-        "cosmic_storm_texture_path": 8,
-        "custom_tooltip": 2,
-        "description": 8,
-        "icon": 8,
-        "inline_script": 8,
-        "occlude_system": 1,
-        "on_finished": 8,
-        "on_moved": 8,
-        "on_start": 8,
-        "show_notification": 1,
-        "spawn_weight": 8,
-        "triggered_fleet_modifier": 6,
-        "triggered_planet_modifier": 5,
-        "triggered_ship_modifier": 1,
-        "triggered_system_modifier": 2
-      }
-    },
     "subspecies_integration_type": {
       "path": "common/species_rights/subspecies_integration_types",
       "definitions": 2,
@@ -6388,5 +6357,5 @@
       "files": 1
     }
   },
-  "fingerprint": "bfeca89508547e2c08e33411e3666bfc85ef68240960dce6d2d8f31fb4fcd991"
+  "fingerprint": "c264352a4e831acc2e9aece1576100cc0498e62554055ac898bb887249ed7661"
 }

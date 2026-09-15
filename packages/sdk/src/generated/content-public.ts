@@ -36,6 +36,7 @@
 // From: common/event_chains.cwt
 // From: common/special_projects.cwt
 // From: common/specimens.cwt
+// From: common/storm_types.cwt
 // From: common/megastructures.cwt
 // From: common/terraform.cwt
 // From: interface/sprites.cwt
@@ -352,6 +353,12 @@ export type {
   StaticModifierPlanetFields,
   StaticModifierScope,
 } from "./static-modifier.ts";
+export type {
+  DefinedStormType,
+  StormTypeDef,
+  StormTypeFields,
+  StormTypeLoc,
+} from "./storm-type.ts";
 export type {
   DefinedStrikeCraftComponentTemplate,
   StrikeCraftComponentTemplateDef,

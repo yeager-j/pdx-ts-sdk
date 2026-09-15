@@ -1,0 +1,33 @@
+namespace = storm_test_restoration
+
+country_event = {
+	id = storm_test_restoration.1
+	hide_window = yes
+	is_triggered_only = yes
+	immediate = {
+		create_cosmic_storm = {
+			type = storm_test_storm_type_toxic_restoration
+			immediate = yes
+			cosmic_storm_start_position = random
+		}
+		last_created_cosmic_storm = {
+			set_storm_flag = storm_test_toxic_restoration
+			lock_storm_in_place = yes
+		}
+	}
+}
+
+country_event = {
+	id = storm_test_restoration.2
+	hide_window = yes
+	is_triggered_only = yes
+	immediate = {
+		every_cosmic_storm = {
+			limit = {
+				is_storm_type = storm_test_storm_type_toxic_restoration
+				has_storm_flag = storm_test_toxic_restoration
+			}
+			destroy_cosmic_storm = yes
+		}
+	}
+}

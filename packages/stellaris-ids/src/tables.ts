@@ -93,6 +93,7 @@ import type { VanillaStarClassId } from "./registries/star-class.ts";
 import type { VanillaStarbaseLevelId } from "./registries/starbase-level.ts";
 import type { VanillaStaticModifierId } from "./registries/static-modifier.ts";
 import type { VanillaStaticModifierTrie } from "./registries/static-modifier/index.ts";
+import type { VanillaStormTypeId } from "./registries/storm-type.ts";
 import type { VanillaStrikeCraftComponentTemplateId } from "./registries/strike-craft-component-template.ts";
 import type { VanillaTechnologyId } from "./registries/technology.ts";
 import type { VanillaTerraformLinkId } from "./registries/terraform-link.ts";
@@ -154,6 +155,7 @@ export interface VanillaIds {
   readonly event_chain: VanillaEventChainId;
   readonly special_project: VanillaSpecialProjectId;
   readonly specimen: VanillaSpecimenId;
+  readonly storm_type: VanillaStormTypeId;
   readonly megastructure: VanillaMegastructureId;
   readonly terraform_link: VanillaTerraformLinkId;
   readonly spriteType: VanillaSpriteTypeId;

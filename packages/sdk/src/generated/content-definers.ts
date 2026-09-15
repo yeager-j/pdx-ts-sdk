@@ -36,6 +36,7 @@
 // From: common/event_chains.cwt
 // From: common/special_projects.cwt
 // From: common/specimens.cwt
+// From: common/storm_types.cwt
 // From: common/megastructures.cwt
 // From: common/terraform.cwt
 // From: interface/sprites.cwt
@@ -149,6 +150,7 @@ import {
   type StaticModifierDef,
   type StaticModifierScope,
 } from "./static-modifier.ts";
+import { STORM_TYPE_LOCALISATION, type StormTypeDef } from "./storm-type.ts";
 import {
   STRIKE_CRAFT_COMPONENT_TEMPLATE_LOCALISATION,
   type StrikeCraftComponentTemplateDef,
@@ -1333,6 +1335,26 @@ export function defineSpecimen<const Id extends string>(
     id: def.id,
     def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, SPECIMEN_LOCALISATION),
+  };
+}
+
+/** What a storm type feature can contain. */
+export type StormTypeItem = ContentItem<"storm_type", StormTypeDef>;
+
+/**
+ * Internal lowering primitive for a storm type. Public authors call
+ * `mod.stormType(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineStormType<const Id extends string>(
+  def: StormTypeDef<Id>
+): ContentItem<"storm_type", StormTypeDef<Id>> {
+  return {
+    itemKind: "content",
+    type: "storm_type",
+    id: def.id,
+    def: snapshotAuthoredValue(def),
+    loc: contentLocalizationRefs(def.id, STORM_TYPE_LOCALISATION),
   };
 }
 

@@ -68,6 +68,21 @@ export const ASSET_PATH_FIELDS = new Map<string, string>([
       'comment gives the mod-root form ("gfx/models/shielded_planet.mesh"); vanilla writes ' +
       '"gfx/models/spacedust.mesh". It is the mesh a pdxmesh is.',
   ],
+  [
+    "storm_type.cosmic_storm_texture_path",
+    "common/storm_types.cwt declares `cosmic_storm_texture_path = filepath`; every vanilla " +
+      'storm type writes a mod-root path such as "gfx/map/storms/NebulaOpacity.dds".',
+  ],
+  [
+    "storm_type.cosmic_storm_texture_color_path",
+    "common/storm_types.cwt declares `cosmic_storm_texture_color_path = filepath`; every " +
+      'vanilla storm type writes its mod-root color-map path under "gfx/map/storms".',
+  ],
+  [
+    "storm_type.cosmic_storm_texture_lightning_paths",
+    "common/storm_types.cwt declares a brace list of `filepath` values; every vanilla storm " +
+      'type writes mod-root lightning texture paths under "gfx/map/storms/lightning".',
+  ],
 ]);
 
 /**

@@ -36,6 +36,7 @@
 // From: common/event_chains.cwt
 // From: common/special_projects.cwt
 // From: common/specimens.cwt
+// From: common/storm_types.cwt
 // From: common/megastructures.cwt
 // From: common/terraform.cwt
 // From: interface/sprites.cwt
@@ -78,6 +79,7 @@ import type { SpecialProjectLoc } from "./special-project.ts";
 import type { SpeciesClassLoc } from "./species-class.ts";
 import type { SpecimenLoc } from "./specimen.ts";
 import type { StaticModifierLoc } from "./static-modifier.ts";
+import type { StormTypeLoc } from "./storm-type.ts";
 import type { StrikeCraftComponentTemplateLoc } from "./strike-craft-component-template.ts";
 import type { TechnologyLoc } from "./technology.ts";
 import type { TraditionCategoryLoc } from "./tradition-category.ts";
@@ -186,6 +188,8 @@ export interface ContentLocByType {
   readonly special_project: SpecialProjectLoc;
   /** The localization keys one `specimen` mints, as references. */
   readonly specimen: SpecimenLoc;
+  /** The localization keys one `storm_type` mints, as references. */
+  readonly storm_type: StormTypeLoc;
   /** The localization keys one `megastructure` mints, as references. */
   readonly megastructure: MegastructureLoc;
   /** A `terraform_link` declares no localisation slots, so it mints no keys. */
