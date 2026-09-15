@@ -21,6 +21,7 @@
 - Event Chains & Special Projects
 - Civics
 - Origins
+- Cosmic Storms
 
 ## Simple
 
