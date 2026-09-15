@@ -96,7 +96,10 @@ export interface PdxmeshDef<Id extends string = string> extends PdxmeshFields {
 }
 
 /** A pdxmesh registered with a mod, usable as a typed cross-reference. */
-export type DefinedPdxmesh<Id extends string = string> = DefinedContent<"pdxmesh", PdxmeshDef<Id>>;
+export type DefinedPdxmesh<Id extends string = string> = DefinedContent<
+  "model_mesh",
+  PdxmeshDef<Id>
+>;
 
 /** How the writer lowers each member of {@link PdxmeshFields} to PDXScript. */
 export const PDXMESH_FIELDS: readonly ContentField[] = [

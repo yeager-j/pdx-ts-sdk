@@ -107,7 +107,7 @@ export type StormTypeLoc = {
 
 /** A storm_type registered with a mod, usable as a typed cross-reference. */
 export type DefinedStormType<Id extends string = string> = DefinedContent<
-  "storm_type",
+  "storm_types",
   StormTypeDef<Id>
 >;
 

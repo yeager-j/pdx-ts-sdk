@@ -1719,6 +1719,10 @@ describe("content-type codegen", () => {
     const stormType = emissions.get("storm_type");
 
     expect(stormType?.code).toContain("export interface StormTypeFields");
+    expect(stormType?.code).toContain(
+      "export type DefinedStormType<Id extends string = string> = DefinedContent<\n" +
+        '  "storm_types",'
+    );
     expect(stormType?.code).toContain("  name: LocalizedText;");
     expect(stormType?.code).toContain("stormMinRadius: WeightBlock<never>;");
     expect(stormType?.code).toContain("spawnWeight: number | WeightBlock<never>;");

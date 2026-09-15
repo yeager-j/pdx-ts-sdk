@@ -64,6 +64,7 @@ import {
   type CrisisPathItem,
   type CrisisPathRef,
   type DecisionRef,
+  type DefinedStormType,
   type EconomicResourceBlock,
   type EconomicResourceBlockNoProduce,
   type EconomicResourceOperation,
@@ -199,9 +200,15 @@ describe("generated content authoring types", () => {
     const building = contentMod.building("not_a_storm", { name: "Not a storm" });
     const country = makeScope<"country">([]);
     const acceptsStorm = (_storm: StormTypesRef): void => {};
+    const acceptsDefinedStorm = (definedStorm: DefinedStormType<typeof storm.id>): void => {
+      acceptsStorm(definedStorm);
+      country.createCosmicStorm({ type: definedStorm, cosmicStormStartPosition: "random" });
+      isStormType(definedStorm);
+    };
 
     expectTypeOf(storm.id).toEqualTypeOf<"content_types_storm_type_toxic">();
     expectTypeOf(storm).toMatchTypeOf<StormTypeItem>();
+    expectTypeOf(acceptsDefinedStorm).toBeFunction();
     acceptsStorm(storm);
     country.createCosmicStorm({ type: storm, cosmicStormStartPosition: "random" });
     isStormType(storm);

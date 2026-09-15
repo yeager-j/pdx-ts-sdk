@@ -536,7 +536,7 @@ export type StrikeCraftComponentTemplateLoc = {
 
 /** A strike_craft_component_template registered with a mod, usable as a typed cross-reference. */
 export type DefinedStrikeCraftComponentTemplate<Id extends string = string> = DefinedContent<
-  "strike_craft_component_template",
+  "component_template.strike_craft_component_template",
   StrikeCraftComponentTemplateDef<Id>
 >;
 

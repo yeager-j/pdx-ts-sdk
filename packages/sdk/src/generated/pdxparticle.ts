@@ -28,7 +28,7 @@ export interface PdxparticleDef<Id extends string = string> extends PdxparticleF
 
 /** A pdxparticle registered with a mod, usable as a typed cross-reference. */
 export type DefinedPdxparticle<Id extends string = string> = DefinedContent<
-  "pdxparticle",
+  "particle",
   PdxparticleDef<Id>
 >;
 
