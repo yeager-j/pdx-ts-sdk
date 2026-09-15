@@ -12,11 +12,14 @@ import { viewFromFiles } from "../src/installation/vanilla/view.ts";
 import { makeScope } from "../src/internals.ts";
 import {
   always,
+  and,
+  anyOwnedMission,
   canGoMia,
   canJoinFactions,
   currentSituationApproach,
   currentStage,
   external,
+  hasAscensionPerk,
   hasAuthority,
   hasCompletedEventChainCounter,
   hasCountryFlag,
@@ -25,10 +28,13 @@ import {
   hasShipFlag,
   hasSpecimen,
   hasStageModifier,
+  hasTechnology,
   isAtWar,
   isCapital,
+  isMissionType,
   isSiteLocked,
   isStormType,
+  not,
   or,
   vanilla,
   type AgendaRef,
@@ -119,6 +125,9 @@ import {
   type TechnologyFields,
   type TechnologyPatch,
   type TechnologyRef,
+  type TerraformLinkFields,
+  type TerraformLinkItem,
+  type TerraformLinkRef,
   type TraditionSwapFields,
   type Trigger,
   type TriggeredModifier,
@@ -3005,6 +3014,128 @@ describe("generated content authoring types", () => {
  * definition's own members come from, so what it accepts is checked the same
  * way — and what it must not accept is the identity it exists to keep.
  */
+describe("terraform link authoring types (SDK-460)", () => {
+  const stables = contentMod.mission("terraform_stables", {
+    picture: "GFX_evt_inf_planetary_crust_drilling",
+  });
+  const restoration = contentMod.staticModifier("terraform_restoration", {
+    hostScope: "planet",
+    name: "Dormant Biosphere Network",
+  });
+  const ocean = vanilla.planetClass("pc_ocean");
+  const gaia = vanilla.planetClass("pc_gaia");
+  const worldShaper = vanilla.ascensionPerk("ap_world_shaper");
+
+  it("preserves the logical identity and typed reference brand", () => {
+    const link = contentMod.terraformLink("ocean_restoration", {
+      from: ocean,
+      to: gaia,
+      duration: 3_600,
+      resources: [
+        {
+          category: vanilla.economicCategory("terraforming"),
+          cost: { amounts: { energy: 7_500 } },
+        },
+      ],
+      condition: and(
+        hasTechnology(vanilla.technology("tech_terrestrial_sculpting")),
+        anyOwnedMission(isMissionType(stables))
+      ),
+      potential: (ctx) =>
+        and(ctx.from.trigger(hasModifier(restoration)), not(hasAscensionPerk(worldShaper))),
+    });
+
+    expectTypeOf(link.id).toEqualTypeOf<"content_types_terraform_link_ocean_restoration">();
+    expectTypeOf(link).toExtend<TerraformLinkItem>();
+    expectTypeOf(link).toExtend<TerraformLinkRef>();
+    expectTypeOf<TechnologyRef>().not.toExtend<TerraformLinkRef>();
+    // Anonymous links have no shipped identifier for the vanilla package to expose.
+    // @ts-expect-error — the generated vanilla id union is `never`.
+    vanilla.terraformLink("ocean_to_gaia");
+  });
+
+  it("rejects wrong references, values, and clause scopes", () => {
+    const technology = contentMod.technology("wrong_registry", {
+      name: "Wrong registry",
+      area: "society",
+      tier: 1,
+      category: "new_worlds",
+      cost: 1,
+      weight: 1,
+    });
+
+    contentMod.terraformLink("wrong_source", {
+      // @ts-expect-error — a technology is not a planet-class reference.
+      from: technology,
+      to: gaia,
+      duration: 1_800,
+    });
+    contentMod.terraformLink("wrong_category", {
+      from: ocean,
+      to: gaia,
+      duration: 1_800,
+      resources: [
+        {
+          // @ts-expect-error — a mission is not an economic-category reference.
+          category: stables,
+          cost: { amounts: { energy: 1 } },
+        },
+      ],
+    });
+    contentMod.terraformLink("wrong_duration", {
+      from: ocean,
+      to: gaia,
+      // @ts-expect-error — CWT declares an integer, represented as a number.
+      duration: "1800",
+    });
+    contentMod.terraformLink("wrong_country_clause", {
+      from: ocean,
+      to: gaia,
+      duration: 1_800,
+      // @ts-expect-error — a planet trigger must be opened through the declared FROM scope.
+      potential: hasPlanetFlag("terraform_target"),
+    });
+    contentMod.terraformLink("wrong_from_clause", {
+      from: ocean,
+      to: gaia,
+      duration: 1_800,
+      potential: (ctx) =>
+        // @ts-expect-error — potential's FROM is a planet, not a country.
+        ctx.from.trigger(hasCountryFlag("terraform_country")),
+    });
+    contentMod.terraformLink("wrong_hook_scopes", {
+      from: ocean,
+      to: gaia,
+      duration: 1_800,
+      effect: (country, ctx) => {
+        country.setCountryFlag("terraform_complete");
+        ctx.from.effects((planet) => planet.setPlanetFlag("terraform_complete"));
+      },
+      onQueued: (planet, ctx) => {
+        // @ts-expect-error — queue hooks run on the planet, not a country.
+        planet.setCountryFlag("terraform_queued");
+        ctx.from.effects((country) => {
+          // @ts-expect-error — queue-hook FROM is the country, not the planet.
+          country.setPlanetFlag("terraform_queued");
+        });
+      },
+    });
+  });
+
+  it("keeps every generated field on the public definition surface", () => {
+    expectTypeOf<TerraformLinkFields>().toHaveProperty("from");
+    expectTypeOf<TerraformLinkFields>().toHaveProperty("to");
+    expectTypeOf<TerraformLinkFields>().toHaveProperty("resources");
+    expectTypeOf<TerraformLinkFields>().toHaveProperty("duration");
+    expectTypeOf<TerraformLinkFields>().toHaveProperty("potential");
+    expectTypeOf<TerraformLinkFields>().toHaveProperty("condition");
+    expectTypeOf<TerraformLinkFields>().toHaveProperty("effect");
+    expectTypeOf<TerraformLinkFields>().toHaveProperty("aiWeight");
+    expectTypeOf<TerraformLinkFields>().toHaveProperty("onQueued");
+    expectTypeOf<TerraformLinkFields>().toHaveProperty("onUnqueued");
+  });
+});
+
 describe("generated patch authoring types", () => {
   const view = viewFromFiles({
     "common/technology/pp_soc_tech.txt":

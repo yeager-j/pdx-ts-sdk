@@ -205,8 +205,16 @@ function describeEmittedFields(emission: ContentEmission): string {
 
 function assertManifestKeywordMatchesType(entry: ContentManifestEntry, type: ContentType): void {
   const keyword = entry.keyword;
-  if (keyword !== undefined && type.nameField === null) {
-    throw new Error(`type[${entry.type}] declares no name_field, so it has no keyword`);
+  if (entry.anonymous === true && keyword === undefined) {
+    throw new Error(`anonymous type[${entry.type}] needs its repeated keyword`);
+  }
+  if (entry.anonymous === true && type.nameField !== null) {
+    throw new Error(`anonymous type[${entry.type}] must not declare name_field=${type.nameField}`);
+  }
+  if (entry.anonymous !== true && keyword !== undefined && type.nameField === null) {
+    throw new Error(
+      `type[${entry.type}] declares no name_field, so keyword=${keyword} requires anonymous: true`
+    );
   }
   if (keyword === undefined && type.nameField !== null) {
     throw new Error(
@@ -242,7 +250,14 @@ function emitManifestContents(rules: RuleSet, emitter: Emitter): ManifestContent
     assertManifestKeywordMatchesType(entry, type);
 
     emitter.beginFile();
-    const emission = emitContentType(emitter, type, body, registry, entry.as);
+    const emission = emitContentType(
+      emitter,
+      type,
+      body,
+      registry,
+      entry.as,
+      entry.anonymous === true
+    );
     const usage = emitter.endFile();
     // A registry that is one subtype of its type has nothing to refine: its
     // brand is already the qualified one wherever the rules reference it.
@@ -396,7 +411,7 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
   );
   report.push(
     `vanilla refs: ${vanillaRefs.checked} checked constructors,` +
-      ` ${vanillaRefs.tries} tries emitted (${vanillaRefs.refs.length} ref types registered)`
+      ` ${vanillaRefs.tries} tries emitted (${vanillaRefs.registeredRefs} ref types registered)`
   );
   report.push(
     `event kinds: ${events.kinds} (${events.definers} definers, ` +
@@ -688,7 +703,7 @@ async function writeContentModules(
       'import { makeEventTrie, makeIdTrie, makeVanillaRef } from "../identifiers/trie.ts";\n' +
       importList(
         "./refs.ts",
-        vanillaRefs.refs.map((name) => emitter.refTypeName(name))
+        vanillaRefs.importedRefs.map((name) => emitter.refTypeName(name))
       ) +
       "\n" +
       vanillaRefs.code
@@ -862,7 +877,10 @@ async function main(): Promise<void> {
       emitter,
       CONTENT_MANIFEST,
       VANILLA_REF_EXTRAS,
-      new Map(contents.map((content) => [content.registry, content.referenceName]))
+      new Map(contents.map((content) => [content.registry, content.referenceName])),
+      new Set(
+        contents.filter((content) => content.emission.anonymous).map((content) => content.registry)
+      )
     );
 
     const modifiers = await writeSharedRuleModules({

@@ -38,6 +38,7 @@
 // From: common/specimens.cwt
 // From: common/storm_types.cwt
 // From: common/megastructures.cwt
+// From: common/terraform.cwt
 // From: interface/sprites.cwt
 // From: gfx/model_entities.cwt
 // From: gfx/particles.cwt
@@ -161,6 +162,7 @@ import {
   type TechnologyPatch,
   type TechnologyPatchItem,
 } from "./technology.ts";
+import { TERRAFORM_LINK_LOCALISATION, type TerraformLinkDef } from "./terraform-link.ts";
 import {
   TRADITION_CATEGORY_LOCALISATION,
   type TraditionCategoryDef,
@@ -1402,6 +1404,26 @@ export function patchMegastructure<Source extends ParsedMegastructure>(
       MEGASTRUCTURE_LOCALISATION,
       prefix
     ),
+  };
+}
+
+/** What a terraform link feature can contain. */
+export type TerraformLinkItem = ContentItem<"terraform_link", TerraformLinkDef>;
+
+/**
+ * Internal lowering primitive for a terraform link. Public authors call
+ * `mod.terraformLink(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineTerraformLink<const Id extends string>(
+  def: TerraformLinkDef<Id>
+): ContentItem<"terraform_link", TerraformLinkDef<Id>> {
+  return {
+    itemKind: "content",
+    type: "terraform_link",
+    id: def.id,
+    def: snapshotAuthoredValue(def),
+    loc: contentLocalizationRefs(def.id, TERRAFORM_LINK_LOCALISATION),
   };
 }
 

@@ -68,6 +68,34 @@ const emissions = new Map(
 );
 
 describe("content-type codegen", () => {
+  it("generates anonymous terraform links with their declared scopes and fields", () => {
+    const terraformLink = emissions.get("terraform_link");
+    const registry = readFileSync("packages/sdk/src/generated/content-registry.ts", "utf8");
+
+    expect(interfaceMembers(terraformLink?.code ?? "", "TerraformLinkFields")).toEqual([
+      "from",
+      "to",
+      "resources",
+      "duration",
+      "condition",
+      "potential",
+      "effect",
+      "aiWeight",
+      "onQueued",
+      "onUnqueued",
+    ]);
+    expect(terraformLink?.code).toContain(
+      'Trigger<"country">, "country", { readonly root: "country"; readonly from: "planet" }'
+    );
+    expect(terraformLink?.code).toContain(
+      'onQueued?: EffectBlock<"planet", { readonly root: "planet"; readonly from: "country" }>;'
+    );
+    expect(terraformLink?.code).toContain(
+      'onUnqueued?: EffectBlock<"planet", { readonly root: "planet"; readonly from: "country" }>;'
+    );
+    expect(registry).toContain('keyedBy: { keyword: "terraform_link", nameField: null }');
+  });
+
   it("generates relic, mission, and mission-category authoring surfaces", () => {
     const relic = emissions.get("relic");
     const mission = emissions.get("mission");

@@ -4,8 +4,8 @@
  *
  * Nothing about where a registry's files live is written down here: `path`,
  * `path_extension`, `name_field`, and `skip_root_key` all come from the CWT
- * `type[...]` declaration. What the manifest states — the keyword a
- * `name_field` registry is written under — is cross-checked against any
+ * `type[...]` declaration. What the manifest states — the repeated keyword a
+ * name-field or anonymous registry is written under — is cross-checked against any
  * `## type_key_filter` the rules declare, the same stance `@pdx-ts/codegen-cwt`
  * takes: a keyword the rules contradict would emit a top-level key the game
  * quietly ignores.
@@ -43,8 +43,10 @@ export interface RegistrySpec {
   readonly extension: string;
   /** Repeated top-level key each definition is written under, when it has one. */
   readonly keyword: string | null;
-  /** Body field carrying the id, for registries keyed by a repeated keyword. */
+  /** Body field carrying the id, or null when repeated definitions are anonymous. */
   readonly nameField: string | null;
+  /** Whether definitions have no game-visible identifier. */
+  readonly anonymous: boolean;
   /** Root block the definitions sit one level inside, e.g. `spriteTypes`. */
   readonly skipRootKey: string | null;
   /**
@@ -146,8 +148,16 @@ function resolveRow(
   }
   const keyword = row.keyword ?? null;
   const skipRootKey = type.skipRootKey ?? null;
-  if (keyword !== null && type.nameField === null) {
-    throw new Error(`type[${row.type}] declares no name_field, so it has no keyword`);
+  if (row.anonymous === true && keyword === null) {
+    throw new Error(`anonymous type[${row.type}] needs its repeated keyword`);
+  }
+  if (row.anonymous === true && type.nameField !== null) {
+    throw new Error(`anonymous type[${row.type}] must not declare name_field=${type.nameField}`);
+  }
+  if (row.anonymous !== true && keyword !== null && type.nameField === null) {
+    throw new Error(
+      `type[${row.type}] declares no name_field, so keyword=${keyword} requires anonymous: true`
+    );
   }
   // A `skip_root_key` registry is recognised by the presence of its name field
   // inside the root block instead: sprites are written under eight differently
@@ -178,6 +188,7 @@ function resolveRow(
     extension: type.pathExtension ?? DEFAULT_EXTENSION,
     keyword,
     nameField: type.nameField,
+    anonymous: row.anonymous === true,
     skipRootKey,
     keyFilter: type.keyFilter !== null && !type.keyFilter.negated ? type.keyFilter.key : null,
     excludedKey: type.keyFilter?.negated === true ? type.keyFilter.key : null,

@@ -51,6 +51,7 @@ function registry(
       extension: ".txt",
       keyword: null,
       nameField: null,
+      anonymous: false,
       skipRootKey: null,
       keyFilter: null,
       excludedKey: null,

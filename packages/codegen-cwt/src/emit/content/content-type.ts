@@ -94,6 +94,8 @@ const PARSED_CONTENT_MODULE = "../installation/vanilla/parsed-definitions.ts";
 export interface ContentEmission {
   /** Complete generated module text for the registry. */
   readonly code: string;
+  /** Whether the game serializes definitions without an identifier. */
+  readonly anonymous: boolean;
   /**
    * Every name {@link ContentEmission.code} declares as an export, which the
    * public barrel checks the names it publishes against.
@@ -1007,7 +1009,8 @@ function definitionType(
   typeName: string,
   fieldsName: string,
   parameter: ScopeParameter | null,
-  unions: SubtypeUnionsPlan
+  unions: SubtypeUnionsPlan,
+  anonymous: boolean
 ): string {
   const declaredFrom = parameter?.declaredFrom;
   const generic =
@@ -1024,9 +1027,14 @@ function definitionType(
     parameter === null
       ? ""
       : `<${parameter.parameterName}${declaredFrom === undefined ? "" : ", L"}>`;
-  const idMember = "  /** Full content id, including the mod prefix. */\n" + "  id: Id;\n";
+  const idMember = anonymous
+    ? "  /** SDK-only identity, including the mod prefix; not written to PDXScript. */\n" +
+      "  id: Id;\n"
+    : "  /** Full content id, including the mod prefix. */\n" + "  id: Id;\n";
   const withId = docComment([
-    `${capitalizedArticle(type.name)} ${type.name} with the id it is defined under.`,
+    anonymous
+      ? `${capitalizedArticle(type.name)} ${type.name} with its SDK-only logical identity.`
+      : `${capitalizedArticle(type.name)} ${type.name} with the id it is defined under.`,
   ]);
   if (unions.arms.length === 0) {
     const base = parameter === null ? `${typeName}Fields` : `${fieldsName}${fieldsArguments}`;
@@ -1107,7 +1115,8 @@ function contentTypeCode(
   locTypeName: string | null,
   draft: ContentTypeDraft,
   unions: SubtypeUnionsPlan,
-  patch: { readonly code: string; readonly exportedNames: readonly string[] }
+  patch: { readonly code: string; readonly exportedNames: readonly string[] },
+  anonymous: boolean
 ): { readonly code: string; readonly exportedNames: readonly string[] } {
   const { typeName, fieldsName, fieldsConstant, localisationConstant } = names;
   const declaredFrom = parameter?.declaredFrom;
@@ -1172,13 +1181,16 @@ function contentTypeCode(
         `export type ${typeName}Fields${surface.generic} =\n` +
         unions.arms.map((arm) => `  | ${arm.typeName}${surface.genericArguments}`).join("\n") +
         ";\n\n") +
-    definitionType(type, typeName, fieldsName, parameter, unions) +
+    definitionType(type, typeName, fieldsName, parameter, unions, anonymous) +
     // A registry with no declared slots emits no type: its items carry the
     // shared empty surface, so there is nothing per-registry to name.
     (locTypeName === null ? "" : localisationRefType(emitter, type, typeName, localisationPlan)) +
     docComment([
-      `${capitalizedArticle(type.name)} ${type.name} registered with a mod, ` +
-        "usable as a typed cross-reference.",
+      anonymous
+        ? `${capitalizedArticle(type.name)} ${type.name} registered with a mod. Its id tracks ` +
+          "SDK identity and is not written to PDXScript."
+        : `${capitalizedArticle(type.name)} ${type.name} registered with a mod, ` +
+          "usable as a typed cross-reference.",
     ]) +
     `export type Defined${typeName}<Id extends string = string> = ` +
     `${emitter.use("DefinedContent")}<\n` +
@@ -1327,7 +1339,8 @@ export function emitContentType(
    * of `type[sprite]`, and reading the selector off the name would look for a
    * `subtype[spriteType]` that does not exist.
    */
-  subtype?: string
+  subtype?: string,
+  anonymous: boolean = false
 ): ContentEmission {
   // One CWT type can back several registries — three keywords share
   // `type[component_template]`. Renaming once here makes every downstream
@@ -1410,7 +1423,8 @@ export function emitContentType(
     locTypeName,
     draft,
     unions,
-    patch
+    patch,
+    anonymous
   );
 
   // The prose lists are projections of the same rows the ledger carries, so
@@ -1424,6 +1438,7 @@ export function emitContentType(
   const localisationRows = [...localisationPlan.aliases, ...draft.localisationAliases];
   return {
     code: module.code,
+    anonymous,
     exportedNames: module.exportedNames,
     typeName: names.typeName,
     publicTypes: contentPublicTypes(

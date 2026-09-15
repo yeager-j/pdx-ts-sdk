@@ -532,10 +532,12 @@ export interface ContentRegistryDescriptor {
   readonly fields: readonly ContentField[];
   readonly localisation: readonly ContentLocalisation[];
   /**
-   * Set when the registry keys entries by a repeated keyword instead of by the
-   * id — `utility_component_template = { key = "..." }` rather than
-   * `my_id = { ... }`. `keyword` is the literal top-level key and `nameField`
-   * the body field the id moves into.
+   * Set when the registry writes entries under a repeated keyword instead of
+   * the id — `utility_component_template = { key = "..." }` or an anonymous
+   * `terraform_link = { ... }`, rather than `my_id = { ... }`.
+   *
+   * `nameField` is the body field that receives the id. A null value keeps the
+   * logical authoring id internal so several anonymous entries can coexist.
    */
-  readonly keyedBy?: { readonly keyword: string; readonly nameField: string };
+  readonly keyedBy?: { readonly keyword: string; readonly nameField: string | null };
 }

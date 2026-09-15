@@ -68,6 +68,7 @@ const profile = {
   specimen: "specimen",
   stormType: "storm_type",
   megastructure: "megastructure",
+  terraformLink: "terraform_link",
   // No GFX registries: `spriteType`, `pdxmesh` and `pdxparticle` mint
   // segmentless names (SDK-121), so they are not `IdProfile` members and a
   // profile naming one no longer compiles.

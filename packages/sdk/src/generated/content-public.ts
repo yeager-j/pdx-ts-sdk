@@ -38,6 +38,7 @@
 // From: common/specimens.cwt
 // From: common/storm_types.cwt
 // From: common/megastructures.cwt
+// From: common/terraform.cwt
 // From: interface/sprites.cwt
 // From: gfx/model_entities.cwt
 // From: gfx/particles.cwt
@@ -380,6 +381,11 @@ export type {
   TechnologyStartDef,
   TechnologyStartFields,
 } from "./technology.ts";
+export type {
+  DefinedTerraformLink,
+  TerraformLinkDef,
+  TerraformLinkFields,
+} from "./terraform-link.ts";
 export type {
   DefinedTraditionCategory,
   TraditionCategoryDef,

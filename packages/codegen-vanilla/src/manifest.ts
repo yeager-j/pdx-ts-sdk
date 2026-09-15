@@ -43,6 +43,8 @@ export interface VanillaIdRow {
   readonly source: string;
   /** Top-level keyword, for types the rules mark with `name_field`. */
   readonly keyword?: string;
+  /** Definitions repeat under {@link keyword} and expose no identifier. */
+  readonly anonymous?: true;
   /** Emit a trie even when the current install is below the measured threshold. */
   readonly oversized?: true;
   /**
@@ -102,6 +104,7 @@ const CONTENT_ROWS: readonly VanillaIdRow[] = CONTENT_MANIFEST.map((entry) => {
     ...("as" in entry ? { as: entry.as } : {}),
     source: entry.source,
     ...("keyword" in entry ? { keyword: entry.keyword } : {}),
+    ...("anonymous" in entry ? { anonymous: entry.anonymous } : {}),
     ...("oversized" in entry ? { oversized: entry.oversized } : {}),
     ...(bucket === undefined ? {} : { bucket }),
   };

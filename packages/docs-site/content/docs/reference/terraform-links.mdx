@@ -1,0 +1,80 @@
+---
+title: Terraform Links
+description: Add planet-class terraforming routes with typed costs, eligibility gates, and lifecycle hooks.
+registries: [terraform_link]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+A **terraform link** connects one source planet class to one destination class.
+The SDK writes links as repeated `terraform_link = { ... }` blocks under
+`common/terraform/`.
+
+The logical name passed to `mod.terraformLink(...)` distinguishes the item
+during the Fold. Stellaris does not receive that name. Two links can therefore
+use the same `from` and `to` classes when their gates or durations differ.
+
+This example adds two mutually exclusive Ocean-to-Gaia routes for one marked
+labour world. Terrestrial Sculpting and an active authored mission are required.
+World Shaper changes the base duration from 3,600 to 1,800 days. The route also
+requires an authored planet modifier that supplies its name, description, and
+tooltip without adding a speed modifier.
+
+<PairedExample name="terraform-links" />
+
+## Scope contracts
+
+`potential`, `condition`, `effect`, and `aiWeight` run in country scope with
+`FROM` set to the source planet. Use their `ctx.from` reference for planet
+checks and effects.
+
+`onQueued` and `onUnqueued` reverse that relationship: they run on the planet,
+with `FROM` set to the country that queued the terraforming.
+
+The SDK checks these scope relationships at compile time. It also checks
+planet-class, economic-category, technology, ascension-perk, mission, and
+authored static-modifier references used by the example.
+
+## Costs and ordinary modifiers
+
+Put costs in a `resources` block and use the standard `terraforming` economic
+category. `duration` is the base number of days. Stellaris applies its ordinary
+terraforming cost and speed modifiers after these base values; the SDK does not
+calculate the final player-visible values.
+
+## Coexistence with the vanilla Ocean-to-Gaia route
+
+Stellaris 4.4.6 already ships an Ocean-to-Gaia link with a 3,600-day base
+duration gated by World Shaper. The example does not replace it. With World
+Shaper, the target-specific 1,800-day link and the ordinary vanilla link can
+both be eligible, while the custom 3,600-day link is disabled. Without World
+Shaper, only the custom 3,600-day link is eligible for the marked target.
+
+<Callout type="warn" title="Verify selection in the running game">
+  The SDK preserves both same-pair definitions, but it does not simulate how the terraforming
+  interface presents or selects competing links. Confirm that the marked Ocean world clearly shows
+  or selects the 1,800-day route when World Shaper is active.
+</Callout>
+
+For a focused in-game check:
+
+1. Give the actor Terrestrial Sculpting and the active stables mission.
+2. Mark one Ocean world and apply `Dormant Biosphere Network`; leave another Ocean world unmarked.
+3. Without World Shaper, confirm only the marked world gains the special route at 3,600 base days.
+4. Add World Shaper and confirm the marked world exposes or selects the 1,800-day special route.
+5. In each perk state, apply ordinary terraforming speed and cost modifiers and confirm the
+   displayed duration and cost change from the route's base values.
+6. Queue, cancel, and complete the route; confirm the queue, unqueue, and completion hooks run once.
+7. Save and reload during the queue, then repeat the cancellation and completion checks.
+
+## API reference
+
+`TerraformLinkDef` is the generated definition type. There is no
+`vanilla.terraformLink(...)` reference builder because links are anonymous in
+game files and have no identifier to check. The logical name given to
+`mod.terraformLink(...)` is SDK-only identity.
+
+<FieldTable registry="terraform_link" />

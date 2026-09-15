@@ -23,13 +23,16 @@ import { viewFromFiles } from "../src/installation/vanilla/view.ts";
 import {
   always,
   and,
+  anyOwnedMission,
   canGoMia,
   canJoinFactions,
   currentSituationApproach,
   currentStage,
   external,
+  hasAscensionPerk,
   hasAuthority,
   hasCountryFlag,
+  hasModifier,
   hasPlanetFlag,
   hasShipFlag,
   hasSituationFlag,
@@ -37,11 +40,14 @@ import {
   hasTechnology,
   isBottleneckSystem,
   isCapital,
+  isMissionType,
   isScopeValid,
   isSiteLocked,
   isStormType,
+  not,
   scriptedTriggerModifier,
   stormFlags,
+  vanilla,
   type Modifier,
   type ScopeName,
   type SpriteRef,
@@ -4501,6 +4507,99 @@ describe("weight rows with no gating condition (SDK-11)", () => {
 
     await expect(content).toMatchFileSnapshot(
       "__snapshots__/content/ungated-weight-row-traditions.txt"
+    );
+  });
+});
+
+describe("terraform links (SDK-460)", () => {
+  it("keeps same-pair links distinct and emits their costs, gates, and lifecycle hooks", async () => {
+    const mod = createMod({
+      name: "Terraform link test",
+      prefix: "sdk460",
+      supportedVersion: "4.4.*",
+    });
+    const restoration = mod.staticModifier("dormant_biosphere_network", {
+      hostScope: "planet",
+      name: "Dormant Biosphere Network",
+      desc: "A dormant ecological network can restore this world.",
+      customTooltip: "Only the marked labour target can use this route.",
+    });
+    const activeStables = mod.mission("active_stables", {
+      name: "Active Stables",
+      picture: vanilla.spriteType("GFX_evt_inf_planetary_crust_drilling"),
+    });
+    const ocean = vanilla.planetClass("pc_ocean");
+    const gaia = vanilla.planetClass("pc_gaia");
+    const category = vanilla.economicCategory("terraforming");
+    const worldShaper = vanilla.ascensionPerk("ap_world_shaper");
+    const terrestrialSculpting = vanilla.technology("tech_terrestrial_sculpting");
+    const conditions = and(
+      hasTechnology(terrestrialSculpting),
+      anyOwnedMission(isMissionType(activeStables))
+    );
+
+    const withoutWorldShaper = mod.terraformLink("restoration_without_world_shaper", {
+      from: ocean,
+      to: gaia,
+      resources: [{ category, cost: { amounts: { energy: 7_500 } } }],
+      duration: 3_600,
+      potential: (ctx) =>
+        and(
+          ctx.from.trigger(hasPlanetFlag("sdk460_labour_target")),
+          ctx.from.trigger(hasModifier(restoration)),
+          not(hasAscensionPerk(worldShaper))
+        ),
+      condition: conditions,
+      effect: (country, ctx) => {
+        country.setCountryFlag("sdk460_restoration_complete");
+        ctx.from.effects((planet) => planet.removeModifier(restoration));
+      },
+      aiWeight: { base: 1 },
+      onQueued: (planet, ctx) => {
+        planet.setPlanetFlag("sdk460_restoration_queued");
+        ctx.from.effects((country) => country.setCountryFlag("sdk460_restoration_active"));
+      },
+      onUnqueued: (planet, ctx) => {
+        planet.removePlanetFlag("sdk460_restoration_queued");
+        ctx.from.effects((country) => country.removeCountryFlag("sdk460_restoration_active"));
+      },
+    });
+    const withWorldShaper = mod.terraformLink("restoration_with_world_shaper", {
+      from: ocean,
+      to: gaia,
+      resources: [{ category, cost: { amounts: { energy: 7_500 } } }],
+      duration: 1_800,
+      potential: (ctx) =>
+        and(
+          ctx.from.trigger(hasPlanetFlag("sdk460_labour_target")),
+          ctx.from.trigger(hasModifier(restoration)),
+          hasAscensionPerk(worldShaper)
+        ),
+      condition: conditions,
+      effect: (country, ctx) => {
+        country.setCountryFlag("sdk460_restoration_complete");
+        ctx.from.effects((planet) => planet.removeModifier(restoration));
+      },
+      aiWeight: { base: 1 },
+      onQueued: (planet) => planet.setPlanetFlag("sdk460_restoration_queued"),
+      onUnqueued: (planet) => planet.removePlanetFlag("sdk460_restoration_queued"),
+    });
+    const feature = mod.feature("restoration", [
+      restoration,
+      activeStables,
+      withoutWorldShaper,
+      withWorldShaper,
+    ]);
+
+    const first = render(mod.compile([feature]));
+    const second = render(mod.compile([feature]));
+    const terraform = first.get("common/terraform/sdk460_restoration.txt");
+
+    expect(terraform).toBe(second.get("common/terraform/sdk460_restoration.txt"));
+    expect(terraform?.match(/^terraform_link = \{/gm)).toHaveLength(2);
+    expect(terraform).not.toContain("sdk460_terraform_link_restoration_");
+    await expect(terraform).toMatchFileSnapshot(
+      "__snapshots__/content/common__terraform__sdk460_restoration.txt"
     );
   });
 });

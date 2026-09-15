@@ -14,7 +14,7 @@ export const VANILLA_PATH_GAME_VERSION = "4.4.6";
  * Compare values only when those excluded inputs are unchanged.
  */
 export const VANILLA_INSTALL_EVIDENCE_SHA256 =
-  "714650c53929e230e04b0cdeddf57ff3fcfdf409be7749113ea3a3104e73292c";
+  "59a9ad0dd227967da2a2e804d813566b47a5af47e3ce3f71576494ce0ef18ff2";
 
 export const VANILLA_PATHS: readonly string[] = /*#__PURE__*/ Object.freeze([
   "assets/app-background.png",

@@ -133,7 +133,12 @@ function printReport(report: VanillaReport, removed: readonly string[]): void {
   reportSection(
     "Registries",
     report.registries.map(
-      (one) => `${one.registry}: ${one.ids} ids from ${one.files} files` + suffix(one)
+      (one) =>
+        `${one.registry}: ${
+          one.anonymous
+            ? `${one.files} files of anonymous definitions`
+            : `${one.ids} ids from ${one.files} files`
+        }` + suffix(one)
     )
   );
   reportSection(
@@ -247,7 +252,7 @@ function suffix(one: VanillaReport["registries"][number]): string {
 
 function emptyRegistries(report: VanillaReport): string[] {
   return report.registries
-    .filter((one) => one.ids === 0)
+    .filter((one) => one.ids === 0 && !one.anonymous)
     .map(
       (one) =>
         `${one.registry} — ${one.missing ? "path does not exist" : `${one.files} files, no ids`}; ` +

@@ -38,6 +38,7 @@
 // From: common/specimens.cwt
 // From: common/storm_types.cwt
 // From: common/megastructures.cwt
+// From: common/terraform.cwt
 // From: interface/sprites.cwt
 // From: gfx/model_entities.cwt
 // From: gfx/particles.cwt
@@ -262,6 +263,7 @@ import {
   TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_ENTRY_FIELDS,
   TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_FIELDS,
 } from "./technology.ts";
+import { TERRAFORM_LINK_FIELDS } from "./terraform-link.ts";
 import { TRADITION_CATEGORY_DESC_FIELDS, TRADITION_CATEGORY_FIELDS } from "./tradition-category.ts";
 import { TRADITION_FIELDS, TRADITION_SWAP_FIELDS } from "./tradition.ts";
 import {
@@ -6146,6 +6148,54 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     },
   ],
   [
+    TERRAFORM_LINK_FIELDS,
+    {
+      from: {
+        optional: false,
+        docs: ["country scope, from = planet"],
+        memberType: "PlanetClassRef | string",
+      },
+      to: { optional: false, docs: [], memberType: "PlanetClassRef | string" },
+      resources: { optional: true, docs: [], memberType: "EconomicResourceBlock<ScopeName>[]" },
+      duration: { optional: false, docs: [], memberType: "number" },
+      condition: {
+        optional: true,
+        docs: [
+          "displayed in game, hence functions like after effect and requires localisations in the same way.",
+        ],
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "planet" }>',
+      },
+      potential: {
+        optional: true,
+        docs: [],
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "planet" }>',
+      },
+      effect: {
+        optional: true,
+        docs: [],
+        memberType: 'EffectBlock<"country", { readonly root: "country"; readonly from: "planet" }>',
+      },
+      aiWeight: {
+        optional: true,
+        docs: [],
+        memberType:
+          'WithFrom<WeightBlock<"country">, "country", { readonly root: "country"; readonly from: "planet" }>',
+      },
+      onQueued: {
+        optional: true,
+        docs: [],
+        memberType: 'EffectBlock<"planet", { readonly root: "planet"; readonly from: "country" }>',
+      },
+      onUnqueued: {
+        optional: true,
+        docs: [],
+        memberType: 'EffectBlock<"planet", { readonly root: "planet"; readonly from: "country" }>',
+      },
+    },
+  ],
+  [
     SPRITE_TYPE_FIELDS,
     {
       parent: {
@@ -7268,6 +7318,7 @@ export const CONTENT_FIELD_OMISSIONS: Readonly<
     },
   ],
   megastructure: [],
+  terraform_link: [],
   spriteType: [],
   pdxmesh: [],
   pdxparticle: [],

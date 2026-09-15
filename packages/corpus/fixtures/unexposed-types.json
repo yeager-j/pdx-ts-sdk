@@ -5921,23 +5921,6 @@
         "weight_modifier": 4
       }
     },
-    "terraform_link": {
-      "path": "common/terraform",
-      "definitions": 258,
-      "files": 3,
-      "fingerprint": "d49bcbe1de02d0a81371db2bf77625c3627bbac65b987e70391cde95a609b573",
-      "fields": {
-        "ai_weight": 242,
-        "condition": 173,
-        "duration": 258,
-        "effect": 71,
-        "from": 258,
-        "inline_script": 188,
-        "potential": 249,
-        "resources": 258,
-        "to": 258
-      }
-    },
     "timeline_events": {
       "path": "common/timeline_events",
       "definitions": 7,
@@ -6374,5 +6357,5 @@
       "files": 1
     }
   },
-  "fingerprint": "fb4c0b2e632d6ea615e3203cd9a2307e5cb00dafee9ae4b9bd9d448598dda394"
+  "fingerprint": "c264352a4e831acc2e9aece1576100cc0498e62554055ac898bb887249ed7661"
 }

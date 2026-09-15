@@ -29,8 +29,10 @@ import {
 export interface VanillaRefsEmission {
   /** Complete generated `vanilla-refs.ts` module text. */
   readonly code: string;
-  /** Ref type names (raw CWT `<type>` names) this emission used. */
-  readonly refs: readonly string[];
+  /** Ref type names (raw CWT `<type>` names) the generated module imports. */
+  readonly importedRefs: readonly string[];
+  /** Number of distinct ref types registered, including anonymous authored registries. */
+  readonly registeredRefs: number;
   /** Number of registries emitted as checked constructor functions. */
   readonly checked: number;
   /** Number of registries emitted as navigable identifier tries. */
@@ -54,6 +56,8 @@ interface VanillaRefRow {
   readonly refSource: string;
   /** Whether the registry is large enough to get the navigable trie. */
   readonly oversized: boolean;
+  /** Whether the registry has no game-visible ids and therefore no constructor. */
+  readonly anonymous: boolean;
 }
 
 /**
@@ -64,7 +68,8 @@ export function emitVanillaRefs(
   emitter: Emitter,
   manifest: readonly ContentManifestEntry[],
   extras: readonly VanillaRefExtra[],
-  referenceNames: ReadonlyMap<string, string>
+  referenceNames: ReadonlyMap<string, string>,
+  anonymousRegistries: ReadonlySet<string> = new Set()
 ): VanillaRefsEmission {
   const rows: VanillaRefRow[] = [
     ...manifest.map((entry): VanillaRefRow => {
@@ -75,6 +80,7 @@ export function emitVanillaRefs(
         spoken: spokenName(registry),
         refSource: referenceNames.get(registry) ?? entry.type,
         oversized: entry.oversized ?? false,
+        anonymous: anonymousRegistries.has(registry),
       };
     }),
     ...extras.map((extra): VanillaRefRow => ({
@@ -83,6 +89,7 @@ export function emitVanillaRefs(
       spoken: spokenName(extra.type),
       refSource: extra.type,
       oversized: extra.oversized ?? false,
+      anonymous: false,
     })),
     ...VANILLA_SUBTYPE_REFERENCE_PROJECTIONS.map((projection): VanillaRefRow => ({
       registry: `${projection.registry}.${projection.subtype}`,
@@ -90,6 +97,7 @@ export function emitVanillaRefs(
       spoken: spokenName(projection.subtype),
       refSource: `${projection.registry}.${projection.subtype}`,
       oversized: false,
+      anonymous: false,
     })),
   ];
 
@@ -111,8 +119,11 @@ export function emitVanillaRefs(
 
   return {
     code: chunks.join("\n"),
-    refs: [...new Set(rows.map((row) => row.refSource))].sort(),
-    checked: rows.filter((row) => !row.oversized).length,
+    importedRefs: [
+      ...new Set(rows.filter((row) => !row.anonymous).map((row) => row.refSource)),
+    ].sort(),
+    registeredRefs: new Set(rows.map((row) => row.refSource)).size,
+    checked: rows.filter((row) => !row.oversized && !row.anonymous).length,
     tries: rows.filter((row) => row.oversized).length + HAND_WRITTEN_VANILLA_REFS.length,
   };
 }
@@ -149,6 +160,9 @@ function emitRow(emitter: Emitter, row: VanillaRefRow): string {
   // else in the rules happens to reference it — `sound`, `sound_effect`, and
   // `resource` are ref-only extras with no other emitter touching them.
   emitter.usedRefs.add(row.refSource);
+  if (row.anonymous) {
+    return "";
+  }
   const refType = emitter.refTypeName(row.refSource);
   const name = row.helper;
   const key = JSON.stringify(row.registry);
