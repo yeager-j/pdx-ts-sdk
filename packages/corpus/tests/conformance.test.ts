@@ -628,6 +628,22 @@ describe("corpus conformance", () => {
     expect([shapes.length, withInline.length]).toEqual([14, 7]);
     expect(withInline.filter((keys) => keys.size === 2)).toHaveLength(1);
   });
+
+  it("pins the sub-keys shipped terraform links write inside resources (SDK-460 residue)", () => {
+    const observation = byRegistry.get("terraform_link")?.corpus.occurrences.get("resources");
+    // economicResources does not emit descent metadata, so this explicit pin
+    // keeps its unauthorable inline_script arm visible until SDK-17 models it.
+    const expressible = new Set(["category", "cost", "produces", "upkeep", "logistics"]);
+    const inexpressible = [...(observation?.keys ?? [])].filter((key) => !expressible.has(key));
+    expect(inexpressible).toEqual(["inline_script"]);
+
+    // Vanilla 4.4.6 writes two resource shapes for terraform links. One uses
+    // category + cost; the other delegates the body through inline_script.
+    const shapes = observation?.keysByDefinition ?? [];
+    const withInline = shapes.filter((keys) => keys.has("inline_script"));
+    expect([shapes.length, withInline.length]).toEqual([2, 1]);
+    expect(withInline[0]).toEqual(new Set(["category", "inline_script"]));
+  });
 });
 
 describe("the trigger-key predicate the extractor reads a mixed trigger struct with", () => {
