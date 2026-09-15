@@ -37,6 +37,7 @@
 // From: common/special_projects.cwt
 // From: common/specimens.cwt
 // From: common/megastructures.cwt
+// From: common/terraform.cwt
 // From: interface/sprites.cwt
 // From: gfx/model_entities.cwt
 // From: gfx/particles.cwt

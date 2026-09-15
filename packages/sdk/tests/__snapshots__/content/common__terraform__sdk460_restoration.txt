@@ -1,0 +1,91 @@
+terraform_link = {
+	from = pc_ocean
+	to = pc_gaia
+	resources = {
+		category = terraforming
+		cost = {
+			energy = 7500
+		}
+	}
+	duration = 1800
+	condition = {
+		has_technology = tech_terrestrial_sculpting
+		any_owned_mission = {
+			is_mission_type = sdk460_mission_active_stables
+		}
+	}
+	potential = {
+		from = {
+			has_planet_flag = sdk460_labour_target
+		}
+		from = {
+			has_modifier = sdk460_static_modifier_dormant_biosphere_network
+		}
+		has_ascension_perk = ap_world_shaper
+	}
+	effect = {
+		set_country_flag = sdk460_restoration_complete
+		from = {
+			remove_modifier = sdk460_static_modifier_dormant_biosphere_network
+		}
+	}
+	ai_weight = {
+		base = 1
+	}
+	on_queued = {
+		set_planet_flag = sdk460_restoration_queued
+	}
+	on_unqueued = {
+		remove_planet_flag = sdk460_restoration_queued
+	}
+}
+
+terraform_link = {
+	from = pc_ocean
+	to = pc_gaia
+	resources = {
+		category = terraforming
+		cost = {
+			energy = 7500
+		}
+	}
+	duration = 3600
+	condition = {
+		has_technology = tech_terrestrial_sculpting
+		any_owned_mission = {
+			is_mission_type = sdk460_mission_active_stables
+		}
+	}
+	potential = {
+		from = {
+			has_planet_flag = sdk460_labour_target
+		}
+		from = {
+			has_modifier = sdk460_static_modifier_dormant_biosphere_network
+		}
+		NOT = {
+			has_ascension_perk = ap_world_shaper
+		}
+	}
+	effect = {
+		set_country_flag = sdk460_restoration_complete
+		from = {
+			remove_modifier = sdk460_static_modifier_dormant_biosphere_network
+		}
+	}
+	ai_weight = {
+		base = 1
+	}
+	on_queued = {
+		set_planet_flag = sdk460_restoration_queued
+		from = {
+			set_country_flag = sdk460_restoration_active
+		}
+	}
+	on_unqueued = {
+		remove_planet_flag = sdk460_restoration_queued
+		from = {
+			remove_country_flag = sdk460_restoration_active
+		}
+	}
+}

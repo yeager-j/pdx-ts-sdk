@@ -494,12 +494,18 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
       `ContentItem<${key}, ${result}>${declaration};\n` +
       "  }";
   const handleDoc = docComment(
-    [
-      `Mints ${article} ${spoken} id without its definition.`,
-      "Define it later with its `define(...)` method when a cycle needs the id first —",
-      `${article} ${spoken} that names itself, or two that name each other.`,
-      "The handle is a reference, not content: place the item `define(...)` returns.",
-    ],
+    emission.anonymous
+      ? [
+          `Reserves the SDK-only logical identity for ${article} ${spoken}.`,
+          "Define it later with its `define(...)` method, then place the returned item.",
+          "The logical identity distinguishes anonymous entries but is not serialized.",
+        ]
+      : [
+          `Mints ${article} ${spoken} id without its definition.`,
+          "Define it later with its `define(...)` method when a cycle needs the id first —",
+          `${article} ${spoken} that names itself, or two that name each other.`,
+          "The handle is a reference, not content: place the item `define(...)` returns.",
+        ],
     "  "
   );
   if (exactName === undefined) {
@@ -508,17 +514,23 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
         method,
         declaration:
           docComment(
-            [
-              `Defines ${article} ${spoken} from its logical name.`,
-              "The capability mints and owns the full id; the returned branded reference",
-              "flows into matching content-reference fields.",
-              ...(nestedDefinitionMembers.length === 0
-                ? []
-                : [
-                    "Nested-definition record keys are full ids and must belong to this capability's",
-                    "prefix, because other fields may reference them directly.",
-                  ]),
-            ],
+            emission.anonymous
+              ? [
+                  `Defines an anonymous ${spoken} from its logical name.`,
+                  "The capability uses the minted id to preserve item identity and ordering;",
+                  "the game receives only the repeated anonymous definition block.",
+                ]
+              : [
+                  `Defines ${article} ${spoken} from its logical name.`,
+                  "The capability mints and owns the full id; the returned branded reference",
+                  "flows into matching content-reference fields.",
+                  ...(nestedDefinitionMembers.length === 0
+                    ? []
+                    : [
+                        "Nested-definition record keys are full ids and must belong to this capability's",
+                        "prefix, because other fields may reference them directly.",
+                      ]),
+                ],
             "  "
           ) + signatures,
       },

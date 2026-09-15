@@ -1,0 +1,394 @@
+{
+  "registry": "terraform_link",
+  "definitions": 258,
+  "files": 3,
+  "fingerprint": "d49bcbe1de02d0a81371db2bf77625c3627bbac65b987e70391cde95a609b573",
+  "fields": {
+    "ai_weight": {
+      "definitions": 242,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 242,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "modifier",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "modifier",
+          "weight"
+        ],
+        [
+          "weight"
+        ]
+      ]
+    },
+    "ai_weight.modifier": {
+      "definitions": 153,
+      "repeated": 52,
+      "scalars": 0,
+      "blocks": 153,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "from",
+        "has_trait",
+        "is_hive_empire",
+        "is_machine_empire",
+        "is_wilderness_empire",
+        "owner",
+        "should_terraform_trigger"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "from",
+          "owner"
+        ],
+        [
+          "from"
+        ],
+        [
+          "from",
+          "owner"
+        ],
+        [
+          "has_trait"
+        ],
+        [
+          "has_trait",
+          "is_machine_empire"
+        ],
+        [
+          "has_trait",
+          "should_terraform_trigger"
+        ],
+        [
+          "is_hive_empire"
+        ],
+        [
+          "is_hive_empire",
+          "is_wilderness_empire"
+        ],
+        [
+          "is_machine_empire"
+        ],
+        [
+          "should_terraform_trigger"
+        ]
+      ]
+    },
+    "condition": {
+      "definitions": 173,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 173,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "always",
+        "from",
+        "has_ascension_perk",
+        "has_technology"
+      ],
+      "keysByDefinition": [
+        [
+          "OR",
+          "has_ascension_perk",
+          "has_technology"
+        ],
+        [
+          "OR",
+          "has_technology"
+        ],
+        [
+          "always"
+        ],
+        [
+          "from"
+        ],
+        [
+          "has_ascension_perk",
+          "has_technology"
+        ],
+        [
+          "has_technology"
+        ]
+      ]
+    },
+    "duration": {
+      "definitions": 258,
+      "repeated": 0,
+      "scalars": 258,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1000",
+        "1800",
+        "360",
+        "3600",
+        "5000",
+        "5400",
+        "7200"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "effect": {
+      "definitions": 71,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 71,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "from"
+      ],
+      "keysByDefinition": [
+        [
+          "from"
+        ]
+      ]
+    },
+    "from": {
+      "definitions": 258,
+      "repeated": 0,
+      "scalars": 258,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "pc_alpine",
+        "pc_arctic",
+        "pc_arid",
+        "pc_barren",
+        "pc_barren_cold",
+        "pc_city",
+        "pc_continental",
+        "pc_desert",
+        "pc_frozen",
+        "pc_gaia",
+        "pc_gray_goo",
+        "pc_hive",
+        "pc_machine",
+        "pc_nanotech",
+        "pc_nuked",
+        "pc_ocean",
+        "pc_relic",
+        "pc_savannah",
+        "pc_toxic",
+        "pc_tropical",
+        "pc_tundra",
+        "pc_volcanic"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "inline_script": {
+      "definitions": 188,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 188,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "script"
+      ],
+      "keysByDefinition": [
+        [
+          "script"
+        ]
+      ]
+    },
+    "potential": {
+      "definitions": 249,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 249,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "exists",
+        "from",
+        "has_ascension_perk",
+        "has_country_flag",
+        "has_origin",
+        "has_policy_flag",
+        "has_technology",
+        "is_hive_empire",
+        "is_mutation_authority",
+        "owner",
+        "should_show_standard_terraforming"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "has_ascension_perk"
+        ],
+        [
+          "NOT",
+          "has_country_flag"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "exists",
+          "from"
+        ],
+        [
+          "exists",
+          "from"
+        ],
+        [
+          "exists",
+          "from",
+          "has_ascension_perk"
+        ],
+        [
+          "exists",
+          "from",
+          "has_country_flag"
+        ],
+        [
+          "exists",
+          "from",
+          "has_country_flag",
+          "has_policy_flag"
+        ],
+        [
+          "exists",
+          "from",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_ascension_perk"
+        ],
+        [
+          "exists",
+          "has_country_flag"
+        ],
+        [
+          "exists",
+          "has_country_flag",
+          "has_policy_flag"
+        ],
+        [
+          "exists",
+          "has_country_flag",
+          "has_technology"
+        ],
+        [
+          "exists",
+          "has_origin",
+          "is_hive_empire",
+          "is_mutation_authority"
+        ],
+        [
+          "exists",
+          "has_technology"
+        ],
+        [
+          "from",
+          "has_country_flag",
+          "has_origin"
+        ],
+        [
+          "from",
+          "has_origin"
+        ],
+        [
+          "from",
+          "has_technology"
+        ],
+        [
+          "should_show_standard_terraforming"
+        ]
+      ]
+    },
+    "resources": {
+      "definitions": 258,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 258,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "cost",
+        "inline_script"
+      ],
+      "keysByDefinition": [
+        [
+          "category",
+          "cost"
+        ],
+        [
+          "category",
+          "inline_script"
+        ]
+      ]
+    },
+    "to": {
+      "definitions": 258,
+      "repeated": 0,
+      "scalars": 258,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "pc_alpine",
+        "pc_arctic",
+        "pc_arid",
+        "pc_continental",
+        "pc_desert",
+        "pc_gaia",
+        "pc_hive",
+        "pc_machine",
+        "pc_nuked",
+        "pc_ocean",
+        "pc_savannah",
+        "pc_tropical",
+        "pc_tundra",
+        "pc_volcanic"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

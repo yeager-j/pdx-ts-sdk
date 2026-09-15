@@ -548,6 +548,9 @@ export type TechnologyCategoryRef = TypedRef<
 /** A reference to a `<technology_tier>`. */
 export type TechnologyTierRef = TypedRef<"technology_tier" | `technology_tier.${string}`>;
 
+/** A reference to a `<terraform_link>`. */
+export type TerraformLinkRef = TypedRef<"terraform_link" | `terraform_link.${string}`>;
+
 /** A reference to a `<text_color>`. */
 export type TextColorRef = TypedRef<"text_color" | `text_color.${string}`>;
 

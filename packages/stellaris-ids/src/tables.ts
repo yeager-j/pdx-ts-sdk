@@ -95,6 +95,7 @@ import type { VanillaStaticModifierId } from "./registries/static-modifier.ts";
 import type { VanillaStaticModifierTrie } from "./registries/static-modifier/index.ts";
 import type { VanillaStrikeCraftComponentTemplateId } from "./registries/strike-craft-component-template.ts";
 import type { VanillaTechnologyId } from "./registries/technology.ts";
+import type { VanillaTerraformLinkId } from "./registries/terraform-link.ts";
 import type { VanillaTraditionCategoryId } from "./registries/tradition-category.ts";
 import type { VanillaTraditionId } from "./registries/tradition.ts";
 import type { VanillaUtilityComponentTemplateId } from "./registries/utility-component-template.ts";
@@ -154,6 +155,7 @@ export interface VanillaIds {
   readonly special_project: VanillaSpecialProjectId;
   readonly specimen: VanillaSpecimenId;
   readonly megastructure: VanillaMegastructureId;
+  readonly terraform_link: VanillaTerraformLinkId;
   readonly spriteType: VanillaSpriteTypeId;
   readonly pdxmesh: VanillaPdxmeshId;
   readonly pdxparticle: VanillaPdxparticleId;

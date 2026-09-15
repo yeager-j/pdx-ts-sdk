@@ -54,8 +54,10 @@ export interface RegistryIds {
 /**
  * The id one definition carries, under the three layouts the rules describe.
  *
- * Without a `name_field` the top-level key *is* the id. With one, the top-level
- * key is a repeated keyword and the id sits in a body field. With a
+ * Without a repeated keyword the top-level key *is* the id. With a
+ * `name_field`, the repeated keyword wraps a body field carrying the id. An
+ * anonymous repeated registry has neither a top-level nor body id and therefore
+ * contributes no vanilla ids. With a
  * `skip_root_key` on top of that the definitions sit one level inside a root
  * block, and the rules decide how those are recognised — see {@link collect}.
  */
@@ -141,6 +143,9 @@ function collect(
       if (id !== null) {
         add(id, item.value.items);
       }
+      continue;
+    }
+    if (spec.anonymous) {
       continue;
     }
     add(item.key, item.value.items);

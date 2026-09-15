@@ -37,6 +37,7 @@
 // From: common/special_projects.cwt
 // From: common/specimens.cwt
 // From: common/megastructures.cwt
+// From: common/terraform.cwt
 // From: interface/sprites.cwt
 // From: gfx/model_entities.cwt
 // From: gfx/particles.cwt
@@ -126,6 +127,7 @@ import {
   defineStaticModifier,
   defineStrikeCraftComponentTemplate,
   defineTechnology,
+  defineTerraformLink,
   defineTradition,
   defineTraditionCategory,
   defineUtilityComponentTemplate,
@@ -196,6 +198,7 @@ import type {
   TechnologyPatch,
   TechnologyPatchItem,
 } from "./technology.ts";
+import type { TerraformLinkDef } from "./terraform-link.ts";
 import type { TraditionCategoryDef } from "./tradition-category.ts";
 import type { TraditionDef } from "./tradition.ts";
 import type { UtilityComponentTemplateDef } from "./utility-component-template.ts";
@@ -505,6 +508,11 @@ export interface IdProfile {
    * Override it when this registry needs a different id convention.
    */
   readonly megastructure: string;
+  /**
+   * The segment inserted between the mod prefix and a terraform link's logical name.
+   * Override it when this registry needs a different id convention.
+   */
+  readonly terraformLink: string;
 }
 
 /** The conventional id segments used when no profile override is supplied. */
@@ -557,6 +565,7 @@ export const DEFAULT_ID_PROFILE = Object.freeze({
   specialProject: "special_project",
   specimen: "specimen",
   megastructure: "megastructure",
+  terraformLink: "terraform_link",
 }) satisfies IdProfile;
 
 /**
@@ -1896,6 +1905,26 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     patch: (megastructure: Source) => MegastructurePatch
   ): MegastructurePatchItem;
   /**
+   * Defines an anonymous terraform link from its logical name.
+   * The capability uses the minted id to preserve item identity and ordering;
+   * the game receives only the repeated anonymous definition block.
+   */
+  terraformLink<const Name extends string>(
+    name: Name,
+    def: Omit<TerraformLinkDef<MintedContentId<P, I, "terraformLink", Name>>, "id">
+  ): ContentItem<"terraform_link", TerraformLinkDef<MintedContentId<P, I, "terraformLink", Name>>>;
+  /**
+   * Reserves the SDK-only logical identity for a terraform link.
+   * Define it later with its `define(...)` method, then place the returned item.
+   * The logical identity distinguishes anonymous entries but is not serialized.
+   */
+  terraformLinkHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
+    "terraform_link",
+    TerraformLinkDef<MintedContentId<P, I, "terraformLink", Name>>
+  >;
+  /**
    * Defines a sprite type from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -3213,6 +3242,29 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       megastructure: Source,
       patch: (megastructure: Source) => MegastructurePatch
     ) => patchMegastructure(megastructure, patch, prefix),
+    terraformLinkHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "terraform_link",
+        mint("terraformLink", name),
+        (def: TerraformLinkDef<MintedContentId<P, I, "terraformLink", Name>>) => {
+          return defineTerraformLink(def);
+        }
+      );
+    },
+    terraformLink: <const Name extends string>(
+      name: Name,
+      def: Omit<TerraformLinkDef<MintedContentId<P, I, "terraformLink", Name>>, "id">
+    ) => {
+      return createContentHandle(
+        "terraform_link",
+        mint("terraformLink", name),
+        (def: TerraformLinkDef<MintedContentId<P, I, "terraformLink", Name>>) => {
+          return defineTerraformLink(def);
+        }
+      ).define(
+        def as unknown as Omit<TerraformLinkDef<MintedContentId<P, I, "terraformLink", Name>>, "id">
+      );
+    },
     spriteTypeHandle: <const Name extends string>(name: Name) => {
       return createContentHandle(
         "spriteType",

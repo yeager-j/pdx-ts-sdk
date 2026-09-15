@@ -89,4 +89,11 @@ export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
     reason: "CWT `macro[inline_script]`; needs first-class inline-script machinery.",
     issue: "SDK-17",
   },
+  {
+    registry: "terraform_link",
+    field: "inline_script",
+    count: 188,
+    reason: "CWT `macro[inline_script]`; needs first-class inline-script machinery.",
+    issue: "SDK-17",
+  },
 ];

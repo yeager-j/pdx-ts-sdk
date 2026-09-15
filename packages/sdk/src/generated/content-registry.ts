@@ -37,6 +37,7 @@
 // From: common/special_projects.cwt
 // From: common/specimens.cwt
 // From: common/megastructures.cwt
+// From: common/terraform.cwt
 // From: interface/sprites.cwt
 // From: gfx/model_entities.cwt
 // From: gfx/particles.cwt
@@ -109,6 +110,7 @@ import {
   STRIKE_CRAFT_COMPONENT_TEMPLATE_LOCALISATION,
 } from "./strike-craft-component-template.ts";
 import { TECHNOLOGY_FIELDS, TECHNOLOGY_LOCALISATION } from "./technology.ts";
+import { TERRAFORM_LINK_FIELDS, TERRAFORM_LINK_LOCALISATION } from "./terraform-link.ts";
 import {
   TRADITION_CATEGORY_FIELDS,
   TRADITION_CATEGORY_LOCALISATION,
@@ -570,6 +572,16 @@ export const CONTENT_REGISTRIES = [
     fileExtension: ".txt",
     fields: MEGASTRUCTURE_FIELDS,
     localisation: MEGASTRUCTURE_LOCALISATION,
+  },
+  {
+    type: "terraform_link",
+    referenceName: "terraform_link",
+    outputDir: "common/terraform",
+    fileStem: "terraform",
+    fileExtension: ".txt",
+    fields: TERRAFORM_LINK_FIELDS,
+    localisation: TERRAFORM_LINK_LOCALISATION,
+    keyedBy: { keyword: "terraform_link", nameField: null },
   },
   {
     type: "spriteType",

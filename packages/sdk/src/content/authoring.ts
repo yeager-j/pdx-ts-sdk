@@ -102,6 +102,9 @@ function toEntry(
   if (descriptor.keyedBy === undefined) {
     return block(def.id, fields);
   }
+  if (descriptor.keyedBy.nameField === null) {
+    return block(descriptor.keyedBy.keyword, fields);
+  }
   // The id leads the body: vanilla writes `key` first in every one of these,
   // and a definition whose id is buried mid-block is needlessly hard to read.
   return block(descriptor.keyedBy.keyword, [kv(descriptor.keyedBy.nameField, def.id), ...fields]);

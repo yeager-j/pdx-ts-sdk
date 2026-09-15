@@ -23,11 +23,19 @@ export interface ContentManifestEntry {
    */
   readonly idSegment?: string;
   /**
-   * Literal top-level definition key when the id lives in a body field.
+   * Literal repeated top-level definition key.
+   *
+   * For a `name_field` registry, the body field carries the id. For an anonymous
+   * registry, the logical authoring id stays internal and the body carries no id.
    * It is explicit because CWT does not consistently declare a reliable type-key filter.
    * Any positive filter that CWT does declare must match this key.
    */
   readonly keyword?: string;
+  /**
+   * Definitions have no game-visible id and repeat under {@link keyword}.
+   * Their logical authoring ids exist only inside the SDK.
+   */
+  readonly anonymous?: true;
   /**
    * CWT subtype used when one type backs several distinct SDK registries.
    * It must name a declared subtype so generated definitions satisfy the matching reference brand.
@@ -174,6 +182,12 @@ export const CONTENT_MANIFEST = [
   },
   { type: "specimen", source: "common/specimens.cwt" },
   { type: "megastructure", source: "common/megastructures.cwt" },
+  {
+    type: "terraform_link",
+    source: "common/terraform.cwt",
+    keyword: "terraform_link",
+    anonymous: true,
+  },
   // The three GFX registries. Each writes `.gfx` rather than `.txt` and sits
   // inside a root envelope its CWT type declares (`spriteTypes`, `objectTypes`),
   // both of which the layout half of the descriptor already carries.
