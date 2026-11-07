@@ -30,7 +30,7 @@
     "modding"
   ],
   "devDependencies": {
-    "fast-check": "^4.9.0",
+    "fast-check": "^4.10.2",
     "jomini": "^0.10.0"
   },
   "repository": {
